@@ -245,4 +245,4 @@ Mỗi phần có implementation plan riêng.
 | Docker trong cloud session | Có thể không có → không chạy được Testcontainers ở cloud | Phần C |
 | Ảnh HEIC | Có thể bị gửi lên dạng HEIC | Phần B |
 | Nội dung từ gia đình | Cần: ảnh sản phẩm, quy cách đóng gói, giá (nếu hiện), các mốc hành trình, link bài báo, thông tin liên hệ | Trước phần B (trang công khai) |
-| Danh tính git | Git global trên máy công ty là email công ty | Đặt `user.email` cá nhân trong repo trước khi push lần đầu |
+| Danh tính git | Git global trên máy công ty là email công ty | Repo dùng config local: `user.name=ledat1011`, `user.email=75622784+ledat1011@users.noreply.github.com`; đặt giống vậy trên mọi máy sau khi clone |
