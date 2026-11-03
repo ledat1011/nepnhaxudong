@@ -36,6 +36,24 @@ Các skill nằm trong `.claude/skills/`. Chỉ cài khi cần dùng skill đó 
   Bước kiểm tra hình ảnh dùng WPS Office, chỉ chạy được trên máy Windows có cài WPS.
 - `state-diagram` và `call-chain` cần Python 3 (không cần gói thêm). `state-diagram` xuất PNG bằng Edge, Chrome hoặc Chromium.
 
+## Chạy web ở local
+Cần Node 22. Web nằm trong thư mục `web/`.
+
+1. Cài gói:
+   ```bash
+   cd web && npm ci
+   ```
+2. Chạy với dữ liệu mẫu (không cần API):
+   ```bash
+   npm run dev
+   ```
+   Mở `http://localhost:3000/vi`.
+3. Chạy với API thật: chép `web/.env.example` thành `web/.env.local`, chạy API theo mục "Chạy API ở local", rồi chạy:
+   ```bash
+   npm run dev:api
+   ```
+   `REVALIDATE_SECRET` trong `.env.local` phải giống `REVALIDATE_SECRET` của API.
+
 ## Cloud session
 Sẽ điền sau khi kiểm tra trên claude.ai/code.
 
