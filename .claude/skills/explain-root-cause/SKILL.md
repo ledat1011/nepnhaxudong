@@ -1,6 +1,6 @@
 ---
 name: explain-root-cause
-description: Explains the root cause of a bug or failed test like a senior expert, so that developers, testers and the PO all understand it in one read — verdict first, the rule the bug depends on, a timeline from real evidence, why it stays broken, the working case next to the failing case, the code location with a small flow diagram, database/log evidence, and the fix. Writes for the user in their language and, on request, a short English version for the PO. Use whenever the user asks to explain a root cause or an investigation result — "giải thích root cause", "là sao giải thích giúp tôi", "explain this for the PO", "viết giải thích cho PO", "make a timeline", "tóm tắt nguyên nhân", "is my understanding right?", "why does this happen", or wants to turn findings into something others can understand — even if they don't say "root cause".
+description: Explains the root cause of a bug or failed test like a senior expert, so that developers, testers and the PO all understand it in one read — verdict first, the rule the bug depends on, a timeline from real evidence, why it stays broken, the working case next to the failing case, the code location with a small flow diagram, database/log evidence, and the fix. Writes for the user in their language and, on request, a short English version for the PO. Use whenever the user asks to explain a root cause or an investigation result — "explain the root cause", "explain this to me", "explain this for the PO", "write an explanation for the PO", "make a timeline", "summarize the cause", "is my understanding right?", "why does this happen" — in any language — or wants to turn findings into something others can understand, even if they don't say "root cause".
 ---
 
 # Explain a root cause
@@ -71,7 +71,7 @@ a worked example is in `references/answer-format.md`.
 
 ## Follow-up questions
 
-- "Is my understanding right?" → answer **Yes / No** (or **Đúng / Không**) first, then add only
+- "Is my understanding right?" → answer **Yes / No** (in the user's language) first, then add only
   the nuance that changes the meaning. Do not repeat the whole explanation.
 - "Rewrite this for the PO" → use the PO template in `references/answer-format.md`: summary,
   rule, what goes wrong, diagram, evidence, why the working case is fine, fix, re-test note

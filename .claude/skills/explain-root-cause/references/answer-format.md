@@ -7,7 +7,7 @@ content.
 
 ## Contents
 1. Explanation for the user — template
-2. Explanation for the user — example (Vietnamese)
+2. Explanation for the user — example (shown in English; write it in the user's language)
 3. Two-cause variant (when reproduction finds a second bug)
 4. Reply for the PO — template
 5. Reply for the PO — example (English)
@@ -57,28 +57,28 @@ content.
 [One question: offer to implement the fix.]
 ```
 
-## 2. Explanation for the user — example (Vietnamese)
+## 2. Explanation for the user — example (shown in English; write it in the user's language)
 
-> Phần lưu trạng thái bài viết không bị lỗi. Lỗi nằm ở **thứ tự gọi revalidate trang web và
-> commit giao dịch** trong `StoryService.publish`. Trang web được yêu cầu dựng lại trước khi bài
-> viết được commit, nên nó đọc dữ liệu cũ và lưu cache trang cũ.
+> The code that saves the story status is not broken. The bug is in the **order of the website
+> revalidate call and the transaction commit** in `StoryService.publish`. The website is asked to
+> rebuild the page before the story is committed, so it reads old data and caches the old page.
 >
-> | Giờ (UTC) | Thành phần | Sự kiện | Kết quả |
+> | Time (UTC) | Component | Event | Result |
 > |---|---|---|---|
-> | 02:14:05.120 | backend | `publish` mở giao dịch, ghi bài 12 từ DRAFT sang **PUBLISHED** (chưa commit) | — |
-> | 02:14:05.180 | backend | Gọi `POST /api/revalidate` cho trang `/vi/story` | ✅ 200 |
-> | 02:14:05.350 | website | Dựng lại trang, gọi `GET /api/public/stories` | ❌ danh sách không có bài 12 |
-> | 02:14:05.400 | website | Lưu cache trang không có bài 12 | ❌ cache cũ |
-> | 02:14:05.460 | backend | Commit giao dịch, bài 12 là PUBLISHED | ✅ |
+> | 02:14:05.120 | backend | `publish` opens a transaction and changes story 12 from DRAFT to **PUBLISHED** (not committed) | — |
+> | 02:14:05.180 | backend | Calls `POST /api/revalidate` for the page `/vi/story` | ✅ 200 |
+> | 02:14:05.350 | website | Rebuilds the page and calls `GET /api/public/stories` | ❌ the list does not contain story 12 |
+> | 02:14:05.400 | website | Caches the page without story 12 | ❌ stale cache |
+> | 02:14:05.460 | backend | Commits the transaction, story 12 is PUBLISHED | ✅ |
 >
 > Flow diagram when two services interact: see section 6.
 >
 > Working vs failing, side by side:
 >
-> | | Trang `/vi/story` (lỗi) | Trang `/vi/about` (đúng) |
+> | | Page `/vi/story` (fails) | Page `/vi/about` (works) |
 > |---|---|---|
-> | Thời điểm gọi revalidate | Trước commit | Sau commit |
-> | Tự hết không? | **Không**, đến lần revalidate kế tiếp | **Có** |
+> | When revalidate is called | Before the commit | After the commit |
+> | Does it recover alone? | **No**, only at the next revalidate | **Yes** |
 
 ## 3. Two-cause variant
 
@@ -86,9 +86,9 @@ When reproduction on the user's environment behaves differently, add a compariso
 
 | | [Condition A, e.g. preview environment (wrong secret)] | [Condition B, e.g. production environment (right secret)] |
 |---|---|---|
-| Lỗi chặn đầu tiên | ... | ... |
-| Kết quả | ... | ... |
-| Cần sửa | ... | ... |
+| First error that blocks | ... | ... |
+| Result | ... | ... |
+| Needs a fix | ... | ... |
 
 Also say explicitly whether the first bug will appear again once the second one is fixed.
 
