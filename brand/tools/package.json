@@ -1,0 +1,9 @@
+{
+  "name": "nepnha-brand-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "tokens": "node build-tokens.mjs"
+  }
+}
