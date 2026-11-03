@@ -108,11 +108,24 @@ Website giới thiệu gạo nếp cái hoa vàng của gia đình ở Hải Dư
 
 ## Bắt đầu và kết thúc mỗi session
 - Đầu session: `git pull`. Đọc `docs/session/STATE.md` (hook SessionStart đã nạp sẵn).
-- Cuối session, trước khi dừng: cập nhật `docs/session/STATE.md`, viết một file log
-  `docs/session/log/YYYY-MM-DD-<may>-<chu-de>.md` theo `docs/session/log/_template.md`,
-  rồi commit và push.
+- Cuối session, trước khi dừng: cập nhật `docs/session/STATE.md`, hoàn thiện file log của session
+  (xem mục "Nhật ký phản hồi của session"), rồi commit và push.
 - Quyết định lớn ghi vào `docs/decisions/NNNN-<ten>.md`.
 - Hai máy không làm cùng một nhánh cùng lúc. Mỗi việc một nhánh `feat/<ten-ngan>`, PR vào `main`.
+
+## Nhật ký phản hồi của session (giữ lại sau khi nén context)
+- **File:** mỗi session một file `docs/session/log/YYYY-MM-DD-<may>-<chu-de>.md`, theo mẫu
+  `docs/session/log/_template.md`. Tạo file ngay khi chủ dự án đưa phản hồi đầu tiên.
+- **Ghi gì:** chỉnh sửa ("không phải X, làm Y"), quyết định của chủ dự án, cách làm chủ dự án đã xác nhận,
+  ràng buộc và sở thích, sự thật chủ dự án nói mà code không có, việc còn mở chủ dự án yêu cầu.
+  Không ghi những gì đã có trong code / git, output của công cụ, hay suy luận của agent.
+- **Khi nào:** ngay trong lượt chủ dự án đưa phản hồi, trước khi làm tiếp. Không đợi tới cuối session.
+- **Định dạng:** gạch đầu dòng ngắn, mới nhất ở dưới cùng. Khi chủ dự án đổi ý, sửa hoặc xóa dòng cũ —
+  không bao giờ giữ hai dòng mâu thuẫn nhau.
+- **Sau khi nén context hoặc khi tiếp tục session:** đọc file này trước mọi bước khác và làm theo.
+  Nếu nó mâu thuẫn với bản tóm tắt của context, file này thắng.
+- **Phản hồi áp dụng cho cả các session sau:** ghi thêm vào `CLAUDE.md` (quy tắc) hoặc `docs/decisions/`
+  (quyết định). Đây là nơi lưu lâu dài mà mọi máy và cloud session đều đọc được; memory của Claude chỉ có trên một máy.
 
 ## Quy tắc trả lời
 - Trả lời bằng tiếng Việt.
@@ -140,7 +153,7 @@ Các mục cố định (heading cấp 2, đúng tên): `Giai đoạn hiện t�
 
 - [ ] **Step 7: Tạo `docs/session/log/_template.md`**
 
-Các mục: `# YYYY-MM-DD — <máy> — <chủ đề>`, `## Đã làm`, `## Quyết định`, `## Phản hồi của chủ dự án`, `## Còn mở`.
+Các mục: `# YYYY-MM-DD — <máy> — <chủ đề>`, `## Phản hồi`, `## Quyết định`, `## Còn mở`, `## Đã làm`.
 
 - [ ] **Step 8: Tạo 4 file quyết định**
 

@@ -1,13 +1,13 @@
 # YYYY-MM-DD — <máy> — <chủ đề>
 
-## Đã làm
--
+## Phản hồi
+- <điều chủ dự án nói, bằng lời đơn giản> → <cách áp dụng>
 
 ## Quyết định
--
-
-## Phản hồi của chủ dự án
--
+- <quyết định> — <lý do>
 
 ## Còn mở
--
+- <việc>
+
+## Đã làm
+- <việc đã làm, kèm commit nếu có>
