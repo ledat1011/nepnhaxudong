@@ -5,8 +5,7 @@ import { Pagination } from "@/components/story/Pagination";
 import { StoryCard } from "@/components/story/StoryCard";
 import { getContentClient } from "@/lib/content/client";
 import { buildHomeNav } from "@/lib/content/home-nav";
-import { parsePage } from "@/lib/content/story-routing";
-import { STORIES_PAGE_SIZE } from "@/lib/content/tags";
+import { hasNextPage, parsePage } from "@/lib/content/story-routing";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isLang } from "@/lib/i18n/langs";
 import { isStorySection, storiesPath } from "@/lib/i18n/routes";
@@ -32,7 +31,7 @@ export default async function StoryListPage({ params, searchParams }: StoryListP
   if (page > 0 && stories.length === 0) notFound();
 
   const nav = buildHomeNav(home, dict);
-  const hasNext = stories.length === STORIES_PAGE_SIZE;
+  const hasNext = await hasNextPage(client, lang, page, stories);
 
   return (
     <>
@@ -54,7 +53,7 @@ export default async function StoryListPage({ params, searchParams }: StoryListP
             <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {stories.map((story) => (
                 <li key={story.slug}>
-                  <StoryCard lang={lang} story={story} dict={dict} />
+                  <StoryCard lang={lang} story={story} dict={dict} headingLevel={2} />
                 </li>
               ))}
             </ul>

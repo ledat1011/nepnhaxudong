@@ -43,7 +43,7 @@ export default async function StoryPage({ params }: StoryPageProps) {
       />
       <main id="noi-dung">
         <article className="mx-auto max-w-3xl px-4 py-12 md:py-20">
-          <h1 className="font-display text-3xl leading-[1.35] text-earth [overflow-wrap:anywhere] md:text-5xl md:leading-[1.3]">
+          <h1 className="font-sans text-3xl font-bold leading-tight text-earth [overflow-wrap:anywhere] md:text-5xl md:leading-tight">
             {story.title}
           </h1>
           <time dateTime={story.publishedAt} className="mt-4 block font-bold text-coat">

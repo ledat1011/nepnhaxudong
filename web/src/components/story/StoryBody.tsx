@@ -10,7 +10,7 @@ const BODY_CLASS = [
   "[&_h2]:mb-3 [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:leading-snug",
   "[&_h3]:mb-2 [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:leading-snug",
   "[&_ul]:my-5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-5 [&_ol]:list-decimal [&_ol]:pl-6",
-  "[&_li]:my-1.5 [&_li]:pl-1",
+  "[&_li]:my-1.5 [&_li]:pl-1 [&_li_ul]:my-1 [&_li_ol]:my-1",
   "[&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-grain [&_blockquote]:bg-straw [&_blockquote]:px-5 [&_blockquote]:py-3 [&_blockquote]:italic",
   "[&_a]:font-bold [&_a]:text-coat [&_a]:underline [&_a]:underline-offset-4 [&_a:hover]:text-earth",
   "[&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-2 [&_a:focus-visible]:outline-coat",

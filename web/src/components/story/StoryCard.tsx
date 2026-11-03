@@ -10,10 +10,13 @@ type StoryCardProps = {
   lang: Lang;
   story: StorySummary;
   dict: Dictionary;
+  /** Heading level of the title: 3 under the home page h2, 2 under the list page h1. */
+  headingLevel?: 2 | 3;
 };
 
 /** Card for the home page and the story list. The title link covers the whole card. */
-export function StoryCard({ lang, story, dict }: StoryCardProps) {
+export function StoryCard({ lang, story, dict, headingLevel = 3 }: StoryCardProps) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-grain bg-rice has-[a:hover]:border-coat">
       <div className="aspect-[16/9] overflow-hidden">
@@ -28,14 +31,14 @@ export function StoryCard({ lang, story, dict }: StoryCardProps) {
         <time dateTime={story.publishedAt} className="text-sm font-bold text-coat">
           {formatDate(story.publishedAt, lang)}
         </time>
-        <h3 className="text-xl font-bold leading-snug">
+        <Heading className="text-xl font-bold leading-snug">
           <Link
             href={storyPath(lang, story.slug)}
             className="rounded after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
           >
             {story.title}
           </Link>
-        </h3>
+        </Heading>
         <p className="leading-relaxed">{story.excerpt}</p>
         <p aria-hidden="true" className="mt-auto pt-2 font-bold text-coat">
           {dict.stories.readMore} →

@@ -13,4 +13,10 @@ describe("StoryBody", () => {
       "https://example.com/x",
     );
   });
+
+  it("puts a small margin on lists nested in a list item", () => {
+    const { container } = render(<StoryBody html="<ul><li>a<ul><li>b</li></ul></li></ul>" />);
+    expect(container.firstElementChild).toHaveClass("[&_li_ul]:my-1", "[&_li_ol]:my-1");
+    expect(container.querySelector("li > ul > li")).toHaveTextContent("b");
+  });
 });

@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { parsePage, storyAlternates } from "./story-routing";
-import type { StoryDetail } from "./types";
+import { describe, expect, it, vi } from "vitest";
+import { hasNextPage, parsePage, storyAlternates } from "./story-routing";
+import { STORIES_PAGE_SIZE } from "./tags";
+import type { ContentClient, StoryDetail, StorySummary } from "./types";
 
 function story(slug: string, alternateSlug: string | null): StoryDetail {
   return {
@@ -59,5 +60,41 @@ describe("storyAlternates", () => {
       vi: "/vi/cau-chuyen/chuyen-nha-nep-xu-dong",
       en: "/en/stories/chuyen-nha-nep-xu-dong",
     });
+  });
+});
+
+function summaries(count: number): StorySummary[] {
+  return Array.from({ length: count }, (_, i) => ({
+    slug: `s-${i}`,
+    title: "t",
+    excerpt: "e",
+    publishedAt: "2026-04-10T02:00:00Z",
+    cover: null,
+  }));
+}
+
+function clientWithNextPage(next: StorySummary[]) {
+  const getStories = vi.fn().mockResolvedValue(next);
+  return { client: { getStories } as unknown as ContentClient, getStories };
+}
+
+describe("hasNextPage", () => {
+  it("is false without an extra call when the page is not full", async () => {
+    const { client, getStories } = clientWithNextPage(summaries(1));
+    const items = summaries(STORIES_PAGE_SIZE - 1);
+    await expect(hasNextPage(client, "vi", 0, items)).resolves.toBe(false);
+    expect(getStories).not.toHaveBeenCalled();
+  });
+
+  it("is false when the page is full and the next page is empty", async () => {
+    const { client, getStories } = clientWithNextPage([]);
+    await expect(hasNextPage(client, "vi", 2, summaries(STORIES_PAGE_SIZE))).resolves.toBe(false);
+    expect(getStories).toHaveBeenCalledExactlyOnceWith("vi", 3);
+  });
+
+  it("is true when the page is full and the next page has stories", async () => {
+    const { client, getStories } = clientWithNextPage(summaries(1));
+    await expect(hasNextPage(client, "en", 0, summaries(STORIES_PAGE_SIZE))).resolves.toBe(true);
+    expect(getStories).toHaveBeenCalledExactlyOnceWith("en", 1);
   });
 });

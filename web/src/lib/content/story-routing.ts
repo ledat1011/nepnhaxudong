@@ -1,6 +1,7 @@
 import { LANGS, type Lang } from "@/lib/i18n/langs";
 import { storyPath } from "@/lib/i18n/routes";
-import type { StoryDetail } from "./types";
+import { STORIES_PAGE_SIZE } from "./tags";
+import type { ContentClient, StoryDetail, StorySummary } from "./types";
 
 /**
  * Reads the `?page` query value. No value is the first page (0).
@@ -21,4 +22,18 @@ export function storyAlternates(lang: Lang, story: StoryDetail): Record<Lang, st
     paths[code] = storyPath(code, slug);
   }
   return paths;
+}
+
+/**
+ * Whether a page follows this one. A full page may be the last one (when the total is an exact
+ * multiple of the page size), so the next page is asked for; that call is cached by tag.
+ */
+export async function hasNextPage(
+  client: ContentClient,
+  lang: Lang,
+  page: number,
+  items: StorySummary[],
+): Promise<boolean> {
+  if (items.length < STORIES_PAGE_SIZE) return false;
+  return (await client.getStories(lang, page + 1)).length > 0;
 }
