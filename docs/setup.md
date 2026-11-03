@@ -64,21 +64,21 @@ Lệnh này build web hai lần (mỗi lần vào một thư mục riêng `.next
 ### Chạy bản production với dữ liệu mẫu
 Dùng khi cần xem web đúng như khi chạy thật (ví dụ để đo Lighthouse). `next start` không chạy được vì cấu hình có `output: "standalone"`, nên chạy server standalone. Làm trong `web/`, dùng Git Bash hoặc Linux. Cổng 3300 phải rảnh.
 
-1. Build vào thư mục riêng `.next-lighthouse` (thư mục này đã được git bỏ qua):
+1. Build vào thư mục mặc định `.next` (thư mục này đã được git bỏ qua; build vào thư mục khác sẽ làm Next sửa `web/tsconfig.json`):
    ```bash
-   NEXT_DIST_DIR=.next-lighthouse SITE_URL=http://127.0.0.1:3300 npx next build
+   SITE_URL=http://127.0.0.1:3300 npx next build
    ```
 2. Chép file tĩnh cạnh server (server standalone chỉ phục vụ file tĩnh khi chúng nằm cạnh nó):
    ```bash
-   mkdir -p .next-lighthouse/standalone/.next-lighthouse/static && cp -r .next-lighthouse/static/. .next-lighthouse/standalone/.next-lighthouse/static
+   mkdir -p .next/standalone/.next/static && cp -r .next/static/. .next/standalone/.next/static
    ```
 3. Chạy server:
    ```bash
-   PORT=3300 HOSTNAME=127.0.0.1 CONTENT_SOURCE=mock SITE_URL=http://127.0.0.1:3300 node .next-lighthouse/standalone/server.js
+   PORT=3300 HOSTNAME=127.0.0.1 CONTENT_SOURCE=mock SITE_URL=http://127.0.0.1:3300 node .next/standalone/server.js
    ```
    Mở `http://127.0.0.1:3300/vi`. Dừng bằng Ctrl+C.
 
-`SITE_URL` phải đặt ở cả bước build (cấu hình ảnh) và bước chạy (canonical, sitemap). Sau khi build, Next có thể sửa `web/tsconfig.json` (thêm thư mục build vào `include`); không commit thay đổi này.
+`SITE_URL` phải đặt ở cả bước build (cấu hình ảnh) và bước chạy (canonical, sitemap).
 
 ### Đo Lighthouse (mobile)
 Khi server ở mục trên đang chạy, mở một terminal khác trong `web/`:
