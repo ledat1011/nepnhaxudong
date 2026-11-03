@@ -1,6 +1,7 @@
 package vn.nepnhaxudong.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.util.Map;
@@ -9,7 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.JsonNode;
+import vn.nepnhaxudong.common.ApiException;
 
 class UserAdminTest extends AuthTestSupport {
 
@@ -19,6 +23,9 @@ class UserAdminTest extends AuthTestSupport {
   private static final String TOTP_REQUIRED = "Cần mã xác thực 2 lớp.";
 
   @Autowired JdbcTemplate jdbc;
+  @Autowired UserAdminService userAdminService;
+  @Autowired UserSessions userSessions;
+  @Autowired PlatformTransactionManager transactionManager;
 
   // ---- user management -------------------------------------------------------------------
 
@@ -175,6 +182,70 @@ class UserAdminTest extends AuthTestSupport {
     assertThat(login.getStatusCode().value()).isEqualTo(200);
     assertThat(ApiClient.json(login).path("mustChangePassword").asBoolean()).isTrue();
     assertThat(other.get("/admin/users").getStatusCode().value()).isEqualTo(403);
+  }
+
+  @Test
+  void resetPasswordAlsoSwitchesTotpOffSoALostPhoneCanBeRecovered() {
+    var admin = loggedIn(ADMIN_EMAIL, ADMIN_PASSWORD);
+    String secret = enableTotpFor("lost-phone@example.com", "lost-phone-password-1");
+    long targetId = users.findByEmail("lost-phone@example.com").orElseThrow().getId();
+    assertThat(secret).isNotBlank();
+    assertThat(users.findById(targetId).orElseThrow().isTotpEnabled()).isTrue();
+
+    var reset =
+        admin.post(
+            "/admin/users/" + targetId + "/reset-password", Map.of("temporaryPassword", TEMP_PASSWORD));
+
+    assertThat(reset.getStatusCode().value()).isEqualTo(204);
+    var user = users.findById(targetId).orElseThrow();
+    assertThat(user.isTotpEnabled()).isFalse();
+    assertThat(user.getTotpSecret()).isNull();
+    var recovered = newClient();
+    var login = login(recovered, "lost-phone@example.com", TEMP_PASSWORD);
+    assertThat(login.getStatusCode().value()).isEqualTo(200);
+    assertThat(ApiClient.json(login).path("mustChangePassword").asBoolean()).isTrue();
+  }
+
+  @Test
+  void aDisabledActorCannotDisableAnotherUser() {
+    long actorId = createUser(ADMIN_EMAIL, ADMIN_PASSWORD, false).getId();
+    long targetId = createUser("target@example.com", "target-password-1", false).getId();
+    var actor = users.findById(actorId).orElseThrow();
+    actor.setEnabled(false);
+    users.save(actor);
+
+    // The admin filter would already stop a disabled actor over HTTP; this is the re-check inside the
+    // transaction, which matters when two admins disable each other at the same time.
+    assertThatThrownBy(() -> userAdminService.disable(actorId, targetId))
+        .isInstanceOfSatisfying(
+            ApiException.class,
+            e -> {
+              assertThat(e.getStatus().value()).isEqualTo(403);
+              assertThat(e.getMessage()).isEqualTo("Tài khoản của bạn đã bị khóa.");
+            });
+    assertThat(users.findById(targetId).orElseThrow().isEnabled()).isTrue();
+  }
+
+  @Test
+  void sessionsEndOnlyAfterTheSurroundingTransactionCommits() {
+    var user = createUser(ADMIN_EMAIL, ADMIN_PASSWORD, false);
+    long userId = user.getId();
+    login(newClient(), ADMIN_EMAIL, ADMIN_PASSWORD);
+    assertThat(sessionCount(userId)).isEqualTo(1);
+    var transaction = new TransactionTemplate(transactionManager);
+
+    transaction.executeWithoutResult(
+        status -> {
+          userSessions.endAll(userId);
+          // Still there while the transaction is open ...
+          assertThat(sessionCount(userId)).isEqualTo(1);
+          // ... and kept when it rolls back.
+          status.setRollbackOnly();
+        });
+    assertThat(sessionCount(userId)).isEqualTo(1);
+
+    transaction.executeWithoutResult(status -> userSessions.endAll(userId));
+    assertThat(sessionCount(userId)).isZero();
   }
 
   @Test

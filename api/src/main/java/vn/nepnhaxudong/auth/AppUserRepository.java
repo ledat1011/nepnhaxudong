@@ -10,6 +10,11 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
 
   Optional<AppUser> findByEmail(String email);
 
+  /** Locks the row until the end of the transaction. */
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("select u from AppUser u where u.id = :id")
+  Optional<AppUser> findByIdForUpdate(long id);
+
   /** Locks the row, so two parallel wrong passwords cannot both read the same failed-attempt count. */
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select u from AppUser u where u.email = :email")

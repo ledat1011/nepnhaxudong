@@ -97,8 +97,15 @@ class AuthHardeningTest extends AuthTestSupport {
     var unknown = client.get("/public/test-probe/no-such-path");
     assertThat(unknown.getStatusCode().value()).isEqualTo(404);
 
-    var wrongMethod = client.post("/auth/csrf", null);
-    assertThat(wrongMethod.getStatusCode().value()).isNotEqualTo(500);
+    // POST on a GET-only path: a logged-in user with a valid CSRF token reaches Spring MVC, which
+    // answers 405 (an anonymous user would be stopped by the authorization filter with 401).
+    createUser(EMAIL, PASSWORD, false);
+    var loggedIn = newClient();
+    login(loggedIn, EMAIL, PASSWORD);
+    loggedIn.fetchCsrf();
+    var wrongMethod = loggedIn.post("/auth/csrf", null);
+    assertThat(wrongMethod.getStatusCode().value()).isEqualTo(405);
+    assertThat(isProblemJson(wrongMethod)).isTrue();
 
     var malformed = newClient();
     malformed.fetchCsrf();
