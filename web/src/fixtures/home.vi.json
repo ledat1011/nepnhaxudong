@@ -1,0 +1,73 @@
+{
+  "lang": "vi",
+  "brand": {
+    "tagline": "[MẪU] Gạo nếp cái hoa vàng từ một gia đình ở xứ Đông"
+  },
+  "products": [
+    {
+      "name": "[MẪU] Gạo nếp cái hoa vàng",
+      "description": "[MẪU] Hạt nếp tròn đều, màu trắng ngà, được gia đình trồng và xay xát ở xứ Đông (Hải Dương). Nấu xôi dẻo, thơm mùi lúa mới.",
+      "features": [
+        "[MẪU] Trồng theo mùa vụ, thu hoạch bằng tay",
+        "[MẪU] Hạt dẻo, thơm nhẹ, ít vỡ khi nấu",
+        "[MẪU] Đóng gói sạch, giao theo từng mẻ xay"
+      ],
+      "cookingTips": "[MẪU] Ngâm nếp 6 đến 8 tiếng, để ráo rồi đồ xôi khoảng 30 phút. Rắc chút muối và đảo đều giữa chừng cho xôi chín đều.",
+      "showPrice": false,
+      "packagings": [
+        { "weightGrams": 1000, "priceVnd": null },
+        { "weightGrams": 2000, "priceVnd": null }
+      ],
+      "images": []
+    }
+  ],
+  "timeline": [
+    {
+      "year": 1998,
+      "title": "[MẪU] Mảnh ruộng đầu tiên",
+      "description": "[MẪU] Ông bà bắt đầu trồng nếp cái hoa vàng trên mảnh ruộng nhỏ của gia đình.",
+      "image": null
+    },
+    {
+      "year": 2015,
+      "title": "[MẪU] Xay xát tại nhà",
+      "description": "[MẪU] Gia đình tự xay xát để giữ trọn hương vị và chọn từng mẻ gạo.",
+      "image": null
+    },
+    {
+      "year": 2026,
+      "title": "[MẪU] Nếp Nhà ra mắt",
+      "description": "[MẪU] Nếp Nhà đưa gạo nếp của gia đình đến nhiều bếp ăn hơn.",
+      "image": null
+    }
+  ],
+  "press": [
+    {
+      "title": "[MẪU] Hạt nếp cái hoa vàng giữ nghề của xứ Đông",
+      "sourceName": "[MẪU] Báo Mẫu Một",
+      "url": "https://example.com/bao-chi/nep-cai-hoa-vang",
+      "publishedOn": "2026-03-20",
+      "image": null
+    },
+    {
+      "title": "[MẪU] Gia đình nhỏ và mùa nếp mới",
+      "sourceName": "[MẪU] Tạp chí Mẫu Hai",
+      "url": "https://example.com/bao-chi/mua-nep-moi",
+      "publishedOn": null,
+      "image": null
+    }
+  ],
+  "contact": {
+    "phone": "0000 000 000",
+    "zalo": "0000 000 000",
+    "messenger": "https://example.com/messenger",
+    "address": "[MẪU] Xứ Đông, tỉnh Hải Dương",
+    "mapUrl": "https://example.com/ban-do",
+    "hours": "[MẪU] Mỗi ngày, 8:00 đến 20:00"
+  },
+  "social": {
+    "facebook": "https://example.com/facebook",
+    "youtube": "https://example.com/youtube",
+    "tiktok": null
+  }
+}

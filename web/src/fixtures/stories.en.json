@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "first-harvest-in-xu-dong",
+    "title": "[MẪU] The first harvest in xứ Đông",
+    "excerpt": "[MẪU] The whole family goes to the field at dawn to cut the first golden-flower rice of the season.",
+    "publishedAt": "2026-04-10T02:00:00Z",
+    "cover": null,
+    "bodyHtml": "<p>[MẪU] At dawn the family walks to the field while dew still sits on the leaves. The golden-flower ears are ripe and heavy.</p><h2>[MẪU] Cut by hand</h2><p>[MẪU] Each bundle is cut and tied by hand so the grains are not bruised. It is slow, but it keeps the quality.</p><ul><li>[MẪU] Cut in gentle sun</li><li>[MẪU] Dry for two sunny days</li></ul>",
+    "alternateSlug": "mua-gat-dau-tien-o-xu-dong"
+  },
+  {
+    "slug": "how-to-cook-soft-sticky-rice",
+    "title": "[MẪU] How to cook soft, fragrant sticky rice",
+    "excerpt": "[MẪU] Three simple steps for a soft, fragrant and evenly cooked pot.",
+    "publishedAt": "2026-03-05T02:00:00Z",
+    "cover": null,
+    "bodyHtml": "<p>[MẪU] Good sticky rice starts with soaking the grains long enough. These are the three steps the family follows every day.</p><h2>[MẪU] The steps</h2><ol><li>[MẪU] Soak 6 to 8 hours</li><li>[MẪU] Drain the water</li><li>[MẪU] Steam for about 30 minutes</li></ol><blockquote>[MẪU] Soft rice comes from good grains and enough soaking time.</blockquote><p>[MẪU] More in the <a href=\"https://example.com/cong-thuc/xoi-deo\">sample recipe page</a>.</p>",
+    "alternateSlug": "cach-nau-xoi-deo-thom"
+  },
+  {
+    "slug": "storing-sticky-rice-the-right-way",
+    "title": "[MẪU] Storing sticky rice the right way",
+    "excerpt": "[MẪU] A few small notes that keep the rice fragrant for longer.",
+    "publishedAt": "2026-02-14T02:00:00Z",
+    "cover": null,
+    "bodyHtml": "<p>[MẪU] Keep sticky rice in a dry, cool place away from direct sunlight.</p><p>[MẪU] Full article address: https://example.com/stories/storing-sticky-rice/complete-guide-for-every-family/xu-dong-hai-duong/edition-2026-february</p><h3>[MẪU] A small tip</h3><p>[MẪU] Use a sealed jar and <strong>do not</strong> keep it near damp places.</p>",
+    "alternateSlug": "bao-quan-gao-nep-dung-cach"
+  },
+  {
+    "slug": "chuyen-nha-nep-xu-dong",
+    "title": "[MẪU] Chuyện nhà Nếp ở xứ Đông",
+    "excerpt": "[MẪU] Vì sao một gia đình chọn giữ nghề trồng nếp qua nhiều năm.",
+    "publishedAt": "2026-01-20T02:00:00Z",
+    "cover": null,
+    "bodyHtml": "<p>[MẪU] Nhà Nếp ở xứ Đông giữ nghề trồng nếp từ đời ông bà. Mỗi mùa gặt là một dịp để cả nhà gặp nhau.</p><p>[MẪU] Câu chuyện này chưa có bản tiếng Anh riêng, nên trang tiếng Anh dùng bản tiếng Việt.</p>",
+    "alternateSlug": null
+  }
+]
