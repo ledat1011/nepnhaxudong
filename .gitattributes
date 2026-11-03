@@ -7,3 +7,4 @@
 *.gif binary
 *.woff2 binary
 *.ico binary
+scripts/test/fixtures/**/*-crlf.md -text
