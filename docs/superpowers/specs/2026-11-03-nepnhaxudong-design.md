@@ -83,7 +83,6 @@ Mọi cặp chữ / nền dùng trên web phải đạt WCAG AA (4,5:1 cho chữ
   | `eyes` (tùy chọn) | — | chớp mắt định kỳ |
 
 - **Quy trình:** Nano Banana (Gemini, qua `nanobanana-mcp-server`) vẽ 4–6 ý tưởng → chủ dự án chọn → Recraft (remote MCP) chuyển sang SVG → Claude dọn SVG và gom lớp → kiểm tra bản biểu tượng ở 32px. Ngân sách < 10 USD.
-- **Nhãn hiệu:** tra cơ sở dữ liệu Cục SHTT (WIPO Publish, nhóm 30) trước khi in bao bì.
 
 ## 3. Website công khai
 
