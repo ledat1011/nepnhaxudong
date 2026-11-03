@@ -13,10 +13,11 @@ Steps:
 3. Fill what each lower part needs under the parts above it, so a tilted head (±3°) or rice (±6°)
    shows no hole: the body silhouette under everything, the head's colors in the body where the rice
    lies in front of the head, rice under the hands, every part a few pixels under the next.
-4. Smooth each part (3 x 3 majority), trace it on its own with vtracer, snap each color to the brand
-   palette, scale to 512 x 512 and write compact relative path data.
-5. Add the tied straw bundle (straws, rope tie, cut ends) to the rice as hand-drawn polygons
-   (straw_bundle()); traced, its thin lines broke into bits.
+4. Replace the straw section of the rice (from under the grain heads to the cut ends) with drawn
+   straws, rope tie and leaf end (redraw_straws()); traced, its thin lines broke into bits and blobs.
+5. Smooth each part (3 x 3 majority; the drawn pixels are kept as drawn), trace it on its own with
+   vtracer, snap each color to the brand palette, scale to 512 x 512 and write compact relative
+   path data.
 6. Write head-full.svg for logo-icon: the head with the pixels the rice hides painted in, cut below
    the chin (head_full()). The mascot's own head keeps those holes, since the leaves lie in front.
 
@@ -92,63 +93,84 @@ RICE_ANCHORS = ['gold', 'gold-shade', 'leaf', 'leaf-shade', 'straw', 'straw-shad
 GRAIN_OUTLINE_REACH = 12
 # Background regions enclosed by the figure and smaller than this are light lines (hat ribs).
 BACKGROUND_HOLE_AREA = 600
-# The loose straws between the grains and the upper hand are redrawn from lightness alone: a rice
-# pixel in STRAW_ZONE darker than BUNDLE_LINE_L (CIE L), or darker than the mean of the LINE_WINDOW
-# square around it by LINE_CONTRAST, is a line; every other one is straw. By color they break into
-# outline, shade and gold bits.
-STRAW_ZONE = [(520, 600), (600, 610), (650, 700), (560, 790), (530, 800), (505, 700)]
-BUNDLE_LINE_L = 48
-LINE_WINDOW = 11
-LINE_CONTRAST = 10
 # Elsewhere in the rice a shade pixel within this distance of gold is gold (grain rims). In the
 # hat, a gold or shade pixel farther than this from an outline is a rib line and is gold.
 SHADE_REACH = 3
 
-# The tied straw bundle (between the hands, the rope tie, and the cut straws below the lower hand) is
-# drawn by hand instead of traced: traced, its thin straw lines broke into bits. Source pixels.
-# Between the hands: MID_STRAWS parallel straws from under the upper forearm (MID_START) to the right
-# arm, whose outline cuts them (ARM_EDGE); MID_TOP is the top straw's upper side, MID_BOTTOM a point
-# on the lowest straw's lower side.
-MID_TOP = ((670, 719), (770, 772))
-MID_BOTTOM = (545, 806)
-MID_START = ((610, 687), (545, 796))
+# The straw section (from under the grain heads down to the cut ends) is drawn, not traced: traced,
+# its thin straw lines broke into bits and blobs. Source pixels.
+# STRAW_EDGE_A / STRAW_EDGE_B: the bundle's upper-right and lower-left edges at matching stations,
+# top first. The STRAWS straws run between them, so they fan out where the bundle is wider. What the
+# leaves, grains or hands cover, or what lies outside the traced rice, is not shown (the straws run
+# on under it), except between the hands (MID_REGION) and below the sleeve (LOW_REGION), where the
+# drawn shapes are the straws' edge and cut ends.
+STRAW_EDGE_A = [(330, 440), (410, 505), (500, 575), (590, 648), (670, 719), (775, 770), (958, 908)]
+STRAW_EDGE_B = [(250, 555), (330, 615), (400, 672), (450, 738), (575, 870), (652, 915), (742, 1018)]
+STRAWS = 16
+STRAW_SAMPLES = 60
+# Each line between two straws wavers by up to this share of the straw width, so no straw is a
+# straight plank of constant width.
+STRAW_WAVE = 0.22
+STRAW_LINE_WIDTH = 3
+# The shade: at this share across the straw, this wide, from this share of the bundle's length.
+STRAW_SHADE_AT = 0.35
+STRAW_SHADE_WIDTH = 5
+STRAW_SHADE_FROM = 0.3
+# Every STRAW_LINE_STEP-th point of a line is written; a line stops STRAW_LINE_CLEAR pixels before
+# an outline, the rope or anything that covers the straws.
+STRAW_LINE_STEP = 3
+STRAW_LINE_CLEAR = 2
+STRAW_OUTLINE = 6
+# Every STRAW_DEPTH_LINE-th line (counted from STRAW_DEPTH_FIRST) is Nâu áo, the others Vàng lúa.
+STRAW_DEPTH_LINE = 5
+STRAW_DEPTH_FIRST = 3
+# The straws end in pairs. A pair is cut up to END_JITTER stations short of the last one, at least
+# END_STEP away from its neighbour, with a round end END_DEPTHS deep (share of its half width).
+END_JITTER = 0.18
+END_STEP = 0.06
+# Over the last END_ZONE stations the line between two pairs is a Nâu đất outline this wide.
+END_ZONE = 0.3
+END_LINE_WIDTH = 4
+END_DEPTHS = (0.55, 0.8, 1.0)
+STRAW_SEED = 7
+# Grains and leaves stay as traced, with the outline this close to them; they only lie above the
+# upper hand (GRAIN_ZONE). A gold (green) region there is a grain (leaf) when it is thicker than
+# 2 x GRAIN_THICK (LEAF_THICK) somewhere; a gold or green streak between straw lines is not.
+PROTECT_BAND = 10
+PROTECT_CORE = 5
+GRAIN_ZONE = [(0, 0), (1024, 0), (1024, 600), (640, 690), (480, 780), (0, 820)]
+GRAIN_THICK = 4
+LEAF_THICK = 3
+STRAW_SMOOTH = 4
+# The lower end of the leaf that crosses the straws above the upper hand is light green in the
+# source and reads as straw by color, so it is drawn: its left edge (a thin outline against the
+# straws) and its right edge (the outline against the blouse).
+LEAF_TIP_LEFT = [(490, 552), (532, 600), (565, 630), (585, 646), (596, 652)]
+LEAF_TIP_RIGHT = [(540, 552), (584, 600), (606, 640)]
+LEAF_TIP_LEFT_LINE = 4
+LEAF_TIP_RIGHT_LINE = 8
+# The rope tie, wrapped diagonally just under the upper hand: twisted strands (ellipses slanted
+# ROPE_ANGLE degrees to the rope) every ROPE_STEP along ROPE, ROPE_HALF wide on each side.
+ROPE = ((703, 728), (608, 846))
+ROPE_HALF = 13
+ROPE_STEP = 13
+ROPE_ANGLE = 38
+ROPE_OUTLINE = 3
+# Between the hands (MID_REGION) the straws' edge is the drawn one too: there the lines follow it,
+# while the traced edge would cut every line short.
+MID_REGION = [(655, 700), (800, 762), (745, 830), (640, 875), (590, 800)]
+# The right forearm lies in front of the straws: right of ARM_EDGE (below ARM_TOP) and above the
+# sleeve's lower outline (SLEEVE_EDGE). LOW_REGION is everything below that outline.
 ARM_EDGE = ((770, 772), (735, 808))
-MID_STRAWS = 6
-# How far the straws run on under the upper forearm past MID_START.
-MID_UNDER_ARM = 24
-# The rope tie: a band across the straws from the bundle's upper outline (TIE_TOP, where it rises
-# TIE_BULGE over it with a flat round end TIE_CAP deep) down under the lower hand.
-TIE_TOP = (698, 734)
-TIE_BULGE = 4
-TIE_CAP = 7
-TIE_LENGTH = 140
-TIE_WIDTH = 28
-TIE_TWIST_STEP = 10
-TIE_TWIST_SLANT = 9
-# Below the lower hand: one straw per cut end, all pointing away from LOW_FOCUS, cut at the top by
-# the sleeve's lower outline (SLEEVE_EDGE) and, under the hand, by the start of LOW_REGION.
-LOW_ENDS = [(762, 1006), (790, 1002), (817, 996), (850, 986), (885, 976), (895, 957), (922, 932),
-            (927, 897)]
-LOW_FOCUS = (240, 484)
-LOW_LENGTH = 220
-LOW_STRAW_WIDTH = 18
+ARM_TOP = 700
 SLEEVE_EDGE = [(790, 898), (800, 908), (815, 918), (830, 921), (850, 912), (870, 899), (880, 894),
                (890, 881), (900, 868), (910, 850), (915, 837)]
 LOW_REGION = [(630, 876)] + SLEEVE_EDGE + [(1000, 850), (1000, 1040), (630, 1040)]
-# Outline width, and the width of the Nâu áo line between two straws.
-BUNDLE_OUTLINE = 5
-STRAW_LINE = 3.5
-# Rounded cut end: its depth as a share of the straw width.
-STRAW_END_DEPTH = 0.3
-STRAW_END_POINTS = 9
-# The image generator's translucent four-point star over the straw ends: hand or rice pixels traced
-# from it go (the drawn straws are there).
+# The image generator's translucent four-point star over the straw ends: hand pixels traced from it
+# go (the drawn straws are there).
 WATERMARK = [(900, 872), (934, 904), (902, 936), (875, 903)]
-# Width of the hands' own outline: darker hand pixels farther from the skin over the bundle go.
+# Width of the hands' own outline: darker hand pixels farther from the skin over the straws go.
 HAND_OUTLINE = 8
-# Traced rice pixels this close to the drawn bundle, or below the sleeve (LOW_REGION), go, so no
-# old straw bit shows beside it.
-BUNDLE_CLEAR = 10
 
 # The whole head for logo-icon: the head part closed with this radius (it takes in the brim and
 # hair the rice hides, and the loose brim bits between the leaves), cut at HEAD_FULL_CUT (below the
@@ -156,8 +178,9 @@ BUNDLE_CLEAR = 10
 HEAD_FULL_CLOSE = 64
 HEAD_FULL_CUT = 515
 HEAD_FULL_OUTLINE = 7
-# Leaf outline bits that stick out of the closed head and are thinner than twice this go.
-HEAD_FULL_SMOOTH = 5
+# The closed head is smoothed with a box filter this wide, so leaf outline bits that stick out go
+# and the guessed brim edge is an even curve.
+HEAD_FULL_BLUR = 21
 
 # Extra paint under the parts above, in source pixels.
 UNDER_LAYER = 14
@@ -356,7 +379,7 @@ def region_part(name, inside_head, cy):
     return BODY
 
 
-def assign_parts(anchor, lightness):
+def assign_parts(anchor):
     """Part per pixel (-1 = background) and brand color index per pixel (-1 = transparent)."""
     # Ink anchors other than hair are all one key: outlines, whatever their source shade.
     ink = [i for i, (name, _, _, is_ink) in enumerate(ANCHORS) if is_ink and name != 'hair']
@@ -379,16 +402,13 @@ def assign_parts(anchor, lightness):
     outline = part == -2
     for p in range(len(PARTS)):
         part = np.where(dilate(part == p, OUTLINE_REACH) & outline, p, part)
-    # The color of an anchor, except: the loose straws, the grains' shaded rims and hat ribs gold.
+    # The color of an anchor, except: the grains' shaded rims and hat ribs are gold.
     brand = np.array([BRAND.index(b) if b else -1 for _, _, b, _ in ANCHORS], dtype=np.int16)
     color = brand[anchor]
     is_any = lambda names: np.isin(anchor, [ANCHOR_INDEX[n] for n in names])
     near = lambda names: dilate(is_any(names), SHADE_REACH)
     golden = ['gold', 'gold-shade', 'straw-shade']
-    bundle = (part == RICE) & polygon_mask(STRAW_ZONE)
-    line = (lightness < BUNDLE_LINE_L) | (lightness < box_mean(lightness, LINE_WINDOW) - LINE_CONTRAST)
-    color[bundle] = np.where(line[bundle], BRAND.index(DARK), BRAND.index(STRAW))
-    rims = (part == RICE) & ~bundle & is_any(['straw-shade']) & near(['gold', 'gold-shade'])
+    rims = (part == RICE) & is_any(['straw-shade']) & near(['gold', 'gold-shade'])
     color[rims & ~near(['straw', 'hat-light'])] = BRAND.index(GOLD)
     ink = [name for name, _, _, is_ink in ANCHORS if is_ink]
     color[(part == HEAD) & is_any(golden) & ~near(ink)] = BRAND.index(GOLD)
@@ -450,16 +470,17 @@ def head_full(part, color):
     under the brim, hair, skin), cut below the chin, as one piece. Returns (mask, color)."""
     head = part == HEAD
     rows = np.arange(SOURCE_SIZE)[:, None]
-    full = fill_holes(erode(dilate(head, HEAD_FULL_CLOSE), HEAD_FULL_CLOSE) | head) & (rows < HEAD_FULL_CUT)
-    full = fill_holes(largest_region(dilate(erode(full, HEAD_FULL_SMOOTH), HEAD_FULL_SMOOTH) & full))
+    full = fill_holes(erode(dilate(head, HEAD_FULL_CLOSE), HEAD_FULL_CLOSE) | head)
+    full = (box_mean(full.astype(float), HEAD_FULL_BLUR) >= 0.5) & (rows < HEAD_FULL_CUT)
+    full = fill_holes(largest_region(full))
     # Hat ribs (gold) are thin lines, not a fill to extend.
     fills = head & ~np.isin(color, [BRAND.index(DARK), BRAND.index(GOLD)])
     guessed = full & ~head
     # Through the head's outlines too, so a guessed area that they close off still gets a color.
     painted = spread(np.where(fills, color, -1), fills, guessed | (head & ~fills))
     colors = np.where(head, color, painted)
-    # The guessed areas get outlines: along the new silhouette, along the cut, and where two fill
-    # colors meet in them (hat brim against hair or face).
+    # Outlines along the whole smoothed silhouette and the cut, and where two fill colors meet in
+    # the guessed areas (hat brim against hair or face).
     border = full & dilate(~full, HEAD_FULL_OUTLINE)
     fill_color = np.where(fills | guessed, colors, -1)
     seam = np.zeros_like(full)
@@ -467,8 +488,7 @@ def head_full(part, color):
         moved = shift(fill_color, dy, dx)
         seam |= (moved != fill_color) & (moved >= 0) & (fill_color >= 0)
     seam = dilate(seam & guessed, HEAD_FULL_OUTLINE // 2) & guessed
-    colors = np.where((border & (guessed | (rows >= HEAD_FULL_CUT - HEAD_FULL_OUTLINE))) | seam,
-                      BRAND.index(DARK), colors)
+    colors = np.where(border | seam, BRAND.index(DARK), colors)
     return full, np.where(full, colors, -1)
 
 
@@ -478,146 +498,244 @@ def write_svg(path, body):
     print(f'wrote {path} ({len(svg.encode())} bytes)')
 
 
-def unit(vector):
-    vector = np.asarray(vector, dtype=float)
-    return vector / np.hypot(*vector)
+def catmull_rom(points, samples):
+    """A smooth curve through the points (Catmull-Rom), `samples` points per segment plus the end."""
+    p = [np.asarray(q, dtype=float) for q in points]
+    p = [2 * p[0] - p[1]] + p + [2 * p[-1] - p[-2]]
+    out = []
+    for i in range(1, len(p) - 2):
+        p0, p1, p2, p3 = p[i - 1], p[i], p[i + 1], p[i + 2]
+        for t in np.linspace(0, 1, samples, endpoint=False):
+            out.append(0.5 * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
+                              + (3 * p1 - p0 - 3 * p2 + p3) * t ** 3))
+    out.append(p[-2])
+    return np.array(out)
 
 
-def signed_area(polygon):
-    return sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(polygon, polygon[1:] + polygon[:1])) / 2
+def label_canvas():
+    return Image.new('L', (SOURCE_SIZE, SOURCE_SIZE), 0)
 
 
-def clip(subject, convex):
-    """The part of polygon `subject` (any shape) inside the convex polygon `convex` (Sutherland-Hodgman)."""
-    sign = 1 if signed_area(convex) > 0 else -1
-    out = [np.asarray(p, dtype=float) for p in subject]
-    for a, b in zip(convex, convex[1:] + convex[:1]):
-        a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
-        side = lambda p: sign * ((b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]))
-        points, out = out, []
-        for p, q in zip(points[-1:] + points[:-1], points):
-            sp, sq = side(p), side(q)
-            if sq >= 0:
-                if sp < 0:
-                    out.append(p + (q - p) * sp / (sp - sq))
-                out.append(q)
-            elif sp >= 0:
-                out.append(p + (q - p) * sp / (sp - sq))
-        if not out:
-            return []
-    return out
+def labels(canvas):
+    """Brand color index per pixel from a canvas drawn with index + 1 (0 = nothing)."""
+    return np.asarray(canvas).astype(np.int16) - 1
 
 
-def straw_shape(start, end, half_width, cap):
-    """Convex outline of a straw from start to end, the end rounded over the last `cap` pixels."""
-    start, end = np.asarray(start, dtype=float), np.asarray(end, dtype=float)
-    along = unit(end - start)
-    across = np.array([-along[1], along[0]])
-    base = end - along * cap
-    arc = [base + along * cap * np.cos(t) + across * half_width * np.sin(t)
-           for t in np.linspace(np.pi / 2, -np.pi / 2, STRAW_END_POINTS)]
-    return [start + across * half_width] + arc + [start - across * half_width]
+def straw_layer():
+    """The straws as a brand color index per pixel (-1 = none), in source pixels, and their thin
+    Vàng lúa / Nâu áo lines and shades as (points, color, width) polylines. The lines are written as vector paths:
+    traced, they cost about three times the bytes."""
+    rng = np.random.default_rng(STRAW_SEED)
+    edge_a = catmull_rom(STRAW_EDGE_A, STRAW_SAMPLES)
+    edge_b = catmull_rom(STRAW_EDGE_B, STRAW_SAMPLES)
+    count = len(edge_a)
+    along = np.linspace(0, 1, count)
+    share = []
+    for k in range(STRAWS + 1):
+        wave = 0.0
+        if 0 < k < STRAWS:
+            phase = rng.uniform(0, 2 * np.pi, 2)
+            slow, fast = rng.uniform(1.0, 2.2), rng.uniform(2.5, 4.0)
+            wave = STRAW_WAVE / STRAWS * (0.6 * np.sin(2 * np.pi * slow * along + phase[0])
+                                          + 0.4 * np.sin(2 * np.pi * fast * along + phase[1]))
+        share.append(k / STRAWS + wave)
+    lines = [edge_a + (edge_b - edge_a) * np.asarray(f)[..., None] for f in share]
+    pairs = STRAWS // 2
+    cuts = [rng.uniform(0, END_JITTER)]
+    while len(cuts) < pairs:
+        cut = rng.uniform(0, END_JITTER)
+        if abs(cut - cuts[-1]) >= END_STEP:
+            cuts.append(cut)
+    ends = [count - 1 - int(cut * STRAW_SAMPLES) for cut in cuts]
+    depths = [rng.choice(END_DEPTHS) for _ in range(pairs)]
+    canvas = label_canvas()
+    draw = ImageDraw.Draw(canvas)
+    caps = []
+    thin = []
+    for i in range(pairs):
+        left, right = lines[2 * i][:ends[i] + 1], lines[2 * i + 2][:ends[i] + 1]
+        forward = left[-1] - left[-2] + right[-1] - right[-2]
+        forward /= np.hypot(*forward)
+        middle, half = (left[-1] + right[-1]) / 2, (right[-1] - left[-1]) / 2
+        depth = np.hypot(*half) * depths[i]
+        caps.append(depth)
+        cap = [middle - half * np.cos(t) + forward * depth * np.sin(t) for t in np.linspace(0, np.pi, 11)]
+        draw.polygon([tuple(q) for q in [*left, *cap, *right[::-1]]], fill=BRAND.index(STRAW) + 1)
+    for k in range(1, STRAWS):
+        pair = k // 2
+        if k % 2:
+            # The line inside a pair stops before the pair's round end.
+            step = np.hypot(*(lines[k][ends[pair]] - lines[k][ends[pair] - 1]))
+            end = ends[pair] - int(np.ceil(caps[pair] / step)) - 1
+        else:
+            # Between two pairs: toward the ends the line is an outline, so each cut end stands
+            # on its own, up to the end of the longer pair.
+            end = min(ends[pair - 1], ends[pair])
+            split = end - int(END_ZONE * STRAW_SAMPLES)
+            draw.line([tuple(q) for q in lines[k][split:max(ends[pair - 1], ends[pair]) + 1]],
+                      fill=BRAND.index(DARK) + 1, width=END_LINE_WIDTH, joint='curve')
+            end = split + 1
+        tone = BLOUSE if k % STRAW_DEPTH_LINE == STRAW_DEPTH_FIRST else GOLD
+        thin.append((lines[k][:end], tone, STRAW_LINE_WIDTH))
+    # Warmer straws: a soft Vàng lúa shade along every other straw, near its upper line, from the
+    # upper hand down to the end.
+    for k in range(0, STRAWS, 2):
+        pair = k // 2
+        shade = lines[k] + (lines[k + 1] - lines[k]) * STRAW_SHADE_AT
+        step = np.hypot(*(shade[ends[pair]] - shade[ends[pair] - 1]))
+        end = ends[pair] - int(np.ceil(caps[pair] / step)) - 1
+        thin.append((shade[int(STRAW_SHADE_FROM * count):end], GOLD, STRAW_SHADE_WIDTH))
+    return labels(canvas), thin
 
 
-def half_plane(line, inside_point, shift=0.0):
-    """Large convex polygon: the side of `line` that holds inside_point, its edge moved `shift` inward."""
-    p, q = (np.asarray(v, dtype=float) for v in line)
-    along = unit(q - p)
-    normal = np.array([-along[1], along[0]])
-    if normal @ (np.asarray(inside_point) - p) < 0:
-        normal = -normal
-    p = p + normal * shift
-    far = 4 * SOURCE_SIZE
-    return [p - along * far, p + along * far, p + along * far + normal * far, p - along * far + normal * far]
-
-
-def offset_line(points, distance):
-    """A polyline moved `distance` to its right-hand side (below a line drawn left to right)."""
-    points = [np.asarray(p, dtype=float) for p in points]
-    normals = [np.array([-e[1], e[0]]) for e in (unit(b - a) for a, b in zip(points, points[1:]))]
-    moved = []
-    for i, p in enumerate(points):
-        near = normals[max(i - 1, 0):i + 1]
-        moved.append(p + unit(sum(near)) * distance)
-    return moved
-
-
-def straw_bundle():
-    """The hand-drawn bundle as (color, polygons) layers, bottom first, in source pixels."""
-    along = unit(np.subtract(MID_TOP[1], MID_TOP[0]))
-    down = np.array([-along[1], along[0]])
-    top = np.asarray(MID_TOP[0], dtype=float)
-    band = down @ (np.asarray(MID_BOTTOM) - top)
-    pitch = (band - 2 * BUNDLE_OUTLINE) / MID_STRAWS
-    start_point = np.asarray(MID_START[0], dtype=float)
-    start_dir = unit(np.subtract(MID_START[1], MID_START[0]))
-    arm_outer = half_plane(ARM_EDGE, MID_BOTTOM)
-    arm_inner = half_plane(ARM_EDGE, MID_BOTTOM, BUNDLE_OUTLINE)
-    # One straight cut under the forearm, not a step at every straw.
-    start_side = half_plane(MID_START, MID_TOP[1], -MID_UNDER_ARM / 2)
-    mid = {DARK: [], BLOUSE: [], STRAW: []}
-    for i in range(MID_STRAWS):
-        center = top + down * (BUNDLE_OUTLINE + (i + 0.5) * pitch)
-        # Where this straw's center line meets the start line, then a little further under the arm.
-        k = np.linalg.solve(np.column_stack([along, -start_dir]), start_point - center)[0]
-        start = center + along * (k - MID_UNDER_ARM)
-        end = start + along * SOURCE_SIZE / 2
-        for color, half, region in ((DARK, pitch / 2 + BUNDLE_OUTLINE, arm_outer),
-                                    (BLOUSE, pitch / 2, arm_inner),
-                                    (STRAW, (pitch - STRAW_LINE) / 2, arm_inner)):
-            mid[color].append(clip(clip(straw_shape(start, end, half, 0), region), start_side))
-    tie_top = np.asarray(TIE_TOP, dtype=float) - down * TIE_BULGE
-    tie_end = tie_top + down * TIE_LENGTH
-    half = TIE_WIDTH / 2
-    tie_core = straw_shape(tie_end, tie_top, half, TIE_CAP)
-    twists = []
-    for offset in np.arange(TIE_TWIST_STEP, TIE_LENGTH, TIE_TWIST_STEP):
-        a = tie_top + down * offset - along * half
-        b = tie_top + down * (offset + TIE_TWIST_SLANT) + along * half
-        side = unit(np.array([-(b - a)[1], (b - a)[0]])) * STRAW_LINE / 2
-        twists.append(clip([a + side, b + side, b - side, a - side], tie_core))
-    low_outer = LOW_REGION
-    low_inner = [LOW_REGION[0]] + offset_line(SLEEVE_EDGE, BUNDLE_OUTLINE) + LOW_REGION[len(SLEEVE_EDGE) + 1:]
-    low = {DARK: [], BLOUSE: [], STRAW: []}
-    half = LOW_STRAW_WIDTH / 2
-    cap = LOW_STRAW_WIDTH * STRAW_END_DEPTH
-    for end in LOW_ENDS:
-        direction = unit(np.subtract(end, LOW_FOCUS))
-        start = np.asarray(end) - direction * LOW_LENGTH
-        low[DARK].append(clip(low_outer, straw_shape(start, end + direction * BUNDLE_OUTLINE,
-                                                     half + BUNDLE_OUTLINE, cap + BUNDLE_OUTLINE)))
-        low[BLOUSE].append(clip(low_inner, straw_shape(start, end, half + STRAW_LINE / 2, cap)))
-        low[STRAW].append(clip(low_inner, straw_shape(start, end, half, cap)))
-    tie_half = TIE_WIDTH / 2 + BUNDLE_OUTLINE
-    tie_outline = straw_shape(tie_end, tie_top - down * BUNDLE_OUTLINE, tie_half, TIE_CAP + BUNDLE_OUTLINE)
-    return [(DARK, low[DARK]), (BLOUSE, low[BLOUSE]), (STRAW, low[STRAW]),
-            (DARK, mid[DARK]), (BLOUSE, mid[BLOUSE]), (STRAW, mid[STRAW]),
-            (DARK, [tie_outline]), (GOLD, [tie_core]), (DARK, twists)]
-
-
-def bundle_paths(layers):
-    """One path per layer; every polygon counter-clockwise, so overlaps add up under nonzero fill."""
+def line_paths(thin, visible):
+    """The straw lines as filled outlines (no strokes in the mascot), one path per color, cut where
+    `visible` is False."""
+    shapes = {}
+    for points, tone, width in thin:
+        inside = visible[np.clip(points[:, 1].round().astype(int), 0, SOURCE_SIZE - 1),
+                         np.clip(points[:, 0].round().astype(int), 0, SOURCE_SIZE - 1)]
+        start = None
+        for i, seen in enumerate(np.append(inside, False)):
+            if seen and start is None:
+                start = i
+            elif not seen and start is not None:
+                if i - start >= 2:
+                    # The visible run, thinned out but with both of its ends.
+                    run = points[start:i]
+                    run = np.vstack([run[:-1:STRAW_LINE_STEP], run[-1:]])
+                    shapes.setdefault(tone, []).append(band(run, width / 2))
+                start = None
     paths = []
-    for color, polygons in layers:
-        d = ''
-        for polygon in polygons:
-            if len(polygon) < 3:
-                continue
-            if signed_area(polygon) < 0:
-                polygon = polygon[::-1]
-            d += 'M' + 'L'.join(f'{x:.2f} {y:.2f}' for x, y in polygon) + 'Z'
-        paths.append((compact_path(d, 0, 0), color))
+    for tone, polygons in shapes.items():
+        d = ''.join('M' + 'L'.join(f'{x:.2f} {y:.2f}' for x, y in polygon) + 'Z' for polygon in polygons)
+        paths.append((compact_path(d, 0, 0), tone))
     return paths
 
 
-def bundle_mask(layers):
+def band(points, half):
+    """Outline of a polyline `half` wide on each side."""
+    tangent = np.gradient(points, axis=0)
+    tangent /= np.maximum(np.hypot(tangent[:, 0], tangent[:, 1]), 1e-9)[:, None]
+    normal = np.stack([-tangent[:, 1], tangent[:, 0]], 1) * half
+    return [*(points + normal), *(points - normal)[::-1]]
+
+
+def ellipse(center, a, b, angle, points=24):
+    t = np.linspace(0, 2 * np.pi, points, endpoint=False)
+    x, y = a * np.cos(t), b * np.sin(t)
+    c, s = np.cos(angle), np.sin(angle)
+    return [(center[0] + x[i] * c - y[i] * s, center[1] + x[i] * s + y[i] * c) for i in range(points)]
+
+
+def rope_layer():
+    """The twisted rope as a brand color index per pixel (-1 = none): each strand is an outlined
+    Vàng lúa ellipse with a Nâu áo shade, drawn top to bottom so each overlaps the one before."""
+    start, end = (np.asarray(q, dtype=float) for q in ROPE)
+    axis = (end - start) / np.hypot(*(end - start))
+    slant = np.arctan2(axis[1], axis[0]) + np.radians(ROPE_ANGLE)
+    a = ROPE_HALF / np.sin(np.radians(ROPE_ANGLE))
+    b = ROPE_STEP * 0.55
+    canvas = label_canvas()
+    draw = ImageDraw.Draw(canvas)
+    for d in np.arange(0, np.hypot(*(end - start)), ROPE_STEP):
+        center = start + axis * d
+        draw.polygon(ellipse(center, a + ROPE_OUTLINE, b + ROPE_OUTLINE, slant), fill=BRAND.index(DARK) + 1)
+        draw.polygon(ellipse(center, a, b, slant), fill=BRAND.index(BLOUSE) + 1)
+        draw.polygon(ellipse(center - axis * 1.5, a - 1.5, b - 2.2, slant), fill=BRAND.index(GOLD) + 1)
+    return labels(canvas)
+
+
+def leaf_tip(color):
+    """Draws the leaf's light lower end over `color`; returns (its mask, the new colors)."""
+    tip = polygon_mask(LEAF_TIP_LEFT + LEAF_TIP_RIGHT[::-1])
     canvas = Image.new('1', (SOURCE_SIZE, SOURCE_SIZE), 0)
     draw = ImageDraw.Draw(canvas)
-    for _, polygons in layers:
-        for polygon in polygons:
-            if len(polygon) >= 3:
-                draw.polygon([tuple(p) for p in polygon], fill=1)
-    return dilate(np.asarray(canvas, dtype=bool), BUNDLE_CLEAR) | polygon_mask(LOW_REGION)
+    draw.line(LEAF_TIP_RIGHT, fill=1, width=LEAF_TIP_RIGHT_LINE, joint='curve')
+    draw.line(LEAF_TIP_LEFT, fill=1, width=LEAF_TIP_LEFT_LINE, joint='curve')
+    edges = np.asarray(canvas, dtype=bool) & dilate(tip, LEAF_TIP_RIGHT_LINE // 2)
+    color = np.where(tip, BRAND.index(LEAF), color)
+    return tip | edges, np.where(edges, BRAND.index(DARK), color)
+
+
+def thick_regions(mask, depth):
+    """The connected regions of mask that are thicker than 2 x depth somewhere."""
+    ids, regions = components(mask.astype(np.int8))
+    core = erode(mask, depth)
+    keep = [rid for rid in np.unique(ids[core]) if regions[rid]['value'] == 1]
+    return np.isin(ids, keep)
+
+
+def arm_front():
+    """The right forearm in front of the straws: right of ARM_EDGE, above the sleeve's lower outline."""
+    (x0, y0), (x1, y1) = ARM_EDGE
+    yy, xx = np.mgrid[0:SOURCE_SIZE, 0:SOURCE_SIZE]
+    side = (x1 - x0) * (yy - y0) - (y1 - y0) * (xx - x0)
+    right = np.sign(side) == np.sign((x1 - x0) * (SOURCE_SIZE - y0) - (y1 - y0) * (SOURCE_SIZE - x0))
+    return right & ~polygon_mask(LOW_REGION) & (yy > ARM_TOP)
+
+
+def redraw_straws(anchor, part, masks, colors):
+    """Replaces the traced straws in the rice with the drawn straws, rope and leaf end. Returns the
+    mask of drawn pixels, which the smoothing before tracing must keep as they are, and the straw
+    lines as paths to add over the traced rice."""
+    brand = np.array([BRAND.index(b) if b else -1 for _, _, b, _ in ANCHORS], dtype=np.int16)
+    raw = brand[anchor]
+    rice, color = masks[RICE], colors[RICE]
+    straws, thin = straw_layer()
+    drawn = straws >= 0
+    low = polygon_mask(LOW_REGION)
+    # Between the hands and below the sleeve the drawn shapes are the straws' own edge.
+    shaped = low | polygon_mask(MID_REGION)
+    zone = rice & polygon_mask(GRAIN_ZONE)
+    # Grains and leaves are thick; a gold or green streak between straw lines is not.
+    kept = (thick_regions(zone & (raw == BRAND.index(GOLD)), GRAIN_THICK)
+            | thick_regions(zone & (raw == BRAND.index(LEAF)), LEAF_THICK))
+    tip, color = leaf_tip(color)
+    kept |= tip
+    protect = (zone & (kept | (dilate(kept, PROTECT_BAND) & (raw == BRAND.index(DARK))))) | tip
+    front = arm_front()
+    # The hands took the old straw lines next to them as their outlines; over the straws only their
+    # own outline stays, and the rest is straw.
+    skin = masks[HANDS] & (colors[HANDS] != BRAND.index(DARK))
+    stray = drawn & masks[HANDS] & ~skin & ~dilate(skin, HAND_OUTLINE) & ~front
+    masks[HANDS] &= ~stray
+    allowed = (rice | shaped | stray) & ~front
+    straw = drawn & allowed & ~protect
+    # A smooth edge: thin outline teeth that stick into the straws go under them (the grain and
+    # leaf fills and the first PROTECT_CORE pixels of their outlines stay), and thin jags of the
+    # traced edge go.
+    core = protect & (kept | dilate(kept, PROTECT_CORE) | tip)
+    candidate = erode(dilate(straw, STRAW_SMOOTH), STRAW_SMOOTH) & drawn & allowed & ~core
+    straw = dilate(erode(candidate, STRAW_SMOOTH), STRAW_SMOOTH) & candidate
+    # What the smoothing takes off (slivers between grain and leaf outlines, jags) takes the color
+    # next to it instead.
+    sliver = candidate & ~straw
+    old = rice & (drawn | shaped) & ~protect
+    # The forearm's outline over the straws was traced into the rice; it belongs to the body.
+    arm_line = old & front & (color == BRAND.index(DARK))
+    colors[BODY] = np.where(arm_line, BRAND.index(DARK), colors[BODY])
+    rice = (rice & ~old) | straw | tip
+    color = np.where(straw, straws, np.where(rice, color, -1))
+    rest = rice & ~straw & ~sliver
+    color = np.where(sliver, spread(np.where(rest, color, -1), rest, sliver), color)
+    rice |= sliver
+    # Outline wherever the straws meet something else, unless an outline is already there; the
+    # hands draw their own.
+    lined = straw | masks[HANDS] | (rice & ~straw & (color == BRAND.index(DARK)))
+    edge = straw & dilate(~lined, STRAW_OUTLINE)
+    color = np.where(edge, BRAND.index(DARK), color)
+    rope = rope_layer()
+    tie = (rope >= 0) & ~front
+    rice |= tie
+    color = np.where(tie, rope, color)
+    masks[RICE], colors[RICE] = rice, color
+    lines = line_paths(thin, erode(straw & ~edge & ~dilate(tie, 1), STRAW_LINE_CLEAR))
+    # Below the sleeve the body was only painted under the old straws: drop what the new ones leave.
+    masks[BODY] &= ~(low & (part != BODY) & ~rice & ~masks[HANDS])
+    # The pixels traced from the watermark go.
+    masks[HANDS] &= ~polygon_mask(WATERMARK)
+    return straw | tie | tip, lines
 
 
 NUMBER = re.compile(r'-?\d*\.?\d+(?:e-?\d+)?')
@@ -693,10 +811,12 @@ def compact_path(d, tx, ty):
 PATH = re.compile(r'<path d="([^"]*)" fill="(#[0-9A-Fa-f]{6})" transform="translate\(([-\d.]+),([-\d.]+)\)"\s*/>')
 
 
-def snap(hex_color):
-    """Nearest brand color. vtracer merges speckles into a neighbor and averages their colors."""
+def snap(hex_color, choices=BRAND):
+    """Nearest of the choices. vtracer merges speckles into a neighbor and averages their colors, so
+    an average of two colors must snap back to a color of that picture (straw and gold lines would
+    otherwise give skin)."""
     rgb = hex_rgb(hex_color)
-    return min(BRAND, key=lambda b: ((hex_rgb(b) - rgb) ** 2).sum())
+    return min(choices, key=lambda b: ((hex_rgb(b) - rgb) ** 2).sum())
 
 
 def majority(mask, colors, passes):
@@ -719,18 +839,23 @@ def majority(mask, colors, passes):
     return label >= 0, label
 
 
-def trace(mask, colors, settings):
-    mask, colors = majority(mask, colors, SMOOTH_PASSES)
+def trace(mask, colors, settings, keep=None):
+    smooth_mask, smooth_colors = majority(mask, colors, SMOOTH_PASSES)
+    if keep is None:
+        mask, colors = smooth_mask, smooth_colors
+    else:
+        mask, colors = np.where(keep, mask, smooth_mask), np.where(keep, colors, smooth_colors)
     h, w = mask.shape
     rgba = np.zeros((h, w, 4), dtype=np.uint8)
     palette = np.array([hex_rgb(b) for b in BRAND], dtype=np.uint8)
     rgba[mask, :3] = palette[colors[mask]]
+    used = [BRAND[i] for i in np.unique(colors[mask])]
     rgba[mask, 3] = 255
     pixels = [tuple(int(v) for v in px) for px in rgba.reshape(-1, 4)]
     svg = vtracer.convert_pixels_to_svg(pixels, (w, h), **settings)
     paths = []
     for d, fill, tx, ty in PATH.findall(svg):
-        paths.append((compact_path(d, float(tx), float(ty)), snap(fill.upper())))
+        paths.append((compact_path(d, float(tx), float(ty)), snap(fill.upper(), used)))
     if len(paths) != svg.count('<path'):
         raise ValueError('vtracer wrote a path this script cannot read')
     return paths
@@ -772,21 +897,15 @@ def main(argv):
         raise SystemExit(f'expected a {SOURCE_SIZE} x {SOURCE_SIZE} image, got {image.size}')
     pixels = np.asarray(image)
     anchor = classify_picture(pixels)
-    part, color = assign_parts(anchor, srgb_to_lab(pixels.astype(float))[..., 0])
+    part, color = assign_parts(anchor)
     masks, colors = extend(part, color)
-    bundle = straw_bundle()
-    clear = bundle_mask(bundle)
-    masks[RICE] &= ~clear
-    masks[HANDS] &= ~polygon_mask(WATERMARK)
-    # The hands took the old straw lines next to them as their outlines; over the drawn bundle only
-    # their own outline stays.
-    skin = masks[HANDS] & (colors[HANDS] != BRAND.index(DARK))
-    masks[HANDS] &= ~(clear & (colors[HANDS] == BRAND.index(DARK)) & ~dilate(skin, HAND_OUTLINE))
+    drawn, straw_lines = redraw_straws(anchor, part, masks, colors)
     if args.debug:
         save_debug(args.debug, part, masks, colors)
-    traced = {name: trace(masks[p], colors[p], {**TRACE, **TRACE_BY_PART.get(name, {})})
+    traced = {name: trace(masks[p], colors[p], {**TRACE, **TRACE_BY_PART.get(name, {})},
+                          drawn if p == RICE else None)
               for p, name in enumerate(PARTS)}
-    traced['rice'] += bundle_paths(bundle)
+    traced['rice'] += straw_lines
     write_svg(args.out, ''.join(group(name, traced[name]) for name in PARTS))
     head_mask, head_colors = head_full(part, color)
     head_out = args.head_full or Path(args.out).with_name('head-full.svg')
