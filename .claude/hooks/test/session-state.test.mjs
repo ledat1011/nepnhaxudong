@@ -8,10 +8,10 @@ test('renderSessionStart wraps state text', () => {
   assert.match(out, /Phần C/);
 });
 test('renderSessionStart handles missing state', () => {
-  assert.match(renderSessionStart({ stateText: null, isRemote: false }), /chưa có docs\/session\/STATE\.md/);
+  assert.match(renderSessionStart({ stateText: null, isRemote: false }), /has no docs\/session\/STATE\.md/);
 });
 test('renderSessionStart handles empty state', () => {
-  assert.match(renderSessionStart({ stateText: '   \n', isRemote: false }), /STATE\.md đang trống/);
+  assert.match(renderSessionStart({ stateText: '   \n', isRemote: false }), /STATE\.md is empty/);
 });
 test('renderSessionStart notes cloud session', () => {
   assert.match(renderSessionStart({ stateText: 'x', isRemote: true }), /cloud session/);

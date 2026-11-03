@@ -5,14 +5,14 @@ const SESSION_DIR = 'docs/session/';
 export function renderSessionStart({ stateText, isRemote }) {
   const lines = [];
   if (stateText === null) {
-    lines.push('Repo chưa có docs/session/STATE.md. Hãy tạo nó theo CLAUDE.md trước khi làm việc.');
+    lines.push('The repo has no docs/session/STATE.md yet. Create it as described in CLAUDE.md before you start work.');
   } else if (stateText.trim() === '') {
-    lines.push('docs/session/STATE.md đang trống. Hãy điền trạng thái theo CLAUDE.md.');
+    lines.push('docs/session/STATE.md is empty. Fill in the project state as described in CLAUDE.md.');
   } else {
-    lines.push(`Trạng thái dự án (${STATE_PATH}):`, '', stateText);
+    lines.push(`Project state (${STATE_PATH}):`, '', stateText);
   }
   if (isRemote) {
-    lines.push('', 'Đây là cloud session: Docker có thể không có; xem docs/setup.md mục Cloud session.');
+    lines.push('', 'This is a cloud session: Docker may not be available. See docs/setup.md, section "Cloud session".');
   }
   return lines.join('\n');
 }
@@ -39,6 +39,6 @@ export function decideStop({ changedPaths, stopHookActive }) {
   return {
     block: true,
     reason:
-      'Có thay đổi trong repo nhưng docs/session/STATE.md chưa được cập nhật. Hãy cập nhật STATE.md và viết log session theo CLAUDE.md trước khi dừng.',
+      'The repo has changes but docs/session/STATE.md was not updated. Update STATE.md and write the session log as described in CLAUDE.md before you stop.',
   };
 }

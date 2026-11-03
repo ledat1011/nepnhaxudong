@@ -13,7 +13,7 @@ Build polished, **low-text, visual** slide decks with pptxgenjs and verify them 
 - **Visual every slide:** icon-in-circle, card grid, big-number callout, comparison columns, or a table. No plain bullet-on-white slides.
 - **Dark "sandwich":** title slide + closing slide on a near-black background; content slides on white.
 - **Motif:** brand-color circle with a dark icon, repeated across slides. A thin top brand rule + a small `NN / TOTAL` locator top-right + a short kicker label (small-caps, gray) under the rule. **No accent stripes down card edges** (reads as AI filler).
-- **Agenda / mục lục slide** right after the title (numbered circles, 1–2 columns).
+- **Agenda / table-of-contents slide** right after the title (numbered circles, 1–2 columns).
 - **Speaker notes = the full spoken script**, written to land the slide in ~60–90s, pacing the whole deck to the time budget (e.g. 15 min ≈ 11 slides).
 - **Never invent data.** For metrics you don't have, render an obvious dashed "your figure" placeholder box + a label for what to measure.
 - **Match an existing brand** when one is supplied: sample exact hex from a reference PDF/image (see Color sampling) and reuse its fonts, kicker/locator chrome, and logo motif.
