@@ -1,0 +1,10 @@
+{
+  "name": "excalidraw-diagram",
+  "private": true,
+  "description": "Excalidraw diagrams as PNG, and on request as an animated GIF",
+  "dependencies": {
+    "@napi-rs/canvas": "0.1.65",
+    "gifenc": "1.0.3",
+    "omggif": "1.0.10"
+  }
+}

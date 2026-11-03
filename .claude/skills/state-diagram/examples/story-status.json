@@ -1,0 +1,25 @@
+{
+  "highlight_label": "★ new in this change",
+  "start": "admin creates a story",
+  "new": ["PUBLISHING"],
+  "legend": {"wait": "waiting for the website"},
+  "column": [
+    {"id": "DRAFT", "kind": "done"},
+    {"id": "PUBLISHING", "kind": "claim"},
+    {"id": "PUBLISHED", "kind": "done"},
+    {"id": "ARCHIVED", "kind": "terminal"}
+  ],
+  "side": [
+    {"id": "PUBLISH_FAILED", "kind": "terminal", "row": "PUBLISHING"}
+  ],
+  "free": [
+    {"from": "any status", "to": "DELETED", "label": "admin deletes the story", "style": "dash"}
+  ],
+  "edges": [
+    {"from": "DRAFT", "to": "PUBLISHING", "style": "new", "label": "admin presses publish"},
+    {"from": "DRAFT", "to": "ARCHIVED", "label": "draft is discarded"},
+    {"from": "PUBLISHING", "to": "PUBLISHED", "style": "new", "label": ["page revalidated", "after commit"]},
+    {"from": "PUBLISHING", "to": "PUBLISH_FAILED", "style": "new", "label": ["revalidate failed", "3 times"]},
+    {"from": "PUBLISHED", "to": "ARCHIVED", "label": "admin archives"}
+  ]
+}
