@@ -8,6 +8,7 @@ import { buildCss } from '../build-tokens.mjs';
 import { contentBBox, contrast, palette, rotateGroups, svgFacts, visibleBBox } from '../lib/svg-check.mjs';
 import opentype from 'opentype.js';
 import { Resvg } from '@resvg/resvg-js';
+import { parseSync } from 'svgson';
 
 const tokensDir = fileURLToPath(new URL('../../tokens/', import.meta.url));
 const readTokens = () => JSON.parse(readFileSync(tokensDir + 'tokens.json', 'utf8'));
@@ -224,6 +225,11 @@ test('mascot tach lop dung cau truc', () => {
   }
 });
 
+// The mascot is traced from the approved illustration by vectorize-mascot.py (about 75 KB). The
+// limit leaves room for a re-trace with small changes, and still catches an untuned trace: near
+// the vtracer defaults the same picture gives about 150 KB.
+const MASCOT_MAX_BYTES = 96 * 1024;
+
 test('mascot dung mau, khong the cam, nhe', () => {
   const facts = svgFacts(mascotPath);
   const allowed = palette();
@@ -232,7 +238,42 @@ test('mascot dung mau, khong the cam, nhe', () => {
     assert.ok(!facts.tags.has(tag), `co the <${tag}>`);
   }
   assert.deepEqual(facts.hrefs.filter((h) => !h.startsWith('#')), [], 'co href ra ngoai');
-  assert.ok(facts.bytes < 40 * 1024, `${facts.bytes} byte`);
+  assert.ok(facts.bytes < MASCOT_MAX_BYTES, `${facts.bytes} byte`);
+});
+
+// The traced mascot is plain filled paths (what build-logos handles), and the page background
+// color (Trang gao) is left transparent, not painted.
+const TRACED_ATTRIBUTES = new Set(['d', 'fill', 'transform']);
+
+test('mascot: chi gom path to mau, nen trong suot', () => {
+  const root = parseSync(readFileSync(mascotPath, 'utf8'));
+  const background = readTokens().color['trang-gao'].value.toLowerCase();
+  const groups = root.children.filter((child) => child.type === 'element');
+  const visit = (node, where) => {
+    for (const child of node.children.filter((c) => c.type === 'element')) {
+      if (child.name === 'g') {
+        visit(child, `${where} > g`);
+        continue;
+      }
+      assert.equal(child.name, 'path', `${where} co the <${child.name}>`);
+      const extra = Object.keys(child.attributes).filter((key) => !TRACED_ATTRIBUTES.has(key));
+      assert.deepEqual(extra, [], `${where} path co thuoc tinh ${extra.join(', ')}`);
+      assert.notEqual(child.attributes.fill?.toLowerCase(), background, `${where} to mau nen`);
+    }
+  };
+  for (const group of groups) visit(group, `g#${group.attributes.id}`);
+  assert.ok(!('stroke' in root.attributes), 'svg goc co stroke');
+});
+
+const vectorizePath = fileURLToPath(new URL('../vectorize-mascot.py', import.meta.url));
+
+test('vectorize-mascot.py: ghi nguon anh, khong co duong dan may', () => {
+  const script = readFileSync(vectorizePath, 'utf8');
+  const header = script.slice(0, script.indexOf('"""', 3));
+  assert.match(header, /approved on 2026-11-03/, 'thieu ghi chu nguon anh');
+  for (const local of [/\b[A-Za-z]:\\/, /AppData/i, /scratchpad/i, /\/(Users|home)\//]) {
+    assert.doesNotMatch(script, local, `co duong dan may ${local}`);
+  }
 });
 
 test('mascot: pivot head / rice khop transform-origin va nam trong nhom', () => {
@@ -295,7 +336,7 @@ test('logo: co viewBox, khong the cam, href noi bo, id duy nhat, nhe', () => {
   }
 });
 
-// Size budget follows the mascot (whose own test caps it at 40 KB): logo-full = mascot + the two
+// Size budget follows the mascot (whose own test caps it at MASCOT_MAX_BYTES): logo-full = mascot + the two
 // text outlines; logo-mono = one recolored copy of the same mascot inside a mask, so it may not grow
 // past logo-full by more than a fixed overhead; logo-icon is part of the head.
 const WORDMARK_BUDGET = 24 * 1024;
