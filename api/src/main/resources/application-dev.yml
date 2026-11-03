@@ -1,0 +1,4 @@
+# Local development only. The password is the default of infra/compose.dev.yml.
+spring:
+  datasource:
+    password: ${DB_PASSWORD:nepnha-local}

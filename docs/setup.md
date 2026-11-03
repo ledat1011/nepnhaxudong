@@ -40,3 +40,20 @@ Các skill nằm trong `.claude/skills/`. Chỉ cài khi cần dùng skill đó 
 Sẽ điền sau khi kiểm tra trên claude.ai/code.
 
 Lưu ý: `scripts/cloud-setup.sh` có thể in `java=unknown` khi máy có java nhưng script không đọc được số phiên bản.
+
+## Chạy API ở local
+API nằm trong thư mục `api/` (Spring Boot 4, Java 21, Postgres 16). Cần Docker và JDK 21; JDK 21 phải là JDK đang dùng (`JAVA_HOME` trỏ tới JDK 21, kiểm tra bằng `java -version`).
+
+1. Chạy Postgres local (cổng 5433, DB và user `nepnha`, mật khẩu mặc định `nepnha-local` chỉ dùng cho local):
+   ```bash
+   docker compose -f infra/compose.dev.yml up -d
+   ```
+2. Chạy API với profile `dev`:
+   ```bash
+   cd api && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+   ```
+3. Kiểm tra: mở `http://localhost:8080/api/actuator/health`, kết quả phải có `"status":"UP"`.
+
+Chạy test (cần Docker, Testcontainers tự bật Postgres): `cd api && ./mvnw -B verify`.
+
+Biến môi trường (mẫu ở `api/.env.example`): `DB_URL`, `DB_USER`, `DB_PASSWORD`. Không ghi mật khẩu thật vào repo.
