@@ -137,6 +137,33 @@ class RevalidateClientTest {
   }
 
   @Test
+  void usesPlainHttp11WithoutAnUpgradeHeader() {
+    client().revalidate(Set.of("home"));
+
+    ReceivedRequest request = web.next();
+    assertThat(request.protocol()).isEqualTo("HTTP/1.1");
+    assertThat(request.upgrade()).isNull();
+  }
+
+  @Test
+  void aRefusedSecretIsNotRetriedAndIsLoggedOnceWithoutTheSecret() {
+    for (int status : new int[] {401, 403}) {
+      web.reset();
+      web.alwaysRespondWith(status);
+
+      client().revalidate(Set.of("home"));
+
+      assertThat(web.next().tags()).containsExactly("home");
+      assertThat(web.staysQuietFor(Duration.ofMillis(100))).isTrue();
+    }
+    List<String> warnings = log.messages(Level.WARN);
+    assertThat(warnings).hasSize(2);
+    assertThat(warnings.get(0)).contains("401").contains("REVALIDATE_SECRET");
+    assertThat(warnings.get(1)).contains("403").contains("REVALIDATE_SECRET");
+    assertThat(log.everything()).doesNotContain(SECRET);
+  }
+
+  @Test
   void aTimeoutIsRetriedLikeAnyOtherFailure() {
     web.alwaysRespondWith(FakeWebServer.HANG);
     var client = new RevalidateClient(web.baseUrl(), SECRET, SHORT_WAIT, Duration.ofMillis(100));

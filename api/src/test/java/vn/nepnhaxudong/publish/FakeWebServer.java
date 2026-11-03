@@ -129,6 +129,8 @@ final class FakeWebServer implements AutoCloseable {
         new ReceivedRequest(
             exchange.getRequestMethod(),
             exchange.getRequestURI().getPath(),
+            exchange.getProtocol(),
+            exchange.getRequestHeaders().getFirst("Upgrade"),
             exchange.getRequestHeaders().getFirst("x-revalidate-secret"),
             text,
             tagsOf(text)));

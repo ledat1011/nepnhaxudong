@@ -21,7 +21,8 @@ import org.springframework.web.client.RestClient;
  * call (not the SSRF-safe fetcher of the press preview). A failure never reaches the caller: the
  * content is already saved, so the call is repeated up to {@value #MAX_RETRIES} times with waits
  * that double (1 s, 2 s, 4 s by default) and then given up with a warning. A 400 answer means our
- * tags are wrong, so repeating cannot help and it is not repeated.
+ * tags are wrong, and 401 or 403 means the secret is wrong; repeating cannot help, so these are
+ * not repeated.
  *
  * <p>The call blocks until it ends; it must run on a worker thread, not on a request thread.
  */
@@ -55,10 +56,20 @@ public class RevalidateClient {
               + " about content changes");
     }
     this.enabled = !base.isEmpty() && !this.secret.isEmpty();
-    var httpClient = HttpClient.newBuilder().connectTimeout(timeout).build();
+    this.rest = enabled ? buildRestClient(base, timeout) : null;
+  }
+
+  private static RestClient buildRestClient(String base, Duration timeout) {
+    // HTTP/1.1 on purpose: by default the JDK client asks a plain http:// server to upgrade to
+    // HTTP/2 (Upgrade: h2c). The website is a Node server that needs no such negotiation.
+    var httpClient =
+        HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(timeout)
+            .build();
     var requestFactory = new JdkClientHttpRequestFactory(httpClient);
     requestFactory.setReadTimeout(timeout);
-    this.rest = RestClient.builder().baseUrl(base).requestFactory(requestFactory).build();
+    return RestClient.builder().baseUrl(base).requestFactory(requestFactory).build();
   }
 
   /** False when the base URL or the secret is missing; every call is then skipped. */
@@ -84,7 +95,16 @@ public class RevalidateClient {
         post(tags);
         return;
       } catch (HttpClientErrorException.BadRequest e) {
+        // Our tags are wrong; repeating cannot help. This stops this batch only: later batches of
+        // the same event are still sent.
         LOG.warn("revalidate refused by the website with 400, not retried: tags={}", tags);
+        return;
+      } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
+        // A wrong or missing secret is a configuration error; repeating cannot help.
+        LOG.warn(
+            "revalidate refused ({}): check REVALIDATE_SECRET: tags={}",
+            e.getStatusCode().value(),
+            tags);
         return;
       } catch (RuntimeException e) {
         LOG.warn(
