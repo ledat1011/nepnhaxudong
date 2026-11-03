@@ -1,0 +1,11 @@
+{
+  "name": "nepnhaxudong",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test:tools": "node --test \".claude/hooks/test/*.test.mjs\" \".claude/mcp/test/*.test.mjs\" \"scripts/test/*.test.mjs\""
+  }
+}
