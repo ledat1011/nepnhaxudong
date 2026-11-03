@@ -24,6 +24,7 @@ test('tokens khop spec 2.1', () => {
     'hong-ma': '#E59A84',
     'xanh-ma': '#6E8B3D',
     da: '#F4CDA8',
+    toc: '#222222',
   };
   assert.deepEqual(Object.keys(color).sort(), Object.keys(expected).sort());
   for (const [name, hex] of Object.entries(expected)) {
@@ -32,11 +33,12 @@ test('tokens khop spec 2.1', () => {
   }
 });
 
-test('palette() tra ve 8 ma hex chu thuong', () => {
+test('palette() tra ve 9 ma hex chu thuong', () => {
   const p = palette();
-  assert.equal(p.size, 8);
+  assert.equal(p.size, 9);
   assert.ok(p.has('#4a2c1a'));
   assert.ok(p.has('#f4cda8'));
+  assert.ok(p.has('#222222'));
 });
 
 test('tokens.css sinh tu tokens.json', () => {
@@ -276,6 +278,101 @@ test('vectorize-mascot.py: ghi nguon anh, khong co duong dan may', () => {
   }
 });
 
+const pathsByGroup = (file) => {
+  const root = parseSync(readFileSync(file, 'utf8'));
+  const found = {};
+  const visit = (node, group) => {
+    for (const child of node.children.filter((c) => c.type === 'element')) {
+      const inGroup = group ?? (child.name === 'g' ? child.attributes.id : undefined);
+      if (child.name === 'path') (found[inGroup] ??= []).push(child.attributes);
+      visit(child, inGroup);
+    }
+  };
+  visit(root, undefined);
+  return found;
+};
+
+test('mascot: toc den chi trong head, vien van Nau dat', () => {
+  const { color } = readTokens();
+  const [hair, ink] = [color.toc.value, color['nau-dat'].value].map((c) => c.toLowerCase());
+  const groups = pathsByGroup(mascotPath);
+  const fills = (id) => new Set(groups[id].map((a) => a.fill.toLowerCase()));
+  assert.ok(fills('head').has(hair), 'head khong co toc den');
+  assert.ok(fills('head').has(ink), 'head mat vien Nau dat');
+  for (const id of ['body', 'rice', 'hands']) {
+    assert.ok(!fills(id).has(hair), `g#${id} co mau toc`);
+  }
+});
+
+const headFullPath = fileURLToPath(new URL('../../mascot/head-full.svg', import.meta.url));
+const HEAD_FULL_SIZE = 512;
+// A few pixels of antialiasing can touch between two shapes; a real loose piece is far larger.
+const SPECK_PIXELS = 24;
+
+// Opaque regions (4-connected) and transparent pixels the drawing fully encloses, on a render.
+function alphaFacts(svg, size) {
+  const image = new Resvg(svg, { fitTo: { mode: 'width', value: size } }).render();
+  const { width, height } = image;
+  const pixels = image.pixels;
+  const opaque = new Uint8Array(width * height);
+  for (let p = 0; p < width * height; p++) opaque[p] = pixels[p * 4 + 3] >= 128;
+  const seen = new Uint8Array(width * height);
+  const fill = (start, value) => {
+    const stack = [start];
+    let count = 0;
+    while (stack.length) {
+      const p = stack.pop();
+      if (seen[p] || opaque[p] !== value) continue;
+      seen[p] = 1;
+      count++;
+      const [x, y] = [p % width, Math.floor(p / width)];
+      if (x > 0) stack.push(p - 1);
+      if (x < width - 1) stack.push(p + 1);
+      if (y > 0) stack.push(p - width);
+      if (y < height - 1) stack.push(p + width);
+    }
+    return count;
+  };
+  for (let x = 0; x < width; x++) {
+    fill(x, 0);
+    fill((height - 1) * width + x, 0);
+  }
+  for (let y = 0; y < height; y++) {
+    fill(y * width, 0);
+    fill(y * width + width - 1, 0);
+  }
+  let enclosed = 0;
+  const pieces = [];
+  for (let p = 0; p < width * height; p++) {
+    if (seen[p]) continue;
+    if (opaque[p]) pieces.push(fill(p, 1));
+    else enclosed += fill(p, 0);
+  }
+  return { enclosed, pieces };
+}
+
+test('alphaFacts dem lo kin va manh roi', () => {
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+    '<path d="M10 10h40v40h-40zM20 20v20h20v-20z" fill="#4A2C1A" fill-rule="evenodd"/>' +
+    '<rect x="70" y="70" width="10" height="10" fill="#4A2C1A"/></svg>';
+  const facts = alphaFacts(svg, 100);
+  assert.ok(Math.abs(facts.enclosed - 400) <= 40, `lo ${facts.enclosed}`);
+  assert.equal(facts.pieces.filter((n) => n > SPECK_PIXELS).length, 2);
+});
+
+test('head-full: dau day du cho logo-icon, khong lo, mot khoi', () => {
+  const facts = svgFacts(headFullPath);
+  assert.equal(facts.viewBox, `0 0 ${HEAD_FULL_SIZE} ${HEAD_FULL_SIZE}`);
+  assert.deepEqual(facts.topLevel, [{ tag: 'g', id: 'head' }]);
+  const allowed = palette();
+  assert.deepEqual([...facts.colors].filter((c) => !allowed.has(c)), [], 'mau ngoai bang');
+  const { enclosed, pieces } = alphaFacts(readFileSync(headFullPath, 'utf8'), HEAD_FULL_SIZE);
+  assert.equal(enclosed, 0, `${enclosed} px lo trong dau`);
+  const big = pieces.filter((n) => n > SPECK_PIXELS);
+  assert.equal(big.length, 1, `dau gom ${big.length} manh: ${big.join(', ')} px`);
+});
+
 test('mascot: pivot head / rice khop transform-origin va nam trong nhom', () => {
   const facts = svgFacts(mascotPath);
   const svg = readFileSync(mascotPath, 'utf8');
@@ -380,9 +477,9 @@ const DARK_TOLERANCE = 24;
 const EDGE_RADIUS = 1;
 const MAX_MONO_MISMATCH = 0.01;
 
-// Pixels of the mascot area of logo-full (Nâu đất or not) against the ink of logo-mono, rendered on
-// the same grid. Mono must keep exactly the Nâu đất areas: a color area that turns solid dark, or a
-// dark area that is lost, shows up as mismatching pixels. Antialiased edges differ by about one
+// Pixels of the mascot area of logo-full (dark = Nâu đất or the black hair, or not) against the ink
+// of logo-mono, rendered on the same grid. Mono must keep exactly the dark areas: a color area that
+// turns solid dark, or a dark area that is lost, shows up as mismatching pixels. Antialiased edges differ by about one
 // pixel between the two renders, so a pixel only counts when no pixel within EDGE_RADIUS of it in
 // the other render agrees.
 test('logo-mono: muc giong vung Nau dat cua logo-full', () => {
@@ -400,14 +497,14 @@ test('logo-mono: muc giong vung Nau dat cua logo-full', () => {
   const y0 = Math.max(0, Math.floor((Number(area.y) - vy) * scale));
   const x1 = Math.min(width, Math.ceil((Number(area.x) + Number(area.width) - vx) * scale));
   const y1 = Math.min(height, Math.ceil((Number(area.y) + Number(area.height) - vy) * scale));
-  const dark = [0x4a, 0x2c, 0x1a];
+  const darks = [[0x4a, 0x2c, 0x1a], [0x22, 0x22, 0x22]];
   const isDark = new Uint8Array(width * height);
   const isInk = new Uint8Array(width * height);
   // .pixels copies the whole buffer on every read, so read each one once.
   const [pa, pb] = [a.pixels, b.pixels];
   for (let p = 0; p < width * height; p++) {
     const i = p * 4;
-    isDark[p] = pa[i + 3] >= 128 && dark.every((c, k) => Math.abs(pa[i + k] - c) <= DARK_TOLERANCE);
+    isDark[p] = pa[i + 3] >= 128 && darks.some((dark) => dark.every((c, k) => Math.abs(pa[i + k] - c) <= DARK_TOLERANCE));
     isInk[p] = pb[i + 3] >= 128;
   }
   const near = (mask, x, y, value) => {
@@ -462,13 +559,14 @@ test('logo-mono: bao loi voi thuoc tinh / the khong xu ly duoc', async () => {
   }
 });
 
-test('logo-mono: giu nguyen hinh hoc, chi doi mau Nau dat -> trang, mau khac -> den', async () => {
+test('logo-mono: giu nguyen hinh hoc, Nau dat va toc -> trang, mau khac -> den', async () => {
   const { monoMascot } = await import('../build-logos.mjs');
   const out = monoMascot(
     monoProbe(
       '<path d="M0 0h9" fill="none" stroke-dasharray="4 2" stroke-linecap="butt"/>' +
         '<path d="M0 0h9v9z" fill="#F4CDA8" fill-rule="evenodd"/>' +
-        '<use href="#d" x="3" y="4" fill="#4A2C1A"/>',
+        '<use href="#d" x="3" y="4" fill="#4A2C1A"/>' +
+        '<path id="hair" d="M0 0h5v5z" fill="#222222"/>',
     ),
   );
   for (const kept of ['stroke-dasharray="4 2"', 'stroke-linecap="butt"', 'fill-rule="evenodd"', 'x="3"', 'y="4"']) {
@@ -477,6 +575,7 @@ test('logo-mono: giu nguyen hinh hoc, chi doi mau Nau dat -> trang, mau khac -> 
   assert.ok(out.includes('stroke="#FFFFFF"'), 'Nau dat (stroke goc) phai thanh trang');
   assert.ok(out.includes('fill="#000000"'), 'mau da phai thanh den');
   assert.ok(out.includes('<use href="#d" x="3" y="4" fill="#FFFFFF"'), 'use Nau dat phai thanh trang');
+  assert.ok(out.includes('<path d="M0 0h5v5z" fill="#FFFFFF"'), 'toc (#222222) phai thanh trang nhu Nau dat');
   assert.ok(!/#4A2C1A|#F4CDA8/i.test(out.slice(out.indexOf('<mask'), out.indexOf('</mask>'))), 'con mau goc trong mask');
 });
 

@@ -1,4 +1,6 @@
 // Builds brand/logo/logo-{full,icon,mono}.svg from brand/mascot/mascot-layered.svg and the brand fonts.
+// logo-icon uses brand/mascot/head-full.svg instead: the whole head, without the holes where the rice
+// lies in front of it in the mascot.
 // Run it again (npm run logos) after every change to the mascot; a test fails while the logos are stale.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +10,7 @@ import { contentBBox, visibleBBox } from './lib/svg-check.mjs';
 
 const brandDir = new URL('../', import.meta.url);
 const mascotPath = fileURLToPath(new URL('mascot/mascot-layered.svg', brandDir));
+const headFullPath = fileURLToPath(new URL('mascot/head-full.svg', brandDir));
 const fontsDir = fileURLToPath(new URL('fonts/', brandDir));
 const logoDir = fileURLToPath(new URL('logo/', brandDir));
 const tokens = JSON.parse(readFileSync(fileURLToPath(new URL('tokens/tokens.json', brandDir)), 'utf8'));
@@ -165,9 +168,9 @@ function simplifyHead(node, inherited) {
   return copy;
 }
 
-function iconLogo(mascot) {
-  const rootPaint = inheritedRoot(mascot);
-  const head = simplifyHead(byId(mascot, 'head'), rootPaint);
+function iconLogo(headFull) {
+  const rootPaint = inheritedRoot(headFull);
+  const head = simplifyHead(byId(headFull, 'head'), rootPaint);
   const drawing = `<g${attrs(rootPaint)}>\n${stringify(head)}\n</g>\n`;
   const box = paintedBox(drawing);
   const cx = box.x + box.width / 2;
@@ -179,6 +182,8 @@ function iconLogo(mascot) {
 // ---------- mono ----------
 
 const INK = '#FFFFFF';
+// Colors that print as ink in the one-color logo: the outlines and the black hair.
+const INK_COLORS = [color('nau-dat'), color('toc')].map((c) => c.toLowerCase());
 const PAPER = '#000000';
 const MONO_SHAPES = new Set(['g', 'defs', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'use']);
 // Kept as they are: they only shape the geometry, which the mask copy keeps unchanged.
@@ -195,12 +200,12 @@ const ANIMATION_STYLE =/^\s*(transform-box|transform-origin)\s*:/;
 function monoColor(value, where) {
   if (value === 'none') return value;
   const hex = value.toLowerCase();
-  if (hex === color('nau-dat').toLowerCase()) return INK;
+  if (INK_COLORS.includes(hex)) return INK;
   if (Object.values(tokens.color).some((c) => c.value.toLowerCase() === hex)) return PAPER;
   throw new Error(`logo-mono: ${where} has color "${value}", not a palette color`);
 }
 
-// Copy of one mascot node for the mask: Nâu đất becomes ink (white), every other palette color
+// Copy of one mascot node for the mask: Nâu đất and the hair become ink (white), every other palette color
 // becomes paper (black), geometry stays. Anything else throws, so a redrawn mascot cannot lose
 // something silently: opacity has no one-color form, and unknown attributes or elements may paint.
 function monoNode(node, keepIds) {
@@ -253,7 +258,7 @@ export function buildLogos() {
   const monoWords = words.replace(new RegExp(color('nau-ao'), 'g'), color('nau-dat'));
   return {
     'logo-full.svg': wrap(viewBox, full),
-    'logo-icon.svg': iconLogo(mascot),
+    'logo-icon.svg': iconLogo(parseSync(readFileSync(headFullPath, 'utf8'))),
     'logo-mono.svg': wrap(viewBox, monoMascot(source) + monoWords),
   };
 }
