@@ -149,16 +149,26 @@ LEAF_TIP_LEFT = [(490, 552), (532, 600), (565, 630), (585, 646), (596, 652)]
 LEAF_TIP_RIGHT = [(540, 552), (584, 600), (606, 640)]
 LEAF_TIP_LEFT_LINE = 4
 LEAF_TIP_RIGHT_LINE = 8
-# The rope tie, wrapped diagonally just under the upper hand: twisted strands (ellipses slanted
-# ROPE_ANGLE degrees to the rope) every ROPE_STEP along ROPE, ROPE_HALF wide on each side.
-ROPE = ((703, 728), (608, 846))
-ROPE_HALF = 13
-ROPE_STEP = 13
-ROPE_ANGLE = 38
-ROPE_OUTLINE = 3
+# The rope tie, wrapped across the bundle just under the upper hand, from its top edge to under the
+# lower hand: ROPE_WRAPS cords side by side, each of twisted strands (ellipses slanted ROPE_ANGLE
+# degrees to the rope) every ROPE_STEP along ROPE, ROPE_HALF wide on each side.
+ROPE = ((703, 726), (604, 852))
+ROPE_WRAPS = 2
+ROPE_HALF = 6.5
+ROPE_STEP = 6.5
+ROPE_ANGLE = 40
+ROPE_OUTLINE = 2.5
+ROPE_POINTS = 10
+# How much thinner a gold strand is than its outline, so the Nâu áo core shows between strands.
+ROPE_SHADE = 2.1
+# Where it is tied, the bundle's edge pinches in by this much next to the rope.
+ROPE_PINCH = 5
 # Between the hands (MID_REGION) the straws' edge is the drawn one too: there the lines follow it,
-# while the traced edge would cut every line short.
-MID_REGION = [(655, 700), (800, 762), (745, 830), (640, 875), (590, 800)]
+# while the traced edge would cut every line short. Its lower-left side is the smooth end of the
+# straws between the forearm and the lower hand.
+MID_REGION = [(655, 700), (800, 762), (745, 830), (640, 875), (600, 848), (548, 795), (590, 760)]
+# Left of that side (MID_CUT) the traced edge was a saw-tooth; the straws end on the straight line.
+MID_CUT = [(548, 795), (600, 848), (575, 890), (480, 840), (500, 785)]
 # The right forearm lies in front of the straws: right of ARM_EDGE (below ARM_TOP) and above the
 # sleeve's lower outline (SLEEVE_EDGE). LOW_REGION is everything below that outline.
 ARM_EDGE = ((770, 772), (735, 808))
@@ -628,22 +638,51 @@ def ellipse(center, a, b, angle, points=24):
     return [(center[0] + x[i] * c - y[i] * s, center[1] + x[i] * s + y[i] * c) for i in range(points)]
 
 
-def rope_layer():
-    """The twisted rope as a brand color index per pixel (-1 = none): each strand is an outlined
-    Vàng lúa ellipse with a Nâu áo shade, drawn top to bottom so each overlaps the one before."""
+def rope_shapes():
+    """The rope tie: ROPE_WRAPS thin twisted cords side by side, across the bundle, as (color,
+    polygons) layers, bottom first: the Nâu đất outline, the Nâu áo shade, and the Vàng lúa strands
+    (ellipses slanted to the cord). Written as vector paths: traced, the thin strands merge."""
     start, end = (np.asarray(q, dtype=float) for q in ROPE)
     axis = (end - start) / np.hypot(*(end - start))
+    across = np.array([-axis[1], axis[0]])
     slant = np.arctan2(axis[1], axis[0]) + np.radians(ROPE_ANGLE)
     a = ROPE_HALF / np.sin(np.radians(ROPE_ANGLE))
-    b = ROPE_STEP * 0.55
-    canvas = label_canvas()
+    b = ROPE_STEP * 0.6
+    gap = 2 * (ROPE_HALF + ROPE_OUTLINE) - ROPE_OUTLINE
+    length = np.hypot(*(end - start))
+    layers = {DARK: [], BLOUSE: [], GOLD: []}
+    for wrap in range(ROPE_WRAPS):
+        shift = across * gap * (wrap - (ROPE_WRAPS - 1) / 2)
+        # The Nâu áo core of the cord, under the strands.
+        core = [start + shift + axis * d for d in (ROPE_STEP / 2, length - ROPE_STEP)]
+        layers[BLOUSE].append(band(np.array(core), ROPE_HALF - ROPE_OUTLINE / 2))
+        for d in np.arange(0, length, ROPE_STEP):
+            center = start + shift + axis * d
+            layers[DARK].append(ellipse(center, a + ROPE_OUTLINE, b + ROPE_OUTLINE, slant, ROPE_POINTS))
+            layers[GOLD].append(ellipse(center - axis, a - 1, b - ROPE_SHADE, slant, ROPE_POINTS))
+    return [(tone, layers[tone]) for tone in (DARK, BLOUSE, GOLD)]
+
+
+def rope_mask(shapes):
+    canvas = Image.new('1', (SOURCE_SIZE, SOURCE_SIZE), 0)
     draw = ImageDraw.Draw(canvas)
-    for d in np.arange(0, np.hypot(*(end - start)), ROPE_STEP):
-        center = start + axis * d
-        draw.polygon(ellipse(center, a + ROPE_OUTLINE, b + ROPE_OUTLINE, slant), fill=BRAND.index(DARK) + 1)
-        draw.polygon(ellipse(center, a, b, slant), fill=BRAND.index(BLOUSE) + 1)
-        draw.polygon(ellipse(center - axis * 1.5, a - 1.5, b - 2.2, slant), fill=BRAND.index(GOLD) + 1)
-    return labels(canvas)
+    for polygon in shapes[0][1]:
+        draw.polygon(polygon, fill=1)
+    return np.asarray(canvas, dtype=bool)
+
+
+def polygon_paths(layers):
+    """One path per color; every polygon turned the same way, so overlaps add up under nonzero fill."""
+    paths = []
+    for tone, polygons in layers:
+        d = ''
+        for polygon in polygons:
+            area = sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(polygon, polygon[1:] + polygon[:1]))
+            if area < 0:
+                polygon = polygon[::-1]
+            d += 'M' + 'L'.join(f'{x:.2f} {y:.2f}' for x, y in polygon) + 'Z'
+        paths.append((compact_path(d, 0, 0), tone))
+    return paths
 
 
 def leaf_tip(color):
@@ -678,7 +717,7 @@ def arm_front():
 def redraw_straws(anchor, part, masks, colors):
     """Replaces the traced straws in the rice with the drawn straws, rope and leaf end. Returns the
     mask of drawn pixels, which the smoothing before tracing must keep as they are, and the straw
-    lines as paths to add over the traced rice."""
+    lines and the rope as paths to add over the traced rice."""
     brand = np.array([BRAND.index(b) if b else -1 for _, _, b, _ in ANCHORS], dtype=np.int16)
     raw = brand[anchor]
     rice, color = masks[RICE], colors[RICE]
@@ -700,7 +739,7 @@ def redraw_straws(anchor, part, masks, colors):
     skin = masks[HANDS] & (colors[HANDS] != BRAND.index(DARK))
     stray = drawn & masks[HANDS] & ~skin & ~dilate(skin, HAND_OUTLINE) & ~front
     masks[HANDS] &= ~stray
-    allowed = (rice | shaped | stray) & ~front
+    allowed = (rice | shaped | stray) & ~front & ~polygon_mask(MID_CUT)
     straw = drawn & allowed & ~protect
     # A smooth edge: thin outline teeth that stick into the straws go under them (the grain and
     # leaf fills and the first PROTECT_CORE pixels of their outlines stay), and thin jags of the
@@ -720,22 +759,24 @@ def redraw_straws(anchor, part, masks, colors):
     rest = rice & ~straw & ~sliver
     color = np.where(sliver, spread(np.where(rest, color, -1), rest, sliver), color)
     rice |= sliver
+    # The bundle pinches in where the rope ties it.
+    rope = rope_shapes()
+    tie = rope_mask(rope)
+    pinch = dilate(tie, ROPE_PINCH) & ~erode(straw, ROPE_PINCH) & ~tie
+    straw &= ~pinch
+    rice &= ~(pinch & ~protect)
     # Outline wherever the straws meet something else, unless an outline is already there; the
     # hands draw their own.
     lined = straw | masks[HANDS] | (rice & ~straw & (color == BRAND.index(DARK)))
     edge = straw & dilate(~lined, STRAW_OUTLINE)
     color = np.where(edge, BRAND.index(DARK), color)
-    rope = rope_layer()
-    tie = (rope >= 0) & ~front
-    rice |= tie
-    color = np.where(tie, rope, color)
     masks[RICE], colors[RICE] = rice, color
-    lines = line_paths(thin, erode(straw & ~edge & ~dilate(tie, 1), STRAW_LINE_CLEAR))
+    lines = line_paths(thin, erode(straw & ~edge & ~dilate(tie, 1), STRAW_LINE_CLEAR)) + polygon_paths(rope)
     # Below the sleeve the body was only painted under the old straws: drop what the new ones leave.
     masks[BODY] &= ~(low & (part != BODY) & ~rice & ~masks[HANDS])
     # The pixels traced from the watermark go.
     masks[HANDS] &= ~polygon_mask(WATERMARK)
-    return straw | tie | tip, lines
+    return straw | tip, lines
 
 
 NUMBER = re.compile(r'-?\d*\.?\d+(?:e-?\d+)?')
