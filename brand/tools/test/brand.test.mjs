@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { buildCss } from '../build-tokens.mjs';
 import { contrast, palette } from '../lib/svg-check.mjs';
+import opentype from 'opentype.js';
 
 const tokensDir = fileURLToPath(new URL('../../tokens/', import.meta.url));
 const readTokens = () => JSON.parse(readFileSync(tokensDir + 'tokens.json', 'utf8'));
@@ -59,4 +60,30 @@ test('moi cap chu/nen dat AA', () => {
 test('contrast dung cong thuc', () => {
   assert.ok(Math.abs(contrast('#4A2C1A', '#FBF7EE') - 11.79) < 0.01);
   assert.ok(Math.abs(contrast('#D9A13B', '#FBF7EE') - 2.16) < 0.01);
+});
+
+const fontsDir = fileURLToPath(new URL('../../fonts/', import.meta.url));
+const loadFont = (name) => {
+  const buf = readFileSync(fontsDir + name);
+  return opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+};
+const missingGlyphs = (font, text) =>
+  [...new Set(text)].filter((ch) => ch !== ' ' && font.charToGlyph(ch).index === 0);
+
+test('font co du dau tieng Viet', () => {
+  assert.deepEqual(missingGlyphs(loadFont('Pacifico-Regular.ttf'), 'Nếp Nhà'), []);
+  for (const weight of ['400', '500', '700']) {
+    const file = `Quicksand-${weight}.ttf`;
+    assert.deepEqual(
+      missingGlyphs(loadFont(file), 'Xứ Đông · Gạo nếp cái hoa vàng'),
+      [],
+      file,
+    );
+  }
+});
+
+test('co file giay phep OFL', () => {
+  for (const file of ['OFL-Pacifico.txt', 'OFL-Quicksand.txt']) {
+    assert.match(readFileSync(fontsDir + file, 'utf8'), /SIL OPEN FONT LICENSE/i, file);
+  }
 });
