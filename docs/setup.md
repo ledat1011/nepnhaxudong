@@ -1,11 +1,12 @@
 # Cài đặt
 
 ## Cài đặt một máy mới (Windows)
-1. Cài Git for Windows, Node 22 và uv.
+1. Cài Git for Windows, Node 22, uv và Python 3 (Python 3 cần cho hai skill `state-diagram` và `call-chain`).
 2. Lấy code:
    ```bash
    git clone https://github.com/ledat1011/nepnhaxudong.git
    ```
+   Sau khi phần C được merge, nhánh mặc định `main` đã có đủ nội dung; chỉ cần `git clone`, không cần chuyển nhánh.
 3. Đặt git identity cho repo (chạy trong thư mục repo):
    ```bash
    git config user.name "ledat1011"
@@ -16,8 +17,9 @@
    setx GEMINI_API_KEY "<key>"
    ```
    Mở lại terminal để biến có hiệu lực.
-5. Mở Claude Code trong thư mục repo và chấp nhận cài các plugin được đề nghị.
-6. Kiểm tra: hỏi "Giai đoạn hiện tại là gì?". Agent phải trả lời đúng theo `docs/session/STATE.md` mà không cần bạn kể lại.
+5. Mở Claude Code trong thư mục repo và chấp nhận cài các plugin được đề nghị. Lần đầu mở repo, Claude Code cũng hỏi có duyệt các MCP server của dự án trong `.mcp.json` không — hãy duyệt.
+6. Recraft cần đăng nhập một lần: trong Claude Code chạy `/mcp`, chọn `recraft`, rồi chọn Authenticate.
+7. Kiểm tra: hỏi "Giai đoạn hiện tại là gì?". Agent phải trả lời đúng theo `docs/session/STATE.md` mà không cần bạn kể lại.
 
 ## Gói cài thêm cho các skill dùng chung
 Các skill nằm trong `.claude/skills/`. Chỉ cài khi cần dùng skill đó (`node_modules/` đã được git bỏ qua).
@@ -35,3 +37,6 @@ Các skill nằm trong `.claude/skills/`. Chỉ cài khi cần dùng skill đó 
 - `state-diagram` và `call-chain` cần Python 3 (không cần gói thêm). `state-diagram` xuất PNG bằng Edge, Chrome hoặc Chromium.
 
 ## Cloud session
+Sẽ điền sau khi kiểm tra trên claude.ai/code.
+
+Lưu ý: `scripts/cloud-setup.sh` có thể in `java=unknown` khi máy có java nhưng script không đọc được số phiên bản.

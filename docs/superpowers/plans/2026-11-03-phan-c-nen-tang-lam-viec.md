@@ -108,7 +108,7 @@ Website giới thiệu gạo nếp cái hoa vàng của gia đình ở Hải Dư
 
 ## Bắt đầu và kết thúc mỗi session
 - Đầu session: `git pull`. Đọc `docs/session/STATE.md` (hook SessionStart đã nạp sẵn).
-- Cuối session, trước khi dừng: cập nhật `docs/session/STATE.md`, hoàn thiện file log của session
+- Cuối session, trước khi dừng: cập nhật `docs/session/STATE.md`, tạo hoặc hoàn thiện file log của session
   (xem mục "Nhật ký phản hồi của session"), rồi commit và push.
 - Quyết định lớn ghi vào `docs/decisions/NNNN-<ten>.md`.
 - Hai máy không làm cùng một nhánh cùng lúc. Mỗi việc một nhánh `feat/<ten-ngan>`, PR vào `main`.
@@ -122,8 +122,8 @@ Website giới thiệu gạo nếp cái hoa vàng của gia đình ở Hải Dư
 - **Khi nào:** ngay trong lượt chủ dự án đưa phản hồi, trước khi làm tiếp. Không đợi tới cuối session.
 - **Định dạng:** gạch đầu dòng ngắn, mới nhất ở dưới cùng. Khi chủ dự án đổi ý, sửa hoặc xóa dòng cũ —
   không bao giờ giữ hai dòng mâu thuẫn nhau.
-- **Sau khi nén context hoặc khi tiếp tục session:** đọc file này trước mọi bước khác và làm theo.
-  Nếu nó mâu thuẫn với bản tóm tắt của context, file này thắng.
+- **Sau khi nén context hoặc khi tiếp tục session:** đọc file log này trước mọi bước khác và làm theo.
+  Nếu nó mâu thuẫn với bản tóm tắt của context, file log này thắng.
 - **Phản hồi áp dụng cho cả các session sau:** ghi thêm vào `CLAUDE.md` (quy tắc) hoặc `docs/decisions/`
   (quyết định). Đây là nơi lưu lâu dài mà mọi máy và cloud session đều đọc được; memory của Claude chỉ có trên một máy.
 
@@ -537,7 +537,7 @@ Expected: push thành công; tab Actions chạy `tools` xanh trên cả `ubuntu-
 
 - [ ] **Step 5: DỪNG — chủ dự án bật bảo vệ nhánh `main`**
 
-Trong Settings → Branches: yêu cầu PR và check `tools` xanh trước khi merge.
+Trong Settings → Branches: yêu cầu PR và hai check `tools (ubuntu-latest)` và `tools (windows-latest)` xanh trước khi merge.
 
 - [ ] **Step 6: DỪNG — chủ dự án kiểm tra trên máy cá nhân**
 

@@ -11,3 +11,4 @@ target/
 dist/
 coverage/
 .pr-review/
+.superpowers/

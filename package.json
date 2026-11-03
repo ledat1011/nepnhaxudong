@@ -1,7 +1,6 @@
 {
   "name": "nepnhaxudong",
   "private": true,
-  "type": "module",
   "engines": {
     "node": ">=22"
   },

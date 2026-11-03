@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  tools:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
