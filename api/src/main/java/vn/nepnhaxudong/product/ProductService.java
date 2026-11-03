@@ -3,7 +3,6 @@ package vn.nepnhaxudong.product;
 import java.time.Clock;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -126,9 +125,6 @@ public class ProductService {
   }
 
   private void validateMedia(List<Long> ids) {
-    if (ids.stream().anyMatch(Objects::isNull)) {
-      throw invalid("Mã ảnh không hợp lệ.");
-    }
     Set<Long> seen = new HashSet<>();
     for (Long id : ids) {
       if (!seen.add(id)) {

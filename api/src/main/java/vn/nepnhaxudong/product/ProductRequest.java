@@ -1,6 +1,7 @@
 package vn.nepnhaxudong.product;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import vn.nepnhaxudong.common.LocalizedList;
@@ -17,10 +18,14 @@ public record ProductRequest(
     LocalizedText description,
     LocalizedList features,
     LocalizedText cookingTips,
-    @Size(max = ProductRequest.MAX_PACKAGINGS, message = "Một sản phẩm có tối đa 20 quy cách.")
-        List<@Valid PackagingDto> packagings,
-    @Size(max = ProductRequest.MAX_IMAGES, message = "Một sản phẩm có tối đa 30 ảnh.")
-        List<Long> mediaIds) {
+    @Size(
+            max = ProductRequest.MAX_PACKAGINGS,
+            message = "Một sản phẩm có tối đa " + ProductRequest.MAX_PACKAGINGS + " quy cách.")
+        List<@NotNull(message = "Quy cách không được để trống.") @Valid PackagingDto> packagings,
+    @Size(
+            max = ProductRequest.MAX_IMAGES,
+            message = "Một sản phẩm có tối đa " + ProductRequest.MAX_IMAGES + " ảnh.")
+        List<@NotNull(message = "Mã ảnh không được để trống.") Long> mediaIds) {
 
   static final int MAX_PACKAGINGS = 20;
   static final int MAX_IMAGES = 30;

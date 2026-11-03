@@ -1,18 +1,20 @@
 package vn.nepnhaxudong.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -267,6 +269,56 @@ class ProductAdminTest extends AuthTestSupport {
   }
 
   @Test
+  void aNullPackagingIsRefusedWith400NotAnError() {
+    var client = loggedIn();
+    var body = fullBody();
+    body.put("packagings", Arrays.asList((Object) null));
+
+    var response = client.post("/admin/products", body);
+
+    assertThat(response.getStatusCode().value()).isEqualTo(400);
+    assertThat(ApiClient.json(response).path("detail").asString())
+        .isEqualTo("Quy cách không được để trống.");
+    assertThat(count("product")).isZero();
+  }
+
+  @Test
+  void aNullImageIdIsRefusedWith400NotAnError() {
+    var client = loggedIn();
+    var body = fullBody();
+    body.put("mediaIds", Arrays.asList((Object) null));
+
+    var response = client.post("/admin/products", body);
+
+    assertThat(response.getStatusCode().value()).isEqualTo(400);
+    assertThat(ApiClient.json(response).path("detail").asString())
+        .isEqualTo("Mã ảnh không được để trống.");
+    assertThat(count("product")).isZero();
+  }
+
+  @Test
+  void tooManyPackagingsOrImagesAreRefusedWithTheLimitInTheMessage() {
+    var client = loggedIn();
+    var tooManyPackagings = fullBody();
+    tooManyPackagings.put(
+        "packagings",
+        Collections.nCopies(ProductRequest.MAX_PACKAGINGS + 1, packaging(100, 1L)));
+    var tooManyImages = fullBody();
+    tooManyImages.put(
+        "mediaIds", Collections.nCopies(ProductRequest.MAX_IMAGES + 1, 1L));
+
+    var packagingsResponse = client.post("/admin/products", tooManyPackagings);
+    var imagesResponse = client.post("/admin/products", tooManyImages);
+
+    assertThat(packagingsResponse.getStatusCode().value()).isEqualTo(400);
+    assertThat(ApiClient.json(packagingsResponse).path("detail").asString())
+        .isEqualTo("Một sản phẩm có tối đa " + ProductRequest.MAX_PACKAGINGS + " quy cách.");
+    assertThat(imagesResponse.getStatusCode().value()).isEqualTo(400);
+    assertThat(ApiClient.json(imagesResponse).path("detail").asString())
+        .isEqualTo("Một sản phẩm có tối đa " + ProductRequest.MAX_IMAGES + " ảnh.");
+  }
+
+  @Test
   void anUnknownImageIsRefused() {
     var client = loggedIn();
     var body = fullBody();
@@ -462,24 +514,57 @@ class ProductAdminTest extends AuthTestSupport {
   // ---- audit -----------------------------------------------------------------------------
 
   @Test
-  void createUpdateAndDeleteAreRecordedInTheAuditLog() {
+  void createIsRecordedWithoutABeforeAndWithTheNewProductAsAfter() {
     var client = loggedIn();
-    long id = create(client, "Ghi nhật ký", 0);
-    verify(audit)
-        .record(eq("product"), eq(id), eq(AuditAction.CREATE), isNull(), any(ProductAdminDto.class));
+    long id = create(client, "Tên mới tạo", 0);
 
-    client.put("/admin/products/" + id, fullBody());
+    var after = ArgumentCaptor.forClass(Object.class);
+    verify(audit)
+        .record(eq("product"), eq(id), eq(AuditAction.CREATE), isNull(), after.capture());
+    var snapshot = (ProductAdminDto) after.getValue();
+    assertThat(snapshot.id()).isEqualTo(id);
+    assertThat(snapshot.name().vi()).isEqualTo("Tên mới tạo");
+    assertThat(snapshot.packagings()).hasSize(2);
+  }
+
+  @Test
+  void updateIsRecordedWithTheOldProductAsBeforeAndTheNewProductAsAfter() {
+    var client = loggedIn();
+    long id = create(client, "Tên cũ", 0);
+    var update = fullBody();
+    update.put("name", text("Tên mới", NAME_EN));
+    update.put("packagings", List.of(packaging(300, 30000L)));
+
+    client.put("/admin/products/" + id, update);
+
+    var before = ArgumentCaptor.forClass(Object.class);
+    var after = ArgumentCaptor.forClass(Object.class);
     verify(audit)
         .record(
-            eq("product"),
-            eq(id),
-            eq(AuditAction.UPDATE),
-            any(ProductAdminDto.class),
-            any(ProductAdminDto.class));
+            eq("product"), eq(id), eq(AuditAction.UPDATE), before.capture(), after.capture());
+    var oldSnapshot = (ProductAdminDto) before.getValue();
+    var newSnapshot = (ProductAdminDto) after.getValue();
+    assertThat(oldSnapshot.name().vi()).isEqualTo("Tên cũ");
+    assertThat(oldSnapshot.packagings()).hasSize(2);
+    assertThat(newSnapshot.name().vi()).isEqualTo("Tên mới");
+    assertThat(newSnapshot.packagings()).hasSize(1);
+    assertThat(oldSnapshot).isNotEqualTo(newSnapshot);
+  }
+
+  @Test
+  void deleteIsRecordedWithTheOldProductAsBeforeAndWithoutAnAfter() {
+    var client = loggedIn();
+    long id = create(client, "Sắp xóa", 0);
 
     client.delete("/admin/products/" + id);
+
+    var before = ArgumentCaptor.forClass(Object.class);
     verify(audit)
-        .record(eq("product"), eq(id), eq(AuditAction.DELETE), any(ProductAdminDto.class), isNull());
+        .record(eq("product"), eq(id), eq(AuditAction.DELETE), before.capture(), isNull());
+    var snapshot = (ProductAdminDto) before.getValue();
+    assertThat(snapshot.id()).isEqualTo(id);
+    assertThat(snapshot.name().vi()).isEqualTo("Sắp xóa");
+    assertThat(snapshot.packagings()).hasSize(2);
   }
 
   // ---- helpers ---------------------------------------------------------------------------
