@@ -26,19 +26,27 @@ class LoginAttempts {
   /**
    * Saves the counter, the lock and the result. The business exceptions must not roll the
    * transaction back: the counter and the lock have to be saved when the login fails.
+   *
+   * @param checked the credentials that {@code check} was computed from (read without a lock)
    */
   @Transactional(noRollbackFor = ApiException.class)
-  AppUser record(long userId, CredentialCheck check) {
+  AppUser record(long userId, CredentialSnapshot checked, CredentialCheck check) {
     AppUser user = users.findByIdForUpdate(userId).orElse(null);
     if (user == null || !user.isEnabled()) {
       throw new InvalidCredentialsException();
     }
     Instant now = clock.instant();
     Instant lockedUntil = user.getLockedUntil();
+    if (lockedUntil != null && now.isBefore(lockedUntil)) {
+      throw new AccountLockedException();
+    }
+    // The password and the two-factor state were checked without a lock. When they changed since
+    // (a reset or change of the password, two-factor login switched on or off), the result is about
+    // old credentials: refuse, count nothing and create no session.
+    if (!checked.matches(user)) {
+      throw new InvalidCredentialsException();
+    }
     if (lockedUntil != null) {
-      if (now.isBefore(lockedUntil)) {
-        throw new AccountLockedException();
-      }
       // The lock has expired: counting starts again from zero.
       user.setLockedUntil(null);
       user.setFailedAttempts(0);

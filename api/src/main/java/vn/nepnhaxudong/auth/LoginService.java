@@ -55,7 +55,8 @@ public class LoginService {
     if (lockedUntil != null && now.isBefore(lockedUntil)) {
       throw new AccountLockedException();
     }
-    return attempts.record(user.getId(), check(user, password, totpCode, now));
+    return attempts.record(
+        user.getId(), CredentialSnapshot.of(user), check(user, password, totpCode, now));
   }
 
   /** The slow part: no transaction is open here. */

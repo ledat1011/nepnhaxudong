@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 
 
@@ -38,6 +39,9 @@ class LoginConnectionTest extends AuthTestSupport {
 
   @Autowired BlockingPasswordEncoder blocking;
   @Autowired DataSource dataSource;
+  @Autowired UserAdminService userAdminService;
+  @Autowired TotpService totpService;
+  @Autowired JdbcTemplate jdbc;
 
   @Test
   void noConnectionIsHeldWhileThePasswordIsHashed() throws Exception {
@@ -122,6 +126,68 @@ class LoginConnectionTest extends AuthTestSupport {
             .findFirst()
             .orElseThrow();
     assertThat(sessionCookie).contains("Secure").contains("HttpOnly").contains("SameSite=Lax");
+  }
+
+  @Test
+  void aLoginWithTheOldPasswordIsRefusedWhenAnAdminResetsItDuringTheHash() throws Exception {
+    var user = createUser("owner@example.com", "correct-password-1", false);
+    int sessionsBefore = sessions();
+    blocking.close();
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      var login =
+          CompletableFuture.supplyAsync(
+              () -> login(newClient(), "owner@example.com", "correct-password-1"), executor);
+      awaitWaiting(1);
+
+      userAdminService.resetPassword(user.getId(), "temporary-password-1");
+      blocking.open();
+
+      var response = login.get();
+      assertThat(response.getStatusCode().value()).isEqualTo(401);
+      assertNoSession(response, sessionsBefore);
+      assertThat(users.findById(user.getId()).orElseThrow().getFailedAttempts()).isZero();
+    } finally {
+      blocking.open();
+      executor.shutdownNow();
+    }
+  }
+
+  @Test
+  void aLoginWithoutACodeIsRefusedWhenTwoFactorLoginIsSwitchedOnDuringTheHash() throws Exception {
+    var user = createUser("owner@example.com", "correct-password-1", false);
+    int sessionsBefore = sessions();
+    blocking.close();
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      var login =
+          CompletableFuture.supplyAsync(
+              () -> login(newClient(), "owner@example.com", "correct-password-1"), executor);
+      awaitWaiting(1);
+
+      String secret = totpService.setup(user.getId()).secret();
+      totpService.enable(user.getId(), Totp.code(secret, clock.instant().getEpochSecond()));
+      blocking.open();
+
+      var response = login.get();
+      assertThat(response.getStatusCode().value()).isEqualTo(401);
+      assertNoSession(response, sessionsBefore);
+      assertThat(users.findById(user.getId()).orElseThrow().getFailedAttempts()).isZero();
+    } finally {
+      blocking.open();
+      executor.shutdownNow();
+    }
+  }
+
+  private int sessions() {
+    return jdbc.queryForObject("select count(*) from spring_session", Integer.class);
+  }
+
+  private void assertNoSession(ResponseEntity<String> response, int sessionsBefore) {
+    var cookies = response.getHeaders().get(HttpHeaders.SET_COOKIE);
+    assertThat(cookies == null ? List.<String>of() : cookies)
+        .noneMatch(line -> line.startsWith("NEPNHA_SESSION="));
+    assertThat(sessions()).isEqualTo(sessionsBefore);
   }
 
   private void awaitWaiting(int expected) throws InterruptedException {
