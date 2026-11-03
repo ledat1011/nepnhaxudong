@@ -2,7 +2,7 @@
 // files the mock content client uses, at the URLs of the real API.
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
-import { FAKE_API_PORT } from "./targets.mjs";
+import { FAKE_API_PORT, HOST } from "./targets.mjs";
 
 const LANGS = ["vi", "en"];
 const PAGE_SIZE = 12;
@@ -53,7 +53,7 @@ async function handleTagline(req, res) {
 }
 
 const server = createServer(async (req, res) => {
-  const url = new URL(req.url ?? "/", "http://localhost");
+  const url = new URL(req.url ?? "/", `http://${HOST}`);
 
   if (req.method === "POST" && url.pathname === "/__test/tagline") {
     return handleTagline(req, res);
@@ -86,6 +86,6 @@ const server = createServer(async (req, res) => {
   return send(res, 404, { error: "not found" });
 });
 
-server.listen(Number(process.env.PORT ?? FAKE_API_PORT), () => {
-  console.log(`fake API on :${server.address().port}`);
+server.listen(Number(process.env.PORT ?? FAKE_API_PORT), HOST, () => {
+  console.log(`fake API on ${HOST}:${server.address().port}`);
 });

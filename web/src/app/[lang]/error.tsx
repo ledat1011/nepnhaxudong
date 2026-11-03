@@ -3,6 +3,9 @@
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { LANGS } from "@/lib/i18n/langs";
 import { homePath } from "@/lib/i18n/routes";
+import { withSiteName } from "@/lib/seo/metadata";
+
+const ERROR_TITLE = withSiteName(LANGS.map((lang) => getDictionary(lang).error.title).join(" | "));
 
 // The error boundary cannot know the language for sure, so both are shown,
 // each in an element with its own lang attribute.
@@ -10,6 +13,7 @@ import { homePath } from "@/lib/i18n/routes";
 export default function LangError({ retry }: { retry: () => void }) {
   return (
     <main id="noi-dung" className="mx-auto max-w-xl px-4 py-24 text-center">
+      <title>{ERROR_TITLE}</title>
       {LANGS.map((lang, index) => {
         const { error } = getDictionary(lang);
         const Heading = index === 0 ? "h1" : "h2";

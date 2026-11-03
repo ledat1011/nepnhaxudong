@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { TARGETS } from "./targets.mjs";
+import { origin, TARGETS } from "./targets.mjs";
 
-const ORIGIN = `http://localhost:${TARGETS.mock.port}`;
+const ORIGIN = origin(TARGETS.mock.port);
 
 type JsonLdNode = { "@type"?: string };
 

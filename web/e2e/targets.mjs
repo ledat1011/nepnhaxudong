@@ -1,4 +1,9 @@
 // Ports and build directories shared by the e2e build script and the Playwright config.
+// Every server listens on, and every URL uses, 127.0.0.1: on Linux `localhost` can resolve to ::1.
+export const HOST = "127.0.0.1";
+
+export const origin = (port) => `http://${HOST}:${port}`;
+
 export const FAKE_API_PORT = 4010;
 
 export const TARGETS = {

@@ -13,7 +13,6 @@ const vi = {
     ogImageAlt: "Linh vật Nếp Nhà đứng bên cánh đồng lúa nếp",
   },
   nav: {
-    home: "Trang chủ",
     label: "Điều hướng chính",
     product: "Sản phẩm",
     journey: "Hành trình",
@@ -25,7 +24,6 @@ const vi = {
     skipToContent: "Bỏ qua tới nội dung",
   },
   language: {
-    label: "Ngôn ngữ",
     vi: "Tiếng Việt",
     en: "English",
   },
@@ -95,11 +93,10 @@ const en: Dictionary = {
     name: "Nếp Nhà",
     tagline: "Yellow-flower sticky rice",
     description:
-      "Nếp Nhà is yellow-flower sticky rice grown by a family in Hải Dương, northern Vietnam: round, soft and fragrant.",
+      "Nếp Nhà is yellow-flower sticky rice from a family in the xứ Đông region of northern Vietnam, grown their own way: soft, fragrant and full of country flavour.",
     ogImageAlt: "The Nếp Nhà mascot beside a sticky rice field",
   },
   nav: {
-    home: "Home",
     label: "Main navigation",
     product: "Product",
     journey: "Journey",
@@ -111,7 +108,6 @@ const en: Dictionary = {
     skipToContent: "Skip to content",
   },
   language: {
-    label: "Language",
     vi: "Tiếng Việt",
     en: "English",
   },

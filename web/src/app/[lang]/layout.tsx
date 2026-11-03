@@ -1,24 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Pacifico, Quicksand } from "next/font/google";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { DEFAULT_LANG, isLang } from "@/lib/i18n/langs";
 import { getSiteUrl } from "@/lib/seo/metadata";
+import { fontClassName } from "../fonts";
 import "../globals.css";
-
-const pacifico = Pacifico({
-  subsets: ["latin", "vietnamese"],
-  weight: "400",
-  display: "swap",
-  variable: "--font-pacifico",
-});
-
-const quicksand = Quicksand({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-  variable: "--font-quicksand",
-});
 
 type LangLayoutProps = {
   children: ReactNode;
@@ -37,7 +23,7 @@ export default async function LangLayout({ children, params }: LangLayoutProps) 
   const dict = getDictionary(lang);
 
   return (
-    <html lang={lang} className={`${pacifico.variable} ${quicksand.variable}`}>
+    <html lang={lang} className={fontClassName}>
       <body>
         <a
           href="#noi-dung"

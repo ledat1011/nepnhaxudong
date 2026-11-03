@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { toImageSrc } from "@/components/ui/ContentImage";
 import { BRAND } from "@/lib/brand/colors";
+import { toImageSrc } from "@/lib/content/image-src";
 import type { Product } from "@/lib/content/types";
 import { formatPrice, formatWeight } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";

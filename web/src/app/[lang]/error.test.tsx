@@ -14,6 +14,11 @@ describe("LangError", () => {
     expect(container.querySelector('button [lang="en"]')).toHaveTextContent("Try again");
   });
 
+  it("sets a document title in both languages", () => {
+    render(<LangError retry={vi.fn()} />);
+    expect(document.title).toBe("Có lỗi xảy ra | Something went wrong | Nếp Nhà");
+  });
+
   it("has exactly one h1", () => {
     render(<LangError retry={vi.fn()} />);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);

@@ -53,15 +53,25 @@ test.describe("home page", () => {
     expect(response?.status()).toBe(404);
   });
 
-  test("reduced motion turns smooth scrolling off", async ({ browser, baseURL }) => {
-    const context = await browser.newContext({ baseURL, reducedMotion: "reduce" });
-    const page = await context.newPage();
-    await page.goto("/vi");
-    const behavior = await page.evaluate(
-      () => getComputedStyle(document.documentElement).scrollBehavior,
-    );
-    expect(behavior).toBe("auto");
-    await context.close();
+  test("smooth scrolling is on by default and off with reduced motion", async ({
+    browser,
+    baseURL,
+  }) => {
+    const scrollBehavior = async (reducedMotion: "no-preference" | "reduce") => {
+      const context = await browser.newContext({ baseURL, reducedMotion });
+      const page = await context.newPage();
+      await page.goto("/vi");
+      const behavior = await page.evaluate(
+        () => getComputedStyle(document.documentElement).scrollBehavior,
+      );
+      await context.close();
+      return behavior;
+    };
+
+    // The first check proves the page does set smooth scrolling, so "auto" below means the
+    // reduced-motion rule won and is not just the browser default.
+    expect(await scrollBehavior("no-preference")).toBe("smooth");
+    expect(await scrollBehavior("reduce")).toBe("auto");
   });
 });
 

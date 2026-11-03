@@ -33,3 +33,21 @@ describe("dictionaries", () => {
     }
   });
 });
+
+describe("site description", () => {
+  const MAX_DESCRIPTION_LENGTH = 160;
+
+  it("fits a search result snippet in both languages", () => {
+    for (const lang of ["vi", "en"] as const) {
+      expect(getDictionary(lang).site.description.length).toBeLessThanOrEqual(
+        MAX_DESCRIPTION_LENGTH,
+      );
+    }
+  });
+
+  it("names the region the same way in both languages, with no province name", () => {
+    expect(getDictionary("vi").site.description).toContain("xứ Đông");
+    expect(getDictionary("en").site.description).toContain("xứ Đông");
+    expect(getDictionary("en").site.description).not.toContain("Hải Dương");
+  });
+});

@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   output: "standalone",
   poweredByHeader: false,
+  experimental: {
+    // The root layout sits under [lang], so the app needs its own full-document 404.
+    globalNotFound: true,
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: siteUrl

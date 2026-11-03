@@ -11,8 +11,6 @@ type ContentImageProps = {
   className?: string;
 };
 
-export { toImageSrc };
-
 export function ContentImage({
   image,
   sizes,

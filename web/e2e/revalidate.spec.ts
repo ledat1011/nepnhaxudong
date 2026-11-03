@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
-import { FAKE_API_PORT, REVALIDATE_SECRET } from "./targets.mjs";
+import { FAKE_API_PORT, origin, REVALIDATE_SECRET } from "./targets.mjs";
 
-const FAKE_API = `http://localhost:${FAKE_API_PORT}`;
+const FAKE_API = origin(FAKE_API_PORT);
 const tagline = (page: Page) => page.locator("main h1 + p");
 
 test("content changed in the API shows after a revalidate call, and not before", async ({

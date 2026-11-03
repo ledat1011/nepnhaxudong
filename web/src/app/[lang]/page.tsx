@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   const { site } = getDictionary(lang);
   return buildMetadata({
     lang,
-    title: `${SITE_NAME} - ${site.tagline}`,
+    title: `${SITE_NAME} | ${site.tagline}`,
     description: site.description,
     paths: { vi: homePath("vi"), en: homePath("en") },
   });
