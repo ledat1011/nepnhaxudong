@@ -8,7 +8,7 @@ function renderMenu() {
     <MobileMenu label="Mở menu" closeLabel="Đóng menu">
       <ul>
         <li>
-          <a href="/vi#san-pham">Sản phẩm</a>
+          <a href="#san-pham">Sản phẩm</a>
         </li>
       </ul>
     </MobileMenu>,

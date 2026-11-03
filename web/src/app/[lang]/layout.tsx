@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Pacifico, Quicksand } from "next/font/google";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { DEFAULT_LANG, isLang, LANGS } from "@/lib/i18n/langs";
+import { DEFAULT_LANG, isLang } from "@/lib/i18n/langs";
 import "../globals.css";
 
 const pacifico = Pacifico({
@@ -17,10 +17,6 @@ const quicksand = Quicksand({
   display: "swap",
   variable: "--font-quicksand",
 });
-
-export function generateStaticParams() {
-  return LANGS.map((lang) => ({ lang }));
-}
 
 type LangLayoutProps = {
   children: ReactNode;
