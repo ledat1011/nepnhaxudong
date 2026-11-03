@@ -82,7 +82,8 @@ public class ProductService {
         .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm."));
   }
 
-  private void apply(Product product, ProductRequest request) {
+  /** Writes the request into the product and its children; the caller has validated it. */
+  void apply(Product product, ProductRequest request) {
     product.setSortOrder(request.sortOrder());
     product.setShowPrice(request.showPrice());
     product.putTranslation(
@@ -108,6 +109,12 @@ public class ProductService {
   }
 
   private void validate(ProductRequest request) {
+    validateTexts(request);
+    validateMedia(request.mediaIds());
+  }
+
+  /** The text rules. The images are checked separately. */
+  void validateTexts(ProductRequest request) {
     if (request.name() == null || request.name().vi() == null) {
       throw invalid("Tên sản phẩm (tiếng Việt) không được để trống.");
     }
@@ -121,7 +128,6 @@ public class ProductService {
     if (request.name().en() == null && hasEnglishContent) {
       throw invalid("Tên sản phẩm (tiếng Anh) không được để trống khi đã có nội dung tiếng Anh.");
     }
-    validateMedia(request.mediaIds());
   }
 
   private void validateMedia(List<Long> ids) {

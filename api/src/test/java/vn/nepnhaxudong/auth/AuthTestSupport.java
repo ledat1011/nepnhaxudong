@@ -1,5 +1,6 @@
 package vn.nepnhaxudong.auth;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import java.time.Instant;
@@ -53,6 +54,16 @@ public abstract class AuthTestSupport {
   protected AppUser createUser(String email, String password, boolean mustChangePassword) {
     return users.save(
         AppUser.create(email, "Tester", encoder.encode(password), mustChangePassword));
+  }
+
+  /** Creates a user (email owner@example.com), logs in and fetches the CSRF token. */
+  protected ApiClient loggedInClient() {
+    createUser("owner@example.com", "correct-password-1", false);
+    var client = newClient();
+    assertThat(login(client, "owner@example.com", "correct-password-1").getStatusCode().value())
+        .isEqualTo(200);
+    client.fetchCsrf();
+    return client;
   }
 
   protected ResponseEntity<String> login(ApiClient client, String email, String password) {
