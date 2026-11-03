@@ -48,4 +48,4 @@ Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, 
 - Ảnh tải lên chưa hiện ở web local vì chưa ai phục vụ `/media/*`; Caddy làm việc này (có thể dùng cả cho compose local).
 
 ## Quyết định gần nhất
-- `docs/decisions/0004-trang-thai-xuyen-may.md`
+- `docs/decisions/0005-spring-boot-4.md`

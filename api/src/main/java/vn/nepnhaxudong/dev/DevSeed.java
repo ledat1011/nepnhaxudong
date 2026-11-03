@@ -9,8 +9,10 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import vn.nepnhaxudong.common.Lang;
 import vn.nepnhaxudong.common.LocalizedList;
 import vn.nepnhaxudong.common.LocalizedText;
+import vn.nepnhaxudong.press.PressMentionRepository;
 import vn.nepnhaxudong.press.PressMentionRequest;
 import vn.nepnhaxudong.press.PressService;
 import vn.nepnhaxudong.product.PackagingDto;
@@ -20,19 +22,23 @@ import vn.nepnhaxudong.product.ProductService;
 import vn.nepnhaxudong.site.BrandSettings;
 import vn.nepnhaxudong.site.ContactSettings;
 import vn.nepnhaxudong.site.SiteSettingKey;
+import vn.nepnhaxudong.site.SiteSettingRepository;
 import vn.nepnhaxudong.site.SiteSettingService;
+import vn.nepnhaxudong.site.SiteSettingValue;
 import vn.nepnhaxudong.site.SocialSettings;
+import vn.nepnhaxudong.story.StoryRepository;
 import vn.nepnhaxudong.story.StoryRequest;
 import vn.nepnhaxudong.story.StoryService;
+import vn.nepnhaxudong.timeline.TimelineEventRepository;
 import vn.nepnhaxudong.timeline.TimelineEventRequest;
 import vn.nepnhaxudong.timeline.TimelineService;
 
 /**
  * Sample content for local development, so that the website shows something on an empty database.
- * It exists only in the profile {@code dev} and does nothing when a product already exists, so a
- * second start adds nothing. Every sample text starts with {@value #MARK}, the phone numbers are
- * zeros and the addresses are {@code example.com}. It creates no images. The whole seed is one
- * transaction: when a part fails, nothing is kept.
+ * It exists only in the profile {@code dev}. Each part is created only when it is missing (see
+ * {@link #run}), so a second start adds nothing. Every sample text starts with {@value #MARK}, the
+ * phone numbers are zeros and the addresses are {@code example.com}. It creates no images. The whole
+ * seed is one transaction: when a part fails, nothing is kept.
  */
 @Component
 @Profile("dev")
@@ -43,6 +49,10 @@ public class DevSeed implements ApplicationRunner {
   private static final Logger LOG = LoggerFactory.getLogger(DevSeed.class);
 
   private final ProductRepository productRepository;
+  private final TimelineEventRepository timelineRepository;
+  private final PressMentionRepository pressRepository;
+  private final StoryRepository storyRepository;
+  private final SiteSettingRepository settingRepository;
   private final ProductService products;
   private final TimelineService timeline;
   private final PressService press;
@@ -51,12 +61,20 @@ public class DevSeed implements ApplicationRunner {
 
   public DevSeed(
       ProductRepository productRepository,
+      TimelineEventRepository timelineRepository,
+      PressMentionRepository pressRepository,
+      StoryRepository storyRepository,
+      SiteSettingRepository settingRepository,
       ProductService products,
       TimelineService timeline,
       PressService press,
       StoryService stories,
       SiteSettingService settings) {
     this.productRepository = productRepository;
+    this.timelineRepository = timelineRepository;
+    this.pressRepository = pressRepository;
+    this.storyRepository = storyRepository;
+    this.settingRepository = settingRepository;
     this.products = products;
     this.timeline = timeline;
     this.press = press;
@@ -64,18 +82,33 @@ public class DevSeed implements ApplicationRunner {
     this.settings = settings;
   }
 
+  /**
+   * Each part checks on its own whether it is needed, so a developer who deleted or edited some
+   * sample content can start the app again: products, timeline and press only when there are none,
+   * a story only when its Vietnamese slug is free, a setting only when its row is missing (an
+   * edited setting is never overwritten).
+   */
   @Override
   @Transactional
   public void run(ApplicationArguments args) {
-    if (productRepository.count() > 0) {
-      return;
+    boolean created = false;
+    if (productRepository.count() == 0) {
+      seedProduct();
+      created = true;
     }
-    seedProduct();
-    seedTimeline();
-    seedPress();
-    seedStories();
-    seedSettings();
-    LOG.info("Sample content for development was created.");
+    if (timelineRepository.count() == 0) {
+      seedTimeline();
+      created = true;
+    }
+    if (pressRepository.count() == 0) {
+      seedPress();
+      created = true;
+    }
+    created |= seedStories();
+    created |= seedSettings();
+    if (created) {
+      LOG.info("Sample content for development was created.");
+    }
   }
 
   private void seedProduct() {
@@ -140,21 +173,28 @@ public class DevSeed implements ApplicationRunner {
             null));
   }
 
-  private void seedStories() {
-    publishStory(
-        "mau-cau-chuyen-mot",
-        "sample-story-one",
-        text("Câu chuyện mẫu thứ nhất", "First sample story"),
-        text("Tóm tắt câu chuyện thứ nhất.", "Summary of the first story."));
-    publishStory(
-        "mau-cau-chuyen-hai",
-        "sample-story-two",
-        text("Câu chuyện mẫu thứ hai", "Second sample story"),
-        text("Tóm tắt câu chuyện thứ hai.", "Summary of the second story."));
+  private boolean seedStories() {
+    boolean first =
+        publishStory(
+            "mau-cau-chuyen-mot",
+            "sample-story-one",
+            text("Câu chuyện mẫu thứ nhất", "First sample story"),
+            text("Tóm tắt câu chuyện thứ nhất.", "Summary of the first story."));
+    boolean second =
+        publishStory(
+            "mau-cau-chuyen-hai",
+            "sample-story-two",
+            text("Câu chuyện mẫu thứ hai", "Second sample story"),
+            text("Tóm tắt câu chuyện thứ hai.", "Summary of the second story."));
+    return first || second;
   }
 
-  private void publishStory(
+  /** Creates and publishes the story unless a story already has the Vietnamese slug. */
+  private boolean publishStory(
       String slugVi, String slugEn, LocalizedText title, LocalizedText excerpt) {
+    if (storyRepository.slugTakenByOther(Lang.VI.code(), slugVi, StoryRepository.NEW_STORY_ID)) {
+      return false;
+    }
     var created =
         stories.create(
             new StoryRequest(
@@ -166,27 +206,41 @@ public class DevSeed implements ApplicationRunner {
                     "<p>" + MARK + " Nội dung mẫu của bài viết.</p>",
                     "<p>" + MARK + " Sample content of the story.</p>")));
     stories.publish(created.id());
+    return true;
   }
 
-  private void seedSettings() {
-    settings.save(
-        SiteSettingKey.CONTACT,
-        new ContactSettings(
-            "0000 000 000",
-            "0000000000",
-            "https://example.com/messenger",
-            text("Địa chỉ mẫu, Hải Dương", "Sample address, Hai Duong"),
-            "https://example.com/ban-do",
-            text("8:00 - 17:00 hằng ngày", "8 am - 5 pm every day")));
-    settings.save(
-        SiteSettingKey.SOCIAL,
-        new SocialSettings(
-            "https://example.com/facebook",
-            "https://example.com/youtube",
-            "https://example.com/tiktok"));
-    settings.save(
-        SiteSettingKey.BRAND,
-        new BrandSettings(text("Hạt nếp quê nhà", "Sticky rice from home")));
+  private boolean seedSettings() {
+    boolean contact =
+        saveIfMissing(
+            SiteSettingKey.CONTACT,
+            new ContactSettings(
+                "0000 000 000",
+                "0000000000",
+                "https://example.com/messenger",
+                text("Địa chỉ mẫu, Hải Dương", "Sample address, Hai Duong"),
+                "https://example.com/ban-do",
+                text("8:00 - 17:00 hằng ngày", "8 am - 5 pm every day")));
+    boolean social =
+        saveIfMissing(
+            SiteSettingKey.SOCIAL,
+            new SocialSettings(
+                "https://example.com/facebook",
+                "https://example.com/youtube",
+                "https://example.com/tiktok"));
+    boolean brand =
+        saveIfMissing(
+            SiteSettingKey.BRAND,
+            new BrandSettings(text("Hạt nếp quê nhà", "Sticky rice from home")));
+    return contact || social || brand;
+  }
+
+  /** Saves the setting only when its row is missing; a setting that exists is never changed. */
+  private boolean saveIfMissing(SiteSettingKey key, SiteSettingValue value) {
+    if (settingRepository.findBySettingKey(key.code()).isPresent()) {
+      return false;
+    }
+    settings.save(key, value);
+    return true;
   }
 
   /** A sample text in both languages; both start with the mark. */

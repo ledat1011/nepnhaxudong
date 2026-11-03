@@ -1,6 +1,7 @@
 package vn.nepnhaxudong.common;
 
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.AnnotatedElementUtils;
@@ -71,6 +72,40 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         .body(
             ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra. Hãy thử lại sau."));
+  }
+
+  /**
+   * Every error that Spring MVC raises itself (unknown path, wrong method, wrong content type,
+   * missing or badly typed parameter, ...) passes here. Spring's own detail text is English, so it
+   * is replaced by a Vietnamese text chosen by the status. The handlers above and below that build
+   * their own response do not pass here and keep their specific messages.
+   */
+  @Override
+  protected ResponseEntity<Object> handleExceptionInternal(
+      Exception e,
+      @Nullable Object body,
+      HttpHeaders headers,
+      HttpStatusCode statusCode,
+      WebRequest request) {
+    var response = super.handleExceptionInternal(e, body, headers, statusCode, request);
+    if (response != null && response.getBody() instanceof ProblemDetail problem) {
+      problem.setDetail(detailFor(statusCode));
+    }
+    return response;
+  }
+
+  private static String detailFor(HttpStatusCode status) {
+    return switch (status.value()) {
+      case 400 -> "Dữ liệu gửi lên không hợp lệ.";
+      case 404 -> "Không tìm thấy.";
+      case 405 -> "Thao tác này không được hỗ trợ.";
+      case 406 -> "Không trả được kiểu dữ liệu này.";
+      case 415 -> "Kiểu nội dung gửi lên không được hỗ trợ.";
+      default ->
+          status.is5xxServerError()
+              ? "Đã có lỗi xảy ra. Hãy thử lại sau."
+              : "Yêu cầu không hợp lệ.";
+    };
   }
 
   @Override

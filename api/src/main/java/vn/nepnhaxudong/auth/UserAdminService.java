@@ -7,21 +7,32 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.nepnhaxudong.audit.AuditAction;
+import vn.nepnhaxudong.audit.AuditService;
 import vn.nepnhaxudong.common.ApiException;
 
-/** Family account management. Every logged-in family member has the same rights. */
+/**
+ * Family account management. Every logged-in family member has the same rights. Every change is
+ * written to the audit log as {@code app_user} with a {@link UserSummary} (never the password hash
+ * or the TOTP secret). No change event is published: accounts are not on the website.
+ */
 @Service
 public class UserAdminService {
 
   private final AppUserRepository users;
   private final PasswordEncoder encoder;
   private final UserSessions userSessions;
+  private final AuditService audit;
 
   public UserAdminService(
-      AppUserRepository users, PasswordEncoder encoder, UserSessions userSessions) {
+      AppUserRepository users,
+      PasswordEncoder encoder,
+      UserSessions userSessions,
+      AuditService audit) {
     this.users = users;
     this.encoder = encoder;
     this.userSessions = userSessions;
+    this.audit = audit;
   }
 
   @Transactional(readOnly = true)
@@ -37,12 +48,15 @@ public class UserAdminService {
     }
     var user =
         AppUser.create(email, request.displayName().trim(), encoder.encode(request.temporaryPassword()), true);
+    UserSummary created;
     try {
-      return UserSummary.of(users.saveAndFlush(user));
+      created = UserSummary.of(users.saveAndFlush(user));
     } catch (DataIntegrityViolationException e) {
       // Another request created the same email between the check and the insert.
       throw emailInUse();
     }
+    audit.record(AppUserAuditedHandler.ENTITY_TYPE, created.id(), AuditAction.CREATE, null, created);
+    return created;
   }
 
   /**
@@ -72,13 +86,18 @@ public class UserAdminService {
     if (target == null) {
       throw notFound();
     }
+    var before = UserSummary.of(target);
     target.setEnabled(false);
+    recordUpdate(before, target);
     userSessions.endAll(targetId);
   }
 
   @Transactional
   public void enable(long targetId) {
-    find(targetId).setEnabled(true);
+    AppUser user = find(targetId);
+    var before = UserSummary.of(user);
+    user.setEnabled(true);
+    recordUpdate(before, user);
   }
 
   /**
@@ -89,13 +108,25 @@ public class UserAdminService {
   @Transactional
   public void resetPassword(long targetId, String temporaryPassword) {
     AppUser user = find(targetId);
+    var before = UserSummary.of(user);
     user.setPasswordHash(encoder.encode(temporaryPassword));
     user.setMustChangePassword(true);
     user.setFailedAttempts(0);
     user.setLockedUntil(null);
     user.setTotpEnabled(false);
     user.setTotpSecret(null);
+    recordUpdate(before, user);
     userSessions.endAll(targetId);
+  }
+
+  /** Writes the audit line of a change of an existing account. */
+  private void recordUpdate(UserSummary before, AppUser after) {
+    audit.record(
+        AppUserAuditedHandler.ENTITY_TYPE,
+        after.getId(),
+        AuditAction.UPDATE,
+        before,
+        UserSummary.of(after));
   }
 
   private AppUser find(long id) {

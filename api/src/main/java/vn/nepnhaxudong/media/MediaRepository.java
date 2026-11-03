@@ -12,8 +12,10 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
   List<Media> findAllByOrderByCreatedAtDescIdDesc(Pageable pageable);
 
   /**
-   * True when a product, a timeline event, a press mention or a story points to the image. The
-   * database also refuses the delete ({@code on delete restrict}); this check gives the message.
+   * True when a product, a timeline event, a press mention or a story points to the image, or a story
+   * body contains it as {@code <img src="/media/path">}. The database also refuses the delete of a linked
+   * row ({@code on delete restrict}); this check gives the message and also covers the story bodies,
+   * which have no foreign key.
    */
   @Query(
       value =
@@ -22,6 +24,11 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
               or exists (select 1 from timeline_event where media_id = :id)
               or exists (select 1 from press_mention where media_id = :id)
               or exists (select 1 from story where cover_media_id = :id)
+              or exists (
+                  select 1
+                  from media m
+                      join story_translation t on position('/media/' || m.path in t.body_html) > 0
+                  where m.id = :id)
           """,
       nativeQuery = true)
   boolean isUsed(@Param("id") long id);

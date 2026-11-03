@@ -15,7 +15,6 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 /**
@@ -56,7 +55,7 @@ public class SecurityConfig {
       LoginService loginService,
       ProblemSecurityHandlers problemHandlers)
       throws Exception {
-    // The plain request handler compares the header with the cookie value.
+    // The handler compares the X-XSRF-TOKEN header (only the header) with the cookie value.
     return http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
         .securityContext(c -> c.securityContextRepository(securityContextRepository))
         // An API must not remember the request of an anonymous user (that would create a session).
@@ -67,7 +66,7 @@ public class SecurityConfig {
         .csrf(
             csrf ->
                 csrf.csrfTokenRepository(csrfTokens)
-                    .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                    .csrfTokenRequestHandler(new HeaderCsrfTokenRequestHandler())
                     .ignoringRequestMatchers(
                         PathPatternRequestMatcher.withDefaults()
                             .matcher(HttpMethod.POST, "/auth/login")))

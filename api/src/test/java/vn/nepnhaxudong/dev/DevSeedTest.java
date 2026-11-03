@@ -182,30 +182,75 @@ class DevSeedTest {
 
   @Test
   @Order(7)
-  void theSeedDoesNothingWhenAProductExists() throws Exception {
+  void aPartThatExistsIsNotCreatedAgainAndTheOtherPartsAre() throws Exception {
     emptyContent();
     jdbc.update("insert into product (sort_order, show_price) values (0, false)");
 
     seed().run(NO_ARGUMENTS);
 
     assertThat(count("product")).isEqualTo(1);
-    assertThat(count("timeline_event")).isZero();
-    assertThat(count("press_mention")).isZero();
-    assertThat(count("story")).isZero();
-    assertThat(count("site_setting")).isZero();
+    assertThat(count("product_translation")).isZero();
+    assertThat(count("timeline_event")).isEqualTo(3);
+    assertThat(count("press_mention")).isEqualTo(2);
+    assertThat(count("story")).isEqualTo(2);
+    assertThat(count("site_setting")).isEqualTo(3);
+  }
+
+  @Test
+  @Order(10)
+  void aDeletedSampleProductComesBackAndNothingElseIsDuplicated() throws Exception {
+    reseed();
+    jdbc.update("delete from product");
+
+    seed().run(NO_ARGUMENTS);
+
+    assertThat(count("product")).isEqualTo(1);
+    assertThat(count("product_translation")).isEqualTo(2);
+    assertThat(count("packaging")).isEqualTo(1);
+    assertThat(count("timeline_event")).isEqualTo(3);
+    assertThat(count("press_mention")).isEqualTo(2);
+    assertThat(count("story")).isEqualTo(2);
+    assertThat(count("site_setting")).isEqualTo(3);
+  }
+
+  @Test
+  @Order(11)
+  void aDeletedStoryAndAMissingSettingComeBackAndAnEditedSettingStays() throws Exception {
+    reseed();
+    jdbc.update(
+        "delete from story where id in (select story_id from story_translation where slug = 'mau-cau-chuyen-mot')");
+    jdbc.update("delete from site_setting where key = 'contact'");
+    jdbc.update(
+        "update site_setting set value = '{\"tagline\":{\"vi\":\"Đã sửa\",\"en\":\"Edited\"}}'::jsonb"
+            + " where key = 'brand'");
+
+    seed().run(NO_ARGUMENTS);
+
+    assertThat(count("story")).isEqualTo(2);
+    assertThat(count("story_translation where slug = 'mau-cau-chuyen-mot'")).isEqualTo(1);
+    assertThat(count("site_setting")).isEqualTo(3);
+    assertThat(
+            jdbc.queryForObject(
+                "select value #>> '{tagline,vi}' from site_setting where key = 'brand'",
+                String.class))
+        .isEqualTo("Đã sửa");
+    assertThat(count("product")).isEqualTo(1);
+    assertThat(count("timeline_event")).isEqualTo(3);
+    assertThat(count("press_mention")).isEqualTo(2);
   }
 
   @Test
   @Order(8)
   void theSeedIsOneTransactionAndLeavesNothingWhenItFails() {
     emptyContent();
-    // The second sample story needs this slug, so the seed fails after it wrote the other content.
+    // The English slug of the second sample story is taken by another story (its Vietnamese slug is
+    // free), so the seed fails after it wrote the other content.
     long storyId =
         jdbc.queryForObject("insert into story (status) values ('DRAFT') returning id", Long.class);
     jdbc.update(
-        "insert into story_translation (story_id, lang, slug, title) values (?, 'vi', ?, 'x')",
+        "insert into story_translation (story_id, lang, slug, title) values (?, 'en', ?, 'x')",
         storyId,
-        "mau-cau-chuyen-hai");
+        "sample-story-two");
 
     assertThatThrownBy(() -> seed().run(NO_ARGUMENTS)).isInstanceOf(ApiException.class);
 

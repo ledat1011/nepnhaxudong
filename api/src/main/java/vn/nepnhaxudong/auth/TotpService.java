@@ -6,9 +6,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriUtils;
+import vn.nepnhaxudong.audit.AuditAction;
+import vn.nepnhaxudong.audit.AuditService;
 import vn.nepnhaxudong.common.ApiException;
 
-/** Switches two-factor login (TOTP) on and off for the logged-in user. */
+/**
+ * Switches two-factor login (TOTP) on and off for the logged-in user. Switching it on or off is
+ * written to the audit log as {@code app_user} (a {@link UserSummary}, never the secret).
+ */
 @Service
 public class TotpService {
 
@@ -17,10 +22,12 @@ public class TotpService {
 
   private final AppUserRepository users;
   private final Clock clock;
+  private final AuditService audit;
 
-  public TotpService(AppUserRepository users, Clock clock) {
+  public TotpService(AppUserRepository users, Clock clock, AuditService audit) {
     this.users = users;
     this.clock = clock;
+    this.audit = audit;
   }
 
   /**
@@ -49,7 +56,9 @@ public class TotpService {
       throw new ApiException(HttpStatus.CONFLICT, "Hãy tạo mã bí mật trước khi bật xác thực 2 lớp.");
     }
     requireValid(user, code);
+    var before = UserSummary.of(user);
     user.setTotpEnabled(true);
+    recordUpdate(before, user);
   }
 
   @Transactional
@@ -59,8 +68,19 @@ public class TotpService {
       throw new ApiException(HttpStatus.CONFLICT, "Xác thực 2 lớp chưa được bật.");
     }
     requireValid(user, code);
+    var before = UserSummary.of(user);
     user.setTotpEnabled(false);
     user.setTotpSecret(null);
+    recordUpdate(before, user);
+  }
+
+  private void recordUpdate(UserSummary before, AppUser after) {
+    audit.record(
+        AppUserAuditedHandler.ENTITY_TYPE,
+        after.getId(),
+        AuditAction.UPDATE,
+        before,
+        UserSummary.of(after));
   }
 
   private void requireValid(AppUser user, String code) {

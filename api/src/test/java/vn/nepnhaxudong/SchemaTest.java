@@ -95,6 +95,29 @@ class SchemaTest {
         .isInstanceOf(DataIntegrityViolationException.class);
   }
 
+  @Test
+  void aPublishedStoryNeedsAPublishDate() {
+    // The accepted rows come first: a refused statement aborts the test transaction.
+    jdbc.update("insert into story (status, published_at) values ('PUBLISHED', now())");
+    jdbc.update("insert into story (status) values ('DRAFT')");
+    assertThatThrownBy(() -> jdbc.update("insert into story (status) values ('PUBLISHED')"))
+        .isInstanceOf(DataIntegrityViolationException.class);
+  }
+
+  @Test
+  void aSettingNeedsAValue() {
+    assertThatThrownBy(() -> jdbc.update("insert into site_setting (key) values ('k')"))
+        .isInstanceOf(DataIntegrityViolationException.class);
+  }
+
+  @Test
+  void theListIndexesExist() {
+    List<String> indexes =
+        jdbc.queryForList(
+            "select indexname from pg_indexes where schemaname = 'public'", String.class);
+    assertThat(indexes).contains("story_list_idx", "audit_log_created_idx");
+  }
+
   private long insertStory() {
     return jdbc.queryForObject(
         "insert into story (status) values ('DRAFT') returning id", Long.class);

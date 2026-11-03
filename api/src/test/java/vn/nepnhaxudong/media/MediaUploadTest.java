@@ -528,6 +528,30 @@ class MediaUploadTest extends AuthTestSupport {
     assertStillUsed(client, id);
   }
 
+  @Test
+  void anImageUsedOnlyInAStoryBodyCannotBeDeleted() {
+    var client = loggedInClient();
+    long used = upload(client, "a.jpg");
+    long free = upload(client, "b.jpg");
+    String usedPath = jdbc.queryForObject("select path from media where id = ?", String.class, used);
+    long storyId = jdbc.queryForObject("insert into story default values returning id", Long.class);
+    jdbc.update(
+        "insert into story_translation (story_id, lang, slug, title, body_html)"
+            + " values (?, 'vi', 'bai', 'Bài', ?)",
+        storyId,
+        "<p>Xem <img src=\"/media/" + usedPath + "\" alt=\"x\"></p>");
+
+    var refused = client.delete("/admin/media/" + used);
+    assertProblem(refused, 409, "Ảnh đang được dùng.");
+    assertThat(count("media")).isEqualTo(2);
+    assertThat(files()).hasSize(2);
+
+    var deleted = client.delete("/admin/media/" + free);
+    assertThat(deleted.getStatusCode().value()).isEqualTo(204);
+    assertThat(count("media")).isEqualTo(1);
+    assertThat(files()).hasSize(1);
+  }
+
   // ---- helpers -------------------------------------------------------------------------------
 
   private void assertStillUsed(ApiClient client, long id) {
