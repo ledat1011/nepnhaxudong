@@ -63,4 +63,33 @@ describe("SiteHeader", () => {
     expect(link).toHaveAttribute("hreflang", "en");
     expect(link).toHaveAttribute("lang", "en");
   });
+
+  it("keeps focusable controls in the order they are drawn", () => {
+    const { container } = renderHeader("0000 000 000");
+    // The closed mobile panel is hidden, so it is not focusable.
+    const controls = Array.from(container.querySelectorAll("a[href], button"))
+      .filter((el) => !el.closest("[hidden]"))
+      .map((el) => el.getAttribute("aria-label") ?? el.textContent);
+    // Small screens draw: logo, language, Zalo, menu button.
+    // Large screens draw: logo, nav links, language, Zalo.
+    expect(controls).toEqual([
+      "Nếp Nhà",
+      "Sản phẩm",
+      "Hành trình",
+      "English",
+      "Zalo",
+      "Mở menu",
+    ]);
+  });
+
+  it("does not reorder elements with CSS order classes", () => {
+    const { container } = renderHeader("0000 000 000");
+    const reordered = Array.from(container.querySelectorAll("[class]")).filter((el) =>
+      el.className
+        .toString()
+        .split(/\s+/)
+        .some((token) => /^(?:[a-z0-9[\]-]+:)*-?order-/.test(token)),
+    );
+    expect(reordered).toEqual([]);
+  });
 });

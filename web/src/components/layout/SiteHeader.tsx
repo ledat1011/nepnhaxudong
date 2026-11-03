@@ -16,7 +16,7 @@ type SiteHeaderProps = {
 };
 
 const LINK_CLASS =
-  "rounded px-2 py-1 font-medium text-earth hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
+  "whitespace-nowrap rounded px-2 py-1 font-medium text-earth md:text-sm lg:text-base hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
 
 export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderProps) {
   const home = homePath(lang);
@@ -36,13 +36,10 @@ export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderP
           className="mr-auto flex shrink-0 items-center gap-2 whitespace-nowrap rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
         >
           <LogoMark className="h-9 w-9" />
-          <span className="font-display text-xl text-earth md:text-2xl">{dict.site.name}</span>
+          <span className="font-display text-xl text-earth max-[419px]:sr-only md:text-2xl">{dict.site.name}</span>
         </Link>
-        <nav aria-label={dict.nav.label} className="order-last md:order-none">
-          <ul className="hidden items-center gap-2 md:flex">{items}</ul>
-          <MobileMenu label={dict.nav.openMenu} closeLabel={dict.nav.closeMenu}>
-            <ul className="flex flex-col gap-1">{items}</ul>
-          </MobileMenu>
+        <nav aria-label={dict.nav.label} className="hidden md:block">
+          <ul className="flex items-center gap-2">{items}</ul>
         </nav>
         <LanguageSwitch lang={lang} alternateHref={alternateHref} labels={dict.language} />
         {zalo !== null && (
@@ -53,6 +50,11 @@ export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderP
             {dict.contact.zalo}
           </a>
         )}
+        <MobileMenu label={dict.nav.openMenu} closeLabel={dict.nav.closeMenu}>
+          <nav aria-label={dict.nav.label}>
+            <ul className="flex flex-col gap-1">{items}</ul>
+          </nav>
+        </MobileMenu>
       </div>
     </header>
   );

@@ -2,10 +2,9 @@ import { LogoMark } from "@/components/brand/LogoMark";
 import type { Contact, Social } from "@/lib/content/types";
 import { telHref, zaloHref } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
-import type { Lang } from "@/lib/i18n/langs";
 
 type SiteFooterProps = {
-  lang: Lang;
+  year?: number;
   dict: Dictionary;
   contact: Contact;
   social: Social;
@@ -64,7 +63,12 @@ function contactRows(contact: Contact, dict: Dictionary): ContactRow[] {
   return rows.filter((row): row is ContactRow => row !== null);
 }
 
-export function SiteFooter({ dict, contact, social }: SiteFooterProps) {
+export function SiteFooter({
+  dict,
+  contact,
+  social,
+  year = new Date().getFullYear(),
+}: SiteFooterProps) {
   const rows = contactRows(contact, dict);
   const networks = SOCIAL_NETWORKS.flatMap(({ key, name }) => {
     const url = social[key];
@@ -116,7 +120,7 @@ export function SiteFooter({ dict, contact, social }: SiteFooterProps) {
         </div>
       </div>
       <p className="border-t border-coat px-4 py-4 text-center text-sm">
-        {`${dict.footer.copyright} © ${new Date().getFullYear()} ${dict.site.name}`}
+        {`${dict.footer.copyright} © ${year} ${dict.site.name}`}
       </p>
     </footer>
   );

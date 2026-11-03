@@ -21,7 +21,7 @@ const SOCIAL: Social = {
 
 function renderFooter(contact: Contact = CONTACT, social: Social = SOCIAL) {
   return render(
-    <SiteFooter lang="vi" dict={getDictionary("vi")} contact={contact} social={social} />,
+    <SiteFooter dict={getDictionary("vi")} contact={contact} social={social} year={2030} />,
   );
 }
 
@@ -55,8 +55,13 @@ describe("SiteFooter", () => {
     expect(screen.queryByText("[MẪU] Địa chỉ")).not.toBeInTheDocument();
   });
 
-  it("shows the copyright with the current year", () => {
+  it("shows the copyright with the given year", () => {
     renderFooter();
+    expect(screen.getByText("Bản quyền © 2030 Nếp Nhà")).toBeInTheDocument();
+  });
+
+  it("uses the current year by default", () => {
+    render(<SiteFooter dict={getDictionary("vi")} contact={CONTACT} social={SOCIAL} />);
     const year = new Date().getFullYear();
     expect(screen.getByText(`Bản quyền © ${year} Nếp Nhà`)).toBeInTheDocument();
   });

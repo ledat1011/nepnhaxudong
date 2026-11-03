@@ -1,19 +1,21 @@
 "use client";
 
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { homePath } from "@/lib/i18n/routes";
 import { LANGS } from "@/lib/i18n/langs";
+import { homePath } from "@/lib/i18n/routes";
 
-// The error boundary cannot know the language for sure, so both are shown.
+// The error boundary cannot know the language for sure, so both are shown,
+// each in an element with its own lang attribute.
 // The error itself is never shown: its message may contain internal details.
 export default function LangError({ retry }: { retry: () => void }) {
   return (
     <main id="noi-dung" className="mx-auto max-w-xl px-4 py-24 text-center">
-      {LANGS.map((lang) => {
+      {LANGS.map((lang, index) => {
         const { error } = getDictionary(lang);
+        const Heading = index === 0 ? "h1" : "h2";
         return (
           <section key={lang} lang={lang} className="mb-8">
-            <h1 className="mb-2 font-display text-3xl">{error.title}</h1>
+            <Heading className="mb-2 font-display text-3xl">{error.title}</Heading>
             <p>{error.message}</p>
           </section>
         );
@@ -23,7 +25,17 @@ export default function LangError({ retry }: { retry: () => void }) {
         onClick={() => retry()}
         className="rounded-full bg-coat px-6 py-2 font-bold text-rice hover:bg-earth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
       >
-        {LANGS.map((lang) => getDictionary(lang).error.retry).join(" / ")}
+        {LANGS.map((lang, index) => (
+          <span key={lang}>
+            {index > 0 && (
+              <>
+                {" "}
+                <span aria-hidden="true">/</span>{" "}
+              </>
+            )}
+            <span lang={lang}>{getDictionary(lang).error.retry}</span>
+          </span>
+        ))}
       </button>
       <p className="mt-6 flex justify-center gap-4">
         {LANGS.map((lang) => (
