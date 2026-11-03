@@ -8,6 +8,7 @@ Chạy song song với session phần C (nhánh `feat/phan-c-nen-tang`). Không 
 - Chủ dự án duyệt plan phần A, chọn cách thực hiện Subagent-driven → mỗi task một subagent làm + một subagent review.
 
 - Chủ dự án hỏi vì sao làm logo lại tốn tiền, rồi nói: "bạn tự làm, không dùng Nano Banana của Google" → Claude tự vẽ mascot và logo bằng SVG; không gọi Gemini, không dùng Recraft, không tốn phí API.
+- Xem 6 ý tưởng, chủ dự án nói: "một người phụ nữ trung niên ~50 tuổi, với ôm một bó lúa" → lấy bản 1 (nhìn thẳng, ~50 tuổi) làm gốc, đổi tư thế thành hai tay ôm bó lúa (bàn tay nắm phía trước thân lúa), ngọn lúa vẫn cong qua vai.
 
 ## Quyết định
 - Không dùng Nano Banana / Recraft (khác quy trình ở spec 2.3) — chủ dự án quyết định; Claude vẽ SVG trực tiếp, có nhóm `<g id>` ngay từ đầu, nên không cần bước chuyển ảnh sang SVG.

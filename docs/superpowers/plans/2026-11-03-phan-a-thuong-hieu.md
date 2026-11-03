@@ -134,7 +134,7 @@ brand/
 
 **Interfaces:**
 - Consumes: concept được chọn (Task 3), `svgFacts`, `palette()`.
-- Produces: `mascot-layered.svg` với `viewBox="0 0 512 512"`, thứ tự vẽ `body` → `rice` → `head` (đầu đè lên cổ); `eyes` (nếu có) nằm trong `head`. `head` và `rice` có `data-pivot="x y"` (toạ độ viewBox, cho GSAP `svgOrigin`) và `style="transform-box: view-box; transform-origin: Xpx Ypx"` cùng giá trị.
+- Produces: `mascot-layered.svg` với `viewBox="0 0 512 512"`, thứ tự vẽ `body` → `rice` → `hands` → `head` (bàn tay nắm phía trước thân lúa, đứng yên; đầu đè lên cổ); `eyes` (nếu có) nằm trong `head`. Bốn nhóm là con trực tiếp của `<svg>`. Gốc: bản 1, tư thế hai tay ôm bó lúa (chủ dự án chọn: "phụ nữ trung niên ~50 tuổi, ôm một bó lúa"). `head` và `rice` có `data-pivot="x y"` (toạ độ viewBox, cho GSAP `svgOrigin`) và `style="transform-box: view-box; transform-origin: Xpx Ypx"` cùng giá trị.
 - Produces: `contentBBox(svgString, id?) -> {x, y, width, height}` trong `lib/svg-check.mjs` (resvg; có `id` thì đo riêng nhóm đó).
 
 - [ ] **Step 1: Viết test (thất bại)** cho `mascot-layered.svg`:
