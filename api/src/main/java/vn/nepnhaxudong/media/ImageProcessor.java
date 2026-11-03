@@ -1,26 +1,35 @@
 package vn.nepnhaxudong.media;
 
+import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
+import java.awt.image.DataBuffer;
+import java.awt.image.SampleModel;
+import java.awt.image.SinglePixelPackedSampleModel;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.time.Duration;
 import java.util.Iterator;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
-import javax.imageio.stream.MemoryCacheImageInputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,7 +39,8 @@ import org.springframework.stereotype.Component;
  *
  * <p>The header is read first. A decompression bomb (a small file with a huge picture inside) is
  * refused before any pixel is decoded, and a big but allowed picture is decoded with subsampling,
- * so the heap use stays bounded: see {@link #read}.
+ * so the heap use stays bounded: see {@link #read}. At most {@link #MAX_PARALLEL} images are
+ * processed at the same time; another request waits for a permit and then gets 503.
  */
 @Component
 public class ImageProcessor {
@@ -51,7 +61,40 @@ public class ImageProcessor {
   static final String UNREADABLE_MESSAGE =
       "Không đọc được ảnh. Hãy chọn ảnh JPEG, PNG hoặc WebP khác.";
 
+  static final String ANIMATED_MESSAGE = "Chỉ nhận ảnh tĩnh JPEG, PNG hoặc WebP.";
+
+  /** The decoded picture (before the final scaling) may use at most this much heap. */
+  static final long DECODE_BUDGET_BYTES = 64L * 1024 * 1024;
+
+  /** Used when the reader does not tell its pixel type: 4 bytes, like an ARGB picture. */
+  static final int FALLBACK_BYTES_PER_PIXEL = 4;
+
+  /** The most images that are read, redrawn and written at the same time. */
+  static final int MAX_PARALLEL = 2;
+
   private static final String TWELVEMONKEYS_PACKAGE = "com.twelvemonkeys.";
+  private static final Logger LOG = LoggerFactory.getLogger(ImageProcessor.class);
+
+  static {
+    // Finds the reader plugins on the class path of the running application once.
+    ImageIO.scanForPlugins();
+  }
+
+  private final Semaphore permits = new Semaphore(MAX_PARALLEL, true);
+  private final Duration wait;
+
+  /**
+   * @param wait how long a request waits for a free processing permit before it gets 503
+   *     ({@code app.media.processing-wait})
+   */
+  public ImageProcessor(@Value("${app.media.processing-wait:30s}") Duration wait) {
+    this.wait = wait;
+    // A packaged jar without imageio-webp would refuse every WebP upload. That is not worth
+    // stopping the whole site for (JPEG and PNG still work), so it is a WARN that is easy to find.
+    if (!ImageIO.getImageReadersByFormatName(ImageFormat.WEBP.readerName()).hasNext()) {
+      LOG.warn("No WebP image reader is installed: WebP uploads will be refused");
+    }
+  }
 
   /**
    * Reads, turns, shrinks and writes the image. JPEG and WebP are written as JPEG (quality 0.85, a
@@ -60,6 +103,26 @@ public class ImageProcessor {
    * @throws UnsupportedImageException when the file is not an accepted image (answered as 415)
    */
   public ProcessedImage process(InputStream in) {
+    acquirePermit();
+    try {
+      return processWithPermit(in);
+    } finally {
+      permits.release();
+    }
+  }
+
+  private void acquirePermit() {
+    try {
+      if (!permits.tryAcquire(wait.toMillis(), TimeUnit.MILLISECONDS)) {
+        throw new ImageProcessingBusyException();
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new ImageProcessingBusyException();
+    }
+  }
+
+  private ProcessedImage processWithPermit(InputStream in) {
     byte[] bytes = readAll(in);
     ImageFormat format =
         ImageFormat.detect(bytes)
@@ -89,27 +152,25 @@ public class ImageProcessor {
 
   /**
    * Decodes the first picture of the file. The size is taken from the header and checked before the
-   * pixels are decoded. When the picture is more than twice as long as {@link #MAX_EDGE_PX}, only
-   * every n-th pixel of every n-th row is decoded (n is chosen so that the long edge stays at
-   * least {@link #MAX_EDGE_PX}); the final smooth scaling then has a factor below 2. A picture of
-   * the largest allowed size is therefore decoded at about 1/9 of its memory.
+   * pixels are decoded; for WebP the size comes from the RIFF chunks ({@link WebpHeader}), because
+   * the decoder allocates the size of the bitstream, which can differ from the declared canvas.
+   * When the picture is big, only every n-th pixel of every n-th row is decoded: n is the larger of
+   * "the long edge stays at least {@link #MAX_EDGE_PX}" and "the decoded pixels fit into {@link
+   * #DECODE_BUDGET_BYTES}" (see {@link #subsamplingStep}). The final smooth scaling then has a
+   * factor of about 2 or less.
    */
   private static BufferedImage read(byte[] bytes, ImageFormat format) {
+    if (format == ImageFormat.WEBP) {
+      checkSize(WebpHeader.read(bytes));
+    }
     ImageReader reader = readerFor(format);
-    try (ImageInputStream input =
-        new MemoryCacheImageInputStream(new ByteArrayInputStream(bytes))) {
+    try (ImageInputStream input = new ByteArrayImageInputStream(bytes)) {
       reader.setInput(input, true, true);
       int width = reader.getWidth(0);
       int height = reader.getHeight(0);
-      if (width < 1
-          || height < 1
-          || width > MAX_SIDE_PX
-          || height > MAX_SIDE_PX
-          || (long) width * height > MAX_PIXELS) {
-        throw new UnsupportedImageException(TOO_LARGE_MESSAGE);
-      }
+      checkSize(new ImageSize(width, height));
       ImageReadParam param = reader.getDefaultReadParam();
-      int step = Math.max(1, Math.max(width, height) / MAX_EDGE_PX);
+      int step = subsamplingStep(width, height, bytesPerPixel(reader));
       if (step > 1) {
         param.setSourceSubsampling(step, step, 0, 0);
       }
@@ -121,6 +182,49 @@ public class ImageProcessor {
     } finally {
       reader.dispose();
     }
+  }
+
+  private static void checkSize(ImageSize size) {
+    if (size.width() < 1
+        || size.height() < 1
+        || size.width() > MAX_SIDE_PX
+        || size.height() > MAX_SIDE_PX
+        || (long) size.width() * size.height() > MAX_PIXELS) {
+      throw new UnsupportedImageException(TOO_LARGE_MESSAGE);
+    }
+  }
+
+  /**
+   * The subsampling step: at least the step that keeps the long edge at {@link #MAX_EDGE_PX} or
+   * more, and raised until the decoded picture fits into {@link #DECODE_BUDGET_BYTES}. A 16-bit
+   * RGBA picture needs 8 bytes per pixel, so it can need a bigger step than an 8-bit one. In these
+   * rare cases the decoded long edge may be a little under {@link #MAX_EDGE_PX}.
+   */
+  static int subsamplingStep(int width, int height, int bytesPerPixel) {
+    int step = Math.max(1, Math.max(width, height) / MAX_EDGE_PX);
+    while ((long) Math.ceilDiv(width, step) * Math.ceilDiv(height, step) * bytesPerPixel
+        > DECODE_BUDGET_BYTES) {
+      step++;
+    }
+    return step;
+  }
+
+  /** The pixel type that the reader decodes into by default (its first image type). */
+  private static int bytesPerPixel(ImageReader reader) throws IOException {
+    Iterator<ImageTypeSpecifier> types = reader.getImageTypes(0);
+    return types.hasNext()
+        ? bytesPerPixel(types.next().getSampleModel())
+        : FALLBACK_BYTES_PER_PIXEL;
+  }
+
+  /**
+   * Bytes of one pixel in memory: one data element for a packed pixel, otherwise one element per
+   * band (a band is a channel). A 1-bit picture counts as 1 byte, which is on the safe side.
+   */
+  static int bytesPerPixel(SampleModel model) {
+    int bytesPerElement = Math.max(1, DataBuffer.getDataTypeSize(model.getDataType()) / Byte.SIZE);
+    int elements = model instanceof SinglePixelPackedSampleModel ? 1 : model.getNumBands();
+    return elements * bytesPerElement;
   }
 
   /** The TwelveMonkeys reader when there is one: it also reads CMYK JPEGs. */
@@ -137,7 +241,9 @@ public class ImageProcessor {
       }
     }
     if (first == null) {
-      throw new IllegalStateException("No image reader for " + format);
+      // The plugin is missing from the class path: the upload is refused like an unknown format.
+      LOG.warn("No image reader is installed for {}", format.readerName());
+      throw new UnsupportedImageException(TYPE_MESSAGE);
     }
     return first;
   }

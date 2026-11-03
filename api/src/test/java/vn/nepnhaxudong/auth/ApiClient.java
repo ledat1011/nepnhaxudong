@@ -55,6 +55,11 @@ public final class ApiClient {
     return send(HttpMethod.POST, path, body);
   }
 
+  /** Posts bytes with the given Content-Type header as they are, for requests that are not valid. */
+  public ResponseEntity<String> postRaw(String path, String contentType, byte[] body) {
+    return send(HttpMethod.POST, path, body, MediaType.parseMediaType(contentType));
+  }
+
   public ResponseEntity<String> put(String path, Object body) {
     return send(HttpMethod.PUT, path, body);
   }
@@ -68,9 +73,17 @@ public final class ApiClient {
   }
 
   private ResponseEntity<String> send(HttpMethod method, String path, Object body) {
-    var headers = new HttpHeaders();
-    headers.setContentType(
+    return send(
+        method,
+        path,
+        body,
         body instanceof MultiValueMap ? MediaType.MULTIPART_FORM_DATA : MediaType.APPLICATION_JSON);
+  }
+
+  private ResponseEntity<String> send(
+      HttpMethod method, String path, Object body, MediaType contentType) {
+    var headers = new HttpHeaders();
+    headers.setContentType(contentType);
     if (!cookies.isEmpty()) {
       headers.set(
           HttpHeaders.COOKIE,

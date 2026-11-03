@@ -6,7 +6,7 @@ import com.twelvemonkeys.imageio.metadata.exif.EXIFReader;
 import com.twelvemonkeys.imageio.metadata.jpeg.JPEG;
 import com.twelvemonkeys.imageio.metadata.jpeg.JPEGSegment;
 import com.twelvemonkeys.imageio.metadata.jpeg.JPEGSegmentUtil;
-import java.io.ByteArrayInputStream;
+import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
 import java.io.InputStream;
 import java.util.List;
 import javax.imageio.stream.ImageInputStream;
@@ -31,8 +31,7 @@ final class ExifOrientation {
 
   /** Returns 1 to 8 (the EXIF values), or {@link #NORMAL} when there is no usable tag. */
   static int read(byte[] jpeg) {
-    try (ImageInputStream input =
-        new MemoryCacheImageInputStream(new ByteArrayInputStream(jpeg))) {
+    try (ImageInputStream input = new ByteArrayImageInputStream(jpeg)) {
       List<JPEGSegment> segments = JPEGSegmentUtil.readSegments(input, JPEG.APP1, "Exif");
       if (segments.isEmpty()) {
         return NORMAL;

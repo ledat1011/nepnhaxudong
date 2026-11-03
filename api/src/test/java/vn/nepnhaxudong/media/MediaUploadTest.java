@@ -16,7 +16,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -38,8 +37,7 @@ class MediaUploadTest extends AuthTestSupport {
   @Autowired JdbcTemplate jdbc;
   @Autowired MediaRepository mediaRepository;
 
-  @Value("${app.media.dir}")
-  Path mediaDir;
+  Path mediaDir = Path.of(MEDIA_DIR);
 
   @BeforeEach
   void emptyTablesAndFolder() throws IOException {
@@ -245,6 +243,33 @@ class MediaUploadTest extends AuthTestSupport {
   }
 
   @Test
+  void aMultipartBodyWithoutABoundaryIsRefusedWith400() {
+    var client = loggedInClient();
+
+    var response = client.postRaw("/admin/media", "multipart/form-data", new byte[] {1, 2, 3});
+
+    assertProblem(response, 400, "Nội dung gửi lên không đọc được.");
+    assertNothingStored();
+  }
+
+  @Test
+  void aMultipartBodyThatIsCutShortIsRefusedWith400() {
+    var client = loggedInClient();
+    String cut =
+        "--xyz\r\nContent-Disposition: form-data; name=\"file\"; filename=\"a.jpg\"\r\n"
+            + "Content-Type: image/jpeg\r\n\r\nabc";
+
+    var response =
+        client.postRaw(
+            "/admin/media",
+            "multipart/form-data; boundary=xyz",
+            cut.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+    assertProblem(response, 400, "Nội dung gửi lên không đọc được.");
+    assertNothingStored();
+  }
+
+  @Test
   void aFileOfMoreThanFifteenMegabytesGetsA413() {
     var client = loggedInClient();
     byte[] big = new byte[16 * 1024 * 1024];
@@ -327,7 +352,7 @@ class MediaUploadTest extends AuthTestSupport {
 
     var response = client.post("/admin/audit/" + deleteLine + "/restore", Map.of());
 
-    assertProblem(response, 409, "Không thể khôi phục loại nội dung này.");
+    assertProblem(response, 409, "Ảnh đã xóa không khôi phục được. Hãy tải ảnh lên lại.");
     assertThat(count("media")).isZero();
   }
 

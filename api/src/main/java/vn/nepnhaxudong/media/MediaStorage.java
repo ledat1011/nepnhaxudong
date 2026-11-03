@@ -10,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import vn.nepnhaxudong.auth.AfterCommitAction;
+import vn.nepnhaxudong.common.AfterCommitAction;
+import vn.nepnhaxudong.common.AfterRollbackAction;
 
 /**
  * The image files in the media folder ({@code app.media.dir}). A file is addressed by its relative
@@ -68,8 +68,7 @@ public class MediaStorage {
    */
   public void deleteOnRollback(String relativePath) {
     Path file = resolve(relativePath);
-    TransactionSynchronizationManager.registerSynchronization(
-        new DeleteFileOnRollback(() -> deleteQuietly(file)));
+    AfterRollbackAction.run(() -> deleteQuietly(file));
   }
 
   /** The absolute path of a stored file; it must stay inside the media folder. */

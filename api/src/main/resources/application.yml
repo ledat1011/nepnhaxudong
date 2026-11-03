@@ -45,6 +45,8 @@ app:
   media:
     # Folder of the uploaded images. Caddy serves it as /media/ in production.
     dir: ${MEDIA_DIR:./data/media}
+    # At most 2 images are processed at the same time; a third request waits this long, then gets 503.
+    processing-wait: 30s
 
 # First admin, created at startup only when the app_user table is empty.
 bootstrap:

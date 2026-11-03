@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
@@ -36,6 +37,19 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     LOG.info("Request refused: {} {}", e.getStatus().value(), e.getMessage());
     return ResponseEntity.status(e.getStatus())
         .body(ProblemDetail.forStatusAndDetail(e.getStatus(), e.getMessage()));
+  }
+
+  /**
+   * A multipart body that cannot be parsed: no boundary, or the body ends too early. (A body above
+   * the size limit has its own handler below and answers 413.)
+   */
+  @ExceptionHandler(MultipartException.class)
+  ResponseEntity<ProblemDetail> handleMultipart(MultipartException e) {
+    LOG.warn("A multipart request could not be read: {}", e.toString());
+    return ResponseEntity.badRequest()
+        .body(
+            ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Nội dung gửi lên không đọc được."));
   }
 
   /**

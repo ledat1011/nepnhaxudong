@@ -1,4 +1,4 @@
-package vn.nepnhaxudong.auth;
+package vn.nepnhaxudong.common;
 
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;

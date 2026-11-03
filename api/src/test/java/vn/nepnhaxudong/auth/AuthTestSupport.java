@@ -5,6 +5,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;
@@ -13,6 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import vn.nepnhaxudong.MutableClock;
 import vn.nepnhaxudong.TestClockConfig;
 import vn.nepnhaxudong.TestcontainersConfig;
@@ -27,13 +30,23 @@ import vn.nepnhaxudong.TestcontainersConfig;
       "bootstrap.admin.email=Admin@Example.com",
       "bootstrap.admin.password=first-password-1",
       // The test client talks plain HTTP, so the session cookie must not be Secure here.
-      "server.servlet.session.cookie.secure=false",
-      // Uploaded test images go to the system temp folder, never into the repository.
-      "app.media.dir=${java.io.tmpdir}/nepnha-test-media"
+      "server.servlet.session.cookie.secure=false"
     })
 @AutoConfigureTestRestTemplate
 @Import({TestcontainersConfig.class, TestClockConfig.class})
 public abstract class AuthTestSupport {
+
+  /**
+   * Uploaded test images go to the system temp folder, never into the repository. The folder name
+   * has a random part, so builds that run at the same time do not share it.
+   */
+  protected static final String MEDIA_DIR =
+      System.getProperty("java.io.tmpdir") + "/nepnha-test-media-" + UUID.randomUUID();
+
+  @DynamicPropertySource
+  static void mediaFolder(DynamicPropertyRegistry registry) {
+    registry.add("app.media.dir", () -> MEDIA_DIR);
+  }
 
   static final String LOGIN_ERROR = "Email hoặc mật khẩu không đúng.";
   static final String LOCKED = "Tài khoản tạm khóa 15 phút vì đăng nhập sai nhiều lần.";

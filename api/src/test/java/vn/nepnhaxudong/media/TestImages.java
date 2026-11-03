@@ -27,6 +27,79 @@ final class TestImages {
   static final String WEBP_1X1_ALPHA =
       "UklGRkoAAABXRUJQVlA4WAoAAAAQAAAAAAAAAAAAQUxQSAwAAAARBxAR/Q9ERP8DAABWUDggGAAAABQBAJ0BKgEAAQAAAP4AAA3AAP7mtQAAAA==";
 
+  /** A RIFF/WebP file made of the given chunks (see {@link #webpChunk}). */
+  static byte[] webpFile(byte[]... chunks) {
+    var body = new ByteArrayOutputStream();
+    body.writeBytes("WEBP".getBytes(StandardCharsets.US_ASCII));
+    for (byte[] chunk : chunks) {
+      body.writeBytes(chunk);
+    }
+    var out = new ByteArrayOutputStream();
+    out.writeBytes("RIFF".getBytes(StandardCharsets.US_ASCII));
+    out.writeBytes(littleEndian(body.size()));
+    out.writeBytes(body.toByteArray());
+    return out.toByteArray();
+  }
+
+  /** One RIFF chunk: type, little-endian size, data, and a pad byte when the size is odd. */
+  static byte[] webpChunk(String type, byte[] data) {
+    var out = new ByteArrayOutputStream();
+    out.writeBytes(type.getBytes(StandardCharsets.US_ASCII));
+    out.writeBytes(littleEndian(data.length));
+    out.writeBytes(data);
+    if (data.length % 2 == 1) {
+      out.write(0);
+    }
+    return out.toByteArray();
+  }
+
+  /** The VP8X chunk data: flags, and the canvas size (stored as size - 1 in 24 bits). */
+  static byte[] vp8xData(int width, int height, boolean animated) {
+    byte[] data = new byte[10];
+    data[0] = (byte) (animated ? 0x02 : 0x00);
+    int w = width - 1;
+    int h = height - 1;
+    data[4] = (byte) w;
+    data[5] = (byte) (w >> 8);
+    data[6] = (byte) (w >> 16);
+    data[7] = (byte) h;
+    data[8] = (byte) (h >> 8);
+    data[9] = (byte) (h >> 16);
+    return data;
+  }
+
+  /** The VP8L chunk data: signature 0x2F and the size minus 1 in two 14-bit fields. */
+  static byte[] vp8lData(int width, int height) {
+    byte[] data = new byte[5 + 64];
+    data[0] = 0x2F;
+    long bits = (long) (width - 1) | ((long) (height - 1) << 14);
+    for (int i = 0; i < 4; i++) {
+      data[1 + i] = (byte) (bits >> (8 * i));
+    }
+    return data;
+  }
+
+  /** The VP8 chunk data: frame tag, start code 9D 01 2A, and the size in two 14-bit fields. */
+  static byte[] vp8Data(int width, int height) {
+    byte[] data = new byte[10 + 64];
+    int tag = (1 << 4) | (64 << 5);
+    data[0] = (byte) tag;
+    data[1] = (byte) (tag >> 8);
+    data[2] = (byte) (tag >> 16);
+    data[3] = (byte) 0x9D;
+    data[4] = 0x01;
+    data[5] = 0x2A;
+    data[6] = (byte) width;
+    data[7] = (byte) ((width >> 8) & 0x3F);
+    data[8] = (byte) height;
+    data[9] = (byte) ((height >> 8) & 0x3F);
+    return data;
+  }
+
+  private static byte[] littleEndian(int value) {
+    return ByteBuffer.allocate(4).order(java.nio.ByteOrder.LITTLE_ENDIAN).putInt(value).array();
+  }
+
   /** The first 12 bytes of a HEIC file: box size, "ftyp", brand "heic". */
   static final byte[] HEIC =
       new byte[] {0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63};
