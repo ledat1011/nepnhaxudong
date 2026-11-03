@@ -2,3 +2,9 @@
 spring:
   datasource:
     password: ${DB_PASSWORD:nepnha-local}
+server:
+  servlet:
+    session:
+      cookie:
+        # Local development uses plain HTTP, and a Secure cookie would not be sent.
+        secure: false

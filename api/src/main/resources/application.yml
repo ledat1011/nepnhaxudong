@@ -1,6 +1,14 @@
 server:
   servlet:
     context-path: /api
+    session:
+      cookie:
+        name: NEPNHA_SESSION
+        http-only: true
+        # Secure by default; profile "dev" turns it off for plain HTTP on localhost.
+        secure: true
+        same-site: lax
+        max-age: 30d
 
 spring:
   datasource:
@@ -13,6 +21,21 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  session:
+    timeout: 30d
+    jdbc:
+      # Flyway (V2__spring_session.sql) owns the session tables.
+      initialize-schema: never
+  autoconfigure:
+    # Users live in app_user and log in through AuthController; Spring Boot must not create
+    # its default in-memory user with a generated password.
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+
+# First admin, created at startup only when the app_user table is empty.
+bootstrap:
+  admin:
+    email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
 
 management:
   endpoints:
