@@ -34,9 +34,6 @@ const ICON_DISC = color('vang-rom');
 // The hat is Vàng rơm like the disc; in the icon it is lifted to Trắng gạo so it stands off the disc.
 const ICON_DISC_LIFT = color('trang-gao');
 
-const WIDE_STROKE = 10;
-const FAR = 100000;
-
 const num = (value) => String(Number(value.toFixed(1)));
 
 function loadFont(file) {
@@ -76,9 +73,9 @@ function paintedBox(content) {
   return visibleBBox(`<svg xmlns="${XMLNS}" viewBox="${draft.join(' ')}">${content}</svg>`);
 }
 
-// Wraps the content in a root <svg> whose viewBox is the painted box plus MARGIN of its longer side
-// (square = true makes the viewBox square around the same center).
-function frame(content, square = false) {
+// viewBox = the painted box plus MARGIN of its longer side (square = true makes it square around
+// the same center).
+function frameViewBox(content, square = false) {
   const box = paintedBox(content);
   const pad = MARGIN * Math.max(box.width, box.height);
   let [x, y, width, height] = [box.x - pad, box.y - pad, box.width + 2 * pad, box.height + 2 * pad];
@@ -86,8 +83,11 @@ function frame(content, square = false) {
     const side = Math.max(width, height);
     [x, y, width, height] = [x - (side - width) / 2, y - (side - height) / 2, side, side];
   }
-  return `<svg xmlns="${XMLNS}" viewBox="${[x, y, width, height].map(num).join(' ')}">\n${content}</svg>\n`;
+  return [x, y, width, height].map(num).join(' ');
 }
+
+const wrap = (viewBox, content) => `<svg xmlns="${XMLNS}" viewBox="${viewBox}">\n${content}</svg>\n`;
+const frame = (content, square = false) => wrap(frameViewBox(content, square), content);
 
 const elements = (node) => node.children.filter((child) => child.type === 'element');
 const byId = (node, id) => {
@@ -178,125 +178,83 @@ function iconLogo(mascot) {
 
 // ---------- mono ----------
 
-function ellipsePath(cx, cy, rx, ry) {
-  return `M${num(cx - rx)} ${num(cy)}A${num(rx)} ${num(ry)} 0 1 0 ${num(cx + rx)} ${num(cy)}A${num(rx)} ${num(ry)} 0 1 0 ${num(cx - rx)} ${num(cy)}Z`;
+const INK = '#FFFFFF';
+const PAPER = '#000000';
+const MONO_SHAPES = new Set(['g', 'defs', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'use']);
+// Kept as they are: they only shape the geometry, which the mask copy keeps unchanged.
+const MONO_GEOMETRY = new Set([
+  'd', 'x', 'y', 'width', 'height', 'rx', 'ry', 'cx', 'cy', 'r', 'x1', 'y1', 'x2', 'y2', 'points',
+  'transform', 'href', 'xlink:href', 'stroke-width', 'stroke-linejoin', 'stroke-linecap',
+  'stroke-miterlimit', 'stroke-dasharray', 'stroke-dashoffset', 'fill-rule', 'clip-rule',
+]);
+// Dropped: they only serve the animation of the color mascot.
+const MONO_ANIMATION = new Set(['id', 'data-pivot', 'style']);
+const MONO_OPACITY = new Set(['opacity', 'fill-opacity', 'stroke-opacity']);
+const ANIMATION_STYLE =/^\s*(transform-box|transform-origin)\s*:/;
+
+function monoColor(value, where) {
+  if (value === 'none') return value;
+  const hex = value.toLowerCase();
+  if (hex === color('nau-dat').toLowerCase()) return INK;
+  if (Object.values(tokens.color).some((c) => c.value.toLowerCase() === hex)) return PAPER;
+  throw new Error(`logo-mono: ${where} has color "${value}", not a palette color`);
 }
 
-function rectPath({ x = '0', y = '0', width, height, rx, ry }) {
-  const [x0, y0, w, h] = [x, y, width, height].map(Number);
-  const rX = Math.min(Number(rx ?? ry ?? 0), w / 2);
-  const rY = Math.min(Number(ry ?? rx ?? 0), h / 2);
-  if (rX === 0 || rY === 0) return `M${num(x0)} ${num(y0)}H${num(x0 + w)}V${num(y0 + h)}H${num(x0)}Z`;
-  const arc = (ex, ey) => `A${num(rX)} ${num(rY)} 0 0 1 ${num(ex)} ${num(ey)}`;
+// Copy of one mascot node for the mask: Nâu đất becomes ink (white), every other palette color
+// becomes paper (black), geometry stays. Anything else throws, so a redrawn mascot cannot lose
+// something silently: opacity has no one-color form, and unknown attributes or elements may paint.
+function monoNode(node, keepIds) {
+  const where = `<${node.name}${node.attributes.id ? ` id="${node.attributes.id}"` : ''}>`;
+  if (!MONO_SHAPES.has(node.name)) throw new Error(`logo-mono: unsupported element ${where}`);
+  const attributes = {};
+  for (const [key, value] of Object.entries(node.attributes)) {
+    if (key === 'fill' || key === 'stroke') attributes[key] = monoColor(value, `${where} ${key}`);
+    else if (MONO_GEOMETRY.has(key)) attributes[key] = value;
+    else if (key === 'id' && keepIds) attributes[key] = value;
+    else if (key === 'style') {
+      const unknown = value.split(';').filter((decl) => decl.trim() !== '' && !ANIMATION_STYLE.test(decl));
+      if (unknown.length > 0) throw new Error(`logo-mono: ${where} style "${unknown.join(';')}" is not handled`);
+    } else if (MONO_OPACITY.has(key)) {
+      throw new Error(`logo-mono: ${where} ${key}="${value}" has no one-color form`);
+    } else if (!MONO_ANIMATION.has(key)) throw new Error(`logo-mono: ${where} attribute ${key} is not handled`);
+  }
+  const children = node.children.map((child) => {
+    if (child.type === 'element') return monoNode(child, keepIds || node.name === 'defs');
+    if (child.type === 'text' && child.value.trim() !== '') throw new Error(`logo-mono: text inside ${where}`);
+    return null;
+  });
+  return { ...node, attributes, children: children.filter((child) => child !== null) };
+}
+
+// One-color mascot. The mask repaints the mascot in paint order with two tones, so whatever a color
+// shape covers in the color mascot stays covered: the hair stays solid around an empty face, and
+// lines under the hands, grains and sleeves stay hidden. One Nâu đất rectangle shows through the
+// ink. The mask region is the 512 x 512 canvas, which also cuts the bust at its bottom edge.
+export function monoMascot(source) {
+  const mascot = parseSync(source);
+  const { xmlns, viewBox, ...rootPaint } = mascot.attributes;
+  const root = monoNode({ ...mascot, name: 'g', attributes: rootPaint }, false);
+  const [, , width, height] = viewBox.trim().split(/[\s,]+/);
   return (
-    `M${num(x0 + rX)} ${num(y0)}H${num(x0 + w - rX)}${arc(x0 + w, y0 + rY)}V${num(y0 + h - rY)}` +
-    `${arc(x0 + w - rX, y0 + h)}H${num(x0 + rX)}${arc(x0, y0 + h - rY)}V${num(y0 + rY)}${arc(x0 + rX, y0)}Z`
-  );
-}
-
-// Outline path of a node's fill area, in the node's own user space.
-function fillGeometry(node, mascot) {
-  const a = node.attributes;
-  switch (node.name) {
-    case 'path':
-      return a.d;
-    case 'rect':
-      return rectPath(a);
-    case 'circle':
-      return ellipsePath(Number(a.cx ?? 0), Number(a.cy ?? 0), Number(a.r), Number(a.r));
-    case 'ellipse':
-      return ellipsePath(Number(a.cx ?? 0), Number(a.cy ?? 0), Number(a.rx), Number(a.ry));
-    case 'use':
-      return fillGeometry(byId(mascot, (a.href ?? a['xlink:href']).slice(1)), mascot);
-    default:
-      throw new Error(`logo-mono: unsupported shape <${node.name}>`);
-  }
-}
-
-// Area of a wide round-capped stroke on a straight segment "M x y L x y" (a capsule).
-function capsulePath(d, width) {
-  const match = /^M\s*([-\d.]+)[\s,]+([-\d.]+)\s*L\s*([-\d.]+)[\s,]+([-\d.]+)$/.exec(d.trim());
-  if (match === null) throw new Error(`logo-mono: wide light stroke must be one straight segment, got "${d}"`);
-  const [ax, ay, bx, by] = match.slice(1).map(Number);
-  const length = Math.hypot(bx - ax, by - ay);
-  const r = width / 2;
-  const [nx, ny] = [(-(by - ay) / length) * r, ((bx - ax) / length) * r];
-  const arc = (x, y) => `A${num(r)} ${num(r)} 0 0 0 ${num(x)} ${num(y)}`;
-  return (
-    `M${num(ax + nx)} ${num(ay + ny)}L${num(bx + nx)} ${num(by + ny)}${arc(bx - nx, by - ny)}` +
-    `L${num(ax - nx)} ${num(ay - ny)}${arc(ax + nx, ay + ny)}Z`
-  );
-}
-
-// Flattens the mascot into paint order: each shape with its full transform and effective paint.
-function flatten(node, mascot, inherited, transforms, out) {
-  for (const child of elements(node)) {
-    if (child.name === 'defs') continue;
-    const chain = child.attributes.transform ? [...transforms, child.attributes.transform] : transforms;
-    if (child.name === 'g') {
-      flatten(child, mascot, inherit(child, inherited), chain, out);
-      continue;
-    }
-    const p = paint(child, inherited);
-    if (p.fill === undefined) throw new Error(`logo-mono: <${child.name}> has no fill (default black)`);
-    out.push({ node: child, transform: chain.join(' '), ...p });
-  }
-  return out;
-}
-
-// One-color mascot. Every Nâu đất line and fill stays; other fills become empty, and other-color
-// lines go. A color fill or a wide light stroke hid what lay under it, so, as it is reached in paint
-// order, everything drawn before it is clipped by the outside of its area. Hair stays solid around
-// the face, and lines under the hands, rice grains and sleeves stay hidden.
-function monoMascot(mascot) {
-  const dark = color('nau-dat');
-  const shapes = flatten(mascot, mascot, { stroke: mascot.attributes.stroke }, [], []);
-  // A thin color line drawn on a wider dark line of the same path is an outlined strand (the rice
-  // stalks). Kept at full width the strands merge into one dark bar, so the strand is drawn as one
-  // dark line as wide as its color core.
-  const isLine = (s) => s.fill === 'none' && s.stroke !== 'none';
-  for (const core of shapes.filter((s) => isLine(s) && !same(s.stroke, dark) && s.strokeWidth < WIDE_STROKE)) {
-    const outline = shapes.find(
-      (s) => isLine(s) && same(s.stroke, dark) && s.node.attributes.d === core.node.attributes.d && s.transform === core.transform,
-    );
-    if (outline !== undefined) outline.strokeWidth = core.strokeWidth;
-  }
-  const clips = [];
-  let drawn = '';
-  const hideUnder = (area, transform) => {
-    const id = `mono-cut-${clips.length + 1}`;
-    const outside = `M${-FAR} ${-FAR}H${FAR}V${FAR}H${-FAR}Z`;
-    const placed = transform ? ` transform="${transform}"` : '';
-    clips.push(`<clipPath id="${id}"><path${placed} clip-rule="evenodd" d="${outside}${area}"/></clipPath>`);
-    drawn = `<g clip-path="url(#${id})">\n${drawn}</g>\n`;
-  };
-  for (const { node, transform, fill, stroke, strokeWidth } of shapes) {
-    const placed = transform ? ` transform="${transform}"` : '';
-    const darkFill = same(fill, dark);
-    const darkStroke = same(stroke, dark);
-    if (fill !== 'none' && !darkFill) hideUnder(fillGeometry(node, mascot), transform);
-    if (fill === 'none' && stroke !== 'none' && !darkStroke && strokeWidth >= WIDE_STROKE) {
-      hideUnder(capsulePath(node.attributes.d, strokeWidth), transform);
-    }
-    if (!darkFill && !darkStroke) continue;
-    const strokePart = darkStroke ? ` stroke="${dark}" stroke-width="${num(strokeWidth)}"` : ' stroke="none"';
-    drawn += `<path${placed} d="${fillGeometry(node, mascot)}" fill="${darkFill ? dark : 'none'}"${strokePart}/>\n`;
-  }
-  const { stroke, ...joins } = inheritedRoot(mascot);
-  return (
-    `<defs>\n${clips.join('\n')}\n</defs>\n` +
-    `<svg x="0" y="0" width="${MASCOT_SIZE}" height="${MASCOT_SIZE}" viewBox="${mascot.attributes.viewBox}">\n` +
-    `<g${attrs(joins)}>\n${drawn}</g>\n</svg>\n`
+    `<defs>\n<mask id="mono-ink" maskUnits="userSpaceOnUse" x="0" y="0" width="${width}" height="${height}">\n` +
+    `${stringify(root)}\n</mask>\n</defs>\n` +
+    `<svg x="0" y="0" width="${MASCOT_SIZE}" height="${MASCOT_SIZE}" viewBox="${viewBox}">\n` +
+    `<rect width="${width}" height="${height}" fill="${color('nau-dat')}" mask="url(#mono-ink)"/>\n</svg>\n`
   );
 }
 
 export function buildLogos() {
-  const mascot = parseSync(readFileSync(mascotPath, 'utf8'));
+  const source = readFileSync(mascotPath, 'utf8');
+  const mascot = parseSync(source);
   const words = wordmark();
+  const full = fullMascot(mascot) + words;
+  // logo-mono takes the frame of logo-full, so the two can swap in any layout.
+  const viewBox = frameViewBox(full);
+  const monoWords = words.replace(new RegExp(color('nau-ao'), 'g'), color('nau-dat'));
   return {
-    'logo-full.svg': frame(fullMascot(mascot) + words),
+    'logo-full.svg': wrap(viewBox, full),
     'logo-icon.svg': iconLogo(mascot),
-    'logo-mono.svg': frame(monoMascot(mascot) + words.replace(new RegExp(color('nau-ao'), 'g'), color('nau-dat'))),
+    'logo-mono.svg': wrap(viewBox, monoMascot(source) + monoWords),
   };
 }
 

@@ -47,19 +47,21 @@ function styleColors(style) {
 // Facts about one SVG file for the brand checks: viewBox, ids in document order,
 // every fill/stroke/stop-color (lowercase, short hex expanded), element names, hrefs and size,
 // the direct children of the root (topLevel) and, per id, its tag, attributes and the ids of its ancestors.
+// Colors inside a <mask> are not painted (they only set how much shows), so they go to maskColors.
 export function svgFacts(path) {
   const source = readFileSync(path, 'utf8');
   const facts = {
     viewBox: null,
     ids: [],
     colors: new Set(),
+    maskColors: new Set(),
     tags: new Set(),
     hrefs: [],
     bytes: statSync(path).size,
     topLevel: [],
     elements: {},
   };
-  const visit = (node, ancestors) => {
+  const visit = (node, ancestors, inMask) => {
     if (node.type !== 'element') return;
     const { name, attributes } = node;
     facts.tags.add(name);
@@ -70,18 +72,19 @@ export function svgFacts(path) {
     }
     const raw = COLOR_PROPS.map((prop) => attributes[prop]).filter((v) => v !== undefined);
     if (attributes.style !== undefined) raw.push(...styleColors(attributes.style));
+    const target = inMask ? facts.maskColors : facts.colors;
     for (const color of raw.map(normalizeColor)) {
-      if (!IGNORED_COLORS.has(color)) facts.colors.add(color);
+      if (!IGNORED_COLORS.has(color)) target.add(color);
     }
     for (const key of ['href', 'xlink:href']) {
       if (attributes[key] !== undefined) facts.hrefs.push(attributes[key]);
     }
     const inner = attributes.id !== undefined && node !== root ? [...ancestors, attributes.id] : ancestors;
-    node.children.forEach((child) => visit(child, inner));
+    node.children.forEach((child) => visit(child, inner, inMask || name === 'mask'));
   };
   const root = parseSync(source);
   facts.topLevel = elementChildren(root).map((child) => ({ tag: child.name, id: child.attributes.id }));
-  visit(root, []);
+  visit(root, [], false);
   return facts;
 }
 
