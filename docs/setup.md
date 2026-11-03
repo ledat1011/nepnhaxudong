@@ -54,6 +54,13 @@ Cần Node 22. Web nằm trong thư mục `web/`.
    ```
    `REVALIDATE_SECRET` trong `.env.local` phải giống `REVALIDATE_SECRET` của API.
 
+### Chạy kiểm thử đầu-cuối (Playwright)
+Lần đầu trên máy: `npx playwright install chromium` (trong `web/`). Sau đó:
+```bash
+npm run test:e2e
+```
+Lệnh này build web hai lần (mỗi lần vào một thư mục riêng `.next-e2e-mock` và `.next-e2e-api`, để cache không lẫn nhau), rồi chạy ba server: API giả (cổng 4010), web dùng dữ liệu mẫu (3100) và web dùng API giả (3200). Ba cổng này phải rảnh. Nếu đã build rồi và chỉ sửa test, chạy `npx playwright test` để bỏ qua bước build. Khi test lỗi, xem báo cáo bằng `npx playwright show-report`.
+
 ## Cloud session
 Sẽ điền sau khi kiểm tra trên claude.ai/code.
 

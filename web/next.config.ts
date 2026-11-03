@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const siteUrl = process.env.SITE_URL ? new URL(process.env.SITE_URL) : null;
 
 const nextConfig: NextConfig = {
+  // The e2e tests build into their own directories, so their caches never mix.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   output: "standalone",
   poweredByHeader: false,
   images: {
