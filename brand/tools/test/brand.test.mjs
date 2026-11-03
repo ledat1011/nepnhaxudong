@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildCss } from '../build-tokens.mjs';
-import { contentBBox, contrast, palette, rotateGroups, svgFacts } from '../lib/svg-check.mjs';
+import { contentBBox, contrast, palette, rotateGroups, svgFacts, visibleBBox } from '../lib/svg-check.mjs';
 import opentype from 'opentype.js';
 
 const tokensDir = fileURLToPath(new URL('../../tokens/', import.meta.url));
@@ -252,4 +252,112 @@ test('mascot: xoay head / rice van nam trong viewBox', () => {
     assert.ok(box.x >= 0 && box.y >= 0, `goc ${sign > 0 ? '+' : '-'}: tran trai/tren ${JSON.stringify(box)}`);
     assert.ok(box.x + box.width <= 512, `goc ${sign > 0 ? '+' : '-'}: tran phai ${JSON.stringify(box)}`);
   }
+});
+
+test('visibleBBox tinh ca clipPath, svg long nhau va phan tran ra ngoai viewBox', () => {
+  const clipped =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><clipPath id="c"><rect width="50" height="50"/></clipPath>' +
+    '<g clip-path="url(#c)"><rect x="-5" y="-5" width="80" height="80" fill="#4A2C1A"/></g></svg>';
+  near(visibleBBox(clipped), { x: 0, y: 0, width: 50, height: 50 }, 'clipPath');
+  const nested =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><svg x="10" y="10" width="50" height="50" viewBox="0 0 10 10">' +
+    '<rect x="-5" y="-5" width="30" height="30" fill="#4A2C1A"/></svg></svg>';
+  near(visibleBBox(nested), { x: 10, y: 10, width: 50, height: 50 }, 'svg long nhau');
+  const over =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" viewBox="0 0 100 100">' +
+    '<rect x="-5" y="60" width="130" height="50" fill="#4A2C1A"/></svg>';
+  near(visibleBBox(over), { x: -5, y: 60, width: 130, height: 50 }, 'tran viewBox');
+  const sharp =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">' +
+    '<path d="M20 50L120 45L20 40" fill="none" stroke="#4A2C1A" stroke-width="10" stroke-linejoin="round"/></svg>';
+  near(visibleBBox(sharp), { x: 20, y: 35, width: 105, height: 20 }, 'goc nhon, noi tron');
+  assert.throws(() => visibleBBox('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"/>'), /nothing/);
+});
+
+const logoDir = fileURLToPath(new URL('../../logo/', import.meta.url));
+const LOGOS = ['logo-full.svg', 'logo-icon.svg', 'logo-mono.svg'];
+const viewBoxOf = (facts) => facts.viewBox.trim().split(/[\s,]+/).map(Number);
+
+test('logo: co viewBox, khong the cam, href noi bo, id duy nhat, nhe', () => {
+  for (const file of LOGOS) {
+    const facts = svgFacts(logoDir + file);
+    const box = viewBoxOf(facts);
+    assert.equal(box.length, 4, `${file} viewBox`);
+    assert.ok(box.every(Number.isFinite) && box[2] > 0 && box[3] > 0, `${file} viewBox = ${facts.viewBox}`);
+    for (const tag of ['image', 'text', 'script', 'style', 'foreignObject']) {
+      assert.ok(!facts.tags.has(tag), `${file} co the <${tag}>`);
+    }
+    const ids = facts.ids.map((x) => x.id);
+    assert.deepEqual(ids.filter((id, i) => ids.indexOf(id) !== i), [], `${file} id trung`);
+    assert.deepEqual(facts.hrefs.filter((h) => !h.startsWith('#')), [], `${file} co href ra ngoai`);
+    assert.deepEqual(facts.hrefs.filter((h) => !ids.includes(h.slice(1))), [], `${file} href khong tro toi id nao`);
+    assert.ok(facts.bytes < 60 * 1024, `${file} = ${facts.bytes} byte`);
+  }
+});
+
+test('logo: noi dung ve ra nam trong viewBox', () => {
+  for (const file of LOGOS) {
+    const [x, y, width, height] = viewBoxOf(svgFacts(logoDir + file));
+    const box = visibleBBox(readFileSync(logoDir + file, 'utf8'));
+    const where = `${file} ${JSON.stringify(box)}`;
+    assert.ok(box.x >= x && box.y >= y, `tran trai/tren: ${where}`);
+    assert.ok(box.x + box.width <= x + width && box.y + box.height <= y + height, `tran phai/duoi: ${where}`);
+  }
+});
+
+test('logo-full va logo-icon: moi mau thuoc bang mau', () => {
+  const allowed = palette();
+  for (const file of ['logo-full.svg', 'logo-icon.svg']) {
+    const facts = svgFacts(logoDir + file);
+    assert.deepEqual([...facts.colors].filter((c) => !allowed.has(c)), [], `${file} mau ngoai bang`);
+  }
+});
+
+test('logo-mono: chi mot mau Nau dat', () => {
+  assert.deepEqual([...svgFacts(logoDir + 'logo-mono.svg').colors], ['#4a2c1a']);
+});
+
+test('logo-icon: viewBox vuong, chi co dau', () => {
+  const facts = svgFacts(logoDir + 'logo-icon.svg');
+  const [, , width, height] = viewBoxOf(facts);
+  assert.equal(width, height, `viewBox ${facts.viewBox}`);
+  for (const id of ['body', 'rice', 'hands']) {
+    assert.equal(facts.elements[id], undefined, `logo-icon co #${id}`);
+  }
+});
+
+test('logo-full: giu nhom mascot va pivot de lam dong', () => {
+  const facts = svgFacts(logoDir + 'logo-full.svg');
+  const mascot = svgFacts(mascotPath);
+  for (const id of ['body', 'rice', 'hands', 'head']) {
+    const element = facts.elements[id];
+    assert.equal(element?.tag, 'g', `thieu g#${id}`);
+    const viewport = element.ancestors.map((a) => facts.elements[a]).find((e) => e.tag === 'svg');
+    assert.equal(viewport?.attributes.viewBox, mascot.viewBox, `g#${id} phai nam trong <svg> cua mascot`);
+  }
+  for (const id of Object.keys(ANIMATED)) {
+    assert.equal(facts.elements[id].attributes['data-pivot'], mascot.elements[id].attributes['data-pivot'], `${id} pivot`);
+  }
+});
+
+test('logo sinh tu mascot hien tai (chay npm run logos sau khi sua mascot)', async () => {
+  const { buildLogos } = await import('../build-logos.mjs');
+  const built = buildLogos();
+  assert.deepEqual(Object.keys(built).sort(), LOGOS);
+  for (const file of LOGOS) {
+    const onDisk = readFileSync(logoDir + file, 'utf8').replace(/\r\n/g, '\n');
+    assert.ok(onDisk === built[file], `${file} cu, chay npm run logos`);
+  }
+});
+
+test('svgFacts: svg long nhau co id la to tien, svg goc thi khong', () => {
+  withTempSvg(
+    '<svg id="root" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">' +
+      '<svg id="inner" viewBox="0 0 5 5"><g id="g"/></svg></svg>',
+    (file) => {
+      const f = svgFacts(file);
+      assert.deepEqual(f.elements.inner.ancestors, []);
+      assert.deepEqual(f.elements.g.ancestors, ['inner']);
+    },
+  );
 });

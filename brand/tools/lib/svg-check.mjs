@@ -76,7 +76,7 @@ export function svgFacts(path) {
     for (const key of ['href', 'xlink:href']) {
       if (attributes[key] !== undefined) facts.hrefs.push(attributes[key]);
     }
-    const inner = attributes.id !== undefined && name !== 'svg' ? [...ancestors, attributes.id] : ancestors;
+    const inner = attributes.id !== undefined && node !== root ? [...ancestors, attributes.id] : ancestors;
     node.children.forEach((child) => visit(child, inner));
   };
   const root = parseSync(source);
@@ -115,6 +115,46 @@ export function contentBBox(svgString, id) {
   const box = new Resvg(source).getBBox();
   if (box === undefined) throw new Error(`nothing drawn${id === undefined ? '' : ` in "${id}"`}`);
   return { x: box.x, y: box.y, width: box.width, height: box.height };
+}
+
+const VISIBLE_PAD = 0.5;
+const VISIBLE_MAX_PIXELS = 1024;
+const VISIBLE_MAX_SCALE = 4;
+
+// Bounding box of what is really painted, in viewBox units: clip paths and nested <svg> viewports
+// cut it (contentBBox ignores both), and content past the root viewBox still counts (up to half the
+// viewBox size on each side). It is read from the alpha channel of a resvg render, rounded outward
+// to the pixel grid (at most 1 unit). resvg's own innerBBox() is not used: it reports strokes far
+// past a sharp corner even with round joins.
+export function visibleBBox(svgString) {
+  const root = parseSync(svgString);
+  const [x, y, width, height] = root.attributes.viewBox.trim().split(/[\s,]+/).map(Number);
+  const [left, top] = [x - VISIBLE_PAD * width, y - VISIBLE_PAD * height];
+  const [fullWidth, fullHeight] = [(1 + 2 * VISIBLE_PAD) * width, (1 + 2 * VISIBLE_PAD) * height];
+  const scale = Math.min(VISIBLE_MAX_SCALE, VISIBLE_MAX_PIXELS / Math.max(fullWidth, fullHeight));
+  root.attributes.viewBox = `${left} ${top} ${fullWidth} ${fullHeight}`;
+  root.attributes.width = String(Math.round(fullWidth * scale));
+  root.attributes.height = String(Math.round(fullHeight * scale));
+  const image = new Resvg(stringify(root)).render();
+  const { pixels } = image;
+  let [minX, minY, maxX, maxY] = [Infinity, Infinity, -1, -1];
+  for (let py = 0; py < image.height; py++) {
+    for (let px = 0; px < image.width; px++) {
+      if (pixels[(py * image.width + px) * 4 + 3] === 0) continue;
+      minX = Math.min(minX, px);
+      maxX = Math.max(maxX, px);
+      minY = Math.min(minY, py);
+      maxY = Math.max(maxY, py);
+    }
+  }
+  if (maxX < 0) throw new Error('nothing drawn');
+  const unit = fullWidth / image.width;
+  return {
+    x: left + minX * unit,
+    y: top + minY * unit,
+    width: (maxX + 1 - minX) * unit,
+    height: (maxY + 1 - minY) * unit,
+  };
 }
 
 // Copy of the SVG where each group in angles ({ id: degrees }) gets transform="rotate(deg x y)"
