@@ -70,7 +70,7 @@ Dùng khi cần xem web đúng như khi chạy thật (ví dụ để đo Lighth
    ```
 2. Chép file tĩnh cạnh server (server standalone chỉ phục vụ file tĩnh khi chúng nằm cạnh nó):
    ```bash
-   cp -r .next-lighthouse/static .next-lighthouse/standalone/.next-lighthouse/static
+   mkdir -p .next-lighthouse/standalone/.next-lighthouse/static && cp -r .next-lighthouse/static/. .next-lighthouse/standalone/.next-lighthouse/static
    ```
 3. Chạy server:
    ```bash
@@ -83,9 +83,9 @@ Dùng khi cần xem web đúng như khi chạy thật (ví dụ để đo Lighth
 ### Đo Lighthouse (mobile)
 Khi server ở mục trên đang chạy, mở một terminal khác trong `web/`:
 ```bash
-npx lighthouse@latest http://127.0.0.1:3300/vi --form-factor=mobile --only-categories=performance,accessibility,seo --output=json --output-path=../lh-vi.json --chrome-flags="--headless=new"
+npx lighthouse@13.6.0 http://127.0.0.1:3300/vi --form-factor=mobile --only-categories=performance,accessibility,seo --output=json --output-path="$HOME/lh-vi.json" --chrome-flags="--headless=new"
 ```
-Làm tương tự cho `/en`. Cần Chrome trên máy. Nếu không tìm thấy, đặt `CHROME_PATH` trỏ tới Chromium của Playwright (trong thư mục `ms-playwright` của cache Playwright). Không commit file báo cáo.
+Báo cáo được ghi vào thư mục home, ngoài repo, nên không bị commit nhầm. Làm tương tự cho `/en` (ghi ra `"$HOME/lh-en.json"`). Cần Chrome trên máy. Nếu không tìm thấy, đặt `CHROME_PATH` trỏ tới Chromium của Playwright (trong thư mục `ms-playwright` của cache Playwright). Không commit file báo cáo.
 
 Kết quả đo ngày 2026-11-04, máy công ty, Lighthouse 13.6.0, mobile, dữ liệu mẫu, bản build production. Mỗi trang đo 2 lần; bảng ghi từng lần (lần 1 / lần 2). Mục tiêu: mỗi điểm từ 90 trở lên, LCP dưới 2,5 giây.
 
