@@ -1,0 +1,11 @@
+{
+  "_comment": "Optional. Copy to config.json (git-ignored) only when you want diagrams saved somewhere other than docs/diagrams. Paths use forward slashes, no trailing slash.",
+  "notesRoot": "docs/diagrams",
+  "obsidian": false,
+  "folders": {
+    "ticket": "{slug}",
+    "incident": "incidents",
+    "subsystem": "{area}",
+    "other": "{area}"
+  }
+}

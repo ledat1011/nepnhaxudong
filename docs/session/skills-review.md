@@ -1,0 +1,22 @@
+# Rà soát skill ứng viên
+
+Bảng này ghi đề xuất ban đầu và quyết định cuối của chủ dự án. Các skill được giữ hoặc viết lại đã được chép vào `.claude/skills/`, sau đó quét lại sạch.
+
+"Phát hiện" là kết quả của `node scripts/scan-skill.mjs` (nội dung gắn với công ty cũ hoặc bí mật), tính trên bản gốc trước khi chép. Số liệu chia thành hai nhóm: từ khóa công ty và đường dẫn máy công ty. Cột "Thành phần" ghi thư mục `node_modules/`, script và tệp nhị phân, vì chúng ảnh hưởng đến việc chép.
+
+| Skill | Dùng cho Nếp Nhà để làm gì | Số phát hiện | Thành phần | Đề xuất | Lý do | Chủ dự án quyết định |
+|---|---|---|---|---|---|---|
+| `excalidraw-diagram` | Vẽ sơ đồ kiến trúc, luồng đặt hàng, trình tự gọi API, mốc thời gian; xuất tệp Excalidraw và PNG, GIF khi cần. | 86 (từ khóa công ty ×81, đường dẫn máy công ty ×5). Chưa tính thư mục bộ nhớ đệm `.built/` (115 phát hiện) và `config.json` cá nhân (1 phát hiện); cả hai không được chép. | Có `node_modules/` (34 MB, 3 gói npm), 11 tệp script JS, 9 tệp kiểm thử, 5 ảnh PNG ví dụ. Cần `npm install` sau khi chép. | viết lại | Phần lõi (thư viện, tài liệu tham chiếu) sạch; chỉ các ví dụ và kịch bản kiểm thử gắn với dự án công ty. Thay bằng ví dụ luồng đăng bài của Nếp Nhà. | viết lại |
+| `state-diagram` | Vẽ sơ đồ trạng thái (ví dụ bài viết: nháp, đã đăng, lưu trữ) cho tài liệu và PR. | 17 (từ khóa công ty ×15, đường dẫn máy công ty ×2) | Không có `node_modules/`. 4 script Python, 3 ảnh PNG ví dụ (chữ trong ảnh không quét được, phải vẽ lại). Cần Python và Edge hoặc Chrome để xuất PNG. | viết lại | Cần sửa khoảng 20 dòng chữ và dựng lại 3 ví dụ bằng trạng thái bài viết. Đường dẫn lưu mặc định phải trỏ vào `docs/diagrams/`. | viết lại |
+| `explain-root-cause` | Giải thích nguyên nhân gốc của một lỗi sau khi điều tra, để người không viết mã cũng hiểu. | 17 (từ khóa công ty ×17) | Chỉ có 2 tệp văn bản. Không có script, không có tệp nhị phân. | viết lại | Cấu trúc trả lời hữu ích; các ví dụ mẫu dài lấy từ một lỗi của công ty. Cần viết lại khoảng 40 dòng ví dụ và 3 dòng trong phần hướng dẫn. | viết lại |
+| `explainer` | Giải thích một thuật ngữ, một tính năng hoặc một PR, kèm nguồn dẫn chứng. | 10 (từ khóa công ty ×7, đường dẫn máy công ty ×3) | Chỉ có 1 tệp văn bản. | bỏ | Nguồn tra cứu và nơi lưu kết quả đều gắn với kho tri thức và quy trình quản lý việc của công ty. Viết lại gần như là viết skill mới. | bỏ |
+| `call-chain` | Vẽ cây gọi hàm từ điểm vào đến dòng gây lỗi của dịch vụ Spring Boot, từ stack trace hoặc log. | 7 (từ khóa công ty ×7) | 1 script Python (`extract_frames.py`), 1 tệp ví dụ. Không có `node_modules/`, không có tệp nhị phân. | viết lại | Phần lõi dùng được cho backend Java của dự án. Chỉ cần đổi tiền tố gói mặc định và thay 1 ví dụ; khoảng 10 dòng. | viết lại |
+| `visual-deck` | Làm bộ slide PowerPoint ít chữ, nhiều hình (giới thiệu thương hiệu, trình bày với đối tác). | 0 | 1 tệp mẫu JS cần các gói npm (`pptxgenjs`, `react`, `sharp`, `react-icons`); không có `node_modules/` đi kèm. Bước kiểm tra hình ảnh dùng phần mềm WPS Office chỉ có trên một máy Windows. | giữ | Sạch, không cần viết lại. Cần ghi lệnh cài gói vào `docs/setup.md`; bước kiểm tra bằng WPS không chạy được trên phiên đám mây. | giữ |
+| `story-writer` | Viết một mục công việc có cấu trúc (story, bug, task) cho danh sách việc riêng của chủ dự án. | 23 (từ khóa công ty ×23) | 4 tệp văn bản và dữ liệu đánh giá. Không có script. | bỏ | Skill dài khoảng 370 dòng, xoay quanh công cụ quản lý việc và hồ sơ dự án của công ty. Dự án này chỉ cần một mẫu ngắn, nên viết mới thay vì sửa. | bỏ |
+| `epic-breakdown` | Chia một epic lớn thành các story nhỏ. | 10 (từ khóa công ty ×10) | 3 tệp văn bản và dữ liệu đánh giá. Không có script. | bỏ | Gắn với quy trình quản lý việc của công ty và ít dùng cho một dự án cá nhân quy mô nhỏ. | bỏ |
+
+## Plugin
+
+| Plugin | Dùng cho Nếp Nhà để làm gì | Số phát hiện | Đề xuất | Lý do | Chủ dự án quyết định |
+|---|---|---|---|---|---|
+| `andrej-karpathy-skills@karpathy-skills` | Một skill ngắn nhắc bốn nguyên tắc khi viết mã: nghĩ trước khi làm, giữ giải pháp đơn giản, chỉ sửa đúng chỗ cần, đặt tiêu chí kiểm chứng được. | 0 | bật trong `enabledPlugins` của `.claude/settings.json` | Giấy phép MIT, nội dung chung, không gắn với công ty. Hiện đã cài nhưng đang tắt trong cấu hình cá nhân. Nếu bật cần thêm nguồn `karpathy-skills` vào `extraKnownMarketplaces` để máy khác và phiên đám mây tự cài được. | bật |

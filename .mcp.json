@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "shadcn": { "command": "node", "args": [".claude/mcp/launch.mjs", "npx", "-y", "shadcn@latest", "mcp"] },
+    "next-devtools": { "command": "node", "args": [".claude/mcp/launch.mjs", "npx", "-y", "next-devtools-mcp@latest"] },
+    "nanobanana": { "command": "node", "args": [".claude/mcp/launch.mjs", "uvx", "nanobanana-mcp-server@latest"], "env": { "GEMINI_API_KEY": "${GEMINI_API_KEY:-}" } },
+    "recraft": { "type": "http", "url": "https://mcp.recraft.ai/mcp" }
+  }
+}

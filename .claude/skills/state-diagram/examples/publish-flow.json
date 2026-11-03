@@ -1,0 +1,25 @@
+{
+  "group": {
+    "title": "★ revalidate after commit (new)",
+    "nodes": ["EVENT", "SITE", "CACHE"]
+  },
+  "nodes": [
+    {"id": "ADMIN", "label": ["① Admin app", "POST /stories/12/publish"], "col": 0, "row": 0, "bold_first": true},
+    {"id": "API", "label": ["② Backend", "StoryService.publish", "one transaction"], "col": 1, "row": 0, "bold_first": true},
+    {"id": "EVENT", "label": ["④ After-commit event", "RevalidateClient"], "col": 2, "row": 0, "bold_first": true},
+    {"id": "SITE", "label": ["⑤ Website", "POST /api/revalidate"], "col": 3, "row": 0, "bold_first": true},
+    {"id": "CACHE", "label": ["Page cache", "/vi/story"], "shape": "cyl", "col": 4, "row": 0, "bold_first": true},
+    {"id": "DB", "label": ["table story", "③ status DRAFT → PUBLISHED", "committed"], "shape": "cyl", "col": 1, "row": 1, "span": 2, "bold_first": true},
+    {"id": "VISITOR", "label": "visitor sees the new story", "shape": "round", "col": 5, "row": 0},
+    {"id": "ERR", "label": "failure logged, status stays PUBLISHED", "shape": "round", "col": 3, "row": 1}
+  ],
+  "edges": [
+    {"from": "ADMIN", "to": "API", "label": "request"},
+    {"from": "API", "to": "DB", "route": "v", "label": "③ write and commit"},
+    {"from": "API", "to": "EVENT", "style": "new", "label": "publish event"},
+    {"from": "EVENT", "to": "SITE", "style": "new", "label": "call"},
+    {"from": "SITE", "to": "CACHE", "style": "new", "label": "⑥ rebuild page"},
+    {"from": "CACHE", "to": "VISITOR", "label": "next visit"},
+    {"from": "SITE", "to": "ERR", "route": "v", "label": "no answer"}
+  ]
+}

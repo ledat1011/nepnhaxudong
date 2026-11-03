@@ -1,0 +1,19 @@
+{
+  "highlight": "problem",
+  "highlight_label": "⚠ problem",
+  "highlight_titles": {"PUBLISHED": "⚠ page stays old"},
+  "start": "admin creates a story",
+  "new": ["PUBLISHED"],
+  "legend": {"arrow_new": "where it gets stuck", "new": "stuck status"},
+  "column": [
+    {"id": "DRAFT", "kind": "done"},
+    {"id": "PUBLISHED", "kind": "done"},
+    {"id": "ARCHIVED", "kind": "terminal"}
+  ],
+  "edges": [
+    {"from": "DRAFT", "to": "PUBLISHED", "label": "admin presses publish"},
+    {"from": "DRAFT", "to": "ARCHIVED", "label": "draft is discarded"},
+    {"from": "PUBLISHED", "to": "PUBLISHED", "style": "new", "label": ["revalidate runs before commit", "page cache keeps the old list"]},
+    {"from": "PUBLISHED", "to": "ARCHIVED", "label": "admin archives"}
+  ]
+}
