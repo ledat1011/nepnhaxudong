@@ -4,7 +4,7 @@ import vn.nepnhaxudong.common.LocalizedText;
 
 /**
  * The body of POST and PUT. A PUT replaces the whole story; the status is changed only by publish
- * and unpublish. A blank slug is made from the title. The texts are checked by
+ * and unpublish. A blank slug keeps the slug the story already has in that language, and is made from the title only when it has none. The texts are checked by
  * {@link StoryService} because their messages name the field.
  */
 public record StoryRequest(

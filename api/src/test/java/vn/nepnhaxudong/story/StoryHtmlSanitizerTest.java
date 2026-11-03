@@ -98,4 +98,51 @@ class StoryHtmlSanitizerTest {
     assertThat(StoryHtmlSanitizer.clean("<ul><li>a</li><li>b</li></ul><p>c</p>"))
         .isEqualTo("<ul><li>a</li><li>b</li></ul><p>c</p>");
   }
+
+  @Test
+  void removesTheSourceOfAnImageThatIsNotAnAbsoluteWebAddressOrAMediaPath() {
+    for (String src :
+        new String[] {
+          "/api/admin/stories",
+          "/media/../api/admin/stories",
+          "x.png",
+          "//evil.com/x.png",
+          "\\evil.com/x",
+          "/media/%2e%2e/x",
+          "/media/%2E%2E/x",
+          "/media/a\\b.webp",
+          "/other/a.webp"
+        }) {
+      assertThat(StoryHtmlSanitizer.clean("<img src=\"" + src + "\" alt=\"a\">"))
+          .as(src)
+          .isEqualTo("<img alt=\"a\">");
+    }
+  }
+
+  @Test
+  void keepsTheSourceOfAnImageWithAMediaPathOrAnAbsoluteWebAddress() {
+    for (String src : new String[] {"/media/a.webp", "https://example.com/a.jpg", "http://example.com/a.jpg"}) {
+      String html = "<img src=\"" + src + "\" alt=\"a\">";
+
+      assertThat(StoryHtmlSanitizer.clean(html)).as(src).isEqualTo(html);
+    }
+  }
+
+  @Test
+  void keepsLinksToPathsOfThisSiteAndToPageFragments() {
+    for (String href : new String[] {"/cau-chuyen/x", "#top"}) {
+      String html = "<a href=\"" + href + "\">link</a>";
+
+      assertThat(StoryHtmlSanitizer.clean(html)).as(href).isEqualTo(html);
+    }
+  }
+
+  @Test
+  void removesLinksToOtherSitesWrittenWithoutAProtocolAndRelativeFileNames() {
+    for (String href : new String[] {"//evil.com", "\\evil.com", "x.html", "/a\\b", "javascript:alert(1)"}) {
+      assertThat(StoryHtmlSanitizer.clean("<a href=\"" + href + "\">link</a>"))
+          .as(href)
+          .isEqualTo("<a>link</a>");
+    }
+  }
 }

@@ -61,7 +61,7 @@ class StoryAuditedHandler extends JsonAuditedHandler<StoryAdminDto> {
     LocalizedText slugs;
     try {
       service.validateContent(request);
-      slugs = service.resolveSlugs(request);
+      slugs = service.resolveSlugs(request, null);
     } catch (ApiException e) {
       throw badSnapshot();
     }

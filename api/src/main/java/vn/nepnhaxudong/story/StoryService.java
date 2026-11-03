@@ -58,7 +58,7 @@ public class StoryService {
   @Transactional
   public StoryAdminDto create(StoryRequest request) {
     validateContent(request);
-    LocalizedText slugs = resolveSlugs(request);
+    LocalizedText slugs = resolveSlugs(request, null);
     requireCoverExists(request.coverMediaId());
     requireSlugsFree(slugs, StoryRepository.NEW_STORY_ID);
     var story = Story.create();
@@ -77,7 +77,7 @@ public class StoryService {
   public StoryAdminDto update(long id, StoryRequest request) {
     var story = find(id);
     validateContent(request);
-    LocalizedText slugs = resolveSlugs(request);
+    LocalizedText slugs = resolveSlugs(request, story);
     requireCoverExists(request.coverMediaId());
     requireSlugsFree(slugs, id);
     var before = StoryAdminDto.from(story);
@@ -184,17 +184,33 @@ public class StoryService {
   }
 
   /**
-   * The slug of each language: the typed slug when there is one, otherwise made from the title, and
-   * always normalized. There is an English slug only when there is an English title.
+   * The slug of each language: the typed slug when there is one (normalized), otherwise the slug
+   * the story already has in that language, otherwise one made from the title. A story that is
+   * edited keeps its address when the admin leaves the slug blank, so a public link does not break
+   * when a title changes. {@code existing} is null when the story is new. There is an English slug
+   * only when there is an English title.
    */
-  LocalizedText resolveSlugs(StoryRequest request) {
-    String vi = slugOf(request.slug().vi(), request.title().vi());
+  LocalizedText resolveSlugs(StoryRequest request, Story existing) {
+    String vi =
+        slugOf(request.slug().vi(), storedSlug(existing, Lang.VI), request.title().vi());
     String en =
-        request.title().en() == null ? null : slugOf(request.slug().en(), request.title().en());
+        request.title().en() == null
+            ? null
+            : slugOf(request.slug().en(), storedSlug(existing, Lang.EN), request.title().en());
     return new LocalizedText(vi, en);
   }
 
-  private static String slugOf(String typed, String title) {
+  private static String storedSlug(Story existing, Lang lang) {
+    if (existing == null) {
+      return null;
+    }
+    return existing.translation(lang).map(StoryTranslation::getSlug).orElse(null);
+  }
+
+  private static String slugOf(String typed, String stored, String title) {
+    if (typed == null && stored != null) {
+      return stored;
+    }
     String slug = SlugGenerator.slugify(typed != null ? typed : title);
     if (slug.isEmpty()) {
       throw invalid(SLUG_REQUIRED);

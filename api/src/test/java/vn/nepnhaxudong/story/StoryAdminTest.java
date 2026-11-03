@@ -223,6 +223,49 @@ class StoryAdminTest extends AuthTestSupport {
     assertThat(ApiClient.json(updated).path("slug").path("vi").asString()).isEqualTo("hai");
   }
 
+  @Test
+  void aBlankSlugOnUpdateKeepsTheStoredSlugOfPublishedStory() {
+    var client = loggedInClient();
+    long id = create(client, "Tiêu đề cũ", "Old title");
+    client.post("/admin/stories/" + id + "/publish", Map.of());
+    var update = story("Tiêu đề hoàn toàn mới", "A completely new title");
+    update.put("slug", text("  ", null));
+
+    var updated = client.put("/admin/stories/" + id, update);
+
+    assertThat(updated.getStatusCode().value()).isEqualTo(200);
+    JsonNode json = ApiClient.json(updated);
+    assertThat(json.path("title").path("vi").asString()).isEqualTo("Tiêu đề hoàn toàn mới");
+    assertThat(json.path("slug").path("vi").asString()).isEqualTo("tieu-de-cu");
+    assertThat(json.path("slug").path("en").asString()).isEqualTo("old-title");
+    assertThat(json.path("status").asString()).isEqualTo("PUBLISHED");
+  }
+
+  @Test
+  void aSlugIsMadeFromTheEnglishTitleWhenAnUpdateAddsTheEnglishTextForTheFirstTime() {
+    var client = loggedInClient();
+    long id = create(client, "Chỉ tiếng Việt", null);
+    var update = story("Chỉ tiếng Việt", "Now with English");
+
+    JsonNode json = ApiClient.json(client.put("/admin/stories/" + id, update));
+
+    assertThat(json.path("slug").path("vi").asString()).isEqualTo("chi-tieng-viet");
+    assertThat(json.path("slug").path("en").asString()).isEqualTo("now-with-english");
+  }
+
+  @Test
+  void aTypedSlugOnUpdateStillReplacesTheStoredSlug() {
+    var client = loggedInClient();
+    long id = create(client, "Cũ", "Old");
+    var update = story("Cũ", "Old");
+    update.put("slug", text("duong-dan-moi", null));
+
+    JsonNode json = ApiClient.json(client.put("/admin/stories/" + id, update));
+
+    assertThat(json.path("slug").path("vi").asString()).isEqualTo("duong-dan-moi");
+    assertThat(json.path("slug").path("en").asString()).isEqualTo("old");
+  }
+
   // ---- texts ---------------------------------------------------------------------------------
 
   @Test
@@ -487,6 +530,31 @@ class StoryAdminTest extends AuthTestSupport {
     JsonNode json = ApiClient.json(client.get("/admin/stories/" + id));
     assertThat(json.path("title").path("vi").asString()).isEqualTo("Bản gốc");
     assertThat(json.path("slug").path("vi").asString()).isEqualTo("ban-goc");
+  }
+
+  @Test
+  void restoringALineWhoseSavedBodyHasAScriptStoresTheSanitizedBody() {
+    var client = loggedInClient();
+    long id = create(client, "Bản gốc", null);
+    var update = story("Bản gốc", null);
+    update.put("slug", text("ban-goc", null));
+    client.put("/admin/stories/" + id, update);
+    long line = auditId(id, "UPDATE");
+    jdbc.update(
+        "update audit_log set before_json = jsonb_set(before_json, '{bodyHtml,vi}',"
+            + " to_jsonb(?::text)) where id = ?",
+        "<script>alert(1)</script><p>ok</p>",
+        line);
+
+    var restored = client.post("/admin/audit/" + line + "/restore", Map.of());
+
+    assertThat(restored.getStatusCode().value()).isEqualTo(204);
+    assertThat(
+            jdbc.queryForObject(
+                "select body_html from story_translation where story_id = ? and lang = 'vi'",
+                String.class,
+                id))
+        .isEqualTo("<p>ok</p>");
   }
 
   @Test
