@@ -57,3 +57,5 @@ API nằm trong thư mục `api/` (Spring Boot 4, Java 21, Postgres 16). Cần D
 Chạy test (cần Docker, Testcontainers tự bật Postgres): `cd api && ./mvnw -B verify`.
 
 Biến môi trường (mẫu ở `api/.env.example`): `DB_URL`, `DB_USER`, `DB_PASSWORD`. Không ghi mật khẩu thật vào repo.
+
+Luôn chạy Maven từ thư mục `api/` (`cd api && ./mvnw …`), vì `api/.mvn/maven.config` dùng file settings riêng của dự án (chỉ Maven Central).
