@@ -11,7 +11,8 @@ fi
 echo "node: ${node_version}"
 
 if command -v java >/dev/null 2>&1; then
-  java_version="$(java -version 2>&1 | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')"
+  java_version="$(java -version 2>&1 | sed -nE 's/.*version "([^"]+)".*/\1/p' | head -n 1 || true)"
+  [ -n "${java_version}" ] || java_version="unknown"
 else
   java_version="missing"
 fi
