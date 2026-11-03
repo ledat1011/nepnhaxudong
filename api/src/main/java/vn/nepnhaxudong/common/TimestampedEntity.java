@@ -27,6 +27,14 @@ public abstract class TimestampedEntity {
     return updatedAt;
   }
 
+  /**
+   * Sets updated_at on purpose. A service calls it on a parent when only its child rows changed, so
+   * the parent row is dirty and the change time moves.
+   */
+  public void touch(Instant now) {
+    this.updatedAt = now;
+  }
+
   void stampCreated(Instant now) {
     this.createdAt = now;
     this.updatedAt = now;

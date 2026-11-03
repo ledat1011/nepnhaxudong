@@ -30,15 +30,15 @@ import vn.nepnhaxudong.TestcontainersConfig;
     })
 @AutoConfigureTestRestTemplate
 @Import({TestcontainersConfig.class, TestClockConfig.class})
-abstract class AuthTestSupport {
+public abstract class AuthTestSupport {
 
   static final String LOGIN_ERROR = "Email hoặc mật khẩu không đúng.";
   static final String LOCKED = "Tài khoản tạm khóa 15 phút vì đăng nhập sai nhiều lần.";
 
-  @Autowired TestRestTemplate rest;
-  @Autowired AppUserRepository users;
-  @Autowired PasswordEncoder encoder;
-  @Autowired MutableClock clock;
+  @Autowired protected TestRestTemplate rest;
+  @Autowired protected AppUserRepository users;
+  @Autowired protected PasswordEncoder encoder;
+  @Autowired protected MutableClock clock;
 
   @BeforeEach
   void resetState() {
@@ -46,16 +46,16 @@ abstract class AuthTestSupport {
     clock.set(Instant.now());
   }
 
-  ApiClient newClient() {
+  protected ApiClient newClient() {
     return new ApiClient(rest);
   }
 
-  AppUser createUser(String email, String password, boolean mustChangePassword) {
+  protected AppUser createUser(String email, String password, boolean mustChangePassword) {
     return users.save(
         AppUser.create(email, "Tester", encoder.encode(password), mustChangePassword));
   }
 
-  ResponseEntity<String> login(ApiClient client, String email, String password) {
+  protected ResponseEntity<String> login(ApiClient client, String email, String password) {
     return client.post("/auth/login", Map.of("email", email, "password", password));
   }
 }

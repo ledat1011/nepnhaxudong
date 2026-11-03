@@ -14,7 +14,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /** One simulated browser: it keeps cookies between calls, like a real client does. */
-final class ApiClient {
+public final class ApiClient {
 
   private static final JsonMapper JSON = JsonMapper.builder().build();
 
@@ -22,39 +22,47 @@ final class ApiClient {
   private final Map<String, String> cookies = new LinkedHashMap<>();
   private String csrfToken;
 
-  ApiClient(TestRestTemplate rest) {
+  public ApiClient(TestRestTemplate rest) {
     this.rest = rest;
   }
 
   /** Calls GET /auth/csrf and remembers the token; later write calls send it as X-XSRF-TOKEN. */
-  JsonNode fetchCsrf() {
+  public JsonNode fetchCsrf() {
     var response = get("/auth/csrf");
     JsonNode body = json(response);
     csrfToken = body.path("token").asString();
     return body;
   }
 
-  void useCsrfToken(String token) {
+  public void useCsrfToken(String token) {
     csrfToken = token;
   }
 
-  void useCookie(String name, String value) {
+  public void useCookie(String name, String value) {
     cookies.put(name, value);
   }
 
-  String cookie(String name) {
+  public String cookie(String name) {
     return cookies.get(name);
   }
 
-  ResponseEntity<String> get(String path) {
+  public ResponseEntity<String> get(String path) {
     return send(HttpMethod.GET, path, null);
   }
 
-  ResponseEntity<String> post(String path, Object body) {
+  public ResponseEntity<String> post(String path, Object body) {
     return send(HttpMethod.POST, path, body);
   }
 
-  static JsonNode json(ResponseEntity<String> response) {
+  public ResponseEntity<String> put(String path, Object body) {
+    return send(HttpMethod.PUT, path, body);
+  }
+
+  public ResponseEntity<String> delete(String path) {
+    return send(HttpMethod.DELETE, path, null);
+  }
+
+  public static JsonNode json(ResponseEntity<String> response) {
     return JSON.readTree(response.getBody());
   }
 
