@@ -18,8 +18,8 @@ import vn.nepnhaxudong.common.ApiException;
 
 /**
  * Stores, lists, edits and deletes images for the admin area. Every write is recorded in the audit
- * log. Media is not restorable from the log: a deleted file is gone, so there is no
- * {@code AuditedHandler} for it.
+ * log. Media is not restorable from the log: a deleted file is gone, so
+ * {@link MediaAuditedHandler} refuses every restore with a 409.
  */
 @Service
 public class MediaService {

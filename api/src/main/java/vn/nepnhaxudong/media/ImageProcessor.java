@@ -61,10 +61,15 @@ public class ImageProcessor {
   static final String UNREADABLE_MESSAGE =
       "Không đọc được ảnh. Hãy chọn ảnh JPEG, PNG hoặc WebP khác.";
 
+  static final String WEBP_TOO_LARGE_MESSAGE =
+      "Ảnh WebP quá lớn. Hãy chọn ảnh nhỏ hơn 16 megapixel hoặc dùng JPEG.";
   static final String ANIMATED_MESSAGE = "Chỉ nhận ảnh tĩnh JPEG, PNG hoặc WebP.";
 
   /** The decoded picture (before the final scaling) may use at most this much heap. */
   static final long DECODE_BUDGET_BYTES = 64L * 1024 * 1024;
+
+  /** A decoded WebP picture is an ARGB raster. */
+  static final int WEBP_BYTES_PER_PIXEL = 4;
 
   /** Used when the reader does not tell its pixel type: 4 bytes, like an ARGB picture. */
   static final int FALLBACK_BYTES_PER_PIXEL = 4;
@@ -161,7 +166,9 @@ public class ImageProcessor {
    */
   private static BufferedImage read(byte[] bytes, ImageFormat format) {
     if (format == ImageFormat.WEBP) {
-      checkSize(WebpHeader.read(bytes));
+      ImageSize declared = WebpHeader.read(bytes);
+      checkSize(declared);
+      checkWebpMemory(declared);
     }
     ImageReader reader = readerFor(format);
     try (ImageInputStream input = new ByteArrayImageInputStream(bytes)) {
@@ -181,6 +188,17 @@ public class ImageProcessor {
       throw new UnsupportedImageException(UNREADABLE_MESSAGE);
     } finally {
       reader.dispose();
+    }
+  }
+
+  /**
+   * The WebP decoders (VP8 and VP8L) ignore subsampling and allocate the whole picture, 4 bytes per
+   * pixel. So a WebP must fit into {@link #DECODE_BUDGET_BYTES} at full size, which is about 16.7
+   * megapixels.
+   */
+  static void checkWebpMemory(ImageSize size) {
+    if ((long) size.width() * size.height() * WEBP_BYTES_PER_PIXEL > DECODE_BUDGET_BYTES) {
+      throw new UnsupportedImageException(WEBP_TOO_LARGE_MESSAGE);
     }
   }
 

@@ -356,6 +356,23 @@ class MediaUploadTest extends AuthTestSupport {
     assertThat(count("media")).isZero();
   }
 
+  @Test
+  void anAltTextChangeOfAnExistingImageCannotBeRestoredEither() {
+    var client = loggedInClient();
+    long id = upload(client, "a.jpg");
+    client.put("/admin/media/" + id, Map.of("altVi", "Mô tả mới", "altEn", "New text"));
+    long updateLine =
+        jdbc.queryForObject(
+            "select id from audit_log where entity_type = 'media' and action = 'UPDATE'",
+            Long.class);
+
+    var response = client.post("/admin/audit/" + updateLine + "/restore", Map.of());
+
+    assertProblem(response, 409, "Không khôi phục được thay đổi của ảnh. Hãy sửa lại chữ mô tả.");
+    assertThat(jdbc.queryForObject("select alt_vi from media where id = ?", String.class, id))
+        .isEqualTo("Mô tả mới");
+  }
+
   // ---- edit ----------------------------------------------------------------------------------
 
   @Test

@@ -6,8 +6,8 @@ import java.nio.charset.StandardCharsets;
  * Reads the picture size of a WebP file from its RIFF chunks, without decoding. The decoder
  * allocates the size that the bitstream declares ({@code VP8 } or {@code VP8L} chunk), which can be
  * much larger than the canvas of the {@code VP8X} chunk, so the size of the bitstream is the one
- * that must be checked. A file whose canvas and bitstream disagree is refused, and so is an
- * animated file (only still pictures are accepted).
+ * that must be checked. A file whose canvas and bitstream disagree is refused, and so is a file
+ * with more than one bitstream chunk or an animated file (only still pictures are accepted).
  */
 final class WebpHeader {
 
@@ -52,8 +52,14 @@ final class WebpHeader {
                   1 + littleEndian(file, data + 4, 3), 1 + littleEndian(file, data + 7, 3));
         }
         case "ANIM", "ANMF" -> animated = true;
-        case "VP8 " -> picture = picture != null ? picture : lossy(file, data, length);
-        case "VP8L" -> picture = picture != null ? picture : lossless(file, data, length);
+        case "VP8 ", "VP8L" -> {
+          // A still picture has exactly one bitstream chunk. The decoder may take another one than
+          // the first, so a second chunk is refused and no size can be hidden in it.
+          if (picture != null) {
+            throw damaged();
+          }
+          picture = type.equals("VP8L") ? lossless(file, data, length) : lossy(file, data, length);
+        }
         default -> {}
       }
       // A chunk with an odd size is followed by one pad byte.

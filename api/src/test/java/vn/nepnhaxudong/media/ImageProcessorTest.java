@@ -44,6 +44,8 @@ class ImageProcessorTest {
       "Không đọc được ảnh. Hãy chọn ảnh JPEG, PNG hoặc WebP khác.";
 
   private static final String ANIMATED_MESSAGE = "Chỉ nhận ảnh tĩnh JPEG, PNG hoặc WebP.";
+  private static final String WEBP_TOO_LARGE_MESSAGE =
+      "Ảnh WebP quá lớn. Hãy chọn ảnh nhỏ hơn 16 megapixel hoặc dùng JPEG.";
   private static final String BUSY_MESSAGE = "Máy chủ đang xử lý ảnh khác. Hãy thử lại sau.";
 
   private final ImageProcessor processor = new ImageProcessor(Duration.ofSeconds(30));
@@ -385,6 +387,54 @@ class ImageProcessorTest {
           .isInstanceOf(UnsupportedImageException.class)
           .hasMessage(TYPE_MESSAGE);
     }
+  }
+
+  @Test
+  void aSecondPictureChunkIsRefused() {
+    // A valid 1x1 picture first, then a second chunk that declares 16383 x 16383: the decoder
+    // would take the second one.
+    byte[] twoPictures =
+        TestImages.webpFile(
+            TestImages.webpChunk("VP8X", TestImages.vp8xData(1, 1, false)),
+            TestImages.webpChunk("VP8L", TestImages.vp8lData(1, 1)),
+            TestImages.webpChunk("VP8 ", TestImages.vp8Data(16383, 16383)));
+    byte[] twoLossless =
+        TestImages.webpFile(
+            TestImages.webpChunk("VP8L", TestImages.vp8lData(1, 1)),
+            TestImages.webpChunk("VP8L", TestImages.vp8lData(16384, 16384)));
+
+    for (byte[] file : List.of(twoPictures, twoLossless)) {
+      assertThatThrownBy(() -> process(file))
+          .isInstanceOf(UnsupportedImageException.class)
+          .hasMessage(TYPE_MESSAGE);
+    }
+  }
+
+  @Test
+  void aWebpOverTheDecoderMemoryBudgetIsRefusedBeforeDecoding() {
+    // The WebP decoders ignore subsampling and allocate the whole picture (4 bytes per pixel).
+    byte[] tooBig =
+        TestImages.webpFile(TestImages.webpChunk("VP8L", TestImages.vp8lData(4097, 4097)));
+    byte[] tooBigLossy =
+        TestImages.webpFile(TestImages.webpChunk("VP8 ", TestImages.vp8Data(4097, 4097)));
+
+    for (byte[] file : List.of(tooBig, tooBigLossy)) {
+      assertThatThrownBy(() -> process(file))
+          .isInstanceOf(UnsupportedImageException.class)
+          .hasMessage(WEBP_TOO_LARGE_MESSAGE);
+    }
+  }
+
+  @Test
+  void theWebpBudgetAllowsFourThousandPixelsSquareButNotOneMore() {
+    ImageProcessor.checkWebpMemory(new ImageSize(4000, 4000));
+    ImageProcessor.checkWebpMemory(new ImageSize(4096, 4096));
+
+    assertThatThrownBy(() -> ImageProcessor.checkWebpMemory(new ImageSize(4097, 4097)))
+        .isInstanceOf(UnsupportedImageException.class)
+        .hasMessage(WEBP_TOO_LARGE_MESSAGE);
+    assertThatThrownBy(() -> ImageProcessor.checkWebpMemory(new ImageSize(12_000, 1_500)))
+        .isInstanceOf(UnsupportedImageException.class);
   }
 
   // ---- memory budget of the decode -------------------------------------------------------------
