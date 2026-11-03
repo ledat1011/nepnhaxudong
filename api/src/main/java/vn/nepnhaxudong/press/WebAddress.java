@@ -6,16 +6,16 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * The rule for an article address: an absolute http or https address with a host, at most 2000
- * characters.
+ * The rule for a web address given by an admin (an article, a map, a social page): an absolute
+ * http or https address with a host, at most 2000 characters.
  */
-final class WebAddress {
+public final class WebAddress {
 
-  static final int MAX_LENGTH = 2000;
+  public static final int MAX_LENGTH = 2000;
 
   private WebAddress() {}
 
-  static Optional<URI> parse(String text) {
+  public static Optional<URI> parse(String text) {
     if (text == null || text.isBlank() || text.length() > MAX_LENGTH) {
       return Optional.empty();
     }

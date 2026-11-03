@@ -77,7 +77,10 @@ public class SecurityConfig {
             auth ->
                 auth.dispatcherTypeMatchers(DispatcherType.ERROR)
                     .permitAll()
-                    .requestMatchers("/actuator/health", "/public/**")
+                    .requestMatchers("/actuator/health")
+                    .permitAll()
+                    // The public website data: no login, reading only.
+                    .requestMatchers(HttpMethod.GET, "/public/**")
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/auth/login")
                     .permitAll()
