@@ -4,9 +4,12 @@
   "type": "module",
   "scripts": {
     "test": "node --test \"test/*.test.mjs\"",
-    "tokens": "node build-tokens.mjs"
+    "tokens": "node build-tokens.mjs",
+    "concepts": "node render-concepts.mjs"
   },
   "devDependencies": {
-    "opentype.js": "^2.0.0"
+    "@resvg/resvg-js": "^2.6.2",
+    "opentype.js": "^2.0.0",
+    "svgson": "^5.3.1"
   }
 }
