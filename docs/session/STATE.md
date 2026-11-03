@@ -33,8 +33,8 @@ Phần B1 (API và cơ sở dữ liệu) đã viết xong code, chờ review c�
 Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, Docker, máy chủ).
 
 - Sau Caddy (TLS kết thúc ở Caddy): đặt `server.forward-headers-strategy: framework` (hoặc `native`) và để Caddy gửi `X-Forwarded-Proto`. Nếu không, `request.isSecure()` là false, cookie `XSRF-TOKEN` thiếu `Secure` và không có header HSTS.
-- Giới hạn tốc độ `POST /api/auth/login` ở Caddy: mỗi lần thử tốn khoảng 16 MiB và CPU cho Argon2, và email không tồn tại không bị khoá.
-- Giới hạn tốc độ `/api/admin/*` ở Caddy (multipart được ghi ra đĩa trước khi kiểm tra đăng nhập khi thiếu header CSRF).
+- Giới hạn tốc độ `POST /api/auth/login` ở Caddy: mỗi lần thử tốn khoảng 16 MiB và CPU cho Argon2 (chạy ngoài transaction, không giữ kết nối DB), và email không tồn tại không bị khoá.
+- Giới hạn tốc độ `/api/admin/*` ở Caddy (bớt tải khi có người gửi nhiều request lạ; API đã chỉ đọc token CSRF từ header nên không đọc body multipart trước khi kiểm tra).
 - Cookie CSRF có `Path=/api` (context path). Trang quản trị Next.js phải đọc token từ JSON của `GET /api/auth/csrf`, không đọc từ `document.cookie`.
 - Mọi endpoint quản trị phải nằm dưới `/api/admin/**`, vì bước chặn "phải đổi mật khẩu" chỉ áp dụng cho tiền tố này.
 - Giới hạn kích thước body ở Caddy: `request_body { max_size 16MB }` cho `/api/*`. Tomcat reset kết nối khi body vượt `max-swallow-size` 20MB. Phản hồi 413 của Caddy là văn bản thường, nên giao diện quản trị hiện "Ảnh quá lớn. Tối đa 15 MB." với mọi lỗi 413 và kiểm tra `file.size` trước.
