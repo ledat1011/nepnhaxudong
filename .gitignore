@@ -12,3 +12,6 @@ dist/
 coverage/
 .pr-review/
 .superpowers/
+# Uploaded images of a local run (app.media.dir default ./data/media).
+/data/
+/api/data/

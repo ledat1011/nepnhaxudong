@@ -4,7 +4,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** Runs an action after the current transaction commits, or at once when there is no transaction. */
-final class AfterCommitAction implements TransactionSynchronization {
+public final class AfterCommitAction implements TransactionSynchronization {
 
   private final Runnable action;
 
@@ -12,7 +12,7 @@ final class AfterCommitAction implements TransactionSynchronization {
     this.action = action;
   }
 
-  static void run(Runnable action) {
+  public static void run(Runnable action) {
     if (TransactionSynchronizationManager.isSynchronizationActive()) {
       TransactionSynchronizationManager.registerSynchronization(new AfterCommitAction(action));
     } else {

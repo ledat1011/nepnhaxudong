@@ -27,7 +27,9 @@ import vn.nepnhaxudong.TestcontainersConfig;
       "bootstrap.admin.email=Admin@Example.com",
       "bootstrap.admin.password=first-password-1",
       // The test client talks plain HTTP, so the session cookie must not be Secure here.
-      "server.servlet.session.cookie.secure=false"
+      "server.servlet.session.cookie.secure=false",
+      // Uploaded test images go to the system temp folder, never into the repository.
+      "app.media.dir=${java.io.tmpdir}/nepnha-test-media"
     })
 @AutoConfigureTestRestTemplate
 @Import({TestcontainersConfig.class, TestClockConfig.class})

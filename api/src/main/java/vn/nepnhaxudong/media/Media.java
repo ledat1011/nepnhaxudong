@@ -8,7 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import vn.nepnhaxudong.common.TimestampedEntity;
 
-/** A stored image. Upload and processing are added together with the media service. */
+/** A stored image file. {@code path} is relative to the media folder, for example {@code 2031/01/<uuid>.jpg}. */
 @Entity
 @Table(name = "media")
 public class Media extends TimestampedEntity {
@@ -57,6 +57,11 @@ public class Media extends TimestampedEntity {
     media.altVi = altVi;
     media.altEn = altEn;
     return media;
+  }
+
+  public void changeAltTexts(String altVi, String altEn) {
+    this.altVi = altVi;
+    this.altEn = altEn;
   }
 
   public Long getId() {

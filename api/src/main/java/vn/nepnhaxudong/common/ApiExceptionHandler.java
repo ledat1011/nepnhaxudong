@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
@@ -74,6 +75,19 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     }
     return ResponseEntity.badRequest()
         .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail));
+  }
+
+  /** An upload above the limit of {@code spring.servlet.multipart}: today only images are uploaded. */
+  @Override
+  protected ResponseEntity<Object> handleMaxUploadSizeExceededException(
+      MaxUploadSizeExceededException e,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+    return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+        .body(
+            ProblemDetail.forStatusAndDetail(
+                HttpStatus.PAYLOAD_TOO_LARGE, "Ảnh quá lớn. Tối đa 15 MB."));
   }
 
   @Override
