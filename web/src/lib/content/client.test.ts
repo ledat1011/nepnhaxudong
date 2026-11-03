@@ -33,8 +33,6 @@ describe("getContentClient", () => {
 
 describe("mock client", () => {
   const client = getContentClient({ CONTENT_SOURCE: "mock" });
-  const enSlugs = new Set(storiesEn.map((s) => s.slug));
-  const viOnly = storiesVi.find((s) => !enSlugs.has(s.slug));
 
   it("fills home.stories with the 3 newest stories of that language", async () => {
     for (const [lang, source] of [
@@ -52,20 +50,33 @@ describe("mock client", () => {
     }
   });
 
-  it("finds an English request by the Vietnamese slug when there is no English slug", async () => {
-    expect(viOnly).toBeDefined();
-    const story = await client.getStory("en", viOnly!.slug);
-    expect(story?.slug).toBe(viOnly!.slug);
+  it("finds a story without its own EN slug under its VI slug on en", async () => {
+    const story = await client.getStory("en", "chuyen-nha-nep-xu-dong");
+    expect(story?.slug).toBe("chuyen-nha-nep-xu-dong");
+    expect(story?.alternateSlug).toBeNull();
+  });
+
+  it("does not find a story with its own EN slug by its VI slug on en", async () => {
+    expect(await client.getStory("en", "mua-gat-dau-tien-o-xu-dong")).toBeNull();
+    expect(
+      (await client.getStory("en", "first-harvest-in-xu-dong"))?.alternateSlug,
+    ).toBe("mua-gat-dau-tien-o-xu-dong");
   });
 
   it("returns null for an unknown slug", async () => {
     expect(await client.getStory("vi", "khong-co")).toBeNull();
   });
 
-  it("pages the story list by the page size", async () => {
-    const first = await client.getStories("vi", 1);
+  it("pages the story list with a 0-based page", async () => {
+    const first = await client.getStories("vi", 0);
     expect(first).toHaveLength(4);
     expect(first[0]).not.toHaveProperty("bodyHtml");
-    expect(await client.getStories("vi", 2)).toEqual([]);
+    expect(await client.getStories("vi", 1)).toEqual([]);
+  });
+
+  it("returns an empty list for a negative, fractional or NaN page", async () => {
+    for (const page of [-1, 0.5, Number.NaN]) {
+      expect(await client.getStories("vi", page)).toEqual([]);
+    }
   });
 });

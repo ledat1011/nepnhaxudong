@@ -33,9 +33,9 @@ describe("createApiClient", () => {
 
   it("getStories passes the page and uses the stories tag", async () => {
     const { client, call } = setup(json([]));
-    await client.getStories("vi", 3);
+    await client.getStories("vi", 0);
     const { url, init } = call();
-    expect(url).toBe("https://api.test/api/public/vi/stories?page=3");
+    expect(url).toBe("https://api.test/api/public/vi/stories?page=0");
     expect(init.next?.tags).toEqual(["stories"]);
   });
 
@@ -45,6 +45,21 @@ describe("createApiClient", () => {
     const { url, init } = call();
     expect(url).toBe("https://api.test/api/public/vi/stories/a%20b");
     expect(init.next?.tags).toEqual(["stories", "story:a b"]);
+  });
+
+  it("ignores trailing slashes in the base URL", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => json({ lang: "vi" }));
+    await createApiClient("https://api.test//", fetchFn).getHome("vi");
+    expect(String(fetchFn.mock.calls[0][0])).toBe(
+      "https://api.test/api/public/vi/home",
+    );
+  });
+
+  it("names the requested URL in the error message", async () => {
+    const { client } = setup(new Response(null, { status: 500 }));
+    await expect(client.getHome("vi")).rejects.toThrow(
+      "https://api.test/api/public/vi/home",
+    );
   });
 
   it("getStory returns null on 404", async () => {

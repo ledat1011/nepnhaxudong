@@ -13,14 +13,15 @@ import type {
 
 const HOME_STORY_COUNT = 3;
 
-const HOME = { vi: homeVi, en: homeEn } as unknown as Record<
-  Lang,
-  Omit<HomeData, "stories">
->;
-const STORIES = { vi: storiesVi, en: storiesEn } as unknown as Record<
-  Lang,
-  StoryDetail[]
->;
+// Typed (no casts), so the compiler checks the fixtures against the contract types.
+const HOME: Record<Lang, Omit<HomeData, "stories">> = {
+  vi: { ...homeVi, lang: "vi" },
+  en: { ...homeEn, lang: "en" },
+};
+const STORIES: Record<Lang, StoryDetail[]> = {
+  vi: storiesVi,
+  en: storiesEn,
+};
 
 function newestFirst(lang: Lang): StoryDetail[] {
   return [...STORIES[lang]].sort((a, b) =>
@@ -42,19 +43,19 @@ export function createMockClient(): ContentClient {
       };
     },
 
+    // `page` is 0-based, like the API.
     async getStories(lang, page) {
-      const start = (page - 1) * STORIES_PAGE_SIZE;
+      if (!Number.isInteger(page) || page < 0) return [];
+      const start = page * STORIES_PAGE_SIZE;
       return newestFirst(lang)
         .slice(start, start + STORIES_PAGE_SIZE)
         .map(toSummary);
     },
 
+    // Looks only at the fixture of that language. A story without its own EN
+    // slug is already listed in the EN fixture under its VI slug, like the API.
     async getStory(lang, slug) {
-      const own = STORIES[lang].find((s) => s.slug === slug);
-      if (own) return own;
-      // Like the API: English falls back to the Vietnamese slug.
-      if (lang === "en") return STORIES.vi.find((s) => s.slug === slug) ?? null;
-      return null;
+      return STORIES[lang].find((s) => s.slug === slug) ?? null;
     },
   };
 }

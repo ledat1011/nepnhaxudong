@@ -1,5 +1,5 @@
 import type { Lang } from "@/lib/i18n/langs";
-import { ContentUnavailableError } from "./client";
+import { ContentUnavailableError } from "./errors";
 import { TAG_HOME, TAG_STORIES, storyTag } from "./tags";
 import type {
   ContentClient,
@@ -11,28 +11,32 @@ import type {
 const TIMEOUT_MS = 5000;
 
 type FetchFn = typeof fetch;
+type Reply = { response: Response; url: string };
 
 export function createApiClient(
   baseUrl: string,
   fetchFn: FetchFn = fetch,
 ): ContentClient {
-  async function request(path: string, tags: string[]): Promise<Response> {
-    const url = `${baseUrl}/api/public/${path}`;
+  const root = baseUrl.replace(/\/+$/, "");
+
+  async function request(path: string, tags: string[]): Promise<Reply> {
+    const url = `${root}/api/public/${path}`;
     try {
-      return await fetchFn(url, {
+      const response = await fetchFn(url, {
         cache: "force-cache",
         signal: AbortSignal.timeout(TIMEOUT_MS),
         next: { tags },
       });
+      return { response, url };
     } catch (cause) {
       throw new ContentUnavailableError(`Request failed: ${url}`, { cause });
     }
   }
 
-  async function readJson<T>(response: Response): Promise<T> {
+  async function readJson<T>({ response, url }: Reply): Promise<T> {
     if (!response.ok) {
       throw new ContentUnavailableError(
-        `Content API answered ${response.status} for ${response.url}`,
+        `Content API answered ${response.status} for ${url}`,
       );
     }
     try {
@@ -56,12 +60,12 @@ export function createApiClient(
     },
 
     async getStory(lang: Lang, slug: string): Promise<StoryDetail | null> {
-      const response = await request(
+      const reply = await request(
         `${lang}/stories/${encodeURIComponent(slug)}`,
         [TAG_STORIES, storyTag(slug)],
       );
-      if (response.status === 404) return null;
-      return readJson<StoryDetail>(response);
+      if (reply.response.status === 404) return null;
+      return readJson<StoryDetail>(reply);
     },
   };
 }

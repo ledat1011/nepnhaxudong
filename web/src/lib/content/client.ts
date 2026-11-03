@@ -2,12 +2,7 @@ import { createApiClient } from "./api-client";
 import { createMockClient } from "./mock-client";
 import type { ContentClient } from "./types";
 
-export class ContentUnavailableError extends Error {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-    this.name = "ContentUnavailableError";
-  }
-}
+export { ContentUnavailableError } from "./errors";
 
 type Env = Record<string, string | undefined>;
 
