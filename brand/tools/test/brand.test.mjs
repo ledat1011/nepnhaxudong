@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildCss } from '../build-tokens.mjs';
-import { contrast, palette, svgFacts } from '../lib/svg-check.mjs';
+import { contentBBox, contrast, palette, rotateGroups, svgFacts } from '../lib/svg-check.mjs';
 import opentype from 'opentype.js';
 
 const tokensDir = fileURLToPath(new URL('../../tokens/', import.meta.url));
@@ -139,4 +139,117 @@ test('concept hop le', () => {
 
 test('concepts.png ton tai', () => {
   assert.ok(existsSync(conceptsDir + 'concepts.png'));
+});
+
+const withTempSvg = (source, check) => {
+  const dir = mkdtempSync(join(tmpdir(), 'svgfacts-'));
+  const file = join(dir, 'a.svg');
+  writeFileSync(file, source);
+  try {
+    check(file);
+  } finally {
+    rmSync(dir, { recursive: true });
+  }
+};
+
+test('svgFacts doc nhom cap 1, thuoc tinh va to tien', () => {
+  withTempSvg(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><defs><path id="d"/></defs>' +
+      '<g id="a" data-pivot="1 2"><g><path id="c"/></g></g><circle/></svg>',
+    (file) => {
+      const f = svgFacts(file);
+      assert.deepEqual(f.topLevel, [
+        { tag: 'defs', id: undefined },
+        { tag: 'g', id: 'a' },
+        { tag: 'circle', id: undefined },
+      ]);
+      assert.equal(f.elements.a.attributes['data-pivot'], '1 2');
+      assert.deepEqual(f.elements.a.ancestors, []);
+      assert.deepEqual(f.elements.c.ancestors, ['a']);
+      assert.deepEqual(f.elements.d.ancestors, []);
+    },
+  );
+});
+
+const near = (actual, expected, label) => {
+  for (const key of ['x', 'y', 'width', 'height']) {
+    assert.ok(Math.abs(actual[key] - expected[key]) <= 1, `${label} ${key}: ${actual[key]} != ${expected[key]}`);
+  }
+};
+
+test('contentBBox do ca hinh hoac rieng mot nhom, theo don vi viewBox', () => {
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 100 100">' +
+    '<g id="a"><rect x="10" y="20" width="30" height="40" fill="#4A2C1A"/></g>' +
+    '<g id="b"><g id="inner"><rect x="70" y="70" width="10" height="5" fill="#4A2C1A"/></g></g></svg>';
+  near(contentBBox(svg), { x: 10, y: 20, width: 70, height: 55 }, 'ca hinh');
+  near(contentBBox(svg, 'a'), { x: 10, y: 20, width: 30, height: 40 }, 'a');
+  near(contentBBox(svg, 'inner'), { x: 70, y: 70, width: 10, height: 5 }, 'inner');
+  assert.throws(() => contentBBox(svg, 'missing'), /missing/);
+});
+
+test('rotateGroups xoay nhom quanh data-pivot', () => {
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+    '<g id="a" data-pivot="50 50"><rect x="40" y="0" width="20" height="10" fill="#4A2C1A"/></g></svg>';
+  near(contentBBox(rotateGroups(svg, { a: 90 }), 'a'), { x: 90, y: 40, width: 10, height: 20 }, 'a 90 do');
+});
+
+const mascotPath = fileURLToPath(new URL('../../mascot/mascot-layered.svg', import.meta.url));
+const ANIMATED = { head: 3, rice: 6 };
+
+const pivotOf = (facts, id) => {
+  const attributes = facts.elements[id].attributes;
+  const pivot = attributes['data-pivot'];
+  assert.match(pivot ?? '', /^\d+(\.\d+)? \d+(\.\d+)?$/, `${id} data-pivot`);
+  const [x, y] = pivot.split(' ').map(Number);
+  const style = (attributes.style ?? '').replace(/\s+/g, ' ');
+  assert.match(style, /transform-box: view-box/, `${id} transform-box`);
+  assert.match(style, new RegExp(`transform-origin: ${x}px ${y}px`), `${id} transform-origin khac data-pivot`);
+  return { x, y };
+};
+
+const inside = (point, box) =>
+  point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height;
+
+test('mascot tach lop dung cau truc', () => {
+  const facts = svgFacts(mascotPath);
+  assert.equal(facts.viewBox, '0 0 512 512');
+  const groups = facts.topLevel.filter((x) => x.tag !== 'defs');
+  assert.deepEqual(groups, ['body', 'rice', 'hands', 'head'].map((id) => ({ tag: 'g', id })), 'nhom cap 1 sai');
+  if (facts.elements.eyes !== undefined) {
+    assert.equal(facts.elements.eyes.tag, 'g');
+    assert.ok(facts.elements.eyes.ancestors.includes('head'), 'g#eyes phai nam trong head');
+  }
+});
+
+test('mascot dung mau, khong the cam, nhe', () => {
+  const facts = svgFacts(mascotPath);
+  const allowed = palette();
+  assert.deepEqual([...facts.colors].filter((c) => !allowed.has(c)), [], 'mau ngoai bang');
+  for (const tag of ['image', 'text', 'script', 'style', 'foreignObject']) {
+    assert.ok(!facts.tags.has(tag), `co the <${tag}>`);
+  }
+  assert.deepEqual(facts.hrefs.filter((h) => !h.startsWith('#')), [], 'co href ra ngoai');
+  assert.ok(facts.bytes < 40 * 1024, `${facts.bytes} byte`);
+});
+
+test('mascot: pivot head / rice khop transform-origin va nam trong nhom', () => {
+  const facts = svgFacts(mascotPath);
+  const svg = readFileSync(mascotPath, 'utf8');
+  for (const id of Object.keys(ANIMATED)) {
+    const pivot = pivotOf(facts, id);
+    assert.ok(inside(pivot, contentBBox(svg, id)), `pivot ${id} nam ngoai khung nhom`);
+  }
+  assert.ok(inside(pivotOf(facts, 'rice'), contentBBox(svg, 'hands')), 'tay khong che diem nam bo lua');
+});
+
+test('mascot: xoay head / rice van nam trong viewBox', () => {
+  const svg = readFileSync(mascotPath, 'utf8');
+  for (const sign of [1, -1]) {
+    const angles = Object.fromEntries(Object.entries(ANIMATED).map(([id, deg]) => [id, sign * deg]));
+    const box = contentBBox(rotateGroups(svg, angles));
+    assert.ok(box.x >= 0 && box.y >= 0, `goc ${sign > 0 ? '+' : '-'}: tran trai/tren ${JSON.stringify(box)}`);
+    assert.ok(box.x + box.width <= 512, `goc ${sign > 0 ? '+' : '-'}: tran phai ${JSON.stringify(box)}`);
+  }
 });

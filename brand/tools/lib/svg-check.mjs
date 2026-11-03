@@ -1,6 +1,7 @@
 import { readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { parseSync } from 'svgson';
+import { Resvg } from '@resvg/resvg-js';
+import { parseSync, stringify } from 'svgson';
 
 const tokensPath = fileURLToPath(new URL('../../tokens/tokens.json', import.meta.url));
 
@@ -44,16 +45,29 @@ function styleColors(style) {
 }
 
 // Facts about one SVG file for the brand checks: viewBox, ids in document order,
-// every fill/stroke/stop-color (lowercase, short hex expanded), element names, hrefs and size.
+// every fill/stroke/stop-color (lowercase, short hex expanded), element names, hrefs and size,
+// the direct children of the root (topLevel) and, per id, its tag, attributes and the ids of its ancestors.
 export function svgFacts(path) {
   const source = readFileSync(path, 'utf8');
-  const facts = { viewBox: null, ids: [], colors: new Set(), tags: new Set(), hrefs: [], bytes: statSync(path).size };
-  const visit = (node) => {
+  const facts = {
+    viewBox: null,
+    ids: [],
+    colors: new Set(),
+    tags: new Set(),
+    hrefs: [],
+    bytes: statSync(path).size,
+    topLevel: [],
+    elements: {},
+  };
+  const visit = (node, ancestors) => {
     if (node.type !== 'element') return;
     const { name, attributes } = node;
     facts.tags.add(name);
     if (name === 'svg' && facts.viewBox === null && attributes.viewBox !== undefined) facts.viewBox = attributes.viewBox;
-    if (attributes.id !== undefined) facts.ids.push({ tag: name, id: attributes.id });
+    if (attributes.id !== undefined) {
+      facts.ids.push({ tag: name, id: attributes.id });
+      facts.elements[attributes.id] = { tag: name, attributes, ancestors };
+    }
     const raw = COLOR_PROPS.map((prop) => attributes[prop]).filter((v) => v !== undefined);
     if (attributes.style !== undefined) raw.push(...styleColors(attributes.style));
     for (const color of raw.map(normalizeColor)) {
@@ -62,8 +76,57 @@ export function svgFacts(path) {
     for (const key of ['href', 'xlink:href']) {
       if (attributes[key] !== undefined) facts.hrefs.push(attributes[key]);
     }
-    node.children.forEach(visit);
+    const inner = attributes.id !== undefined && name !== 'svg' ? [...ancestors, attributes.id] : ancestors;
+    node.children.forEach((child) => visit(child, inner));
   };
-  visit(parseSync(source));
+  const root = parseSync(source);
+  facts.topLevel = elementChildren(root).map((child) => ({ tag: child.name, id: child.attributes.id }));
+  visit(root, []);
   return facts;
+}
+
+const elementChildren = (node) => node.children.filter((child) => child.type === 'element');
+
+function findPath(node, id) {
+  if (node.attributes?.id === id) return [node];
+  for (const child of elementChildren(node)) {
+    const path = findPath(child, id);
+    if (path) return [node, ...path];
+  }
+  return null;
+}
+
+// Bounding box of the drawn content (strokes included) in viewBox units, measured by resvg.
+// With an id, every element that is not on the way to that element (or inside it) is hidden;
+// <defs> stay so that <use> references still resolve.
+export function contentBBox(svgString, id) {
+  let source = svgString;
+  if (id !== undefined) {
+    const root = parseSync(svgString);
+    const path = findPath(root, id);
+    if (path === null) throw new Error(`no element with id "${id}"`);
+    for (let i = 0; i < path.length - 1; i++) {
+      for (const sibling of elementChildren(path[i])) {
+        if (sibling !== path[i + 1] && sibling.name !== 'defs') sibling.attributes.display = 'none';
+      }
+    }
+    source = stringify(root);
+  }
+  const box = new Resvg(source).getBBox();
+  if (box === undefined) throw new Error(`nothing drawn${id === undefined ? '' : ` in "${id}"`}`);
+  return { x: box.x, y: box.y, width: box.width, height: box.height };
+}
+
+// Copy of the SVG where each group in angles ({ id: degrees }) gets transform="rotate(deg x y)"
+// around its data-pivot. resvg ignores CSS transform-origin, so the pivot goes into rotate().
+export function rotateGroups(svgString, angles) {
+  const root = parseSync(svgString);
+  for (const [id, degrees] of Object.entries(angles)) {
+    const path = findPath(root, id);
+    if (path === null) throw new Error(`no element with id "${id}"`);
+    const node = path[path.length - 1];
+    const [x, y] = node.attributes['data-pivot'].split(' ');
+    node.attributes.transform = `rotate(${degrees} ${x} ${y})`;
+  }
+  return stringify(root);
 }
