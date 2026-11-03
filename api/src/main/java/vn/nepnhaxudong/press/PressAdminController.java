@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Press management in the admin area. Paths are relative to the context path {@code /api}. */
 @RestController
@@ -19,10 +21,13 @@ public class PressAdminController {
 
   private final PressService service;
   private final PressPreviewService previewService;
+  private final JsonMapper json;
 
-  public PressAdminController(PressService service, PressPreviewService previewService) {
+  public PressAdminController(
+      PressService service, PressPreviewService previewService, JsonMapper json) {
     this.service = service;
     this.previewService = previewService;
+    this.json = json;
   }
 
   @GetMapping
@@ -53,9 +58,25 @@ public class PressAdminController {
     service.delete(id);
   }
 
-  /** Reads the title, date and site name of an article page. A failure gives null fields, not an error. */
+  /**
+   * Reads title, date and site name of an article page. A failure gives null fields, no error.
+   * The body is read as text and parsed here: a missing body or a body that is not JSON is also a
+   * failure of the preview (null fields), not a 400.
+   */
   @PostMapping("/preview")
-  public PressPreviewDto preview(@RequestBody PressPreviewRequest body) {
-    return previewService.preview(body.url());
+  public PressPreviewDto preview(@RequestBody(required = false) String body) {
+    return previewService.preview(urlOf(body));
+  }
+
+  private String urlOf(String body) {
+    if (body == null || body.isBlank()) {
+      return null;
+    }
+    try {
+      PressPreviewRequest request = json.readValue(body, PressPreviewRequest.class);
+      return request == null ? null : request.url();
+    } catch (JacksonException e) {
+      return null;
+    }
   }
 }

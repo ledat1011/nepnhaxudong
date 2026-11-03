@@ -1,6 +1,8 @@
 package vn.nepnhaxudong.audit;
 
 import java.time.Clock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +17,8 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @Service
 public class JpaAuditService implements AuditService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(JpaAuditService.class);
 
   private final AuditLogRepository lines;
   private final JsonMapper json;
@@ -59,6 +63,8 @@ public class JpaAuditService implements AuditService {
     try {
       return Long.valueOf(authentication.getName());
     } catch (NumberFormatException e) {
+      // The name itself is not logged: it could be an email address.
+      LOG.warn("The principal name of the login is not a user id; the audit line has no user");
       return null;
     }
   }

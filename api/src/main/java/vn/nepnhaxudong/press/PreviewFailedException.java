@@ -1,6 +1,6 @@
 package vn.nepnhaxudong.press;
 
-/** A press preview could not be made. The message is for the log; the admin only sees empty fields. */
+/** A press preview could not be made. The message is for the log; the admin sees empty fields. */
 public class PreviewFailedException extends Exception {
 
   public PreviewFailedException(String message) {

@@ -1,5 +1,6 @@
 package vn.nepnhaxudong.press;
 
+import jakarta.annotation.PreDestroy;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -12,6 +13,12 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -23,6 +30,10 @@ import org.springframework.stereotype.Component;
  * check and the connection cannot lead to an internal address. For https it still sends the host
  * name for SNI and checks the certificate against it. It does not follow redirects, reads at most
  * 2 MB of the body, and uses a 5 second timeout to connect and for every read.
+ *
+ * <p>The total time is limited by a watchdog: one shared daemon thread closes the sockets of a call
+ * when its deadline passes, so a blocked connect, TLS handshake or read ends at the deadline even
+ * when a server sends one byte at a time. The body is read only for an HTML answer.
  */
 @Component
 public class PinnedHttpFetcher {
@@ -32,7 +43,28 @@ public class PinnedHttpFetcher {
   private static final int MAX_ADDRESSES_TRIED = 3;
   private static final int MAX_LINE_BYTES = 8 * 1024;
   private static final int MAX_HEADER_LINES = 100;
+  private static final int BUFFER_BYTES = 8 * 1024;
   private static final String USER_AGENT = "Mozilla/5.0 (compatible; NepNhaLinkPreview/1.0)";
+
+  private final ScheduledExecutorService watchdog = newWatchdog();
+
+  private static ScheduledExecutorService newWatchdog() {
+    var executor =
+        new ScheduledThreadPoolExecutor(
+            1,
+            task -> {
+              var thread = new Thread(task, "press-preview-watchdog");
+              thread.setDaemon(true);
+              return thread;
+            });
+    executor.setRemoveOnCancelPolicy(true);
+    return Executors.unconfigurableScheduledExecutorService(executor);
+  }
+
+  @PreDestroy
+  void stopWatchdog() {
+    watchdog.shutdownNow();
+  }
 
   /**
    * @param uri an http or https address with a host
@@ -41,29 +73,48 @@ public class PinnedHttpFetcher {
    */
   public FetchedPage fetch(URI uri, List<InetAddress> addresses, long deadlineNanos)
       throws IOException {
-    boolean https = "https".equalsIgnoreCase(uri.getScheme());
-    int port = uri.getPort() != -1 ? uri.getPort() : (https ? 443 : 80);
-    String host = uri.getHost();
-    try (Socket plain = connect(addresses, port)) {
-      plain.setSoTimeout(TIMEOUT_MILLIS);
-      Socket socket = https ? startTls(plain, unbracket(host), port) : plain;
-      OutputStream out = socket.getOutputStream();
-      out.write(request(uri, host).getBytes(StandardCharsets.ISO_8859_1));
-      out.flush();
-      return readResponse(new BufferedInputStream(socket.getInputStream()), deadlineNanos);
+    var sockets = new CopyOnWriteArrayList<Socket>();
+    ScheduledFuture<?> close =
+        watchdog.schedule(
+            () -> sockets.forEach(PinnedHttpFetcher::closeQuietly),
+            Math.max(0, deadlineNanos - System.nanoTime()),
+            TimeUnit.NANOSECONDS);
+    try {
+      return fetchOn(uri, addresses, deadlineNanos, sockets);
+    } finally {
+      close.cancel(false);
+      sockets.forEach(PinnedHttpFetcher::closeQuietly);
     }
   }
 
-  private static Socket connect(List<InetAddress> addresses, int port) throws IOException {
+  private FetchedPage fetchOn(
+      URI uri, List<InetAddress> addresses, long deadlineNanos, List<Socket> sockets)
+      throws IOException {
+    boolean https = "https".equalsIgnoreCase(uri.getScheme());
+    int port = uri.getPort() != -1 ? uri.getPort() : (https ? 443 : 80);
+    Socket plain = connect(addresses, port, deadlineNanos, sockets);
+    plain.setSoTimeout(TIMEOUT_MILLIS);
+    Socket socket = https ? startTls(plain, WebAddress.resolvableHost(uri), port) : plain;
+    OutputStream out = socket.getOutputStream();
+    out.write(request(uri).getBytes(StandardCharsets.ISO_8859_1));
+    out.flush();
+    return readResponse(new BufferedInputStream(socket.getInputStream()), deadlineNanos);
+  }
+
+  private static Socket connect(
+      List<InetAddress> addresses, int port, long deadlineNanos, List<Socket> sockets)
+      throws IOException {
     IOException last = new IOException("No address to connect to");
     for (InetAddress address : addresses.stream().limit(MAX_ADDRESSES_TRIED).toList()) {
+      checkDeadline(deadlineNanos);
       var socket = new Socket();
+      sockets.add(socket);
       try {
         socket.connect(new InetSocketAddress(address, port), TIMEOUT_MILLIS);
         return socket;
       } catch (IOException e) {
         last = e;
-        socket.close();
+        closeQuietly(socket);
       }
     }
     throw last;
@@ -79,10 +130,17 @@ public class PinnedHttpFetcher {
     return tls;
   }
 
-  private static String request(URI uri, String host) {
-    String path = uri.getRawPath() == null || uri.getRawPath().isEmpty() ? "/" : uri.getRawPath();
-    String query = uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery();
-    String hostHeader = uri.getPort() == -1 ? host : host + ":" + uri.getPort();
+  /**
+   * The request line and headers. The path and query come from the ASCII form of the address, so
+   * letters outside ASCII are sent percent-encoded (as UTF-8), never as "?".
+   */
+  private static String request(URI uri) {
+    URI ascii = URI.create(uri.toASCIIString());
+    String rawPath = ascii.getRawPath();
+    String path = rawPath == null || rawPath.isEmpty() ? "/" : rawPath;
+    String query = ascii.getRawQuery() == null ? "" : "?" + ascii.getRawQuery();
+    String hostHeader =
+        uri.getPort() == -1 ? uri.getHost() : uri.getHost() + ":" + uri.getPort();
     return "GET "
         + path
         + query
@@ -132,7 +190,7 @@ public class PinnedHttpFetcher {
       }
     }
     boolean redirect = status >= 300 && status < 400;
-    if (redirect || status < 200) {
+    if (redirect || status < 200 || !isHtml(contentType)) {
       return new FetchedPage(status, location, contentType, new byte[0]);
     }
     byte[] body =
@@ -140,6 +198,12 @@ public class PinnedHttpFetcher {
             ? readChunked(in, deadlineNanos)
             : readPlain(in, contentLength, deadlineNanos);
     return new FetchedPage(status, location, contentType, body);
+  }
+
+  /** Only an HTML answer has its body read; the caller refuses any other content type. */
+  private static boolean isHtml(String contentType) {
+    return contentType != null
+        && contentType.trim().toLowerCase(Locale.ROOT).startsWith("text/html");
   }
 
   private static long parseLength(String value) {
@@ -155,7 +219,7 @@ public class PinnedHttpFetcher {
       throws IOException {
     long wanted = contentLength >= 0 ? Math.min(contentLength, MAX_BODY_BYTES) : MAX_BODY_BYTES;
     var body = new ByteArrayOutputStream();
-    byte[] buffer = new byte[8192];
+    byte[] buffer = new byte[BUFFER_BYTES];
     while (body.size() < wanted) {
       checkDeadline(deadlineNanos);
       int read = in.read(buffer, 0, (int) Math.min(buffer.length, wanted - body.size()));
@@ -169,32 +233,44 @@ public class PinnedHttpFetcher {
 
   private static byte[] readChunked(InputStream in, long deadlineNanos) throws IOException {
     var body = new ByteArrayOutputStream();
+    byte[] buffer = new byte[BUFFER_BYTES];
     while (body.size() < MAX_BODY_BYTES) {
       checkDeadline(deadlineNanos);
-      String sizeLine = readLine(in, deadlineNanos);
-      int semicolon = sizeLine.indexOf(';');
-      String hex = (semicolon >= 0 ? sizeLine.substring(0, semicolon) : sizeLine).trim();
-      int size;
-      try {
-        size = Integer.parseInt(hex, 16);
-      } catch (NumberFormatException e) {
-        throw new IOException("Bad chunk size");
-      }
-      if (size < 0) {
-        throw new IOException("Bad chunk size");
-      }
+      int size = chunkSize(readLine(in, deadlineNanos));
       if (size == 0) {
         break;
       }
       int remaining = Math.min(size, MAX_BODY_BYTES - body.size());
-      byte[] chunk = in.readNBytes(remaining);
-      body.write(chunk, 0, chunk.length);
-      if (chunk.length < remaining || remaining < size) {
+      int left = remaining;
+      while (left > 0) {
+        checkDeadline(deadlineNanos);
+        int read = in.read(buffer, 0, Math.min(buffer.length, left));
+        if (read < 0) {
+          return body.toByteArray();
+        }
+        body.write(buffer, 0, read);
+        left -= read;
+      }
+      if (remaining < size) {
         break;
       }
       readLine(in, deadlineNanos);
     }
     return body.toByteArray();
+  }
+
+  private static int chunkSize(String sizeLine) throws IOException {
+    int semicolon = sizeLine.indexOf(';');
+    String hex = (semicolon >= 0 ? sizeLine.substring(0, semicolon) : sizeLine).trim();
+    try {
+      int size = Integer.parseInt(hex, 16);
+      if (size < 0) {
+        throw new IOException("Bad chunk size");
+      }
+      return size;
+    } catch (NumberFormatException e) {
+      throw new IOException("Bad chunk size");
+    }
   }
 
   /** Reads one line (up to the line feed) as ISO-8859-1, without the line ending. */
@@ -225,7 +301,11 @@ public class PinnedHttpFetcher {
     }
   }
 
-  private static String unbracket(String host) {
-    return host.startsWith("[") && host.endsWith("]") ? host.substring(1, host.length() - 1) : host;
+  private static void closeQuietly(Socket socket) {
+    try {
+      socket.close();
+    } catch (IOException e) {
+      // Closing is best effort: the call is over or failing anyway.
+    }
   }
 }

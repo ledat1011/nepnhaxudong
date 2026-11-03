@@ -1,5 +1,6 @@
 package vn.nepnhaxudong.timeline;
 
+import java.time.Clock;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,12 +24,14 @@ public class TimelineService {
   private final TimelineEventRepository events;
   private final MediaRepository media;
   private final AuditService audit;
+  private final Clock clock;
 
   public TimelineService(
-      TimelineEventRepository events, MediaRepository media, AuditService audit) {
+      TimelineEventRepository events, MediaRepository media, AuditService audit, Clock clock) {
     this.events = events;
     this.media = media;
     this.audit = audit;
+    this.clock = clock;
   }
 
   @Transactional(readOnly = true)
@@ -134,6 +137,8 @@ public class TimelineService {
     } else {
       event.putTranslation(Lang.EN, request.title().en(), request.description().en());
     }
+    // The event row may be unchanged while its texts changed; the change time still moves.
+    event.touch(clock.instant());
   }
 
   private void validate(TimelineEventRequest request) {

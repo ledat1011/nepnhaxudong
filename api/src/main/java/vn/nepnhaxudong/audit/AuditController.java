@@ -3,7 +3,6 @@ package vn.nepnhaxudong.audit;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +29,6 @@ public class AuditController {
 
   /** Newest first, 50 lines per page, pages count from 0. Both filters are optional. */
   @GetMapping
-  @Transactional(readOnly = true)
   public List<AuditEntryDto> list(
       @RequestParam(required = false) String entityType,
       @RequestParam(required = false) Long entityId,

@@ -175,6 +175,27 @@ class TimelineAdminTest extends AuthTestSupport {
   }
 
   @Test
+  void changingOnlyTheTitleMovesUpdatedAtOfTheEvent() {
+    var client = loggedInClient();
+    long id = create(client, 2000, "Cũ");
+    java.time.Instant created = updatedAt(id);
+    clock.advance(java.time.Duration.ofHours(1));
+    var update = body(2000, "Chỉ đổi tiêu đề", "Cũ (en)");
+    update.put("sortOrder", 0);
+
+    assertThat(client.put("/admin/timeline/" + id, update).getStatusCode().value()).isEqualTo(200);
+
+    assertThat(updatedAt(id)).isAfter(created);
+    assertThat(updatedAt(id)).isEqualTo(created.plus(java.time.Duration.ofHours(1)));
+  }
+
+  private java.time.Instant updatedAt(long id) {
+    return jdbc.queryForObject(
+            "select updated_at from timeline_event where id = ?", java.sql.Timestamp.class, id)
+        .toInstant();
+  }
+
+  @Test
   void deleteRemovesTheEventAndItsTranslations() {
     var client = loggedInClient();
     long id = create(client, 2000, "A");

@@ -3,6 +3,7 @@ package vn.nepnhaxudong.audit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +17,8 @@ import vn.nepnhaxudong.common.ApiException;
 public class AuditRestoreService {
 
   static final String CREATE_MESSAGE = "Không thể khôi phục bản tạo mới; hãy xóa nội dung.";
-  static final String DELETED_LATER =
-      "Không thể khôi phục: nội dung đã bị xóa. Hãy khôi phục bản xóa trước.";
-  static final String STILL_EXISTS = "Không thể khôi phục: nội dung vẫn còn.";
+  static final String CHANGED_MEANWHILE =
+      "Không thể khôi phục: nội dung vừa được thay đổi. Hãy tải lại và thử lại.";
   static final String UNSUPPORTED = "Không thể khôi phục loại nội dung này.";
   static final String NOT_FOUND = "Không tìm thấy dòng lịch sử.";
 
@@ -54,14 +54,16 @@ public class AuditRestoreService {
     }
     long entityId = line.getEntityId();
     Object current = handler.currentSnapshot(entityId).orElse(null);
-    if (line.getAction() == AuditAction.DELETE) {
-      if (current != null) {
-        throw new ApiException(HttpStatus.CONFLICT, STILL_EXISTS);
-      }
-    } else if (current == null) {
-      throw new ApiException(HttpStatus.CONFLICT, DELETED_LATER);
+    // The state of the line is always rebuilt: a deleted entity is created again with its old id,
+    // an existing one is overwritten. The RESTORE line keeps what was overwritten, so a restore can
+    // itself be restored.
+    try {
+      handler.restore(entityId, line.getBeforeJson());
+      // Send the inserts now, so that a clash with a parallel restore shows up here.
+      lines.flush();
+    } catch (DataIntegrityViolationException e) {
+      throw new ApiException(HttpStatus.CONFLICT, CHANGED_MEANWHILE);
     }
-    handler.restore(entityId, line.getBeforeJson());
     Object restored = handler.currentSnapshot(entityId).orElse(null);
     audit.record(line.getEntityType(), entityId, AuditAction.RESTORE, current, restored);
   }

@@ -1,5 +1,6 @@
 package vn.nepnhaxudong.press;
 
+import java.time.Clock;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,11 +24,14 @@ public class PressService {
   private final PressMentionRepository mentions;
   private final MediaRepository media;
   private final AuditService audit;
+  private final Clock clock;
 
-  public PressService(PressMentionRepository mentions, MediaRepository media, AuditService audit) {
+  public PressService(
+      PressMentionRepository mentions, MediaRepository media, AuditService audit, Clock clock) {
     this.mentions = mentions;
     this.media = media;
     this.audit = audit;
+    this.clock = clock;
   }
 
   @Transactional(readOnly = true)
@@ -93,6 +97,8 @@ public class PressService {
     } else {
       mention.putTitle(Lang.EN, request.title().en());
     }
+    // The mention row may be unchanged while its titles changed; the change time still moves.
+    mention.touch(clock.instant());
   }
 
   private void validate(PressMentionRequest request) {

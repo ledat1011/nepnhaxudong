@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.time.Duration;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -92,7 +94,8 @@ class PressPreviewServiceTest {
         new PressPreviewService(
             allowOnly(LOOPBACK),
             host -> new InetAddress[] {LOOPBACK, address("10.0.0.5")},
-            new PinnedHttpFetcher());
+            new PinnedHttpFetcher(),
+            Duration.ofSeconds(15));
 
     var result = mixed.preview("http://mixed.test:" + port() + "/page");
 
@@ -107,16 +110,110 @@ class PressPreviewServiceTest {
     assertThat(service.preview("http://nowhere.test/page")).isEqualTo(PressPreviewDto.EMPTY);
   }
 
+  // ---- total time limit ----------------------------------------------------------------------
+
+  @Test
+  void aChunkThatArrivesOneByteAtATimeStopsAtTheTotalDeadline() throws Exception {
+    try (var raw = new RawTestServer(PressPreviewServiceTest::dripChunk)) {
+      var service = service(Map.of("slow.test", LOOPBACK), Duration.ofSeconds(2));
+
+      long start = System.nanoTime();
+      var result = service.preview("http://slow.test:" + raw.port() + "/");
+      long seconds = (System.nanoTime() - start) / 1_000_000_000L;
+
+      assertThat(result).isEqualTo(PressPreviewDto.EMPTY);
+      assertThat(seconds).as("seconds until the answer").isLessThanOrEqualTo(4L);
+    }
+  }
+
+  @Test
+  void aTlsHandshakeThatNeverAnswersStopsAtTheTotalDeadline() throws Exception {
+    try (var raw = new RawTestServer(out -> Thread.sleep(20_000L))) {
+      var service = service(Map.of("silent.test", LOOPBACK), Duration.ofSeconds(2));
+
+      long start = System.nanoTime();
+      var result = service.preview("https://silent.test:" + raw.port() + "/");
+      long seconds = (System.nanoTime() - start) / 1_000_000_000L;
+
+      assertThat(result).isEqualTo(PressPreviewDto.EMPTY);
+      assertThat(seconds).as("seconds until the answer").isLessThanOrEqualTo(4L);
+    }
+  }
+
+  @Test
+  void aNameLookupThatNeverAnswersStopsAtTheTotalDeadline() {
+    HostResolver stuck =
+        host -> {
+          try {
+            Thread.sleep(20_000);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+          return new InetAddress[] {LOOPBACK};
+        };
+    var service =
+        new PressPreviewService(
+            allowOnly(LOOPBACK), stuck, new PinnedHttpFetcher(), Duration.ofSeconds(2));
+
+    long start = System.nanoTime();
+    var result = service.preview("http://stuck.test/");
+    long seconds = (System.nanoTime() - start) / 1_000_000_000L;
+
+    assertThat(result).isEqualTo(PressPreviewDto.EMPTY);
+    assertThat(seconds).as("seconds until the answer").isLessThanOrEqualTo(4L);
+  }
+
+  @Test
+  void theBodyOfAnAnswerThatIsNotHtmlIsNeverRead() throws Exception {
+    try (var raw = new RawTestServer(PressPreviewServiceTest::jsonHeadersThenSilence)) {
+      var service = service(Map.of("json.test", LOOPBACK), Duration.ofSeconds(15));
+
+      long start = System.nanoTime();
+      var result = service.preview("http://json.test:" + raw.port() + "/");
+      long seconds = (System.nanoTime() - start) / 1_000_000_000L;
+
+      assertThat(result).isEqualTo(PressPreviewDto.EMPTY);
+      assertThat(seconds).as("seconds until the answer").isLessThanOrEqualTo(2L);
+    }
+  }
+
   // ---- helpers -------------------------------------------------------------------------------
 
   private int port() {
     return server.getAddress().getPort();
   }
 
+  private PressPreviewService service(Map<String, InetAddress> hosts, Duration totalTime) {
+    return new PressPreviewService(
+        allowOnly(LOOPBACK), recordingResolver(hosts), new PinnedHttpFetcher(), totalTime);
+  }
+
+  /** A chunked answer whose single chunk of 1000 bytes arrives one byte per second. */
+  private static void dripChunk(OutputStream out) throws Exception {
+    out.write(
+        ("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\n3e8\r\n")
+            .getBytes(StandardCharsets.ISO_8859_1));
+    out.flush();
+    for (int i = 0; i < 30; i++) {
+      out.write('a');
+      out.flush();
+      Thread.sleep(1000);
+    }
+  }
+
+  /** The headers of a big JSON answer, then nothing. */
+  private static void jsonHeadersThenSilence(OutputStream out) throws Exception {
+    out.write(
+        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 1000000\r\n\r\n"
+            .getBytes(StandardCharsets.ISO_8859_1));
+    out.flush();
+    Thread.sleep(20_000L);
+  }
+
   /** Allows the loopback address (the test server) and refuses everything else that is internal. */
   private PressPreviewService service(Map<String, InetAddress> hosts) {
     return new PressPreviewService(
-        allowOnly(LOOPBACK), recordingResolver(hosts), new PinnedHttpFetcher());
+        allowOnly(LOOPBACK), recordingResolver(hosts), new PinnedHttpFetcher(), Duration.ofSeconds(15));
   }
 
   private static AddressPolicy allowOnly(InetAddress allowed) {

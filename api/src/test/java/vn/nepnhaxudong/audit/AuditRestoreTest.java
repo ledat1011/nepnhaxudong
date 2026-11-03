@@ -21,8 +21,6 @@ class AuditRestoreTest extends AuthTestSupport {
 
   private static final String CREATE_MESSAGE =
       "Không thể khôi phục bản tạo mới; hãy xóa nội dung.";
-  private static final String DELETED_LATER =
-      "Không thể khôi phục: nội dung đã bị xóa. Hãy khôi phục bản xóa trước.";
   private static final String MEDIA_GONE = "Không thể khôi phục: ảnh đã bị xóa.";
   private static final String NOT_FOUND = "Không tìm thấy dòng lịch sử.";
   private static final String BAD_SNAPSHOT =
@@ -70,18 +68,27 @@ class AuditRestoreTest extends AuthTestSupport {
   }
 
   @Test
-  void restoringAnEditOfAnEventThatWasDeletedLaterIsRefusedAndChangesNothing() {
+  void restoringAnEditOfAnEventThatWasDeletedLaterBringsItBackWithTheOldIdAndBeforeState() {
     var client = loggedInClient();
-    long id = createTimeline(client, 2000, "A", "A");
-    client.put("/admin/timeline/" + id, timeline(2001, "B", "B"));
+    long id = createTimeline(client, 2000, "A", "A en");
+    client.put("/admin/timeline/" + id, timeline(2001, "B", "B en"));
     client.delete("/admin/timeline/" + id);
     long edit = auditId("timeline_event", id, "UPDATE", 0);
-    int auditRows = count("audit_log");
 
-    assertDetail(client.post("/admin/audit/" + edit + "/restore", Map.of()), 409, DELETED_LATER);
+    var response = client.post("/admin/audit/" + edit + "/restore", Map.of());
 
-    assertThat(count("timeline_event")).isZero();
-    assertThat(count("audit_log")).isEqualTo(auditRows);
+    assertThat(response.getStatusCode().value()).isEqualTo(204);
+    JsonNode json = ApiClient.json(client.get("/admin/timeline/" + id));
+    assertThat(json.path("id").asLong()).isEqualTo(id);
+    assertThat(json.path("year").asInt()).isEqualTo(2000);
+    assertThat(json.path("title").path("vi").asString()).isEqualTo("A");
+    assertThat(json.path("title").path("en").asString()).isEqualTo("A en");
+    var restoreRow =
+        jdbc.queryForMap(
+            "select before_json is null as no_before, after_json ->> 'year' as after_year"
+                + " from audit_log where action = 'RESTORE'");
+    assertThat(restoreRow.get("no_before")).isEqualTo(true);
+    assertThat(restoreRow.get("after_year")).isEqualTo("2000");
   }
 
   // ---- delete and restore --------------------------------------------------------------------
@@ -129,7 +136,7 @@ class AuditRestoreTest extends AuthTestSupport {
   }
 
   @Test
-  void restoringADeleteWhoseContentStillExistsIsRefused() {
+  void restoringADeleteWhileTheContentExistsOverwritesItWithTheBeforeState() {
     var client = loggedInClient();
     long id = createPress(client, "https://a.example/1", "Một", "One");
     client.delete("/admin/press/" + id);
@@ -137,13 +144,27 @@ class AuditRestoreTest extends AuthTestSupport {
     assertThat(
             client.post("/admin/audit/" + deleteRow + "/restore", Map.of()).getStatusCode().value())
         .isEqualTo(204);
-    int auditRows = count("audit_log");
+    var edited = new LinkedHashMap<String, Object>();
+    edited.put("url", "https://a.example/changed");
+    edited.put("sourceName", "Báo khác");
+    edited.put("title", text("Đã sửa", "Edited"));
+    client.put("/admin/press/" + id, edited);
 
     var again = client.post("/admin/audit/" + deleteRow + "/restore", Map.of());
 
-    assertThat(again.getStatusCode().value()).isEqualTo(409);
+    assertThat(again.getStatusCode().value()).isEqualTo(204);
+    JsonNode json = ApiClient.json(client.get("/admin/press/" + id));
+    assertThat(json.path("url").asString()).isEqualTo("https://a.example/1");
+    assertThat(json.path("title").path("vi").asString()).isEqualTo("Một");
     assertThat(count("press_mention")).isEqualTo(1);
-    assertThat(count("audit_log")).isEqualTo(auditRows);
+    assertThat(count("press_mention_translation where press_mention_id = " + id)).isEqualTo(2);
+    var lastRestore =
+        jdbc.queryForMap(
+            "select before_json -> 'title' ->> 'vi' as before_title,"
+                + " after_json -> 'title' ->> 'vi' as after_title from audit_log"
+                + " where action = 'RESTORE' order by id desc limit 1");
+    assertThat(lastRestore.get("before_title")).isEqualTo("Đã sửa");
+    assertThat(lastRestore.get("after_title")).isEqualTo("Một");
   }
 
   // ---- product (children and images) ---------------------------------------------------------
@@ -271,6 +292,112 @@ class AuditRestoreTest extends AuthTestSupport {
       assertDetail(response, 409, BAD_SNAPSHOT);
       assertThat(count("product")).isZero();
     }
+  }
+
+  @Test
+  void aSnapshotThatLacksWholePartsIsRefusedWith409NotAnError() {
+    var client = loggedInClient();
+    long productId = createProduct(client, "Tên", List.of());
+    client.delete("/admin/products/" + productId);
+    long productRow = auditId("product", productId, "DELETE", 0);
+    long timelineId = createTimeline(client, 2000, "A", "A");
+    client.delete("/admin/timeline/" + timelineId);
+    long timelineRow = auditId("timeline_event", timelineId, "DELETE", 0);
+    long pressId = createPress(client, "https://a.example/1", "P", "P");
+    client.delete("/admin/press/" + pressId);
+    long pressRow = auditId("press_mention", pressId, "DELETE", 0);
+
+    var productSnapshots =
+        List.of(
+            "{\"id\":" + productId + ",\"sortOrder\":0,\"missingEn\":false,\"showPrice\":false,\"name\":{\"vi\":\"Tên\"}}",
+            "{\"id\":" + productId + ",\"sortOrder\":0,\"missingEn\":false,\"showPrice\":false,\"name\":null,"
+                + "\"features\":{\"vi\":[\"Dẻo\"]}}",
+            "{\"id\":" + productId + ",\"sortOrder\":0,\"missingEn\":false,\"showPrice\":false,"
+                + "\"name\":{\"vi\":\"Tên\"},\"features\":null,\"description\":null,"
+                + "\"cookingTips\":null,\"packagings\":null,\"mediaIds\":null}",
+            "{\"id\":" + productId + ",\"sortOrder\":0,\"missingEn\":false,\"showPrice\":false,"
+                + "\"name\":{\"vi\":\"Tên\"},\"features\":{\"vi\":null,\"en\":null}}");
+    for (String damaged : productSnapshots) {
+      jdbc.update("update audit_log set before_json = ?::jsonb where id = ?", damaged, productRow);
+      assertDetail(
+          client.post("/admin/audit/" + productRow + "/restore", Map.of()), 409, BAD_SNAPSHOT);
+    }
+    var timelineSnapshots =
+        List.of(
+            "{\"id\":" + timelineId + ",\"year\":2000,\"sortOrder\":0,\"missingEn\":false}",
+            "{\"id\":" + timelineId + ",\"year\":2000,\"sortOrder\":0,\"missingEn\":false,\"title\":{}}",
+            "{\"id\":" + timelineId + ",\"sortOrder\":0,\"missingEn\":false,\"title\":{\"vi\":\"A\"}}");
+    for (String damaged : timelineSnapshots) {
+      jdbc.update("update audit_log set before_json = ?::jsonb where id = ?", damaged, timelineRow);
+      assertDetail(
+          client.post("/admin/audit/" + timelineRow + "/restore", Map.of()), 409, BAD_SNAPSHOT);
+    }
+    var pressSnapshots =
+        List.of(
+            "{\"id\":" + pressId + ",\"sortOrder\":0,\"missingEn\":false}",
+            "{\"id\":" + pressId + ",\"url\":\"https://a.example\",\"sourceName\":\"B\","
+                + "\"sortOrder\":0,\"missingEn\":false}",
+            "{\"id\":" + pressId + ",\"url\":\"javascript:x\",\"sourceName\":\"B\","
+                + "\"sortOrder\":0,\"missingEn\":false,\"title\":{\"vi\":\"T\"}}");
+    for (String damaged : pressSnapshots) {
+      jdbc.update("update audit_log set before_json = ?::jsonb where id = ?", damaged, pressRow);
+      assertDetail(
+          client.post("/admin/audit/" + pressRow + "/restore", Map.of()), 409, BAD_SNAPSHOT);
+    }
+
+    assertThat(count("product")).isZero();
+    assertThat(count("timeline_event")).isZero();
+    assertThat(count("press_mention")).isZero();
+  }
+
+  @Test
+  void contentWhoseVietnameseRowIsMissingIsRefusedWith409NotAnError() {
+    var client = loggedInClient();
+    long timelineId = createTimeline(client, 2000, "A", "A");
+    client.put("/admin/timeline/" + timelineId, timeline(2001, "B", "B"));
+    long timelineRow = auditId("timeline_event", timelineId, "UPDATE", 0);
+    jdbc.update(
+        "delete from timeline_event_translation where timeline_event_id = ? and lang = 'vi'",
+        timelineId);
+    long pressId = createPress(client, "https://a.example/1", "P", "P");
+    client.put(
+        "/admin/press/" + pressId,
+        Map.of("url", "https://a.example/2", "sourceName", "B", "title", text("Q", "Q")));
+    long pressRow = auditId("press_mention", pressId, "UPDATE", 0);
+    jdbc.update(
+        "delete from press_mention_translation where press_mention_id = ? and lang = 'vi'",
+        pressId);
+
+    assertDetail(
+        client.post("/admin/audit/" + timelineRow + "/restore", Map.of()), 409, BAD_SNAPSHOT);
+    assertDetail(client.post("/admin/audit/" + pressRow + "/restore", Map.of()), 409, BAD_SNAPSHOT);
+  }
+
+  @Test
+  void aSnapshotWithOnlyTheRequiredPartsIsRestoredNotRefused() {
+    var client = loggedInClient();
+    long productId = createProduct(client, "Tên", List.of());
+    client.delete("/admin/products/" + productId);
+    long productRow = auditId("product", productId, "DELETE", 0);
+    long timelineId = createTimeline(client, 2000, "A", "A");
+    client.delete("/admin/timeline/" + timelineId);
+    long timelineRow = auditId("timeline_event", timelineId, "DELETE", 0);
+    jdbc.update(
+        "update audit_log set before_json = ?::jsonb where id = ?",
+        "{\"id\":" + productId + ",\"sortOrder\":0,\"missingEn\":false,\"showPrice\":false,"
+            + "\"name\":{\"vi\":\"Tên\"},\"features\":{\"vi\":[\"Dẻo\"]}}",
+        productRow);
+    jdbc.update(
+        "update audit_log set before_json = ?::jsonb where id = ?",
+        "{\"id\":" + timelineId + ",\"year\":2000,\"sortOrder\":0,\"missingEn\":false,\"title\":{\"vi\":\"A\"}}",
+        timelineRow);
+
+    assertThat(client.post("/admin/audit/" + productRow + "/restore", Map.of()).getStatusCode().value())
+        .isEqualTo(204);
+    assertThat(client.post("/admin/audit/" + timelineRow + "/restore", Map.of()).getStatusCode().value())
+        .isEqualTo(204);
+    assertThat(ApiClient.json(client.get("/admin/products/" + productId)).path("name").path("vi").asString())
+        .isEqualTo("Tên");
   }
 
   @Test

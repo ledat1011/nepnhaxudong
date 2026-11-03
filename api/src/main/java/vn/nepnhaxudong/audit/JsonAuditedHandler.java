@@ -1,6 +1,9 @@
 package vn.nepnhaxudong.audit;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -13,6 +16,8 @@ import vn.nepnhaxudong.common.ApiException;
 public abstract class JsonAuditedHandler<T> implements AuditedHandler {
 
   public static final String BAD_SNAPSHOT = "Không thể khôi phục: dữ liệu lịch sử không hợp lệ.";
+
+  private static final Logger LOG = LoggerFactory.getLogger(JsonAuditedHandler.class);
 
   private final String entityType;
   private final Class<T> snapshotType;
@@ -31,7 +36,13 @@ public abstract class JsonAuditedHandler<T> implements AuditedHandler {
 
   @Override
   public Optional<Object> currentSnapshot(long entityId) {
-    return find(entityId).map(Object.class::cast);
+    try {
+      return find(entityId).map(Object.class::cast);
+    } catch (NoSuchElementException e) {
+      // The row exists but has no Vietnamese text row, so it cannot be shown as a DTO.
+      LOG.warn("The {} {} has no Vietnamese text row", entityType, entityId);
+      throw badSnapshot();
+    }
   }
 
   @Override
@@ -45,7 +56,13 @@ public abstract class JsonAuditedHandler<T> implements AuditedHandler {
     if (snapshot == null) {
       throw badSnapshot();
     }
-    restore(entityId, snapshot);
+    try {
+      restore(entityId, snapshot);
+    } catch (NullPointerException e) {
+      // A part of the snapshot is missing in a way the checks did not name: refuse, do not fail.
+      LOG.warn("The snapshot of {} {} is incomplete", entityType, entityId, e);
+      throw badSnapshot();
+    }
   }
 
   /** The current admin DTO of the entity, or empty when it does not exist. */

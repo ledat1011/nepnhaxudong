@@ -162,6 +162,26 @@ class PressAdminTest extends AuthTestSupport {
   }
 
   @Test
+  void changingOnlyTheTitleMovesUpdatedAtOfTheMention() {
+    var client = loggedInClient();
+    long id = create(client, "https://a.example/1", "Cũ");
+    java.time.Instant created = updatedAt(id);
+    clock.advance(java.time.Duration.ofHours(1));
+    var update = body("https://a.example/1", "Báo", "Chỉ đổi tiêu đề", "Cũ (en)");
+    update.put("sortOrder", 0);
+
+    assertThat(client.put("/admin/press/" + id, update).getStatusCode().value()).isEqualTo(200);
+
+    assertThat(updatedAt(id)).isEqualTo(created.plus(java.time.Duration.ofHours(1)));
+  }
+
+  private java.time.Instant updatedAt(long id) {
+    return jdbc.queryForObject(
+            "select updated_at from press_mention where id = ?", java.sql.Timestamp.class, id)
+        .toInstant();
+  }
+
+  @Test
   void requiredTextsAreChecked() {
     var client = loggedInClient();
 
@@ -268,6 +288,17 @@ class PressAdminTest extends AuthTestSupport {
     var client = loggedInClient();
 
     assertAllNull(client.post("/admin/press/preview", new LinkedHashMap<String, Object>()));
+  }
+
+  @Test
+  void previewWithNoBodyOrABodyThatIsNotJsonAnswersNullFields() {
+    var client = loggedInClient();
+
+    assertAllNull(client.post("/admin/press/preview", null));
+    assertAllNull(client.post("/admin/press/preview", "this is not json"));
+    assertAllNull(client.post("/admin/press/preview", "{\"url\": "));
+    assertAllNull(client.post("/admin/press/preview", "[1, 2]"));
+    assertAllNull(client.post("/admin/press/preview", "{\"url\": 12}"));
   }
 
   // ---- helpers -------------------------------------------------------------------------------

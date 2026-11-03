@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -14,13 +13,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import jakarta.annotation.PreDestroy;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -30,7 +37,8 @@ import org.springframework.stereotype.Service;
  *
  * <ul>
  *   <li>only http and https; the host is resolved here and every address must pass
- *       {@link AddressPolicy}; the connection goes to a checked address ({@link PinnedHttpFetcher});
+ *       {@link AddressPolicy}; the connection goes to a checked address
+ *       ({@link PinnedHttpFetcher});
  *   <li>redirects are not followed by the client; at most 3 are followed here, and each target is
  *       checked again like the first address;
  *   <li>5 second timeout, at most 2 MB, and only an HTML answer with status 200 to 299.
@@ -42,23 +50,47 @@ import org.springframework.stereotype.Service;
 public class PressPreviewService {
 
   static final int MAX_REDIRECTS = 3;
-  private static final Duration TOTAL_TIME = Duration.ofSeconds(15);
   private static final Set<Integer> REDIRECT_STATUSES = Set.of(301, 302, 303, 307, 308);
   private static final int MAX_TITLE_LENGTH = 500;
   private static final int MAX_SOURCE_LENGTH = 200;
   private static final int DATE_LENGTH = "2024-05-01".length();
-  private static final Pattern CHARSET = Pattern.compile("charset=\"?([^;\"\\s]+)", Pattern.CASE_INSENSITIVE);
+  private static final Pattern CHARSET =
+      Pattern.compile("charset=\"?([^;\"\\s]+)", Pattern.CASE_INSENSITIVE);
   private static final Logger LOG = LoggerFactory.getLogger(PressPreviewService.class);
 
   private final AddressPolicy policy;
   private final HostResolver resolver;
   private final PinnedHttpFetcher fetcher;
+  private final Duration totalTime;
+  private final ExecutorService lookups = newLookupExecutor();
 
   public PressPreviewService(
-      AddressPolicy policy, HostResolver resolver, PinnedHttpFetcher fetcher) {
+      AddressPolicy policy,
+      HostResolver resolver,
+      PinnedHttpFetcher fetcher,
+      @Value("${press.preview.total-time:15s}") Duration totalTime) {
     this.policy = policy;
     this.resolver = resolver;
     this.fetcher = fetcher;
+    this.totalTime = totalTime;
+  }
+
+  /**
+   * Name lookups run on their own daemon threads, because the system resolver cannot be
+   * interrupted; the caller waits only for the time that is left and then gives up.
+   */
+  private static ExecutorService newLookupExecutor() {
+    return Executors.newCachedThreadPool(
+        task -> {
+          var thread = new Thread(task, "press-preview-lookup");
+          thread.setDaemon(true);
+          return thread;
+        });
+  }
+
+  @PreDestroy
+  void stopLookups() {
+    lookups.shutdownNow();
   }
 
   public PressPreviewDto preview(String url) {
@@ -79,10 +111,10 @@ public class PressPreviewService {
   }
 
   private PressPreviewDto read(URI start) throws IOException, PreviewFailedException {
-    long deadline = System.nanoTime() + TOTAL_TIME.toNanos();
+    long deadline = System.nanoTime() + totalTime.toNanos();
     URI uri = start;
     for (int redirects = 0; ; redirects++) {
-      List<InetAddress> addresses = checkedAddresses(uri.getHost());
+      List<InetAddress> addresses = checkedAddresses(uri, deadline);
       FetchedPage page = fetcher.fetch(uri, addresses, deadline);
       if (REDIRECT_STATUSES.contains(page.status())) {
         if (redirects == MAX_REDIRECTS) {
@@ -98,15 +130,14 @@ public class PressPreviewService {
     }
   }
 
-  /** Resolves the host; every address must be allowed, otherwise the host is refused. */
-  private List<InetAddress> checkedAddresses(String host) throws PreviewFailedException {
-    String name = host.startsWith("[") && host.endsWith("]") ? host.substring(1, host.length() - 1) : host;
-    InetAddress[] addresses;
-    try {
-      addresses = resolver.resolve(name);
-    } catch (UnknownHostException e) {
-      throw new PreviewFailedException("The host name cannot be resolved");
-    }
+  /**
+   * Resolves the host within the time that is left; every address must be allowed, otherwise the
+   * host is refused.
+   */
+  private List<InetAddress> checkedAddresses(URI uri, long deadline)
+      throws PreviewFailedException {
+    String name = WebAddress.resolvableHost(uri);
+    InetAddress[] addresses = lookup(name, deadline);
     if (addresses.length == 0) {
       throw new PreviewFailedException("The host name has no address");
     }
@@ -116,6 +147,21 @@ public class PressPreviewService {
       }
     }
     return Arrays.asList(addresses);
+  }
+
+  private InetAddress[] lookup(String name, long deadline) throws PreviewFailedException {
+    Future<InetAddress[]> answer = lookups.submit(() -> resolver.resolve(name));
+    try {
+      return answer.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+    } catch (TimeoutException e) {
+      answer.cancel(true);
+      throw new PreviewFailedException("The host name lookup took too long");
+    } catch (ExecutionException e) {
+      throw new PreviewFailedException("The host name cannot be resolved");
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new PreviewFailedException("The preview was interrupted");
+    }
   }
 
   private static URI redirectTarget(URI current, String location) throws PreviewFailedException {
@@ -159,7 +205,9 @@ public class PressPreviewService {
   }
 
   private static String meta(Document document, String name) {
-    Element tag = document.selectFirst("meta[property=\"" + name + "\"], meta[name=\"" + name + "\"]");
+    Element tag =
+        document.selectFirst(
+            "meta[property=\"" + name + "\"], meta[name=\"" + name + "\"]");
     return tag == null ? null : tag.attr("content");
   }
 

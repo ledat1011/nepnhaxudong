@@ -229,6 +229,26 @@ class PressPreviewFetchTest extends AuthTestSupport {
     assertThat(json.path("title").asString()).isEqualTo("Nếp cái");
   }
 
+  @Test
+  void aPathAndQueryWithVietnameseLettersAreSentPercentEncoded() {
+    var seen = new java.util.concurrent.atomic.AtomicReference<String>();
+    server.createContext(
+        "/",
+        exchange -> {
+          seen.set(exchange.getRequestURI().getRawPath() + "?" + exchange.getRequestURI().getRawQuery());
+          send(exchange, 200, "text/html", "<title>Bài báo</title>".getBytes(StandardCharsets.UTF_8));
+        });
+    var client = loggedInClient();
+
+    JsonNode json =
+        ApiClient.json(
+            client.post(
+                "/admin/press/preview", Map.of("url", url("/bài-báo/nếp?từ=khóa%20x"))));
+
+    assertThat(seen.get()).isEqualTo("/b%C3%A0i-b%C3%A1o/n%E1%BA%BFp?t%E1%BB%AB=kh%C3%B3a%20x");
+    assertThat(json.path("title").asString()).isEqualTo("Bài báo");
+  }
+
   // ---- helpers -------------------------------------------------------------------------------
 
   private String url(String path) {

@@ -3,7 +3,13 @@ package vn.nepnhaxudong.audit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +20,7 @@ import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.transaction.support.TransactionTemplate;
 import vn.nepnhaxudong.TestcontainersConfig;
 
+@ExtendWith(OutputCaptureExtension.class)
 @SpringBootTest
 @Import(TestcontainersConfig.class)
 class JpaAuditServiceTest {
@@ -54,6 +61,24 @@ class JpaAuditServiceTest {
     assertThat(
             jdbc.queryForObject("select after_json ->> 'year' from audit_log", String.class))
         .isEqualTo("2");
+  }
+
+  @Test
+  void aPrincipalNameThatIsNotANumberGivesNoUserAndAWarningWithoutTheName(
+      CapturedOutput output) {
+    var authentication =
+        UsernamePasswordAuthenticationToken.authenticated("secret-name-xyz", "n/a", List.of());
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+    try {
+      transaction.executeWithoutResult(
+          status -> audit.record("timeline_event", 3, AuditAction.CREATE, null, Map.of("id", 3)));
+    } finally {
+      SecurityContextHolder.clearContext();
+    }
+
+    assertThat(jdbc.queryForObject("select user_id from audit_log", Long.class)).isNull();
+    assertThat(output.getAll()).contains("WARN").contains("not a user id");
+    assertThat(output.getAll()).doesNotContain("secret-name-xyz");
   }
 
   @Test
