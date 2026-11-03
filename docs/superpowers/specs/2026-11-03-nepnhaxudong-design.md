@@ -239,9 +239,7 @@ Mỗi phần có implementation plan riêng.
 
 | Mục | Rủi ro / việc cần làm | Khi nào |
 |---|---|---|
-| Tên "Nếp Nhà" | Trùng hộ kinh doanh ở Hà Nội; tên miền ngắn đã mất; có thể đã có nhãn hiệu | Tra Cục SHTT trước khi in bao bì |
 | Tên miền `nepnhaxudong.vn` | Không có bản ghi DNS ngày 2026-11-03, chưa xác nhận bằng whois | Trước khi mua |
-| Tài khoản Claude công ty | Dự án cá nhân nằm trong tổ chức công ty, có thể trái quy định nội bộ | Chủ dự án tự xác nhận |
 | Docker trong cloud session | Có thể không có → không chạy được Testcontainers ở cloud | Phần C |
 | Ảnh HEIC | Có thể bị gửi lên dạng HEIC | Phần B |
 | Nội dung từ gia đình | Cần: ảnh sản phẩm, quy cách đóng gói, giá (nếu hiện), các mốc hành trình, link bài báo, thông tin liên hệ | Trước phần B (trang công khai) |
