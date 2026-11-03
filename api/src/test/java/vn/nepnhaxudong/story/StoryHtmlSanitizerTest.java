@@ -145,4 +145,30 @@ class StoryHtmlSanitizerTest {
           .isEqualTo("<a>link</a>");
     }
   }
+
+  @Test
+  void removesAnImageSourceWithATabOrLineBreakInsideBecauseBrowsersDeleteThem() {
+    for (String src : new String[] {"/media/.&#9;./x", "/media/.&#10;./x", "/media/.&#13;./x", "/media/a&#127;.webp"}) {
+      assertThat(StoryHtmlSanitizer.clean("<img src=\"" + src + "\" alt=\"a\">"))
+          .as(src)
+          .isEqualTo("<img alt=\"a\">");
+    }
+  }
+
+  @Test
+  void removesALinkWithATabOrLineBreakInsideBecauseBrowsersDeleteThem() {
+    for (String href : new String[] {"/&#9;/evil.com", "/&#10;/evil.com", "/&#13;/evil.com", "https://a.example/&#9;x"}) {
+      assertThat(StoryHtmlSanitizer.clean("<a href=\"" + href + "\">link</a>"))
+          .as(href)
+          .isEqualTo("<a>link</a>");
+    }
+  }
+
+  @Test
+  void theMediaPrefixIsCaseSensitiveButTheSchemeIsNot() {
+    assertThat(StoryHtmlSanitizer.clean("<img src=\"/MEDIA/x.webp\" alt=\"a\">"))
+        .isEqualTo("<img alt=\"a\">");
+    assertThat(StoryHtmlSanitizer.clean("<img src=\"HTTPS://example.com/x.webp\" alt=\"a\">"))
+        .isEqualTo("<img src=\"HTTPS://example.com/x.webp\" alt=\"a\">");
+  }
 }
