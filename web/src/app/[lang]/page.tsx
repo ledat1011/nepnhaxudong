@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ContactSection } from "@/components/home/ContactSection";
 import { Hero } from "@/components/home/Hero";
@@ -13,6 +14,8 @@ import { buildHomeNav } from "@/lib/content/home-nav";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isLang } from "@/lib/i18n/langs";
 import { homePath } from "@/lib/i18n/routes";
+import { buildHomeJsonLd, serializeJsonLd } from "@/lib/seo/json-ld";
+import { buildMetadata, getSiteUrl, SITE_NAME } from "@/lib/seo/metadata";
 
 // No page is built at `next build`, so the build never needs the content API.
 // Each language is rendered on its first request and cached after that.
@@ -21,6 +24,18 @@ export const generateStaticParams = () => [];
 type HomePageProps = {
   params: Promise<{ lang: string }>;
 };
+
+export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
+  const { lang } = await params;
+  if (!isLang(lang)) return {};
+  const { site } = getDictionary(lang);
+  return buildMetadata({
+    lang,
+    title: `${SITE_NAME} - ${site.tagline}`,
+    description: site.description,
+    paths: { vi: homePath("vi"), en: homePath("en") },
+  });
+}
 
 export default async function HomePage({ params }: HomePageProps) {
   const { lang } = await params;
@@ -33,6 +48,10 @@ export default async function HomePage({ params }: HomePageProps) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildHomeJsonLd(home, getSiteUrl())) }}
+      />
       <SiteHeader
         lang={lang}
         dict={dict}

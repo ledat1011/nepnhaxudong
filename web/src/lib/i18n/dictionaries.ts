@@ -7,8 +7,10 @@ type DeepStrings<T> = {
 const vi = {
   site: {
     name: "Nếp Nhà",
+    tagline: "Gạo nếp cái hoa vàng",
     description:
       "Nếp Nhà là gạo nếp cái hoa vàng của một gia đình ở xứ Đông, trồng và chăm theo cách của nhà mình: dẻo, thơm và đậm vị quê.",
+    ogImageAlt: "Linh vật Nếp Nhà đứng bên cánh đồng lúa nếp",
   },
   nav: {
     home: "Trang chủ",
@@ -91,8 +93,10 @@ export type Dictionary = DeepStrings<typeof vi>;
 const en: Dictionary = {
   site: {
     name: "Nếp Nhà",
+    tagline: "Yellow-flower sticky rice",
     description:
-      "Nếp Nhà is the yellow-flower sticky rice (gạo nếp cái hoa vàng) of a family from the Đông region, grown and cared for in the family's own way: soft, fragrant and full of home flavor.",
+      "Nếp Nhà is yellow-flower sticky rice grown by a family in Hải Dương, northern Vietnam: round, soft and fragrant.",
+    ogImageAlt: "The Nếp Nhà mascot beside a sticky rice field",
   },
   nav: {
     home: "Home",

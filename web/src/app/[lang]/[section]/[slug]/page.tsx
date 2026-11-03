@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -11,6 +12,7 @@ import { formatDate } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isLang } from "@/lib/i18n/langs";
 import { isStorySection, storiesPath } from "@/lib/i18n/routes";
+import { buildMetadata, withSiteName } from "@/lib/seo/metadata";
 
 // No page is built at `next build`, so the build never needs the content API.
 // Each story is rendered on its first request and cached after that.
@@ -19,6 +21,21 @@ export const generateStaticParams = () => [];
 type StoryPageProps = {
   params: Promise<{ lang: string; section: string; slug: string }>;
 };
+
+export async function generateMetadata({ params }: StoryPageProps): Promise<Metadata> {
+  const { lang, section, slug } = await params;
+  if (!isLang(lang) || !isStorySection(lang, section)) return {};
+  const story = await getContentClient().getStory(lang, slug);
+  if (story === null) return {};
+  return buildMetadata({
+    lang,
+    title: withSiteName(story.title),
+    description: story.excerpt || getDictionary(lang).site.description,
+    paths: storyAlternates(lang, story),
+    type: "article",
+    publishedTime: story.publishedAt,
+  });
+}
 
 export default async function StoryPage({ params }: StoryPageProps) {
   const { lang, section, slug } = await params;

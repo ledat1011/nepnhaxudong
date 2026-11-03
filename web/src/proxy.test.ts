@@ -24,4 +24,9 @@ describe("proxy", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost:3000/vi");
   });
+
+  it("tells shared caches that the redirect depends on Accept-Language", () => {
+    expect(proxy(request("en")).headers.get("vary")).toBe("Accept-Language");
+    expect(proxy(request()).headers.get("vary")).toBe("Accept-Language");
+  });
 });

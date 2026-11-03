@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ImagePlaceholder } from "@/components/brand/ImagePlaceholder";
+import { toImageSrc } from "@/lib/content/image-src";
 import type { ImageRef } from "@/lib/content/types";
 
 type ContentImageProps = {
@@ -10,14 +11,7 @@ type ContentImageProps = {
   className?: string;
 };
 
-/** Turns an API image URL into one next/image can load. */
-export function toImageSrc(url: string, siteUrl = process.env.SITE_URL): string {
-  if (!url.startsWith("/")) return url;
-  if (!siteUrl) {
-    throw new Error("SITE_URL is required to load images with a relative URL");
-  }
-  return `${siteUrl.replace(/\/$/, "")}${url}`;
-}
+export { toImageSrc };
 
 export function ContentImage({
   image,

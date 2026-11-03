@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -9,6 +10,7 @@ import { hasNextPage, parsePage } from "@/lib/content/story-routing";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isLang } from "@/lib/i18n/langs";
 import { isStorySection, storiesPath } from "@/lib/i18n/routes";
+import { buildMetadata, withSiteName } from "@/lib/seo/metadata";
 
 // No generateStaticParams here: the page reads `?page`, and Next cannot cache a page
 // with search params. It renders per request; the API data is still cached by tag.
@@ -18,6 +20,20 @@ type StoryListPageProps = {
   params: Promise<{ lang: string; section: string }>;
   searchParams: Promise<{ page?: string | string[] }>;
 };
+
+export async function generateMetadata({ params, searchParams }: StoryListPageProps): Promise<Metadata> {
+  const { lang, section } = await params;
+  if (!isLang(lang) || !isStorySection(lang, section)) return {};
+  const page = parsePage((await searchParams).page);
+  if (page === null) return {};
+  const { sections, site } = getDictionary(lang);
+  return buildMetadata({
+    lang,
+    title: withSiteName(sections.story),
+    description: site.description,
+    paths: { vi: storiesPath("vi", page), en: storiesPath("en", page) },
+  });
+}
 
 export default async function StoryListPage({ params, searchParams }: StoryListPageProps) {
   const { lang, section } = await params;
