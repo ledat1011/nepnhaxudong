@@ -33,9 +33,13 @@ public class LoginService {
   /**
    * Checks the credentials and keeps the failed-attempt counter. The business exceptions must not
    * roll the transaction back: the counter and the lock have to be saved when the login fails.
+   *
+   * <p>A user with two-factor login must also send a valid code. A missing code is refused without
+   * counting (the password was right and the client has to ask the user for the code); a wrong code
+   * counts as one failed attempt, like a wrong password.
    */
   @Transactional(noRollbackFor = ApiException.class)
-  public AppUser authenticate(String email, String password) {
+  public AppUser authenticate(String email, String password, String totpCode) {
     Instant now = clock.instant();
     AppUser user = users.findByEmailForUpdate(AppUser.normalizeEmail(email)).orElse(null);
     if (user == null || !user.isEnabled()) {
@@ -54,18 +58,32 @@ public class LoginService {
     }
 
     if (!encoder.matches(password, user.getPasswordHash())) {
-      int attempts = user.getFailedAttempts() + 1;
-      user.setFailedAttempts(attempts);
-      if (attempts >= MAX_FAILED_ATTEMPTS) {
-        user.setLockedUntil(now.plus(LOCK_DURATION));
-        throw new AccountLockedException();
+      throw registerFailure(user, now) ? new AccountLockedException() : new InvalidCredentialsException();
+    }
+
+    if (user.isTotpEnabled()) {
+      if (totpCode == null || totpCode.isBlank()) {
+        throw new TotpRequiredException();
       }
-      throw new InvalidCredentialsException();
+      if (!Totp.verify(user.getTotpSecret(), totpCode.trim(), now.getEpochSecond())) {
+        throw registerFailure(user, now) ? new AccountLockedException() : new InvalidTotpCodeException();
+      }
     }
 
     user.setFailedAttempts(0);
     user.setLockedUntil(null);
     return user;
+  }
+
+  /** Counts one failed attempt, locks the account at the limit and returns true when it is now locked. */
+  private static boolean registerFailure(AppUser user, Instant now) {
+    int attempts = user.getFailedAttempts() + 1;
+    user.setFailedAttempts(attempts);
+    if (attempts >= MAX_FAILED_ATTEMPTS) {
+      user.setLockedUntil(now.plus(LOCK_DURATION));
+      return true;
+    }
+    return false;
   }
 
   /** The user of a session, or {@link SessionExpiredException} when the user was removed or disabled. */

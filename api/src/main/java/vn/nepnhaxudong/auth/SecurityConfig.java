@@ -14,6 +14,7 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
@@ -35,18 +36,27 @@ public class SecurityConfig {
     return new HttpSessionSecurityContextRepository();
   }
 
+  /**
+   * The XSRF-TOKEN cookie is readable by the browser script (HttpOnly false) and is sent back in the
+   * X-XSRF-TOKEN header. It is a bean so that {@link AuthController} can rotate the token at login
+   * and logout.
+   */
+  @Bean
+  CsrfTokenRepository csrfTokenRepository() {
+    var csrfTokens = CookieCsrfTokenRepository.withHttpOnlyFalse();
+    csrfTokens.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+    return csrfTokens;
+  }
+
   @Bean
   SecurityFilterChain filterChain(
       HttpSecurity http,
       SecurityContextRepository securityContextRepository,
+      CsrfTokenRepository csrfTokens,
       LoginService loginService,
       ProblemSecurityHandlers problemHandlers)
       throws Exception {
-    // The XSRF-TOKEN cookie is readable by the browser script (HttpOnly false) and is sent back in
-    // the X-XSRF-TOKEN header. The plain request handler compares the header with the cookie value.
-    var csrfTokens = CookieCsrfTokenRepository.withHttpOnlyFalse();
-    csrfTokens.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
-
+    // The plain request handler compares the header with the cookie value.
     return http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
         .securityContext(c -> c.securityContextRepository(securityContextRepository))
         // An API must not remember the request of an anonymous user (that would create a session).

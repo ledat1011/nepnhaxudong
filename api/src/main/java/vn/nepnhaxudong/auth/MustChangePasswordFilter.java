@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -11,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
-import vn.nepnhaxudong.common.ApiException;
 import vn.nepnhaxudong.common.ProblemJsonWriter;
 
 /**
@@ -47,7 +47,13 @@ public class MustChangePasswordFilter extends OncePerRequestFilter {
           ProblemJsonWriter.write(response, HttpStatus.FORBIDDEN, DETAIL);
           return;
         }
-      } catch (ApiException e) {
+      } catch (SessionExpiredException e) {
+        // The user was deleted or disabled: end the session, as GET /auth/me does.
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+          session.invalidate();
+        }
+        SecurityContextHolder.clearContext();
         ProblemJsonWriter.write(response, e.getStatus(), e.getMessage());
         return;
       }

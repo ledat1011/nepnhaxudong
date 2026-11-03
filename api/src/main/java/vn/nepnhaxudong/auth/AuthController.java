@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,14 +30,17 @@ public class AuthController {
   private final LoginService loginService;
   private final PasswordChangeService passwordChangeService;
   private final SecurityContextRepository securityContextRepository;
+  private final CsrfTokenRepository csrfTokenRepository;
 
   public AuthController(
       LoginService loginService,
       PasswordChangeService passwordChangeService,
-      SecurityContextRepository securityContextRepository) {
+      SecurityContextRepository securityContextRepository,
+      CsrfTokenRepository csrfTokenRepository) {
     this.loginService = loginService;
     this.passwordChangeService = passwordChangeService;
     this.securityContextRepository = securityContextRepository;
+    this.csrfTokenRepository = csrfTokenRepository;
   }
 
   @PostMapping("/login")
@@ -44,7 +48,7 @@ public class AuthController {
       @Valid @RequestBody LoginRequest body,
       HttpServletRequest request,
       HttpServletResponse response) {
-    AppUser user = loginService.authenticate(body.email(), body.password());
+    AppUser user = loginService.authenticate(body.email(), body.password(), body.totpCode());
 
     // Session fixation protection: a session id that existed before the login is never reused.
     if (request.getSession(false) != null) {
@@ -59,14 +63,17 @@ public class AuthController {
     context.setAuthentication(authentication);
     SecurityContextHolder.setContext(context);
     securityContextRepository.saveContext(context, request, response);
+    // A CSRF token seen before the login must not be valid after it.
+    rotateCsrfToken(request, response);
     return UserResponse.of(user);
   }
 
   @PostMapping("/logout")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void logout(HttpServletRequest request) {
+  public void logout(HttpServletRequest request, HttpServletResponse response) {
     invalidateSession(request);
     SecurityContextHolder.clearContext();
+    rotateCsrfToken(request, response);
   }
 
   @GetMapping("/me")
@@ -86,7 +93,12 @@ public class AuthController {
       @AuthenticationPrincipal SessionPrincipal principal,
       @Valid @RequestBody PasswordChangeRequest body,
       HttpServletRequest request) {
-    passwordChangeService.change(principal.userId(), body.currentPassword(), body.newPassword());
+    // The other sessions of this user end inside the service; this one stays and gets a new id.
+    passwordChangeService.change(
+        principal.userId(),
+        body.currentPassword(),
+        body.newPassword(),
+        request.getSession().getId());
     request.changeSessionId();
   }
 
@@ -97,6 +109,12 @@ public class AuthController {
   @GetMapping("/csrf")
   public CsrfResponse csrf(CsrfToken token) {
     return new CsrfResponse(token.getHeaderName(), token.getToken());
+  }
+
+  /** Removes the CSRF cookie and sets a new random token; the client reads it with GET /auth/csrf. */
+  private void rotateCsrfToken(HttpServletRequest request, HttpServletResponse response) {
+    csrfTokenRepository.saveToken(null, request, response);
+    csrfTokenRepository.saveToken(csrfTokenRepository.generateToken(request), request, response);
   }
 
   private static void invalidateSession(HttpServletRequest request) {

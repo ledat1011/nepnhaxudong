@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Creates the first admin at startup when the app_user table is empty. The email and password come
@@ -41,7 +41,10 @@ public class BootstrapAdmin implements ApplicationRunner {
     createIfEmpty();
   }
 
-  @Transactional
+  /**
+   * Not transactional on purpose: {@code count} and {@code save} each run in their own repository
+   * transaction, and a unique-email conflict (another instance was faster) is caught below.
+   */
   public void createIfEmpty() {
     if (users.count() > 0) {
       return;
@@ -52,7 +55,14 @@ public class BootstrapAdmin implements ApplicationRunner {
               + "nobody can log in to the admin area.");
       return;
     }
-    users.save(AppUser.create(email, DISPLAY_NAME, encoder.encode(password), true));
+    try {
+      users.save(AppUser.create(email, DISPLAY_NAME, encoder.encode(password), true));
+    } catch (DataIntegrityViolationException e) {
+      LOG.warn(
+          "The first admin {} already exists: another instance created it first.",
+          AppUser.normalizeEmail(email));
+      return;
+    }
     LOG.info("Created the first admin user {}", AppUser.normalizeEmail(email));
   }
 }

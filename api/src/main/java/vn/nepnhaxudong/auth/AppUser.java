@@ -113,4 +113,20 @@ public class AppUser extends TimestampedEntity {
   public void setLockedUntil(Instant lockedUntil) {
     this.lockedUntil = lockedUntil;
   }
+
+  public String getTotpSecret() {
+    return totpSecret;
+  }
+
+  public void setTotpSecret(String totpSecret) {
+    this.totpSecret = totpSecret;
+  }
+
+  public boolean isTotpEnabled() {
+    return totpEnabled;
+  }
+
+  public void setTotpEnabled(boolean totpEnabled) {
+    this.totpEnabled = totpEnabled;
+  }
 }
