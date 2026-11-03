@@ -11,6 +11,7 @@ import vn.nepnhaxudong.audit.JsonAuditedHandler;
 import vn.nepnhaxudong.common.ApiException;
 import vn.nepnhaxudong.common.LocalizedText;
 import vn.nepnhaxudong.media.MediaReferences;
+import vn.nepnhaxudong.publish.ContentChangedEvent;
 
 /**
  * Reads and restores stories for the audit log. A deleted story is inserted again with its old id,
@@ -72,6 +73,12 @@ class StoryAuditedHandler extends JsonAuditedHandler<StoryAdminDto> {
     Story story = stories.findById(entityId).orElseGet(() -> insertWithId(entityId, snapshot));
     service.apply(story, request, slugs);
     story.setPublication(snapshot.status(), snapshot.publishedAt());
+  }
+
+  /** A restore can change the slugs, so the website refreshes the slugs from both states. */
+  @Override
+  public ContentChangedEvent changeEvent(Object before, Object after) {
+    return StoryChanges.event((StoryAdminDto) before, (StoryAdminDto) after);
   }
 
   private static boolean hasValidPublication(StoryAdminDto snapshot) {

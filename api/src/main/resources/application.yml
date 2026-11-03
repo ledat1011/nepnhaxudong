@@ -47,6 +47,16 @@ app:
     dir: ${MEDIA_DIR:./data/media}
     # At most 2 images are processed at the same time; a third request waits this long, then gets 503.
     processing-wait: 30s
+  web:
+    # The website (Next.js). After a content change the API calls POST {base-url}/api/revalidate
+    # with the secret. Leave base-url empty when the website is not running: the calls are skipped.
+    # In production this is the internal address of the web container, for example http://web:3000.
+    base-url: ${WEB_BASE_URL:}
+    # The same value as REVALIDATE_SECRET of the website.
+    revalidate-secret: ${REVALIDATE_SECRET:}
+    # Wait before the first retry; it doubles each time (1 s, 2 s, 4 s). Connect and read timeout.
+    retry-wait: 1s
+    timeout: 5s
 
 # First admin, created at startup only when the app_user table is empty.
 bootstrap:

@@ -3,6 +3,7 @@ package vn.nepnhaxudong.story;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -32,13 +33,19 @@ public class StoryService {
   private final StoryRepository stories;
   private final MediaRepository media;
   private final AuditService audit;
+  private final ApplicationEventPublisher events;
   private final Clock clock;
 
   public StoryService(
-      StoryRepository stories, MediaRepository media, AuditService audit, Clock clock) {
+      StoryRepository stories,
+      MediaRepository media,
+      AuditService audit,
+      ApplicationEventPublisher events,
+      Clock clock) {
     this.stories = stories;
     this.media = media;
     this.audit = audit;
+    this.events = events;
     this.clock = clock;
   }
 
@@ -70,6 +77,7 @@ public class StoryService {
     }
     var after = StoryAdminDto.from(story);
     audit.record(AUDIT_TYPE, after.id(), AuditAction.CREATE, null, after);
+    events.publishEvent(StoryChanges.event(null, after));
     return after;
   }
 
@@ -89,6 +97,7 @@ public class StoryService {
     }
     var after = StoryAdminDto.from(story);
     audit.record(AUDIT_TYPE, id, AuditAction.UPDATE, before, after);
+    events.publishEvent(StoryChanges.event(before, after));
     return after;
   }
 
@@ -98,6 +107,7 @@ public class StoryService {
     var before = StoryAdminDto.from(story);
     stories.delete(story);
     audit.record(AUDIT_TYPE, id, AuditAction.DELETE, before, null);
+    events.publishEvent(StoryChanges.event(before, null));
   }
 
   /**
@@ -132,6 +142,7 @@ public class StoryService {
   private StoryAdminDto recordStatusChange(Story story, StoryAdminDto before) {
     var after = StoryAdminDto.from(story);
     audit.record(AUDIT_TYPE, after.id(), AuditAction.UPDATE, before, after);
+    events.publishEvent(StoryChanges.event(before, after));
     return after;
   }
 

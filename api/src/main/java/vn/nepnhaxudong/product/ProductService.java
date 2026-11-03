@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import vn.nepnhaxudong.common.ApiException;
 import vn.nepnhaxudong.common.Lang;
 import vn.nepnhaxudong.media.Media;
 import vn.nepnhaxudong.media.MediaRepository;
+import vn.nepnhaxudong.publish.ContentChangedEvent;
 
 /** Reads and writes products for the admin area. Every write is recorded in the audit log. */
 @Service
@@ -24,13 +26,19 @@ public class ProductService {
   private final ProductRepository products;
   private final MediaRepository media;
   private final AuditService audit;
+  private final ApplicationEventPublisher events;
   private final Clock clock;
 
   public ProductService(
-      ProductRepository products, MediaRepository media, AuditService audit, Clock clock) {
+      ProductRepository products,
+      MediaRepository media,
+      AuditService audit,
+      ApplicationEventPublisher events,
+      Clock clock) {
     this.products = products;
     this.media = media;
     this.audit = audit;
+    this.events = events;
     this.clock = clock;
   }
 
@@ -54,6 +62,7 @@ public class ProductService {
     products.save(product);
     var after = ProductAdminDto.from(product);
     audit.record(AUDIT_TYPE, after.id(), AuditAction.CREATE, null, after);
+    events.publishEvent(ContentChangedEvent.home());
     return after;
   }
 
@@ -65,6 +74,7 @@ public class ProductService {
     apply(product, request);
     var after = ProductAdminDto.from(product);
     audit.record(AUDIT_TYPE, id, AuditAction.UPDATE, before, after);
+    events.publishEvent(ContentChangedEvent.home());
     return after;
   }
 
@@ -74,6 +84,7 @@ public class ProductService {
     var before = ProductAdminDto.from(product);
     products.delete(product);
     audit.record(AUDIT_TYPE, id, AuditAction.DELETE, before, null);
+    events.publishEvent(ContentChangedEvent.home());
   }
 
   private Product find(long id) {

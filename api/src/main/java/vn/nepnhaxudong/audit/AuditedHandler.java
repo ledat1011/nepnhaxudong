@@ -1,6 +1,7 @@
 package vn.nepnhaxudong.audit;
 
 import java.util.Optional;
+import vn.nepnhaxudong.publish.ContentChangedEvent;
 
 /**
  * Knows how to read and restore one kind of audited content. Every kind has one bean; the restore
@@ -23,4 +24,14 @@ public interface AuditedHandler {
    * snapshot before it writes anything, and it answers 409 when it cannot restore.
    */
   void restore(long entityId, String snapshotJson);
+
+  /**
+   * What the website must refresh after a successful restore; {@code before} and {@code after} are
+   * the snapshots from {@link #currentSnapshot} taken before and after the restore (either can be
+   * null). Most kinds only show up on the home page, so that is the default; a kind with pages of
+   * its own overrides this.
+   */
+  default ContentChangedEvent changeEvent(Object before, Object after) {
+    return ContentChangedEvent.home();
+  }
 }

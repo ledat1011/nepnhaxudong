@@ -1,6 +1,7 @@
 package vn.nepnhaxudong.site;
 
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import tools.jackson.databind.json.JsonMapper;
 import vn.nepnhaxudong.audit.AuditAction;
 import vn.nepnhaxudong.audit.AuditService;
 import vn.nepnhaxudong.common.ApiException;
+import vn.nepnhaxudong.publish.ContentChangedEvent;
 
 /**
  * Reads and writes the site settings. A key without a row reads as the empty value. Every write is
@@ -28,15 +30,20 @@ public class SiteSettingService {
 
   private final SiteSettingRepository settings;
   private final AuditService audit;
+  private final ApplicationEventPublisher events;
   private final JsonMapper json;
   // A body from a client must not carry a field the setting does not have.
   private final JsonMapper strictJson;
   private final JsonMapper lenientJson;
 
   public SiteSettingService(
-      SiteSettingRepository settings, AuditService audit, JsonMapper json) {
+      SiteSettingRepository settings,
+      AuditService audit,
+      ApplicationEventPublisher events,
+      JsonMapper json) {
     this.settings = settings;
     this.audit = audit;
+    this.events = events;
     this.json = json;
     this.strictJson =
         json.rebuild().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
@@ -94,6 +101,7 @@ public class SiteSettingService {
         before == null ? AuditAction.CREATE : AuditAction.UPDATE,
         before,
         snapshot(row));
+    events.publishEvent(ContentChangedEvent.home());
     return value;
   }
 

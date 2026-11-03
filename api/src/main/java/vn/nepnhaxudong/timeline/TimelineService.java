@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import vn.nepnhaxudong.audit.AuditService;
 import vn.nepnhaxudong.common.ApiException;
 import vn.nepnhaxudong.common.Lang;
 import vn.nepnhaxudong.media.MediaRepository;
+import vn.nepnhaxudong.publish.ContentChangedEvent;
 
 /** Reads and writes timeline events for the admin area. Every write is recorded in the audit log. */
 @Service
@@ -24,13 +26,19 @@ public class TimelineService {
   private final TimelineEventRepository events;
   private final MediaRepository media;
   private final AuditService audit;
+  private final ApplicationEventPublisher publisher;
   private final Clock clock;
 
   public TimelineService(
-      TimelineEventRepository events, MediaRepository media, AuditService audit, Clock clock) {
+      TimelineEventRepository events,
+      MediaRepository media,
+      AuditService audit,
+      ApplicationEventPublisher publisher,
+      Clock clock) {
     this.events = events;
     this.media = media;
     this.audit = audit;
+    this.publisher = publisher;
     this.clock = clock;
   }
 
@@ -56,6 +64,7 @@ public class TimelineService {
     events.save(event);
     var after = TimelineEventAdminDto.from(event);
     audit.record(AUDIT_TYPE, after.id(), AuditAction.CREATE, null, after);
+    publisher.publishEvent(ContentChangedEvent.home());
     return after;
   }
 
@@ -67,6 +76,7 @@ public class TimelineService {
     apply(event, request, request.sortOrder() != null ? request.sortOrder() : event.getSortOrder());
     var after = TimelineEventAdminDto.from(event);
     audit.record(AUDIT_TYPE, id, AuditAction.UPDATE, before, after);
+    publisher.publishEvent(ContentChangedEvent.home());
     return after;
   }
 
@@ -76,6 +86,7 @@ public class TimelineService {
     var before = TimelineEventAdminDto.from(event);
     events.delete(event);
     audit.record(AUDIT_TYPE, id, AuditAction.DELETE, before, null);
+    publisher.publishEvent(ContentChangedEvent.home());
   }
 
   /**
@@ -108,6 +119,7 @@ public class TimelineService {
         throw invalid("Thiếu mã mốc: " + id + ".");
       }
     }
+    boolean moved = false;
     for (int position = 0; position < ids.size(); position++) {
       TimelineEvent event = existing.get(ids.get(position));
       if (event.getSortOrder() != position) {
@@ -115,7 +127,11 @@ public class TimelineService {
         event.setSortOrder(position);
         audit.record(
             AUDIT_TYPE, event.getId(), AuditAction.UPDATE, before, TimelineEventAdminDto.from(event));
+        moved = true;
       }
+    }
+    if (moved) {
+      publisher.publishEvent(ContentChangedEvent.home());
     }
   }
 

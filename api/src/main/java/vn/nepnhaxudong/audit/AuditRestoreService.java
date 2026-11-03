@@ -3,6 +3,7 @@ package vn.nepnhaxudong.audit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,12 +25,17 @@ public class AuditRestoreService {
 
   private final AuditLogRepository lines;
   private final AuditService audit;
+  private final ApplicationEventPublisher events;
   private final Map<String, AuditedHandler> handlers = new HashMap<>();
 
   public AuditRestoreService(
-      AuditLogRepository lines, AuditService audit, List<AuditedHandler> handlerBeans) {
+      AuditLogRepository lines,
+      AuditService audit,
+      ApplicationEventPublisher events,
+      List<AuditedHandler> handlerBeans) {
     this.lines = lines;
     this.audit = audit;
+    this.events = events;
     for (AuditedHandler handler : handlerBeans) {
       if (handlers.put(handler.entityType(), handler) != null) {
         throw new IllegalStateException(
@@ -66,5 +72,7 @@ public class AuditRestoreService {
     }
     Object restored = handler.currentSnapshot(entityId).orElse(null);
     audit.record(line.getEntityType(), entityId, AuditAction.RESTORE, current, restored);
+    // The same event as a normal write of this kind sends; it goes out after the commit.
+    events.publishEvent(handler.changeEvent(current, restored));
   }
 }

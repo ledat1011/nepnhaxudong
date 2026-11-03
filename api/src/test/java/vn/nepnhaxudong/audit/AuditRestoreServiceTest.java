@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import vn.nepnhaxudong.common.ApiException;
@@ -45,7 +46,9 @@ class AuditRestoreServiceTest {
             throw new DuplicateKeyException("another request created the same id");
           }
         };
-    var service = new AuditRestoreService(lines, audit, List.of(handler));
+    var service =
+        new AuditRestoreService(
+            lines, audit, mock(ApplicationEventPublisher.class), List.of(handler));
 
     assertThatThrownBy(() -> service.restore(9L))
         .isInstanceOfSatisfying(

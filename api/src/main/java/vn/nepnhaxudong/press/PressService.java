@@ -2,6 +2,7 @@ package vn.nepnhaxudong.press;
 
 import java.time.Clock;
 import java.util.List;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import vn.nepnhaxudong.audit.AuditService;
 import vn.nepnhaxudong.common.ApiException;
 import vn.nepnhaxudong.common.Lang;
 import vn.nepnhaxudong.media.MediaRepository;
+import vn.nepnhaxudong.publish.ContentChangedEvent;
 
 /** Reads and writes press mentions for the admin area. Every write is recorded in the audit log. */
 @Service
@@ -24,13 +26,19 @@ public class PressService {
   private final PressMentionRepository mentions;
   private final MediaRepository media;
   private final AuditService audit;
+  private final ApplicationEventPublisher events;
   private final Clock clock;
 
   public PressService(
-      PressMentionRepository mentions, MediaRepository media, AuditService audit, Clock clock) {
+      PressMentionRepository mentions,
+      MediaRepository media,
+      AuditService audit,
+      ApplicationEventPublisher events,
+      Clock clock) {
     this.mentions = mentions;
     this.media = media;
     this.audit = audit;
+    this.events = events;
     this.clock = clock;
   }
 
@@ -56,6 +64,7 @@ public class PressService {
     mentions.save(mention);
     var after = PressMentionAdminDto.from(mention);
     audit.record(AUDIT_TYPE, after.id(), AuditAction.CREATE, null, after);
+    events.publishEvent(ContentChangedEvent.home());
     return after;
   }
 
@@ -70,6 +79,7 @@ public class PressService {
         request.sortOrder() != null ? request.sortOrder() : mention.getSortOrder());
     var after = PressMentionAdminDto.from(mention);
     audit.record(AUDIT_TYPE, id, AuditAction.UPDATE, before, after);
+    events.publishEvent(ContentChangedEvent.home());
     return after;
   }
 
@@ -79,6 +89,7 @@ public class PressService {
     var before = PressMentionAdminDto.from(mention);
     mentions.delete(mention);
     audit.record(AUDIT_TYPE, id, AuditAction.DELETE, before, null);
+    events.publishEvent(ContentChangedEvent.home());
   }
 
   private PressMention find(long id) {

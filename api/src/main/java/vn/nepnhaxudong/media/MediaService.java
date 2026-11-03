@@ -6,6 +6,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import vn.nepnhaxudong.audit.AuditAction;
 import vn.nepnhaxudong.audit.AuditService;
 import vn.nepnhaxudong.common.ApiException;
+import vn.nepnhaxudong.publish.ContentChangedEvent;
 
 /**
  * Stores, lists, edits and deletes images for the admin area. Every write is recorded in the audit
@@ -34,6 +36,7 @@ public class MediaService {
   private final MediaStorage storage;
   private final MediaRepository media;
   private final AuditService audit;
+  private final ApplicationEventPublisher events;
   private final Clock clock;
   private final TransactionTemplate transaction;
 
@@ -42,12 +45,14 @@ public class MediaService {
       MediaStorage storage,
       MediaRepository media,
       AuditService audit,
+      ApplicationEventPublisher events,
       Clock clock,
       TransactionTemplate transaction) {
     this.processor = processor;
     this.storage = storage;
     this.media = media;
     this.audit = audit;
+    this.events = events;
     this.clock = clock;
     this.transaction = transaction;
   }
@@ -82,6 +87,7 @@ public class MediaService {
     image.changeAltTexts(vi, en);
     var after = MediaAdminDto.from(image);
     audit.record(AUDIT_TYPE, id, AuditAction.UPDATE, before, after);
+    events.publishEvent(ContentChangedEvent.home());
     return after;
   }
 
@@ -104,6 +110,7 @@ public class MediaService {
       throw new ApiException(HttpStatus.CONFLICT, IN_USE);
     }
     audit.record(AUDIT_TYPE, id, AuditAction.DELETE, before, null);
+    events.publishEvent(ContentChangedEvent.home());
     storage.deleteAfterCommit(image.getPath());
   }
 
@@ -131,6 +138,7 @@ public class MediaService {
                 altEn));
     var after = MediaAdminDto.from(saved);
     audit.record(AUDIT_TYPE, after.id(), AuditAction.CREATE, null, after);
+    // No event: a new image is not on the website until a product, story or setting uses it.
     return after;
   }
 
