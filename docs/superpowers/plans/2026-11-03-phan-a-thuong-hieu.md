@@ -4,32 +4,31 @@
 
 **Goal:** Tạo bộ nhận diện Nếp Nhà: token màu + font, 6 ý tưởng mascot, mascot SVG tách lớp, 3 bản logo SVG và PNG biểu tượng 32/192/512.
 
-**Architecture:** Mọi file nằm trong `brand/`. Công cụ là các script Node nhỏ (một Python) trong `brand/tools/`, có `package.json` riêng, không đụng `package.json` gốc của phần C. Ảnh ý tưởng do Gemini 2.5 Flash Image ("Nano Banana") vẽ; ảnh được chọn được vẽ lại thành 3 lớp riêng (thân, đầu, bó lúa), mỗi lớp được ép về bảng màu rồi chuyển sang SVG, sau đó script ghép 3 lớp thành SVG có nhóm `<g id>` và điểm xoay. Test bằng `node --test` kiểm tra token, font, cấu trúc SVG, màu và kích thước PNG; phần nhìn (đẹp, rõ ở 32px, điểm xoay đúng) do chủ dự án duyệt trên `brand/preview.html`.
+**Architecture:** Mọi file nằm trong `brand/`. Công cụ là các script Node nhỏ trong `brand/tools/`, có `package.json` riêng, không đụng `package.json` gốc của phần C. Claude tự vẽ mascot bằng SVG viết tay (không dùng dịch vụ tạo ảnh), có sẵn các nhóm `<g id>` ngay từ bản ý tưởng; mỗi lần vẽ được render ra PNG bằng resvg để xem lại. Ba bản logo được script ghép từ mascot + chữ đã đổi thành path. Test bằng `node --test` kiểm tra token, font, cấu trúc SVG, màu và kích thước PNG; phần nhìn (đẹp, rõ ở 32px, điểm xoay đúng) do chủ dự án duyệt trên `brand/preview.html`.
 
-**Tech Stack:** Node 22 (`node:test`, `fetch`), `@resvg/resvg-js` (SVG → PNG, đo khung), `opentype.js` (chữ → path), `svgo`, `svgson`; Python 3.13 + Pillow + `vtracer` (ảnh → SVG); Gemini API model `gemini-2.5-flash-image`.
+**Tech Stack:** Node 22 (`node:test`), `@resvg/resvg-js` (SVG → PNG, đo khung), `opentype.js` (chữ → path), `svgo`, `svgson`.
 
-**Spec:** `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md` — mục 2 (2.1, 2.2, 2.3) và mục 7 bước 2.
+**Spec:** `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md` — mục 2 (2.1, 2.2, 2.3) và mục 7 bước 2. Riêng dòng "Quy trình" của 2.3 (Nano Banana → Recraft) đã được chủ dự án thay: Claude tự vẽ SVG, không dùng Nano Banana, không dùng Recraft.
 
 ## Global Constraints
 
-- Bảng màu đúng mã của spec 2.1: Nâu đất `#4A2C1A`, Nâu áo `#8B5A2B`, Vàng lúa `#D9A13B`, Vàng rơm `#F2E2B6`, Trắng gạo `#FBF7EE`, Hồng má `#E59A84` (chỉ trong mascot), Xanh mạ `#6E8B3D` (rất ít, lá lúa).
+- Bảng màu đúng mã của spec 2.1: Nâu đất `#4A2C1A`, Nâu áo `#8B5A2B`, Vàng lúa `#D9A13B`, Vàng rơm `#F2E2B6`, Trắng gạo `#FBF7EE`, Hồng má `#E59A84` (chỉ trong mascot), Xanh mạ `#6E8B3D` (rất ít, lá lúa). Thêm `da` = `#F4CDA8` (màu da, chỉ trong mascot).
 - Vàng lúa không dùng làm màu chữ trên nền sáng. Mọi cặp chữ / nền cho web đạt WCAG AA 4,5:1.
 - Font: Pacifico (chỉ chữ "Nếp Nhà" và tiêu đề lớn, không dùng cho chữ nhỏ); Quicksand 400 / 500 / 700.
+- Mascot: người phụ nữ nửa người, mặt tròn, má hồng, cười hiền, đội nón lá, mặc áo cánh nâu, ôm bó bông lúa nếp vàng cong qua vai. Hoạt hình phẳng, viền Nâu đất, không gradient.
 - Logo đầy đủ: mascot + "Nếp Nhà" (Pacifico) + dòng nhỏ "Xứ Đông · Gạo nếp cái hoa vàng" (Quicksand).
 - Biểu tượng: đầu đội nón lá, rõ ở 32px. Một màu: chỉ `#4A2C1A`.
 - SVG tách lớp: `<g id="head">` xoay quanh cổ, `<g id="rice">` xoay quanh bàn tay, `<g id="body">` đứng yên, `<g id="eyes">` tùy chọn.
-- Ảnh tham khảo (Freepik) chỉ để tham khảo phong cách: không đưa ảnh đó vào API, không đưa vào repo.
-- Ngân sách gọi API < 10 USD; báo chủ dự án trước mỗi đợt gọi có phí.
-- Key đọc từ biến môi trường `GEMINI_API_KEY`; không in key, không ghi key vào file.
+- Ảnh tham khảo `C:\Users\lvdat\Documents\logo\logo-ba-noi-dau-bep-cam-dia-trong-cho-nha-hang-banh-va-logo-am-thuc-tu-lam_513640-1319.avif` (Freepik) chỉ để tham khảo phong cách (nét viền nâu dày, mảng màu phẳng, má hồng, nửa người): không chép hình, không đưa ảnh vào repo.
+- Không dùng dịch vụ tạo ảnh hay chuyển ảnh có phí (Nano Banana / Gemini, Recraft).
 - Không sửa `CLAUDE.md`, `docs/session/STATE.md`, `.claude/**`, `.mcp.json`, `package.json`, `scripts/**` (thuộc phần C). Ghi trạng thái vào `docs/session/log/2026-11-03-may-cong-ty-phan-a-thuong-hieu.md`.
 - Commit trên nhánh `feat/phan-a-thuong-hieu`, identity `ledat1011`, không có dòng Co-Authored-By. Không push, không merge khi chưa có đồng ý của chủ dự án.
 
-## Quyết định cần chủ dự án xác nhận khi duyệt plan
+## Quyết định đã chốt khi duyệt plan
 
-1. **Cách gọi công cụ.** Đề xuất: gọi thẳng Gemini REST API bằng script `brand/tools/gen-image.mjs` (cùng model với `nanobanana-mcp-server`) và chuyển sang SVG bằng `vtracer` chạy trên máy (miễn phí). Lý do: MCP thêm giữa chừng chỉ có hiệu lực ở session mới, và `--scope local` sẽ gắn vào thư mục dự án luz của session này; script không cần khởi động lại. Recraft chỉ dùng nếu `vtracer` cho kết quả xấu (khi đó chủ dự án đăng nhập Recraft). Cách khác: dùng MCP như spec viết, chủ dự án phải khởi động lại app sau khi đặt key.
-2. **Màu da.** Bảng màu 2.1 không có màu da. Đề xuất thêm token `da` = `#F4CDA8`, chỉ dùng trong mascot, giống quy tắc của Hồng má.
-3. **Tải về:** font Pacifico-Regular.ttf (~300 KB) và Quicksand 700 / 500 / 400 TTF tĩnh (~80 KB mỗi file) từ Google Fonts (`fonts.googleapis.com` / `fonts.gstatic.com`), file giấy phép OFL từ `github.com/google/fonts`; gói npm `@resvg/resvg-js`, `opentype.js`, `svgo`, `svgson`; gói pip `vtracer`.
-4. **Key:** chủ dự án tự đặt `GEMINI_API_KEY` thành biến môi trường người dùng của Windows (Cài đặt → Biến môi trường, hoặc `setx GEMINI_API_KEY ...` trong cửa sổ PowerShell riêng). Không dán key vào chat.
+1. Claude tự vẽ SVG; không Nano Banana, không Recraft, không phí API (chủ dự án, 2026-11-03).
+2. Thêm token `da` = `#F4CDA8`, chỉ dùng trong mascot.
+3. Được tải: font Pacifico-Regular.ttf và Quicksand 400 / 500 / 700 TTF tĩnh từ Google Fonts (`fonts.googleapis.com` / `fonts.gstatic.com`), file giấy phép OFL từ `github.com/google/fonts`; gói npm `@resvg/resvg-js`, `opentype.js`, `svgo`, `svgson`.
 
 ## Cấu trúc file
 
@@ -40,34 +39,28 @@ brand/
 ├── tokens/tokens.json        nguồn gốc token (màu, font, cặp chữ/nền hợp lệ)
 ├── tokens/tokens.css         sinh từ tokens.json (biến CSS)
 ├── fonts/                    Pacifico-Regular.ttf, Quicksand-{400,500,700}.ttf, OFL-*.txt
-├── concepts/prompts.md       prompt gốc + 6 biến thể
-├── concepts/concept-{1..6}.webp
-├── layers/{body,head,rice}.webp + layers.json (dịch / co giãn từng lớp khi ghép)
+├── concepts/concept-{1..6}.svg + concepts.png (bảng 6 ý tưởng, render từ SVG)
 ├── mascot/mascot-layered.svg
 ├── logo/logo-full.svg  logo-icon.svg  logo-mono.svg
 ├── png/logo-icon-{32,192,512}.png
 └── tools/
-    ├── package.json          "type": "module"; scripts: test, tokens, mascot, logos, png
+    ├── package.json          "type": "module"; scripts: test, tokens, concepts, logos, png
+    ├── .gitignore            node_modules/
     ├── lib/svg-check.mjs     hàm đọc SVG dùng chung cho test
     ├── build-tokens.mjs      tokens.json → tokens.css
     ├── fetch-fonts.mjs       tải font TTF tĩnh
-    ├── gen-image.mjs         gọi Gemini, lưu PNG
-    ├── run-gemini.ps1        đọc GEMINI_API_KEY từ biến môi trường người dùng rồi chạy gen-image.mjs
-    ├── vectorize.py          ép màu về bảng màu + vtracer → SVG một lớp
-    ├── build-mascot.mjs      ghép 3 lớp → mascot-layered.svg
+    ├── render-concepts.mjs   6 concept SVG → concepts.png (lưới 3 × 2, có số thứ tự)
     ├── build-logos.mjs       mascot + chữ → 3 logo
     ├── export-png.mjs        logo-icon.svg → PNG
     └── test/brand.test.mjs
 ```
 
-Ảnh gốc PNG từ Gemini (1–2 MB) để trong thư mục tạm, không commit; repo chỉ giữ bản WebP chất lượng 85.
-
 ## Review Focus
 
 1. **Logo trên nền tối** (footer có thể dùng nền Nâu đất): viền Nâu đất biến mất. `preview.html` hiện cả 3 logo trên Trắng gạo, Vàng rơm và Nâu đất; nếu bản trên nền tối không đọc được, ghi vào "Còn mở" để chủ dự án quyết định có cần bản sáng.
 2. **Dấu tiếng Việt bị cắt** (dấu của "ế", "à", "ứ" vượt khung): test đo khung nội dung bằng resvg và yêu cầu nằm trong `viewBox` (Task 5).
-3. **Màu lệch bảng màu sau khi chuyển ảnh sang SVG**: test yêu cầu mọi `fill` / `stroke` thuộc bảng màu + `da` (Task 4, 5).
-4. **SVG hỏng khi dùng qua `<img>` hoặc `next/image`**: không `<text>`, `<image>`, `<script>`, `href` ra ngoài; có `viewBox` (Task 4, 5).
+3. **Màu lệch bảng màu**: test yêu cầu mọi `fill` / `stroke` thuộc bảng màu + `da` (Task 3, 4, 5).
+4. **SVG hỏng khi dùng qua `<img>` hoặc `next/image`**: không `<text>`, `<image>`, `<script>`, `href` ra ngoài; có `viewBox` (Task 3, 4, 5).
 5. **Điểm xoay sai làm đầu / bó lúa bay lệch**: `data-pivot` phải nằm trong khung của chính nhóm đó (đo bằng resvg), và `preview.html` chạy thử ±3° / ±6° để chủ dự án nhìn (Task 4, 6).
 
 ---
@@ -75,7 +68,7 @@ brand/
 ### Task 1: Công cụ và token màu, font
 
 **Files:**
-- Create: `brand/tools/package.json`, `brand/tools/build-tokens.mjs`, `brand/tools/lib/svg-check.mjs`, `brand/tools/test/brand.test.mjs`
+- Create: `brand/tools/package.json`, `brand/tools/.gitignore`, `brand/tools/build-tokens.mjs`, `brand/tools/lib/svg-check.mjs`, `brand/tools/test/brand.test.mjs`
 - Create: `brand/tokens/tokens.json`, `brand/tokens/tokens.css`
 
 **Interfaces:**
@@ -84,7 +77,7 @@ brand/
 - Produces: `contrast(hexA, hexB) -> number` (WCAG 2.x) và `palette() -> Set<string>` (mã hex chữ thường) trong `lib/svg-check.mjs`.
 
 - [ ] **Step 1: Viết test token (thất bại)** trong `test/brand.test.mjs`:
-  - `tokens khop spec 2.1`: 7 màu bằng đúng mã spec; `da` = `#F4CDA8` (hoặc giá trị chủ dự án chọn).
+  - `tokens khop spec 2.1`: 7 màu bằng đúng mã spec; `da` = `#F4CDA8`.
   - `tokens.css sinh tu tokens.json`: `buildCss(tokens) === readFile('brand/tokens/tokens.css')`.
   - `moi cap chu/nen dat AA`: mọi cặp trong `textPairs` có `contrast >= 4.5`.
   - `contrast dung cong thuc`: `contrast('#4A2C1A', '#FBF7EE')` ≈ 11.79 (sai số 0.01); `contrast('#D9A13B', '#FBF7EE')` ≈ 2.16.
@@ -108,50 +101,50 @@ brand/
 - [ ] **Step 4: Chạy** `npm test` → PASS. Nếu CSS trả về nhiều file theo `unicode-range`, ghép không được → dùng `--user-agent` cũ hơn; không tự ý đổi sang font khác.
 - [ ] **Step 5: Commit** `feat(brand): add Pacifico and Quicksand fonts`.
 
-### Task 3: Ý tưởng mascot — chủ dự án chọn
+### Task 3: Sáu ý tưởng mascot vẽ bằng SVG — chủ dự án chọn
 
 **Files:**
-- Create: `brand/tools/gen-image.mjs`, `brand/tools/run-gemini.ps1`, `brand/concepts/prompts.md`, `brand/concepts/concept-{1..6}.webp`
+- Create: `brand/concepts/concept-{1..6}.svg`, `brand/concepts/concepts.png`, `brand/tools/render-concepts.mjs`
+- Modify: `brand/tools/test/brand.test.mjs`, `brand/tools/lib/svg-check.mjs`
 
 **Interfaces:**
-- Produces: `node gen-image.mjs --prompt-file <md> --section <ten> --out <png> [--input <png>]` — gọi `POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent` với header `x-goog-api-key` từ `process.env.GEMINI_API_KEY`; `--input` gửi kèm ảnh để sửa ảnh (dùng ở Task 4). Thoát lỗi rõ ràng nếu thiếu key hoặc API không trả ảnh. In ra số ảnh đã tạo, không in key.
-- Produces: `pwsh run-gemini.ps1 <tham-so>` — gán `$env:GEMINI_API_KEY` từ `[Environment]::GetEnvironmentVariable('GEMINI_API_KEY','User')` rồi chạy `node gen-image.mjs <tham-so>`.
+- Consumes: `palette()` (Task 1).
+- Produces: `svgFacts(path) -> { viewBox, ids, colors, tags, hrefs, bytes }` trong `lib/svg-check.mjs` (`colors` = mọi giá trị `fill` / `stroke` / `stop-color`, cả trong thuộc tính `style`, chữ thường; bỏ `none`, `currentColor`, `transparent`).
+- Produces: mỗi concept có `viewBox="0 0 512 512"` và đã có sẵn `<g id="body">`, `<g id="rice">`, `<g id="head">` (thứ tự vẽ body → rice → head), để Task 4 chỉ cần hoàn thiện bản được chọn.
 
-- [ ] **Step 1: Viết** `prompts.md`. Prompt gốc (tiếng Anh cho model): flat cartoon mascot, half-body, kind Vietnamese countryside woman, round face, rosy cheeks, gentle smile, conical palm-leaf hat (nón lá), brown traditional áo cánh blouse, holding a bundle of golden glutinous rice stalks curving over her shoulder, thick dark brown outlines `#4A2C1A`, flat fills only, no gradient, no texture, palette (7 màu + `#F4CDA8`), plain background `#FBF7EE`, centered, square, no text, no watermark. Sáu biến thể:
+- [ ] **Step 1: Viết test (thất bại)** `concept hop le`: với mỗi `concept-{1..6}.svg`: có `viewBox`; có `g#body`, `g#rice`, `g#head`; mọi màu thuộc `palette()`; không thẻ `image` / `text` / `script`; không `href` ra ngoài; < 40 KB. Kèm `concepts.png ton tai`.
+- [ ] **Step 2: Chạy** `npm test` → FAIL.
+- [ ] **Step 3: Vẽ 6 concept** bằng SVG viết tay (path, ellipse, circle), viền Nâu đất `stroke-width` 6–8 ở khung 512, `stroke-linejoin="round"`, mảng màu phẳng, nền trong suốt. Cùng nhân vật (mô tả ở Global Constraints), sáu biến thể:
   1. Nhìn thẳng, bó lúa cong qua vai phải, tuổi khoảng 50.
   2. Nghiêng 3/4, tay ôm bó lúa trước ngực, ngọn lúa cong qua vai.
   3. Bà cụ khoảng 70, tóc búi, nón lá hơi ngửa.
   4. Phụ nữ khoảng 35, nụ cười rộng hơn.
   5. Đặt trong khung tròn Vàng rơm (dạng huy hiệu).
   6. Ít chi tiết nhất (nét dày, ít mảng) để thu nhỏ tốt.
-- [ ] **Step 2: Kiểm tra key.** `pwsh -c "[bool][Environment]::GetEnvironmentVariable('GEMINI_API_KEY','User')"` → `True`. Nếu `False`: hỏi chủ dự án đặt key, dừng.
-- [ ] **Step 3: Báo chủ dự án trước khi gọi:** 6 ảnh × ~0,04 USD ≈ 0,25 USD. Chờ đồng ý.
-- [ ] **Step 4: Chạy** 6 lần `run-gemini.ps1`, lưu PNG vào thư mục tạm; đổi sang `concept-N.webp` (Pillow, chất lượng 85). Kiểm tra: 6 file tồn tại, mỗi file < 400 KB.
-- [ ] **Step 5: Gửi 6 ảnh cho chủ dự án** (một trang xem hoặc từng ảnh). Ghi lựa chọn và góp ý vào log session. Nếu chủ dự án muốn sửa: một đợt sửa (báo chi phí trước), lặp lại tới khi chọn được.
-- [ ] **Step 6: Commit** `feat(brand): add mascot concepts` (prompts + webp).
+  Sau mỗi bản: render PNG bằng resvg và xem ảnh; sửa tới khi mặt cân đối, nón lá đúng hình chóp, bó lúa đọc được là lúa (thân cong + hạt hình giọt nước Vàng lúa, vài lá Xanh mạ).
+- [ ] **Step 4: Viết** `render-concepts.mjs` (resvg) → `concepts.png`: lưới 3 × 2 ô 400px trên nền Trắng gạo, số 1–6 vẽ bằng hình (không dùng font hệ thống). Chạy `npm run concepts`.
+- [ ] **Step 5: Chạy** `npm test` → PASS. Commit `feat(brand): add six mascot concepts`.
+- [ ] **Step 6: Gửi `concepts.png` cho chủ dự án** chọn một bản (có thể kèm góp ý, ví dụ "mặt của bản 1 + bó lúa của bản 2"). Ghi lựa chọn vào log session. Sửa theo góp ý tới khi chủ dự án chọn được.
 
 ### Task 4: Mascot SVG tách lớp
 
 **Files:**
-- Create: `brand/tools/vectorize.py`, `brand/tools/build-mascot.mjs`, `brand/layers/{body,head,rice}.webp`, `brand/layers/layers.json`, `brand/mascot/mascot-layered.svg`
-- Modify: `brand/tools/test/brand.test.mjs`
+- Create: `brand/mascot/mascot-layered.svg`
+- Modify: `brand/tools/test/brand.test.mjs`, `brand/tools/lib/svg-check.mjs`
 
 **Interfaces:**
-- Consumes: ảnh ý tưởng đã chọn (Task 3), `gen-image.mjs --input`, `palette()` và `contrast()` (Task 1).
-- Produces: `python vectorize.py <in.png> <out.svg>` — ép mỗi điểm ảnh về màu gần nhất trong bảng màu + `da` (khoảng cách trong không gian Lab), nền `#FBF7EE` thành trong suốt, rồi `vtracer` chế độ `color` / `stacked`, `filter_speckle=8`.
-- Produces: `mascot-layered.svg` với `viewBox="0 0 512 512"`, thứ tự vẽ `body` → `rice` → `head` (đầu đè lên cổ). `head` và `rice` có `data-pivot="x y"` (toạ độ viewBox, cho GSAP `svgOrigin`) và `style="transform-box: view-box; transform-origin: Xpx Ypx"` cùng giá trị.
-- Produces: `svgFacts(path) -> { viewBox, ids, colors, tags, hrefs, bytes }` trong `lib/svg-check.mjs`; `contentBBox(svgString, id?) -> {x, y, width, height}` (resvg).
+- Consumes: concept được chọn (Task 3), `svgFacts`, `palette()`.
+- Produces: `mascot-layered.svg` với `viewBox="0 0 512 512"`, thứ tự vẽ `body` → `rice` → `head` (đầu đè lên cổ); `eyes` (nếu có) nằm trong `head`. `head` và `rice` có `data-pivot="x y"` (toạ độ viewBox, cho GSAP `svgOrigin`) và `style="transform-box: view-box; transform-origin: Xpx Ypx"` cùng giá trị.
+- Produces: `contentBBox(svgString, id?) -> {x, y, width, height}` trong `lib/svg-check.mjs` (resvg; có `id` thì đo riêng nhóm đó).
 
 - [ ] **Step 1: Viết test (thất bại)** cho `mascot-layered.svg`:
   - có `viewBox`; có `g#head`, `g#rice`, `g#body`; thứ tự trong file: body trước rice trước head.
-  - `head` và `rice` có `data-pivot`; giá trị trùng với `transform-origin`; điểm pivot nằm trong khung nội dung của chính nhóm đó.
-  - mọi màu `fill` / `stroke` thuộc `palette()`; không có thẻ `image`, `text`, `script`; không `href` ra ngoài; dung lượng < 80 KB.
+  - `head` và `rice` có `data-pivot`; giá trị trùng với `transform-origin`; điểm pivot nằm trong khung nội dung của chính nhóm đó (`contentBBox`).
+  - mọi màu thuộc `palette()`; không thẻ `image`, `text`, `script`; không `href` ra ngoài; dung lượng < 40 KB.
 - [ ] **Step 2: Chạy** `npm test` → FAIL.
-- [ ] **Step 3: Tạo 3 lớp.** Báo chi phí (3 ảnh ≈ 0,12 USD), rồi gửi ảnh đã chọn vào `gen-image.mjs --input` với 3 prompt sửa ảnh: "chỉ giữ thân + tay (gồm cổ), bỏ đầu và bó lúa", "chỉ giữ đầu + nón lá", "chỉ giữ bó lúa"; cùng khung, cùng vị trí, nền `#FBF7EE`. Lưu `layers/*.webp`.
-- [ ] **Step 4: Chuyển lớp sang SVG** bằng `vectorize.py`. Nếu kết quả có nhiều mảng vụn hoặc mất nét mặt sau khi tăng `filter_speckle` / đổi `color_precision`: dừng, báo chủ dự án và đề xuất Recraft.
-- [ ] **Step 5: Viết** `build-mascot.mjs`: đọc 3 SVG + `layers.json` (`{ "<lop>": { "dx", "dy", "scale" }, "pivot": { "head": [x,y], "rice": [x,y] } }`), đặt mỗi lớp vào `<g id>`, chạy `svgo` (giữ `id`, `data-*`, `style`), ghi `mascot-layered.svg`. Chỉnh `layers.json` tới khi 3 lớp khớp nhau và pivot nằm ở cổ / bàn tay (xem ảnh render bằng resvg).
-- [ ] **Step 6: Chạy** `npm test` → PASS.
-- [ ] **Step 7: Commit** `feat(brand): add layered mascot svg`.
+- [ ] **Step 3: Hoàn thiện** concept được chọn thành `mascot-layered.svg`: áp dụng góp ý của chủ dự án; đặt pivot `head` ở giữa cổ, pivot `rice` ở bàn tay đang cầm bó lúa; đầu xoay ±3° và bó lúa xoay ±6° quanh pivot không để lộ khe hở (vẽ cổ / phần thân lúa dưới tay dài hơn chỗ bị che). Kiểm tra bằng cách render 3 khung: 0°, +3° / +6°, −3° / −6°.
+- [ ] **Step 4: Chạy** `npm test` → PASS.
+- [ ] **Step 5: Commit** `feat(brand): add layered mascot svg`.
 
 ### Task 5: Ba bản logo
 
@@ -188,5 +181,5 @@ brand/
 - [ ] **Step 4: Chạy** `npm test` → PASS.
 - [ ] **Step 5: Viết** `preview.html` (một file, không thư viện ngoài, đọc `tokens.css`): 3 logo trên nền Trắng gạo / Vàng rơm / Nâu đất; icon ở 16 / 32 / 64 / 192 px; mascot nhúng trực tiếp với CSS keyframes: `head` ±3°, `rice` ±6°, tắt khi `prefers-reduced-motion: reduce`; bảng màu và các cặp chữ / nền kèm tỷ lệ tương phản. Viết `README.md` ngắn: file nào dùng ở đâu, quy tắc màu (Vàng lúa không làm màu chữ trên nền sáng; Hồng má, `da` chỉ trong mascot), cách chạy lại công cụ.
 - [ ] **Step 6: Chủ dự án duyệt** trên `preview.html` (gửi file / ảnh chụp). Sửa theo góp ý, lặp lại Task 4–6 khi cần.
-- [ ] **Step 7: Cập nhật log session**: đã làm gì, quyết định, chi phí API đã dùng, việc còn mở (ví dụ: bản logo sáng cho nền tối, cập nhật `STATE.md` do session phần C gộp).
+- [ ] **Step 7: Cập nhật log session**: đã làm gì, quyết định, việc còn mở (ví dụ: bản logo sáng cho nền tối, cập nhật `STATE.md` và `docs/decisions/` do session phần C gộp).
 - [ ] **Step 8: Commit** `feat(brand): add icon png exports and preview page`. Không push, không merge khi chưa được đồng ý.

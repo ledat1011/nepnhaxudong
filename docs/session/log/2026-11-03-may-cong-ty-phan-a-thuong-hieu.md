@@ -7,13 +7,15 @@ Chạy song song với session phần C (nhánh `feat/phan-c-nen-tang`). Không 
 ## Phản hồi
 - Chủ dự án duyệt plan phần A, chọn cách thực hiện Subagent-driven → mỗi task một subagent làm + một subagent review.
 
+- Chủ dự án hỏi vì sao làm logo lại tốn tiền, rồi nói: "bạn tự làm, không dùng Nano Banana của Google" → Claude tự vẽ mascot và logo bằng SVG; không gọi Gemini, không dùng Recraft, không tốn phí API.
+
 ## Quyết định
-- Gọi Gemini REST bằng script `brand/tools/gen-image.mjs` (không dùng MCP), chuyển SVG bằng `vtracer`; Recraft chỉ khi `vtracer` xấu — chủ dự án duyệt theo plan.
+- Không dùng Nano Banana / Recraft (khác quy trình ở spec 2.3) — chủ dự án quyết định; Claude vẽ SVG trực tiếp, có nhóm `<g id>` ngay từ đầu, nên không cần bước chuyển ảnh sang SVG.
 - Thêm màu `da` = `#F4CDA8`, chỉ dùng trong mascot — chủ dự án duyệt theo plan.
-- Được tải font Pacifico / Quicksand + OFL, gói npm `@resvg/resvg-js`, `opentype.js`, `svgo`, `svgson`, gói pip `vtracer` — chủ dự án duyệt theo plan.
+- Được tải font Pacifico / Quicksand + OFL, gói npm `@resvg/resvg-js`, `opentype.js`, `svgo`, `svgson` — chủ dự án duyệt theo plan.
 
 ## Còn mở
-- Chủ dự án đặt `GEMINI_API_KEY` làm biến môi trường người dùng Windows (cần trước Task 3).
+- Quyết định "không dùng Nano Banana / Recraft" nên được ghi vào `docs/decisions/` khi session phần C gộp trạng thái; `.mcp.json` của phần C có thể bỏ `nanobanana` và `recraft`.
 
 ## Đã làm
 - Tạo worktree và nhánh `feat/phan-a-thuong-hieu`.
