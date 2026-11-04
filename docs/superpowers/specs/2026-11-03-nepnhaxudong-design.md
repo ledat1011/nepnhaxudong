@@ -70,7 +70,7 @@ Mọi cặp chữ / nền dùng trên web phải đạt WCAG AA (4,5:1 cho chữ
 Lý do chọn (đề xuất, chờ chủ dự án xác nhận):
 - **Pacifico**: nét viết tay tròn và mềm, hợp với mascot hoạt hình cười hiền (mục 2.3) và với một sản phẩm do gia đình làm (mục 0). Nét viết tay khó đọc ở cỡ nhỏ, nên chỉ dùng cho chữ lớn.
 - **Quicksand**: nét tròn đều, cùng tính cách với Pacifico, nhưng rõ ở cỡ nhỏ và có đủ dấu tiếng Việt. Hai font hợp nhau, mỗi font một việc.
-- **Nhãn nhỏ** (tiêu đề phụ trong khối Sản phẩm, tên báo, "Địa chỉ", "Giờ liên hệ"): Quicksand 700, màu Nâu áo (mục 2.1: tiêu đề phụ), viết như câu thường. Không viết hoa toàn bộ và không giãn chữ, vì chữ hoa tiếng Việt có dấu ở cỡ nhỏ khó đọc hơn, và bảng màu, font ở trên không có lý do nào cho kiểu chữ đó.
+- **Nhãn nhỏ** (tiêu đề phụ trong khối Sản phẩm, tên báo, "Địa chỉ", "Giờ liên hệ"): Quicksand 700, màu Nâu áo (mục 2.1: tiêu đề phụ), viết như câu thường. Không viết hoa toàn bộ và không giãn chữ, vì `brand/README.md` và mục 2 không có lý do nào cho kiểu chữ đó.
 
 ### 2.3 Logo
 - **Hình:** người phụ nữ nửa người, mặt tròn, má hồng, cười hiền, đội nón lá, mặc áo cánh nâu, ôm bó bông lúa nếp vàng cong qua vai. Phong cách hoạt hình phẳng, viền nâu đất, giống phong cách ảnh tham khảo `C:\Users\lvdat\Documents\logo\logo-ba-noi-dau-bep-cam-dia-trong-cho-nha-hang-banh-va-logo-am-thuc-tu-lam_513640-1319.avif` (của Freepik, chỉ tham khảo phong cách, không sao chép).
@@ -96,7 +96,7 @@ Lý do chọn (đề xuất, chờ chủ dự án xác nhận):
 ### 3.0 Design Read (đề xuất, chờ chủ dự án xác nhận)
 Đọc trang này là: trang giới thiệu một sản phẩm của gia đình (gạo nếp cái hoa vàng xứ Đông) cho khách trong nước, Việt kiều và khách nước ngoài muốn xem rồi liên hệ, theo phong cách hoạt hình phẳng ấm áp (mascot, màu đất và vàng lúa, hình cánh đồng), dial ENERGY 2 / RHYTHM 2 / MOTION 2.
 
-Ba mức dial do chủ dự án chọn ngày 2026-11-04. Lý do của từng mức:
+Ba mức dial được suy ra từ spec này (mục 0 đến 3), chờ chủ dự án xác nhận. Lý do của từng mức:
 - **ENERGY 2**: thương hiệu có mascot, màu ấm và chữ Pacifico, nên trang không lặng như một trang hành chính (mức 1). Nhưng việc chính của trang là cho xem sản phẩm, câu chuyện và cách liên hệ, nên phần trang trí không được nổi hơn nội dung (không lên mức 3).
 - **RHYTHM 2**: thứ tự khối đi theo câu chuyện sản phẩm (mục 3.2). Mỗi khối có dạng riêng theo nội dung (hero hai cột, timeline dọc, thẻ báo và thẻ bài viết, liên hệ hai cột), nhưng mọi khối dùng chung lưới, khoảng cách và bảng màu.
 - **MOTION 2**: hiệu ứng theo cuộn đã chọn ở mục 1 và 3.3 (khối trượt lên, mascot, cây lúa). Không ghim khối, không parallax, vì khách cần đọc nhanh rồi liên hệ, và trang phải đạt mục tiêu đo Lighthouse mobile (mục 0).
