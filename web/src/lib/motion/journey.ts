@@ -8,6 +8,8 @@ const LEAF_DELAY = 0.15;
 const EAR_DURATION = 0.6;
 const STEM_SCRUB_S = 0.5;
 const POP_EASE = "back.out(2)";
+/** The screen line that the tip of the growing stem follows. */
+const STEM_TIP = "70%";
 
 /**
  * Grows the rice plant along the journey timeline: the stem follows the scroll, each event
@@ -32,8 +34,8 @@ export const setupJourney: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
         transformOrigin: "top center",
         scrollTrigger: {
           trigger: list,
-          start: "clamp(top 70%)",
-          end: "clamp(bottom 70%)",
+          start: `clamp(top ${STEM_TIP})`,
+          end: `clamp(bottom ${STEM_TIP})`,
           scrub: STEM_SCRUB_S,
         },
       },
@@ -43,6 +45,10 @@ export const setupJourney: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   root.querySelectorAll<HTMLElement>("[data-journey-event]").forEach((event) => {
     if (!shouldHideElement(event, offset)) return;
     const leaf = event.querySelector<SVGElement>("[data-journey-leaf]");
+    // Measured before the sets below: the leaf joins the stem at its bottom edge.
+    const leafJoin = leaf
+      ? Math.round(leaf.getBoundingClientRect().bottom - event.getBoundingClientRect().top)
+      : 0;
     gsap.set(event, { opacity: 0, y: EVENT_OFFSET_Y });
     // The leaf joins the stem at its left end; the wrapper mirrors it on the left side.
     if (leaf) gsap.set(leaf, { scale: 0, transformOrigin: "0% 100%" });
@@ -67,7 +73,9 @@ export const setupJourney: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
       : null;
     ScrollTrigger.create({
       trigger: event,
-      start: "clamp(top 75%)",
+      // The event starts when the stem tip (on the STEM_TIP line) reaches the leaf joint,
+      // so the leaf grows out of the tip and not below it.
+      start: `clamp(top+=${leafJoin} ${STEM_TIP})`,
       once: true,
       onEnter: () => {
         showEvent.play();

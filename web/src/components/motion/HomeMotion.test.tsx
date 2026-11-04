@@ -9,7 +9,18 @@ vi.mock("@/lib/motion/load-gsap", () => ({ loadGsap: vi.fn() }));
 type Listener = (event: { matches: boolean }) => void;
 
 const revert = vi.fn();
+let refreshListeners: (() => void)[] = [];
+/** Runs what ScrollTrigger runs at the end of a refresh: every "refresh" listener. */
+function finishRefresh() {
+  [...refreshListeners].forEach((listener) => listener());
+}
 const refresh = vi.fn();
+const addEventListener = vi.fn((_type: string, listener: () => void) => {
+  refreshListeners.push(listener);
+});
+const removeEventListener = vi.fn((_type: string, listener: () => void) => {
+  refreshListeners = refreshListeners.filter((item) => item !== listener);
+});
 const modules = {
   gsap: {
     matchMedia: () => ({
@@ -20,7 +31,7 @@ const modules = {
       revert,
     }),
   },
-  ScrollTrigger: { refresh },
+  ScrollTrigger: { refresh, addEventListener, removeEventListener },
 };
 
 let reducedMatches = false;
@@ -43,6 +54,8 @@ beforeEach(() => {
   vi.mocked(loadGsap).mockResolvedValue(modules as never);
   revert.mockReset();
   refresh.mockReset();
+  refresh.mockImplementation(finishRefresh);
+  refreshListeners = [];
   listeners = [];
   reducedMatches = false;
   delete document.documentElement.dataset.motion;
@@ -76,15 +89,66 @@ describe("HomeMotion", () => {
     expect(document.documentElement.dataset.motion).toBe("on");
   });
 
-  it("refreshes ScrollTrigger once, after every setup", async () => {
+  it("asks once for the safe refresh, after every setup", async () => {
     const first = vi.fn();
     const second = vi.fn();
     render(<HomeMotion setups={[first, second]} />);
     await vi.runAllTimersAsync();
     expect(refresh).toHaveBeenCalledTimes(1);
+    // `refresh(true)` waits until the page stops scrolling, so it cannot stop a scroll.
+    expect(refresh).toHaveBeenCalledWith(true);
     expect(refresh.mock.invocationCallOrder[0]).toBeGreaterThan(
       second.mock.invocationCallOrder[0],
     );
+  });
+
+  it("marks the motion as on only when the refresh has run", async () => {
+    refresh.mockImplementation(() => {});
+    const setup = vi.fn();
+    render(<HomeMotion setups={[setup]} />);
+    await vi.runAllTimersAsync();
+    expect(setup).toHaveBeenCalledTimes(1);
+    expect(document.documentElement.dataset.motion).toBeUndefined();
+    finishRefresh();
+    expect(document.documentElement.dataset.motion).toBe("on");
+  });
+
+  it("stops listening for the refresh when reverted before it ran", async () => {
+    refresh.mockImplementation(() => {});
+    const { unmount } = render(<HomeMotion setups={[vi.fn()]} />);
+    await vi.runAllTimersAsync();
+    expect(refreshListeners).toHaveLength(1);
+    unmount();
+    expect(refreshListeners).toHaveLength(0);
+    finishRefresh();
+    expect(document.documentElement.dataset.motion).toBeUndefined();
+  });
+
+  it("leaves the page as it is when GSAP fails to load", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.mocked(loadGsap).mockRejectedValue(new Error("chunk failed"));
+    const setup = vi.fn();
+    render(<HomeMotion setups={[setup]} />);
+    await vi.runAllTimersAsync();
+    expect(setup).not.toHaveBeenCalled();
+    expect(document.documentElement.dataset.motion).toBeUndefined();
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
+  it("tries to load GSAP again when the motion is turned on again after a failure", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.mocked(loadGsap).mockRejectedValueOnce(new Error("chunk failed"));
+    const setup = vi.fn();
+    render(<HomeMotion setups={[setup]} />);
+    await vi.runAllTimersAsync();
+    expect(setup).not.toHaveBeenCalled();
+    listeners.forEach((listener) => listener({ matches: true }));
+    listeners.forEach((listener) => listener({ matches: false }));
+    await vi.runAllTimersAsync();
+    expect(loadGsap).toHaveBeenCalledTimes(2);
+    expect(setup).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 
   it("starts when the user turns reduced motion off", async () => {
@@ -173,8 +237,11 @@ describe("HomeMotion with a pending hash scroll", () => {
     const setup = vi.fn();
     render(<HomeMotion setups={[setup]} />);
     await vi.advanceTimersByTimeAsync(300);
-    expect(setup).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(3000);
+    // The scroll events never stop, so only the longest wait ends it.
+    for (let elapsed = 0; elapsed < 3000; elapsed += 100) {
+      window.dispatchEvent(new Event("scroll"));
+      await vi.advanceTimersByTimeAsync(100);
+    }
     expect(setup).toHaveBeenCalledTimes(1);
   });
 

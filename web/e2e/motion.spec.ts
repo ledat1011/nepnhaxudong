@@ -286,6 +286,67 @@ test("the contact block at the end of the page appears", async ({ page }) => {
   expect(opacities.every((opacity) => opacity === "1")).toBe(true);
 });
 
+const SCROLL_TARGET_FROM_END_PX = 200;
+const LEAF_TIP_MARGIN_PX = 30;
+
+test("a smooth scroll that runs while the motion starts reaches its target", async ({ page }) => {
+  // Hold the GSAP chunk until the smooth scroll runs, so the motion starts during the scroll.
+  let releaseGsap = () => {};
+  const gsapReleased = new Promise<void>((resolve) => {
+    releaseGsap = resolve;
+  });
+  let gsapRequested = false;
+  await page.route(/\.js(\?|$)/, async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    if (body.includes("_gsap")) {
+      gsapRequested = true;
+      await gsapReleased;
+    }
+    await route.fulfill({ response, body });
+  });
+  await page.goto("/vi");
+  await expect.poll(() => gsapRequested).toBe(true);
+  const target = await page.evaluate((fromEnd) => {
+    const top = document.documentElement.scrollHeight - window.innerHeight - fromEnd;
+    window.scrollTo({ top, behavior: "smooth" });
+    return top;
+  }, SCROLL_TARGET_FROM_END_PX);
+  releaseGsap();
+  await page.waitForSelector(MOTION_ON);
+  await expect
+    .poll(() => page.evaluate((top) => Math.abs(window.scrollY - top), target))
+    .toBeLessThan(1);
+});
+
+test("a journey leaf grows out of the stem tip, not below it", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await scrollToJourney(page);
+  // A hidden leaf has scale 0 about its joint, so its box is the joint point itself.
+  const joint = await page.$eval("[data-journey-leaf]", (el) => {
+    const transform = getComputedStyle(el).transform;
+    if (transform === "none" || new DOMMatrix(transform).a !== 0) return null;
+    return el.getBoundingClientRect().bottom + window.scrollY;
+  });
+  expect(joint).not.toBeNull();
+  const stemTipAt = async (offsetPx: number) => {
+    await page.evaluate(
+      ({ y, offset }) => window.scrollTo(0, y - window.innerHeight * 0.7 + offset),
+      { y: joint!, offset: offsetPx },
+    );
+    await page.waitForTimeout(1000);
+    return page.$eval("[data-journey-leaf]", (el) => {
+      const transform = getComputedStyle(el).transform;
+      return transform === "none" ? 1 : new DOMMatrix(transform).a;
+    });
+  };
+  // The stem tip is still above the joint: no leaf yet.
+  expect(await stemTipAt(-LEAF_TIP_MARGIN_PX)).toBe(0);
+  // The stem tip has passed the joint: the leaf has grown.
+  expect(await stemTipAt(LEAF_TIP_MARGIN_PX)).toBeGreaterThan(GROWN_SCALE);
+});
+
 // The mock content has no product image, so the lightbox cannot be opened here. The lightbox is a
 // non-portal `fixed inset-0` element inside the revealed block, so this test puts the same kind
 // of element in that block and checks that it still covers the whole screen.
@@ -365,10 +426,8 @@ test("the mascot tilts while scrolling and settles after", async ({ page }) => {
   expect(Math.abs(await rotationOf(page, "rice"))).toBeLessThan(0.1);
 });
 
-test("very fast scrolling stays within the limits", async ({ page }) => {
-  await page.setViewportSize(MOBILE);
-  await page.goto("/vi");
-  await page.waitForSelector(MOTION_ON);
+test("very fast scrolling stays within the limits and settles after", async ({ page }) => {
+  await openWithClock(page);
   for (let i = 0; i < 3; i++) {
     await page.keyboard.press("End");
     await page.keyboard.press("Home");
@@ -378,6 +437,12 @@ test("very fast scrolling stays within the limits", async ({ page }) => {
     expect(Math.abs(await rotationOf(page, "rice"))).toBeLessThanOrEqual(RICE_LIMIT_DEG);
     await page.waitForTimeout(50);
   }
+  // The page must stand still before the time is paused: a later scroll would tilt it again.
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await pauseClock(page);
+  await page.clock.runFor(SETTLE_WAIT_MS);
+  expect(Math.abs(await rotationOf(page, "head"))).toBeLessThan(0.1);
+  expect(Math.abs(await rotationOf(page, "rice"))).toBeLessThan(0.1);
 });
 
 test("turning reduced motion on puts a tilted mascot back at 0 degrees", async ({ page }) => {

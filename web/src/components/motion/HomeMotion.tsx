@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { loadGsap, type MotionSetup } from "@/lib/motion/load-gsap";
+import { loadGsap, type GsapModules, type MotionSetup } from "@/lib/motion/load-gsap";
 import { whenHashScrollDone } from "@/lib/motion/hash-scroll";
 import { setupJourney } from "@/lib/motion/journey";
 import { setupMascot } from "@/lib/motion/mascot";
@@ -45,20 +45,34 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
       if (started) return;
       started = true;
       cancelWait = whenIdle(async () => {
-        const modules = await loadGsap();
+        let modules: GsapModules;
+        try {
+          modules = await loadGsap();
+        } catch (error) {
+          // Nothing is hidden before the setups run, so the page stays complete without motion.
+          console.warn("Home motion is off: GSAP did not load.", error);
+          return;
+        }
         if (disposed || mm !== null) return;
-        // `ScrollTrigger.refresh()` writes the scroll position back, which would cancel
-        // a smooth scroll to a `#hash` target that is still running.
+        // Start only after a smooth scroll to a `#hash` target has ended.
         cancelWait = whenHashScrollDone(document, () => {
           if (disposed || mm !== null) return;
           const media = modules.gsap.matchMedia();
           mm = media;
           media.add(MOTION_OK_QUERY, () => {
             setups.forEach((setup) => setup(modules, document));
+            const { ScrollTrigger } = modules;
+            const onRefresh = () => {
+              ScrollTrigger.removeEventListener("refresh", onRefresh);
+              document.documentElement.dataset.motion = "on";
+            };
+            ScrollTrigger.addEventListener("refresh", onRefresh);
             // A clamped start is applied only by a refresh, and the page load refresh is over.
-            modules.ScrollTrigger.refresh();
-            document.documentElement.dataset.motion = "on";
+            // A refresh writes the scroll position back, which stops a running smooth scroll
+            // or touch fling. `refresh(true)` waits until the page stops scrolling.
+            ScrollTrigger.refresh(true);
             return () => {
+              ScrollTrigger.removeEventListener("refresh", onRefresh);
               delete document.documentElement.dataset.motion;
             };
           });
