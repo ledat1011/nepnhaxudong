@@ -1,0 +1,127 @@
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useState } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { MediaAdminDto } from "@/lib/admin/types";
+
+const { adminFetch } = vi.hoisted(() => ({ adminFetch: vi.fn() }));
+vi.mock("@/lib/admin/api", () => ({ adminFetch, adminUpload: vi.fn() }));
+const stableReLogin = vi.fn();
+vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin: stableReLogin }) }));
+vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
+
+import { RichTextEditor } from "./RichTextEditor";
+
+function media(id: number): MediaAdminDto {
+  return {
+    id,
+    url: `/media/${id}.webp`,
+    width: 10,
+    height: 10,
+    mime: "image/webp",
+    altVi: `Ảnh ${id}`,
+    altEn: `Image ${id}`,
+  };
+}
+
+function paste(target: Element, html: string) {
+  fireEvent.paste(target, {
+    clipboardData: {
+      types: ["text/html"],
+      files: [],
+      items: [],
+      getData: (type: string) => (type === "text/html" ? html : ""),
+    },
+  });
+}
+
+function Harness({ lang, initial = "", onHtml }: { lang: "vi" | "en"; initial?: string; onHtml(html: string): void }) {
+  const [value, setValue] = useState(initial);
+  return (
+    <RichTextEditor
+      lang={lang}
+      value={value}
+      onChange={(html) => {
+        setValue(html);
+        onHtml(html);
+      }}
+    />
+  );
+}
+
+beforeEach(() => {
+  adminFetch.mockReset();
+  adminFetch.mockResolvedValue([media(1), media(2)]);
+});
+
+describe("RichTextEditor", () => {
+  it("has the nine tools and no strike-through or code button", async () => {
+    render(<RichTextEditor lang="vi" value="" onChange={vi.fn()} />);
+    await screen.findByRole("textbox", { name: "Nội dung" });
+    const names = screen.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent);
+    expect(names).toEqual([
+      "Tiêu đề lớn",
+      "Tiêu đề nhỏ",
+      "In đậm",
+      "In nghiêng",
+      "Danh sách chấm",
+      "Danh sách số",
+      "Trích dẫn",
+      "Liên kết",
+      "Chèn ảnh",
+    ]);
+  });
+
+  it("emits html without h1, script or style after a paste", async () => {
+    const onHtml = vi.fn();
+    render(<Harness lang="vi" onHtml={onHtml} />);
+    const box = await screen.findByRole("textbox", { name: "Nội dung" });
+    paste(box, '<h1>A</h1><script>x</script><p style="color:red">B</p>');
+    await waitFor(() => expect(onHtml).toHaveBeenCalled());
+    const html = onHtml.mock.calls.at(-1)?.[0] as string;
+    expect(html).not.toMatch(/<h1|<script|style=/);
+    expect(html).toContain("B");
+  });
+
+  it("inserts a library image with the English alt text on the English tab", async () => {
+    const onHtml = vi.fn();
+    const events = userEvent.setup();
+    render(<Harness lang="en" onHtml={onHtml} />);
+    await screen.findByRole("textbox", { name: "Nội dung" });
+    await events.click(screen.getByRole("button", { name: "Chèn ảnh" }));
+    const dialog = await screen.findByRole("dialog");
+    await events.click(await within(dialog).findByAltText("Ảnh 2"));
+    await waitFor(() => expect(onHtml).toHaveBeenCalled());
+    // Tiptap keeps an empty paragraph after a last image, so the writer can go on typing.
+    expect(onHtml.mock.calls.at(-1)?.[0]).toBe('<img src="/media/2.webp" alt="Image 2"><p></p>');
+  });
+
+  it("inserts a library image with the Vietnamese alt text on the Vietnamese tab", async () => {
+    const onHtml = vi.fn();
+    const events = userEvent.setup();
+    render(<Harness lang="vi" onHtml={onHtml} />);
+    await screen.findByRole("textbox", { name: "Nội dung" });
+    await events.click(screen.getByRole("button", { name: "Chèn ảnh" }));
+    const dialog = await screen.findByRole("dialog");
+    await events.click(await within(dialog).findByAltText("Ảnh 1"));
+    await waitFor(() => expect(onHtml).toHaveBeenCalled());
+    expect(onHtml.mock.calls.at(-1)?.[0]).toBe('<img src="/media/1.webp" alt="Ảnh 1"><p></p>');
+  });
+
+  it("does not insert an image pasted from another site", async () => {
+    const onHtml = vi.fn();
+    render(<Harness lang="vi" onHtml={onHtml} />);
+    const box = await screen.findByRole("textbox", { name: "Nội dung" });
+    paste(box, '<p>x</p><img src="https://evil.example/a.png" alt="e">');
+    await waitFor(() => expect(onHtml).toHaveBeenCalled());
+    expect(onHtml.mock.calls.at(-1)?.[0]).not.toContain("<img");
+  });
+
+  it("shows a new value that arrives from outside (for example after Hủy)", async () => {
+    const { rerender } = render(<RichTextEditor lang="vi" value="<p>Một</p>" onChange={vi.fn()} />);
+    const box = await screen.findByRole("textbox", { name: "Nội dung" });
+    expect(box).toHaveTextContent("Một");
+    rerender(<RichTextEditor lang="vi" value="<p>Hai</p>" onChange={vi.fn()} />);
+    await waitFor(() => expect(box).toHaveTextContent("Hai"));
+  });
+});

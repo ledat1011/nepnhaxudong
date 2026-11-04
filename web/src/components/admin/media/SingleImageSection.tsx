@@ -7,16 +7,18 @@ import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
 type Props = {
   mediaId: number | null;
   onChange(mediaId: number | null): void;
+  /** The title of the section. */
+  label?: string;
 };
 
 /** One optional image: a preview with "Bỏ ảnh" when chosen, and the library picker (single mode). */
-export function SingleImageSection({ mediaId, onChange }: Props) {
+export function SingleImageSection({ mediaId, onChange, label = "Ảnh" }: Props) {
   const ids = mediaId === null ? [] : [mediaId];
   const { items } = useMediaByIds(ids);
   const media = items.find((item) => item.id === mediaId);
   return (
     <fieldset className="flex min-w-0 flex-col gap-3">
-      <legend className="mb-2 text-base font-semibold">Ảnh</legend>
+      <legend className="mb-2 text-base font-semibold">{label}</legend>
       {mediaId !== null ? (
         <div className="flex items-center gap-2 rounded-md border p-2">
           {media !== undefined ? (

@@ -25,6 +25,8 @@ type Props = {
   onChange(ids: number[]): void;
   /** Multiple mode only: the most images that can be chosen. */
   max?: number;
+  /** The text of the button that opens the library. */
+  triggerLabel?: string;
 };
 
 /**
@@ -32,13 +34,13 @@ type Props = {
  * Single mode: choosing an image replaces the value with that one id and closes the box.
  * Multiple mode: choosing toggles an image, and the user closes the box with "Xong".
  */
-export function MediaPicker({ mode, value, onChange, max }: Props) {
+export function MediaPicker({ mode, value, onChange, max, triggerLabel = "Chọn ảnh" }: Props) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline">
-          Chọn ảnh
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
