@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
+import { FieldError, NotSavedNotice, RequiredMark, RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { Button } from "@/components/admin/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/admin/ui/dialog";
@@ -9,10 +10,31 @@ import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { adminFetch } from "@/lib/admin/api";
 import { AdminApiError, isSessionExpired } from "@/lib/admin/errors";
+import { fieldOfDetail, invalidProps, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { TEMP_PASSWORD_MIN_LENGTH, generateTempPassword } from "@/lib/admin/temp-password";
 import type { CreateUserRequest, UserSummary } from "@/lib/admin/types";
+import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { PasswordReveal } from "./PasswordReveal";
+
+/** The API messages that name a field of this form (see `CreateUserRequest` and `UserAdminService`). */
+const FIELD_RULES: FieldRule[] = [
+  { prefix: "Email", field: "email" },
+  { prefix: "Tên hiển thị", field: "displayName" },
+  { prefix: "Mật khẩu tạm thời", field: "password" },
+];
+
+/** The same checks as the API, with the same texts, so nothing is sent that it would refuse. */
+function check(email: string, displayName: string, password: string): FieldErrors {
+  const errors: Record<string, string> = {};
+  if (email.trim() === "") errors.email = "Email không được để trống.";
+  if (displayName.trim() === "") errors.displayName = "Tên hiển thị không được để trống.";
+  if (password === "") errors.password = "Mật khẩu tạm thời không được để trống.";
+  else if (password.length < TEMP_PASSWORD_MIN_LENGTH) {
+    errors.password = `Mật khẩu tạm thời phải có ít nhất ${TEMP_PASSWORD_MIN_LENGTH} ký tự.`;
+  }
+  return errors;
+}
 
 type Props = {
   open: boolean;
@@ -39,6 +61,7 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
   // The password the server accepted. It is shown once and lives only in this component.
   const [shown, setShown] = useState<string | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const fields = useFieldErrors();
 
   const saving = useSave(
     async () => {
@@ -57,15 +80,29 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
       // The caller shows this value, so it is exactly the password of the request the server accepted.
       return body.temporaryPassword;
     },
-    { successMessage: "Đã tạo tài khoản." },
+    {
+      successMessage: "Đã tạo tài khoản.",
+      onError: (error) => {
+        const field = fieldOfDetail(error.detail, FIELD_RULES);
+        if (field !== null) fields.show({ [field]: error.detail });
+      },
+    },
   );
 
   const done = shown !== null;
   const dirty = !done && (email !== "" || displayName !== "" || password !== "");
-  const canCreate =
-    !saving.pending && email.trim() !== "" && displayName.trim() !== "" && password.length >= TEMP_PASSWORD_MIN_LENGTH;
+  // On even with empty boxes: pressing it shows what is missing.
+  const canCreate = !saving.pending;
+  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, FIELD_RULES) === null ? saving.error : null;
 
   async function create() {
+    const problems = check(email, displayName, password);
+    if (Object.keys(problems).length > 0) {
+      saving.reset();
+      fields.show(problems);
+      return;
+    }
+    fields.reset();
     const accepted = await saving.save();
     if (accepted === undefined) return;
     setShown(accepted);
@@ -99,51 +136,83 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div ref={fields.root} className="flex flex-col gap-4">
+              <RequiredNote />
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={emailId}>Email</Label>
+                <Label htmlFor={emailId}>
+                  Email
+                  <RequiredMark />
+                </Label>
                 <Input
                   id={emailId}
                   type="email"
                   autoComplete="off"
+                  required
                   value={email}
                   disabled={saving.pending}
-                  onChange={(event) => setEmail(event.target.value)}
+                  {...invalidProps(emailId, fields.errors.email)}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    fields.clear("email");
+                  }}
                 />
+                <FieldError id={emailId} message={fields.errors.email} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={nameId}>Tên hiển thị</Label>
+                <Label htmlFor={nameId}>
+                  Tên hiển thị
+                  <RequiredMark />
+                </Label>
                 <Input
                   id={nameId}
                   autoComplete="off"
+                  required
                   value={displayName}
                   disabled={saving.pending}
-                  onChange={(event) => setDisplayName(event.target.value)}
+                  {...invalidProps(nameId, fields.errors.displayName)}
+                  onChange={(event) => {
+                    setDisplayName(event.target.value);
+                    fields.clear("displayName");
+                  }}
                 />
+                <FieldError id={nameId} message={fields.errors.displayName} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={passwordId}>Mật khẩu tạm thời (ít nhất {TEMP_PASSWORD_MIN_LENGTH} ký tự)</Label>
+                <Label htmlFor={passwordId}>
+                  Mật khẩu tạm thời (ít nhất {TEMP_PASSWORD_MIN_LENGTH} ký tự)
+                  <RequiredMark />
+                </Label>
                 <Input
                   id={passwordId}
                   type="password"
                   autoComplete="off"
                   data-1p-ignore
                   data-lpignore="true"
+                  required
                   value={password}
                   disabled={saving.pending}
-                  onChange={(event) => setPassword(event.target.value)}
+                  {...invalidProps(passwordId, fields.errors.password)}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    fields.clear("password");
+                  }}
                 />
+                <FieldError id={passwordId} message={fields.errors.password} />
                 <Button
                   type="button"
                   variant="outline"
                   disabled={saving.pending}
-                  onClick={() => setPassword(generateTempPassword())}
+                  onClick={() => {
+                    setPassword(generateTempPassword());
+                    fields.clear("password");
+                  }}
                 >
                   Tạo mật khẩu
                 </Button>
                 <p className="text-sm text-muted-foreground">Mật khẩu hiện ra một lần sau khi tạo tài khoản.</p>
               </div>
-              <ProblemMessage error={saving.error} />
+              <ProblemMessage error={saveError} />
+              <NotSavedNotice show={fields.hasErrors} />
               {saving.error?.status === 409 ? (
                 <p className="text-sm text-muted-foreground">
                   Tài khoản này có thể đã có rồi. Hãy xem danh sách; dùng &quot;Đặt lại mật khẩu&quot; để đặt mật khẩu tạm thời mới.

@@ -159,6 +159,6 @@ describe("UserList", () => {
     const user = userEvent.setup();
     render(<UserList users={users} onChanged={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: "Thêm người nhà" }));
-    expect(await screen.findByLabelText("Tên hiển thị")).toBeInTheDocument();
+    expect(await screen.findByLabelText(/^Tên hiển thị/)).toBeInTheDocument();
   });
 });
