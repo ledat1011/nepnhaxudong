@@ -559,10 +559,9 @@ test("the hero clouds move and the pause button stops them", async ({ page }) =>
   expect(await cloudTransform(page)).not.toBe(first);
 
   await pause.click();
-  await expect(page.getByRole("button", { name: "Chạy lại chuyển động" }).first()).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  // A toggle button keeps its name; aria-pressed carries the state, the title follows it.
+  await expect(pause).toHaveAttribute("aria-pressed", "true");
+  await expect(pause).toHaveAttribute("title", "Chạy lại chuyển động");
   const stopped = await cloudTransform(page);
   await page.waitForTimeout(1000);
   expect(await cloudTransform(page)).toBe(stopped);
@@ -574,10 +573,96 @@ test("the paused choice survives a reload", async ({ page }) => {
   await page.getByRole("button", { name: "Tạm dừng chuyển động" }).first().click();
   await page.reload();
   await page.waitForSelector(MOTION_ON);
-  await expect(page.getByRole("button", { name: "Chạy lại chuyển động" }).first()).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Tạm dừng chuyển động", pressed: true }).first(),
+  ).toBeVisible();
   const before = await cloudTransform(page);
   await page.waitForTimeout(1000);
   expect(await cloudTransform(page)).toBe(before);
+});
+
+test("the pause button has a Nâu đất focus ring between two Trắng gạo bands", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  const pause = page.getByRole("button", { name: "Tạm dừng chuyển động" }).first();
+  // Reach the button with the keyboard, so :focus-visible applies.
+  await pause.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  const ring = await pause.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return {
+      focusVisible: el.matches(":focus-visible"),
+      outlineStyle: style.outlineStyle,
+      outlineColor: style.outlineColor,
+      outlineWidth: style.outlineWidth,
+      outlineOffset: style.outlineOffset,
+      boxShadow: style.boxShadow,
+    };
+  });
+  expect(ring.focusVisible).toBe(true);
+  expect(ring.outlineStyle).toBe("solid");
+  expect(ring.outlineColor).toBe("rgb(74, 44, 26)");
+  expect(ring.outlineWidth).toBe("2px");
+  expect(ring.outlineOffset).toBe("2px");
+  expect(ring.boxShadow).toContain("rgb(251, 247, 238) 0px 0px 0px 6px");
+});
+
+type Box = { left: number; top: number; right: number; bottom: number };
+
+function overlaps(a: Box, b: Box) {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+async function heroBoxes(page: Page) {
+  return page.evaluate(() => {
+    const box = (el: Element | null) => {
+      if (!el) throw new Error("hero element not found");
+      const r = el.getBoundingClientRect();
+      return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+    };
+    const hero = document.querySelector("[data-hero-scene]");
+    return {
+      hero: box(hero),
+      panel: box(document.querySelector("[data-hero-panel]")),
+      mascot: box(document.querySelector("svg[data-mascot]")),
+      pause: box(hero?.querySelector("button[aria-pressed]") ?? null),
+      links: Array.from(hero?.querySelectorAll("a[href]") ?? []).map(box),
+    };
+  });
+}
+
+for (const viewport of [
+  { width: 320, height: 640 },
+  { width: 375, height: 812 },
+  { width: 767, height: 1024 },
+]) {
+  test(`on a ${viewport.width} px phone the pause button sits in the scene corner`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/vi");
+    await page.waitForSelector(MOTION_ON);
+    const { panel, mascot, pause, links } = await heroBoxes(page);
+    // Inside the bottom-right corner of the scene band.
+    expect(pause.top).toBeGreaterThanOrEqual(panel.top + (panel.bottom - panel.top) / 2);
+    expect(pause.bottom).toBeLessThanOrEqual(panel.bottom);
+    expect(pause.right).toBeLessThanOrEqual(panel.right);
+    expect(pause.left).toBeGreaterThanOrEqual((panel.left + panel.right) / 2);
+    // Never over the mascot or a button.
+    expect(overlaps(pause, mascot)).toBe(false);
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) expect(overlaps(pause, link)).toBe(false);
+  });
+}
+
+test("on a desktop the pause button stays in the bottom-right corner of the hero", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  const { hero, mascot, pause, links } = await heroBoxes(page);
+  expect(hero.bottom - pause.bottom).toBeCloseTo(16, 0);
+  expect(hero.right - pause.right).toBeGreaterThanOrEqual(16);
+  expect(overlaps(pause, mascot)).toBe(false);
+  for (const link of links) expect(overlaps(pause, link)).toBe(false);
 });
 
 test("reduced motion hides the pause button and leaves the clouds still", async ({ page }) => {

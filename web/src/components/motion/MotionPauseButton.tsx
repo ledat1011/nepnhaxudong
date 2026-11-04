@@ -10,8 +10,15 @@ type MotionPauseButtonProps = { dict: Dictionary; controller?: LoopController };
  * Pauses and resumes the looping motion of the page. It is hidden until the motion code has
  * started (`html[data-motion=on]`), so it never shows on a page with reduced motion or without
  * JavaScript. The server renders the "running" state; the saved choice is read after hydration.
- * It is a small round 44 x 44 px icon button (pause bars or play triangle). The name comes from
- * `aria-label`, and the same text is in `title` for mouse users.
+ * It is a small round 44 x 44 px icon button (pause bars or play triangle).
+ *
+ * It is a toggle button: the name (`aria-label`) is always "pause motion" and `aria-pressed`
+ * carries the state, so a screen reader says "pause motion, pressed" when the motion is paused.
+ * Only the glyph and the `title` (for mouse users) follow the state.
+ *
+ * The focus ring is two-tone, because the button can sit on any part of the scene (sky, field,
+ * stems, outlines): a 2 px Nâu đất outline with Trắng gạo on both sides of it (a 6 px Trắng gạo
+ * shadow under the outline). Nâu đất on Trắng gạo is 11.8 : 1 whatever is behind the button.
  */
 export function MotionPauseButton({ dict, controller }: MotionPauseButtonProps) {
   const [paused, setPaused] = useState(false);
@@ -24,16 +31,14 @@ export function MotionPauseButton({ dict, controller }: MotionPauseButtonProps) 
     return source.subscribe(setPaused);
   }, [controller]);
 
-  const label = paused ? dict.motion.resume : dict.motion.pause;
-
   return (
     <button
       type="button"
       aria-pressed={paused}
-      aria-label={label}
-      title={label}
+      aria-label={dict.motion.pause}
+      title={paused ? dict.motion.resume : dict.motion.pause}
       onClick={() => (controller ?? getLoopController()).setPaused(!paused)}
-      className="hidden size-11 items-center justify-center rounded-full border-2 border-coat bg-rice text-earth hover:bg-straw focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat [html[data-motion=on]_&]:inline-flex"
+      className="hidden size-11 items-center justify-center rounded-full border-2 border-coat bg-rice text-earth hover:bg-straw focus-visible:shadow-[0_0_0_6px_var(--color-rice)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-earth [html[data-motion=on]_&]:inline-flex"
     >
       {paused ? (
         <svg data-glyph="play" viewBox="0 0 20 20" aria-hidden="true" focusable="false" className="size-5">

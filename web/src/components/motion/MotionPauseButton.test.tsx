@@ -26,34 +26,54 @@ describe("MotionPauseButton", () => {
     expect(svg).toHaveAttribute("focusable", "false");
   });
 
-  it("toggles the controller and the label on click", () => {
+  it("keeps one name and lets aria-pressed and the title carry the state", () => {
     const controller = createLoopController(null);
     render(<MotionPauseButton dict={dict} controller={controller} />);
     fireEvent.click(screen.getByRole("button", { hidden: true }));
     expect(controller.isPaused()).toBe(true);
-    const button = screen.getByRole("button", { name: dict.motion.resume, hidden: true });
+    // A toggle button keeps its name; a screen reader says "Pause motion, pressed".
+    const button = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
     expect(button).toHaveAttribute("aria-pressed", "true");
     expect(button).toHaveAttribute("title", dict.motion.resume);
     expect(button.querySelector("svg")).toHaveAttribute("data-glyph", "play");
     fireEvent.click(button);
     expect(controller.isPaused()).toBe(false);
     const again = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
+    expect(again).toHaveAttribute("aria-pressed", "false");
+    expect(again).toHaveAttribute("title", dict.motion.pause);
     expect(again.querySelector("svg")).toHaveAttribute("data-glyph", "pause");
   });
 
-  it("shows resume when the controller starts paused", () => {
+  it("shows the pressed state when the controller starts paused", () => {
     const controller = createLoopController({ getItem: () => "1", setItem: () => {} });
     render(<MotionPauseButton dict={dict} controller={controller} />);
-    const button = screen.getByRole("button", { name: dict.motion.resume, hidden: true });
+    const button = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
     expect(button).toHaveAttribute("aria-pressed", "true");
+    expect(button).toHaveAttribute("title", dict.motion.resume);
   });
 
   it("follows changes made elsewhere", () => {
     const controller = createLoopController(null);
     render(<MotionPauseButton dict={dict} controller={controller} />);
     act(() => controller.setPaused(true));
-    const button = screen.getByRole("button", { name: dict.motion.resume, hidden: true });
+    const button = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
+    expect(button).toHaveAttribute("aria-pressed", "true");
     expect(button.querySelector("svg")).toHaveAttribute("data-glyph", "play");
+  });
+
+  it("has a two-tone focus ring: a Nau dat ring between two Trang gao bands", () => {
+    render(<MotionPauseButton dict={dict} controller={createLoopController(null)} />);
+    const button = screen.getByRole("button", { hidden: true });
+    // Nau dat outline 2 px wide, 2 px away from the button edge.
+    expect(button).toHaveClass(
+      "focus-visible:outline-2",
+      "focus-visible:outline-offset-2",
+      "focus-visible:outline-earth",
+    );
+    // A 6 px Trang gao shadow fills the gap under the outline and 2 px outside it, so the ring
+    // always has Trang gao on both sides, whatever the field behind the button shows.
+    expect(button).toHaveClass("focus-visible:shadow-[0_0_0_6px_var(--color-rice)]");
+    expect(button.className).not.toContain("outline-coat");
   });
 
   it("has the hidden class until motion is on", () => {

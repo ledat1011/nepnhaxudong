@@ -31,6 +31,11 @@ const BUTTON_CLASS =
  *
  * Layers, back to front: panel (z-0), sun (z-1), text and mascot (z-2), pause button (z-10).
  * The section is `isolate`, so these z values stay inside the hero.
+ *
+ * The pause button sits in the bottom-right corner of the moving scene: on a phone that is the
+ * top band (the panel is `2.5rem + --hero-m` high, the button 2.75rem, so its top is 3.5rem above
+ * the panel bottom), right of the centered mascot and above the text; from `md` it is the
+ * bottom-right corner of the hero.
  */
 export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {
   return (
@@ -78,7 +83,10 @@ export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {
           <Mascot title={dict.site.name} className="hero-fade-mascot relative z-[2] block h-auto w-full" />
         </div>
       </div>
-      <div className="absolute right-4 bottom-4 z-10">
+      <div
+        data-hero-pause=""
+        className="absolute top-[calc(2.5rem+var(--hero-m)-3.5rem)] right-4 z-10 md:top-auto md:bottom-4"
+      >
         <MotionPauseButton dict={dict} />
       </div>
     </section>

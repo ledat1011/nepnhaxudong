@@ -124,6 +124,17 @@ describe("Hero", () => {
     );
   });
 
+  it("puts the pause button in the scene band on a phone and in the hero corner from md", () => {
+    const { container } = renderHero(null);
+    const corner = container.querySelector("[data-hero-pause]");
+    expect(corner?.querySelector("button")).not.toBeNull();
+    // The panel is 2.5rem + --hero-m high on a phone; the 2.75rem button ends 0.75rem above its bottom.
+    expect(corner).toHaveClass("top-[calc(2.5rem+var(--hero-m)-3.5rem)]", "right-4");
+    expect(corner).toHaveClass("md:top-auto", "md:bottom-4");
+    const panel = container.querySelector("[data-hero-panel]");
+    expect(panel).toHaveClass("h-[calc(2.5rem+var(--hero-m))]");
+  });
+
   it("renders the mascot once", () => {
     const { container } = renderHero(null);
     expect(container.querySelectorAll("g#head")).toHaveLength(1);
