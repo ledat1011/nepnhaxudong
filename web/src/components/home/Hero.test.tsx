@@ -44,6 +44,33 @@ describe("Hero", () => {
     expect(screen.queryByRole("link", { name: dict.hero.journeyCta })).not.toBeInTheDocument();
   });
 
+  it("draws the hero scene behind the content instead of the old field strip", () => {
+    const { container } = renderHero(null);
+    const scene = container.querySelector("section[data-hero-scene]");
+    expect(scene).not.toBeNull();
+    expect(scene?.querySelectorAll("[data-hero-cloud]")).toHaveLength(3);
+    expect(scene?.querySelector("[data-hero-sun]")).not.toBeNull();
+    expect(scene?.querySelectorAll("[data-hero-gust]")).toHaveLength(5);
+    // The old FieldBackdrop strip (viewBox 0 0 1200 160) is gone.
+    expect(container.querySelector('svg[viewBox="0 0 1200 160"]')).toBeNull();
+  });
+
+  it("puts the sun in the mascot box, behind the mascot", () => {
+    const { container } = renderHero(null);
+    const mascot = container.querySelector("svg[data-mascot]");
+    const sun = container.querySelector("[data-hero-sun]")?.closest("svg");
+    expect(sun?.parentElement).toBe(mascot?.parentElement);
+    expect(sun?.compareDocumentPosition(mascot as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("has the pause button for the motion", () => {
+    renderHero(null);
+    expect(screen.getByRole("button", { name: dict.motion.pause, hidden: true })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
   it("renders the mascot once", () => {
     const { container } = renderHero(null);
     expect(container.querySelectorAll("g#head")).toHaveLength(1);
