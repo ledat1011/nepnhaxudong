@@ -107,7 +107,7 @@ describe("ContactForm", () => {
     expect(screen.getByLabelText("Zalo (chỉ số)")).toHaveValue("abc");
   });
 
-  it("keeps Lưu off until something changed, and Hủy brings the saved values back", async () => {
+  it("keeps Lưu off until something changed, and Bỏ thay đổi brings the saved values back after a yes", async () => {
     const user = userEvent.setup();
     serve(filled);
     render(<ContactForm />);
@@ -115,7 +115,9 @@ describe("ContactForm", () => {
     expect(save).toBeDisabled();
     await user.type(screen.getByLabelText("Điện thoại"), "9");
     expect(save).toBeEnabled();
-    await user.click(screen.getByRole("button", { name: "Hủy" }));
+    await user.click(screen.getByRole("button", { name: "Bỏ thay đổi" }));
+    const question = screen.getByRole("alertdialog", { name: "Bỏ thay đổi chưa lưu?" });
+    await user.click(within(question).getByRole("button", { name: "Bỏ thay đổi" }));
     expect(screen.getByLabelText("Điện thoại")).toHaveValue("0901 234 567");
     expect(save).toBeDisabled();
   });

@@ -338,7 +338,7 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
 
       <ProblemMessage error={saveError} />
 
-      <SaveBar dirty={dirty} pending={busy} onSave={() => void save()} onCancel={cancel} />
+      <SaveBar dirty={dirty} pending={busy} onSave={() => void save()} onDiscard={cancel} />
       {baseline !== undefined ? <StoryPreview story={baseline} open={previewOpen} onOpenChange={setPreviewOpen} /> : null}
     </div>
   );

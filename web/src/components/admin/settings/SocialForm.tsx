@@ -94,7 +94,7 @@ function SocialFields({ initial }: { initial: SocialSettings }) {
         onChange={(tiktok) => patch({ tiktok })}
       />
       <ProblemMessage error={saving.error} />
-      <SaveBar dirty={dirty} pending={saving.pending} onSave={() => void save()} onCancel={cancel} />
+      <SaveBar dirty={dirty} pending={saving.pending} onSave={() => void save()} onDiscard={cancel} />
     </div>
   );
 }

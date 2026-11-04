@@ -113,7 +113,7 @@ function ContactFields({ initial }: { initial: ContactSettings }) {
       />
       <BilingualField label="Giờ liên hệ" value={state.hours} onChange={(hours) => patch({ hours })} />
       <ProblemMessage error={saving.error} />
-      <SaveBar dirty={dirty} pending={saving.pending} onSave={() => void save()} onCancel={cancel} />
+      <SaveBar dirty={dirty} pending={saving.pending} onSave={() => void save()} onDiscard={cancel} />
     </div>
   );
 }

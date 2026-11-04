@@ -249,7 +249,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
         onConfirm={() => void remove()}
       />
 
-      <SaveBar dirty={dirty} pending={saving.pending || leaving} onSave={() => void save()} onCancel={cancel} />
+      <SaveBar dirty={dirty} pending={saving.pending || leaving} onSave={() => void save()} onDiscard={cancel} />
     </fieldset>
   );
 }

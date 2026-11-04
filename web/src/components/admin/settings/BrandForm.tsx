@@ -55,7 +55,7 @@ function BrandFields({ initial }: { initial: BrandSettings }) {
     <div className="flex flex-col gap-5">
       <BilingualField label="Khẩu hiệu" value={tagline} onChange={setTagline} />
       <ProblemMessage error={saving.error} />
-      <SaveBar dirty={dirty} pending={saving.pending} onSave={() => void save()} onCancel={cancel} />
+      <SaveBar dirty={dirty} pending={saving.pending} onSave={() => void save()} onDiscard={cancel} />
     </div>
   );
 }
