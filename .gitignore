@@ -12,3 +12,9 @@ dist/
 coverage/
 .pr-review/
 .superpowers/
+# Cookie files of curl tests (they hold a live admin session).
+jar.txt
+*.cookies
+# Uploaded images of a local run (app.media.dir default ./data/media).
+/data/
+/api/data/
