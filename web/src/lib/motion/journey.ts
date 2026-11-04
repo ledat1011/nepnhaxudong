@@ -20,21 +20,25 @@ export const setupJourney: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   if (!line || !list) return;
   const offset = pendingHashScroll(root);
 
-  gsap.fromTo(
-    line,
-    { scaleY: 0 },
-    {
-      scaleY: 1,
-      ease: "none",
-      transformOrigin: "top center",
-      scrollTrigger: {
-        trigger: list,
-        start: "clamp(top 70%)",
-        end: "clamp(bottom 70%)",
-        scrub: STEM_SCRUB_S,
+  // A timeline that is already in view or above the screen keeps its fully grown stem:
+  // the scrub would collapse it at once and leave the leaves next to empty space.
+  if (shouldHideElement(list, offset)) {
+    gsap.fromTo(
+      line,
+      { scaleY: 0 },
+      {
+        scaleY: 1,
+        ease: "none",
+        transformOrigin: "top center",
+        scrollTrigger: {
+          trigger: list,
+          start: "clamp(top 70%)",
+          end: "clamp(bottom 70%)",
+          scrub: STEM_SCRUB_S,
+        },
       },
-    },
-  );
+    );
+  }
 
   root.querySelectorAll<HTMLElement>("[data-journey-event]").forEach((event) => {
     if (!shouldHideElement(event, offset)) return;

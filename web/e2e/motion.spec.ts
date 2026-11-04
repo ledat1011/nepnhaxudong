@@ -211,6 +211,7 @@ test("a deep link into the journey lands on it and keeps what is in view visible
   expect(scrollY).toBeGreaterThan(0);
   expect(top).toBeGreaterThanOrEqual(0);
   expect(top).toBeLessThan(TARGET_TOP_MAX_PX);
+  expect(await scaleYOf(page, "[data-journey-line]")).toBeGreaterThan(GROWN_SCALE);
   const events = await visibleOpacities(page, "[data-journey-event]");
   expect(events.length).toBeGreaterThan(0);
   expect(events.every((opacity) => opacity === "1")).toBe(true);
