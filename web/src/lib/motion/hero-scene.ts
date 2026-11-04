@@ -14,6 +14,14 @@ export const GUST_PHASE_STEP = 0.12;
 export const SUN_BOBS = 6;
 export const SUN_BOB_PX = 4;
 export const MASCOT_RICE_SKEW_DEG = 2;
+/**
+ * The loop draws at most this many frames per second. Its motion is slow (rays 6 deg/s, clouds
+ * under about 40 px/s, a 4 s sway), so 30 frames look the same as 60 and cost half the paint.
+ * The throttle lives in this loop only; GSAP's ticker keeps 60/s for every other animation.
+ */
+export const HERO_UPDATES_PER_S = 30;
+/** Less than one 30/s frame, so a frame that a 60 Hz screen shows a little early still draws. */
+const HERO_MIN_GAP_S = 1 / HERO_UPDATES_PER_S - 0.004;
 
 export type HeroFrame = {
   rays: number;
@@ -42,12 +50,46 @@ export function heroFrame(t: number, starts: readonly number[], gustCount: numbe
   };
 }
 
+/**
+ * Whether the loop draws a frame at loop time `time` (seconds into the cycle) when it last drew
+ * at `last` (null: not yet). The gap is measured around the cycle, so the frames go on across
+ * the end of the cycle, and the frame itself is still `heroFrame` of the real time.
+ */
+export function heroFrameDue(time: number, last: number | null): boolean {
+  if (last === null) return true;
+  const passed = (((time - last) % HERO_CYCLE_S) + HERO_CYCLE_S) % HERO_CYCLE_S;
+  return passed >= HERO_MIN_GAP_S;
+}
+
 type Setter = (value: number) => void;
+
+/**
+ * The pivot of a gust: the bottom middle of its stalks, as GSAP's "50% 100%" of the group's
+ * box would give. A gust is its own svg (HeroScene.tsx), a little larger than its stalks, so the
+ * box of its drawing is measured and turned into a part of the svg's own box.
+ */
+function gustOrigin(gust: SVGElement): string {
+  const fallback = "50% 100%";
+  const drawing = gust.firstElementChild as SVGGraphicsElement | null;
+  const view = (gust as SVGSVGElement).viewBox?.baseVal;
+  if (!drawing || typeof drawing.getBBox !== "function" || !view || view.width === 0) {
+    return fallback;
+  }
+  const box = drawing.getBBox();
+  if (box.width === 0) return fallback;
+  const x = ((box.x + box.width / 2 - view.x) / view.width) * 100;
+  const y = ((box.y + box.height - view.y) / view.height) * 100;
+  return `${x.toFixed(2)}% ${y.toFixed(2)}%`;
+}
 
 /**
  * Moves the hero sky, sun and rice in one 60 s loop, and sways the mascot's rice bundle with the
  * same wind. One paused tween drives a proxy `t`; the loop controller plays it only while the
  * hero is on screen and the visitor has not paused the motion.
+ *
+ * Cost: every moving part (cloud, gust, sun body, rays) is its own svg moved with a CSS transform
+ * on its own layer, so a frame repaints none of the field; only the mascot's `#rice` is moved
+ * inside an svg. The frames are drawn at most 30 times per second (`heroFrameDue`).
  */
 export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   const section = root.querySelector<HTMLElement>("[data-hero-scene]");
@@ -66,7 +108,7 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
       skewX: 0,
     });
   }
-  gsap.set(gusts, { transformOrigin: "50% 100%" });
+  gusts.forEach((gust) => gsap.set(gust, { transformOrigin: gustOrigin(gust) }));
   if (rays) gsap.set(rays, { transformOrigin: "50% 50%" });
 
   const cloudX: Setter[] = clouds.map((c) => gsap.quickSetter(c, "x", "px") as Setter);
@@ -83,6 +125,7 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
     const percent = Number.parseFloat((cloud as SVGElement & ElementCSSInlineStyle).style.left);
     return Number.isFinite(percent) ? percent / 100 : 0;
   };
+  let lastDrawn: number | null = null;
   let starts: number[] = clouds.map(staticLeft);
   let spans: number[] = clouds.map(() => 0);
   const measure = () => {
@@ -98,6 +141,8 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
     });
     starts = next;
     spans = nextSpans;
+    // Draw the next update, so the clouds take the new sizes at once.
+    lastDrawn = null;
   };
   measure();
   ScrollTrigger.addEventListener("refresh", measure);
@@ -117,7 +162,12 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
     ease: "none",
     repeat: -1,
     paused: true,
-    onUpdate: () => apply(heroFrame(proxy.t, starts, gusts.length)),
+    onUpdate: () => {
+      const time = proxy.t * HERO_CYCLE_S;
+      if (!heroFrameDue(time, lastDrawn)) return;
+      lastDrawn = time;
+      apply(heroFrame(proxy.t, starts, gusts.length));
+    },
   });
 
   const entry = getLoopController().add(tween);

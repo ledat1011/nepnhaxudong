@@ -5,9 +5,11 @@ import {
   GUST_MAX_DEG,
   GUST_SWINGS,
   HERO_CYCLE_S,
+  HERO_UPDATES_PER_S,
   SUN_BOBS,
   cloudOffset,
   heroFrame,
+  heroFrameDue,
   setupHeroScene,
 } from "./hero-scene";
 
@@ -71,6 +73,25 @@ describe("heroFrame", () => {
     expect(Number.isInteger(GUST_SWINGS)).toBe(true);
     expect(Number.isInteger(SUN_BOBS)).toBe(true);
     CLOUD_LAPS.forEach((l) => expect(Number.isInteger(l)).toBe(true));
+  });
+});
+
+describe("heroFrameDue", () => {
+  it("draws about 30 frames per second of loop time", () => {
+    expect(HERO_UPDATES_PER_S).toBe(30);
+    expect(heroFrameDue(10, null)).toBe(true);
+    expect(heroFrameDue(10, 10)).toBe(false);
+    expect(heroFrameDue(10 + 1 / 60, 10)).toBe(false);
+    expect(heroFrameDue(10 + 1 / 30, 10)).toBe(true);
+  });
+
+  it("draws every second frame of a 60 Hz screen, also when a frame comes a little early", () => {
+    expect(heroFrameDue(10 + 2 * 0.0163, 10)).toBe(true);
+  });
+
+  it("keeps drawing across the end of the cycle", () => {
+    expect(heroFrameDue(0.02, HERO_CYCLE_S - 0.02)).toBe(true);
+    expect(heroFrameDue(0.001, HERO_CYCLE_S - 0.001)).toBe(false);
   });
 });
 
@@ -192,6 +213,40 @@ describe("setupHeroScene", () => {
       .filter(([target]) => target === rice)
       .map(([, prop]) => prop);
     expect(props).toEqual(["skewX"]);
+  });
+
+  it("skips the updates that come sooner than one 30/s frame", () => {
+    document.body.innerHTML = SCENE;
+    const fake = fakeModules();
+    setupHeroScene(fake.modules, document);
+    const [proxy, vars] = fake.gsap.to.mock.calls[0] as unknown as [
+      { t: number },
+      { onUpdate: () => void },
+    ];
+    const cloud = fake.setters.get("c0:x");
+    // 60 GSAP ticks at 60 Hz: one second of loop time.
+    for (let frame = 0; frame < 60; frame++) {
+      proxy.t = 0.1 + frame / 60 / HERO_CYCLE_S;
+      vars.onUpdate();
+    }
+    expect(cloud).toHaveBeenCalledTimes(30);
+  });
+
+  it("draws the next update again after a refresh measured the clouds", () => {
+    document.body.innerHTML = SCENE;
+    const fake = fakeModules();
+    setupHeroScene(fake.modules, document);
+    const [proxy, vars] = fake.gsap.to.mock.calls[0] as unknown as [
+      { t: number },
+      { onUpdate: () => void },
+    ];
+    const refresh = fake.ScrollTrigger.addEventListener.mock.calls[0] as unknown as [string, () => void];
+    expect(refresh[0]).toBe("refresh");
+    proxy.t = 0.5;
+    vars.onUpdate();
+    refresh[1]();
+    vars.onUpdate();
+    expect(fake.setters.get("c0:x")).toHaveBeenCalledTimes(2);
   });
 
   it("writes a frame to every setter on update", () => {

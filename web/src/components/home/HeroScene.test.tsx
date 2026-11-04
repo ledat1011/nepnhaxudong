@@ -3,7 +3,24 @@ import { gzipSync } from "node:zlib";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ILLUSTRATION_PALETTE } from "@/lib/brand/colors";
-import { HERO_CLOUD_STARTS, HERO_GUST_COUNT, HeroField, HeroSky, HeroSun } from "./HeroScene";
+import {
+  HERO_CLOUD_STARTS,
+  HERO_GUST_COUNT,
+  HeroField,
+  HeroSky,
+  HeroSun,
+  STATIC_FIELD_IMAGE,
+} from "./HeroScene";
+
+/** The svg inside the static field image, parsed. */
+function staticField(): Element {
+  const prefix = "data:image/svg+xml,";
+  expect(STATIC_FIELD_IMAGE.startsWith(prefix)).toBe(true);
+  const text = decodeURIComponent(STATIC_FIELD_IMAGE.slice(prefix.length));
+  const doc = new DOMParser().parseFromString(text, "image/svg+xml");
+  expect(doc.querySelector("parsererror")).toBeNull();
+  return doc.documentElement;
+}
 
 function Scene() {
   return (
@@ -27,6 +44,64 @@ describe("HeroScene", () => {
     const stalks = [...gusts].reduce((n, g) => n + g.querySelectorAll("[data-hero-stalk]").length, 0);
     expect(stalks).toBeGreaterThanOrEqual(20);
     expect(stalks).toBeLessThanOrEqual(24);
+  });
+
+  it("draws each moving part as its own svg, so the static field is never repainted", () => {
+    const { container } = render(<Scene />);
+    // Only the outermost svg of a moving part is transformed; nothing moves inside an svg.
+    const moving = container.querySelectorAll(
+      "[data-hero-cloud], [data-hero-gust], [data-hero-sun], [data-hero-sun-rays]",
+    );
+    expect(moving).toHaveLength(3 + HERO_GUST_COUNT + 2);
+    for (const el of moving) {
+      expect(el.tagName.toLowerCase()).toBe("svg");
+      expect(el.parentElement?.closest("svg")).toBeNull();
+      expect(el).toHaveClass("will-change-transform");
+    }
+    // The far and mid rows, the village and the ground are one image that nothing moves.
+    const field = container.querySelector("img[data-hero-field]");
+    expect(field).toHaveAttribute("src", STATIC_FIELD_IMAGE);
+    expect(field).toHaveAttribute("alt", "");
+    expect(field).toHaveAttribute("width", "1440");
+    expect(field).toHaveAttribute("height", "260");
+    expect(field).not.toHaveAttribute("loading", "lazy");
+    expect(field).not.toHaveClass("will-change-transform");
+    const image = staticField();
+    expect(image.querySelectorAll("use").length).toBeGreaterThan(100);
+    expect(image.querySelector("[data-hero-gust]")).toBeNull();
+  });
+
+  it("draws the stalk shapes without any transform, so each stalk is one node to walk", () => {
+    const { container } = render(<HeroField />);
+    for (const defs of [container.querySelector("svg[data-hero-defs] defs"), staticField().querySelector("defs")]) {
+      expect(defs?.querySelectorAll("[data-grain]").length).toBe(30);
+      expect(defs?.querySelectorAll("[transform]")).toHaveLength(0);
+      expect(defs?.querySelectorAll("ellipse")).toHaveLength(0);
+    }
+  });
+
+  it("uses only palette colors in the static field image", () => {
+    const colors = new Set<string>();
+    for (const el of staticField().querySelectorAll("*")) {
+      for (const name of ["fill", "stroke"]) {
+        const value = el.getAttribute(name);
+        if (value !== null && value !== "none") colors.add(value.toLowerCase());
+      }
+    }
+    expect(colors.size).toBeGreaterThan(0);
+    for (const color of colors) expect(ILLUSTRATION_PALETTE.has(color), color).toBe(true);
+  });
+
+  it("keeps each gust svg on the field's scale, with its bottom on the field's bottom edge", () => {
+    const { container } = render(<HeroField />);
+    for (const gust of container.querySelectorAll<SVGSVGElement>("svg[data-hero-gust]")) {
+      const [x, y, w, h] = (gust.getAttribute("viewBox") ?? "").split(" ").map(Number);
+      expect(y + h).toBe(260);
+      expect(parseFloat(gust.style.left)).toBeCloseTo((x / 1440) * 100, 3);
+      expect(parseFloat(gust.style.top)).toBeCloseTo((y / 260) * 100, 3);
+      expect(parseFloat(gust.style.width)).toBeCloseTo((w / 1440) * 100, 3);
+      expect(parseFloat(gust.style.height)).toBeCloseTo((h / 260) * 100, 3);
+    }
   });
 
   it("places the clouds at the start positions, the second one smaller", () => {
