@@ -1,3 +1,4 @@
+import { RiceEar, RiceLeaf } from "@/components/home/RicePlant";
 import { ContentImage } from "@/components/ui/ContentImage";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { TimelineEvent } from "@/lib/content/types";
@@ -9,8 +10,9 @@ type JourneySectionProps = {
 };
 
 /**
- * Vertical timeline. `data-journey-line` and `data-journey-event` are hooks for the
- * later rice-plant animation, which replaces the plain line.
+ * Vertical timeline drawn as a rice plant: the line is the stem, each event has a leaf and
+ * the ear sits at the bottom. The static markup is the fully grown plant; `setupJourney`
+ * animates it through the `data-journey-*` hooks.
  */
 export function JourneySection({ dict, events }: JourneySectionProps) {
   return (
@@ -21,8 +23,14 @@ export function JourneySection({ dict, events }: JourneySectionProps) {
           <div
             data-journey-line
             aria-hidden="true"
-            className="absolute bottom-0 left-[14px] top-2 w-1 rounded-full bg-grain md:left-1/2 md:-translate-x-1/2"
+            className="absolute bottom-0 left-[13px] top-2 w-1.5 rounded-full bg-sprout md:left-[calc(50%-3px)]"
           />
+          <span
+            aria-hidden="true"
+            className="absolute -bottom-10 left-[16px] -translate-x-1/2 md:left-1/2"
+          >
+            <RiceEar className="block" />
+          </span>
           <ol>
             {events.map((event, i) => {
               const onLeft = i % 2 === 0;
@@ -40,6 +48,14 @@ export function JourneySection({ dict, events }: JourneySectionProps) {
                       onLeft ? "md:left-auto md:right-0 md:translate-x-1/2" : "md:-translate-x-1/2"
                     }`}
                   />
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-[19px] top-10 ${
+                      onLeft ? "md:left-auto md:right-[3px] md:-scale-x-100" : "md:left-[3px]"
+                    }`}
+                  >
+                    <RiceLeaf className="block" />
+                  </span>
                   <p className="text-xl font-bold text-coat">{event.year}</p>
                   <h3 className="mt-1 text-xl font-bold">{event.title}</h3>
                   <p className="mt-2 leading-relaxed">{event.description}</p>

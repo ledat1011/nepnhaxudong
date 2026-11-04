@@ -1,27 +1,15 @@
-import { BRAND } from "@/lib/brand/colors";
+import { LOGO_ICON_INNER, LOGO_ICON_VIEWBOX } from "./generated/logo-icon";
 
-const { earth, grain, straw, rice, blush } = BRAND;
-
-/** Icon version of the logo: head with conical hat. Must stay readable at 32px. */
+/** Icon version of the logo. The markup has no ids, so it can appear more than once per page. */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 64 64"
+      viewBox={LOGO_ICON_VIEWBOX}
       aria-hidden="true"
       focusable="false"
       className={className}
       xmlns="http://www.w3.org/2000/svg"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="32" cy="32" r="30" fill={straw} />
-      <circle cx="32" cy="38" r="16" fill={rice} stroke={earth} strokeWidth="2.5" />
-      <circle cx="23" cy="46" r="3.5" fill={blush} />
-      <circle cx="41" cy="46" r="3.5" fill={blush} />
-      <circle cx="26" cy="42" r="2" fill={earth} />
-      <circle cx="38" cy="42" r="2" fill={earth} />
-      <path d="M28 49q4 4 8 0" fill="none" stroke={earth} strokeWidth="2" />
-      <path d="M6 34L32 8l26 26q-26 8-52 0z" fill={grain} stroke={earth} strokeWidth="2.5" />
-    </svg>
+      dangerouslySetInnerHTML={{ __html: LOGO_ICON_INNER }}
+    />
   );
 }
