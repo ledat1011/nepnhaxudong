@@ -10,7 +10,10 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
 - Write big decisions in `docs/decisions/NNNN-<ten>.md`.
 - Two machines must not work on the same branch at the same time. One branch per task: `feat/<ten-ngan>`, with a PR into `main`.
 - When a branch's work is done, reviewed and its tests pass, push it and open the PR into `main` yourself. You do not need
-  to ask the owner first (owner, 2026-11-04). Still ask the owner before you merge a PR.
+  to ask the owner first (owner, 2026-11-04).
+- Merge the PR yourself too, without asking, when all CI checks pass and there is no merge conflict (owner, 2026-11-05).
+  The owner gives feedback on the running product or on your drafts along the way, not on each merge. Tell the owner
+  what you merged, and keep the local preview up to date so the owner can look at it.
 
 ## Session feedback log (keep it after context compaction)
 - **File:** one file per session: `docs/session/log/YYYY-MM-DD-<may>-<chu-de>.md`, based on the template
