@@ -26,9 +26,11 @@
 - Góp ý hình túi (Task 5): túi hơi dày → vẽ mỏng như túi hút chân không 2 kg mẫu: dáng đứng, cao, cạnh bên mỏng, màng thừa chỉ ở trên. Ảnh mẫu lưu ở `.superpowers/ref/tui-mau-mong.png`.
 - Góp ý Hero lần 2: viền cảnh dài thêm sang trái, gần chạm chữ "Nếp Nhà" (vẫn mờ dần, không nằm sau chữ).
 - Công cụ vẽ: key Gemini ở gói miễn phí, hạn mức tạo ảnh là 0, nên không dùng Nano Banana. Chủ dự án đã đăng nhập Recraft. Quyết định: vẽ 6 tư thế người bằng Recraft trước (mascot làm mẫu, duyệt từng tư thế); 8 cảnh giữ bản vẽ bằng code, chỉ vẽ lại nền cảnh bằng Recraft nếu sau đó vẫn thấy đơn giản.
+- Áo của ba: xanh lá nhạt (đã xác nhận).
+- Recraft gói Free: hình tạo ra có thể công khai và không có quyền dùng thương mại. Quyết định: vẽ thử 6 tư thế bằng gói Free để duyệt kiểu dáng; trước khi đưa lên web thật, chủ dự án nâng lên gói trả phí và tạo lại bản cuối bằng gói đó.
 
 ## Còn mở
-- Xác nhận khi duyệt tư thế người: áo của ba là xanh lá hay xanh dương. Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.
+Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.
 - Công cụ vẽ người: Nano Banana không kết nối được, `GEMINI_API_KEY` chưa đặt, Recraft cần đăng nhập `/mcp`.
 
 ## Đã làm
