@@ -12,6 +12,18 @@ describe("MotionPauseButton", () => {
     const button = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
     expect(button).toHaveAttribute("aria-pressed", "false");
     expect(button).toHaveAttribute("type", "button");
+    expect(button).toHaveAttribute("title", dict.motion.pause);
+    expect(button.querySelector("svg")).toHaveAttribute("data-glyph", "pause");
+  });
+
+  it("is a small round icon button with no visible text", () => {
+    render(<MotionPauseButton dict={dict} controller={createLoopController(null)} />);
+    const button = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
+    expect(button).toHaveTextContent(/^$/);
+    expect(button).toHaveClass("size-11", "rounded-full");
+    const svg = button.querySelector("svg");
+    expect(svg).toHaveAttribute("aria-hidden", "true");
+    expect(svg).toHaveAttribute("focusable", "false");
   });
 
   it("toggles the controller and the label on click", () => {
@@ -21,9 +33,12 @@ describe("MotionPauseButton", () => {
     expect(controller.isPaused()).toBe(true);
     const button = screen.getByRole("button", { name: dict.motion.resume, hidden: true });
     expect(button).toHaveAttribute("aria-pressed", "true");
+    expect(button).toHaveAttribute("title", dict.motion.resume);
+    expect(button.querySelector("svg")).toHaveAttribute("data-glyph", "play");
     fireEvent.click(button);
     expect(controller.isPaused()).toBe(false);
-    expect(screen.getByRole("button", { hidden: true })).toHaveTextContent(dict.motion.pause);
+    const again = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
+    expect(again.querySelector("svg")).toHaveAttribute("data-glyph", "pause");
   });
 
   it("shows resume when the controller starts paused", () => {
@@ -37,7 +52,8 @@ describe("MotionPauseButton", () => {
     const controller = createLoopController(null);
     render(<MotionPauseButton dict={dict} controller={controller} />);
     act(() => controller.setPaused(true));
-    expect(screen.getByRole("button", { hidden: true })).toHaveTextContent(dict.motion.resume);
+    const button = screen.getByRole("button", { name: dict.motion.resume, hidden: true });
+    expect(button.querySelector("svg")).toHaveAttribute("data-glyph", "play");
   });
 
   it("has the hidden class until motion is on", () => {
