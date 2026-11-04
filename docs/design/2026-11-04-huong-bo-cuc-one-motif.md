@@ -2,7 +2,7 @@
 
 Chủ dự án chọn hướng này ngày 2026-11-04 (quyết định `docs/decisions/0009-taste-bo-cuc.md`). Bản dưới đây là bản thiết kế do `draw.mjs` của taste-skill 2.1.5 tạo ra, giữ nguyên tiếng Anh của công cụ. Lệnh tạo: `draw.mjs --sector physical-product --tone warm --have illustration,product-photo --keep palette,type --direction one-motif`, seed `1007694424`.
 
-Còn chờ chủ dự án chọn họa tiết. Các chỗ bản thiết kế mâu thuẫn với bộ nhận diện (mascot và hình minh họa là một phần của thương hiệu, trong khi bản này nói "do not draw illustrations") được ghi ở cuối file.
+Họa tiết: chủ dự án chọn **hạt gạo nếp** (hình bầu dục tròn của hạt nếp cái hoa vàng), ngày 2026-11-04. Câu ý tưởng: "Trên trang này, hạt nếp cái hoa vàng của nhà trở thành khung ảnh, nút bấm, chấm đầu dòng và dải ngăn giữa trang." Các chỗ bản thiết kế mâu thuẫn với bộ nhận diện (mascot và hình minh họa là một phần của thương hiệu, trong khi bản này nói "do not draw illustrations") được ghi ở cuối file.
 
 ---
 
