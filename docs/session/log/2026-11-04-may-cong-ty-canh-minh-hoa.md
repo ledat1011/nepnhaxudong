@@ -28,6 +28,8 @@
 - Công cụ vẽ: key Gemini ở gói miễn phí, hạn mức tạo ảnh là 0, nên không dùng Nano Banana. Chủ dự án đã đăng nhập Recraft. Quyết định: vẽ 6 tư thế người bằng Recraft trước (mascot làm mẫu, duyệt từng tư thế); 8 cảnh giữ bản vẽ bằng code, chỉ vẽ lại nền cảnh bằng Recraft nếu sau đó vẫn thấy đơn giản.
 - Áo của ba: xanh lá nhạt (đã xác nhận).
 - Recraft gói Free: hình tạo ra có thể công khai và không có quyền dùng thương mại. Quyết định: vẽ thử 6 tư thế bằng gói Free để duyệt kiểu dáng; trước khi đưa lên web thật, chủ dự án nâng lên gói trả phí và tạo lại bản cuối bằng gói đó.
+- Góp ý Hero lần 3: nền trời và ruộng kéo mờ dần ra tới mép trái, nằm cả sau chữ "Nếp Nhà" (thay cho ý "không để sau chữ" trước đó).
+- Góp ý khối câu chuyện 8 cảnh: không để từng hình rời (lưới thẻ), mà làm thành một timeline giống khối "Hành trình phát triển"; kiểu timeline có thể khác khối Hành trình. Chủ dự án chọn "Dọc, con đường": một con đường đất dọc ở giữa, uốn nhẹ, từ ruộng về mâm cơm; 8 cảnh xen kẽ trái/phải, mỗi cảnh có "Bước 1–8"; một hạt gạo đi dọc con đường khi cuộn; điện thoại để đường bên trái. Bỏ dải trượt ngang ghim màn hình trên máy tính (thay cho bố cục 3b đã duyệt trước đó).
 
 ## Còn mở
 Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.

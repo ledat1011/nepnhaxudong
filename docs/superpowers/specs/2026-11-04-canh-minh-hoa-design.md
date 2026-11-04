@@ -57,8 +57,8 @@ Trang chủ có thêm ba phần minh hoạ có chuyển động, theo hướng "
 Mascot giữ nguyên (`brand/mascot/mascot-layered.svg`).
 
 ### Bố cục (sửa theo góp ý của chủ dự án, 2026-11-04)
-- **Cảnh chiếm phần bên phải, phía sau mascot**, và kéo dài sang trái tới sát phần chữ: mép trái của cảnh (đã mờ dần) gần chạm chữ "Nếp Nhà", tagline và nút, nhưng không nằm sau chữ (sửa theo góp ý thứ hai của chủ dự án). Bên chữ giữ nền Trắng gạo trơn.
-- **Mép cảnh mờ dần** về Trắng gạo (mép giáp phần chữ và mép dưới giáp khối Sản phẩm), bằng `mask-image` dạng gradient, nên không thấy vệt cắt.
+- **Cảnh trải hết chiều ngang Hero (sửa theo góp ý thứ ba của chủ dự án, 2026-11-05):** trời và ruộng rõ nhất phía sau mascot, rồi mờ dần rất nhẹ sang trái tới tận mép trái, nằm cả phía sau chữ "Nếp Nhà", tagline và nút. Không còn mép cắt nào. Chữ vẫn phải đạt tương phản ≥ 4,5 : 1 ở mọi điểm (Nâu đất trên Xanh trời khoảng 9 : 1).
+- **Mép cảnh mờ dần** về Trắng gạo (về phía mép trái và mép dưới giáp khối Sản phẩm), bằng `mask-image` dạng gradient, nên không thấy vệt cắt.
 - **Mascot đứng trước đồng lúa, ruộng ở sau.** Mascot neo vào đáy cảnh (phần dưới của mascot chạm mép dưới, như ảnh chụp ngang hông), không lơ lửng.
 - **Đường chân trời** (ngọn lúa giáp bầu trời) nằm **ngang lưng** mascot.
 - **Bông lúa dày, trĩu hạt:** mỗi bông nhiều hạt mẩy, thân cong xuống vì nặng; ruộng dày; hàng xa nhỏ dần.
@@ -134,19 +134,18 @@ Màu máy theo ảnh xưởng, đổi sang màu thương hiệu gần nhất: th
 - **Tư thế cần vẽ (6):** mẹ cúi cấy; nông dân cúi cấy (dùng cho cả 2 người, người thứ hai lật ngang); mẹ ôm / trao túi; ba trong cabin máy gặt (chỉ thấy nửa người); ba đứng cạnh lò sấy; anh 2 bê bao thóc. Dùng lại giữa các cảnh.
 
 ### 4.3 Bố cục và cách cuộn
-**Dưới 1024 px (điện thoại, máy tính bảng): xếp dọc, không ghim.**
-- Mỗi cảnh: hình tỉ lệ 4:3 rộng hết cột, chữ ngay dưới.
-- Chuyển động chính chạy một lần khi cảnh vào màn hình (`toggleActions` hoặc `once`); vòng lặp chạy khi cảnh đang thấy (`onToggle`).
-- Không ghim, vì thanh địa chỉ trên điện thoại co giãn làm phần ghim bị giật.
-
-**Từ 1024 px (máy tính): ghim và trượt ngang.**
-- Khối được ghim; cuộn dọc làm 8 cảnh trượt sang trái (`containerAnimation`, tween ngang dùng `ease: "none"`). Tổng độ dài cuộn khoảng 5 lần chiều cao màn hình.
-- Chuyển động của từng cảnh gắn với vị trí ngang qua `containerAnimation`.
-- Một con đường đất chạy liền qua 8 cảnh.
-- Thanh tiến độ 8 hạt lúa ở trên; hạt của cảnh đang xem được tô màu.
+**Timeline dọc theo một con đường, ở mọi cỡ màn hình** (sửa theo góp ý của chủ dự án, 2026-11-05: không để từng hình rời; thay cho dải trượt ngang ghim trên máy tính).
+- Một **con đường đất** chạy dọc suốt khối, uốn nhẹ qua lại, từ ruộng (đầu khối) tới mâm cơm (cuối khối). Màu Vàng rơm, viền Nâu áo. Khác khối "Hành trình" (thân lúa thẳng màu Xanh mạ), để hai timeline nằm gần nhau không trông lặp.
+- 8 mốc trên đường: mỗi mốc một chấm tròn và nhãn "Bước 1" … "Bước 8" (vi) / "Step 1" … "Step 8" (en).
+- **Từ 768 px:** đường ở giữa, cảnh xen kẽ trái / phải (cảnh 1 bên trái), giống cách xếp của "Hành trình".
+- **Dưới 768 px:** đường nằm bên trái, cảnh xếp dọc bên phải đường.
+- Mỗi cảnh: hình 4:3, tiêu đề, 1–2 câu, như cũ.
+- **Hạt gạo đi theo đường:** một hạt gạo (cùng hình hạt gạo của thương hiệu) đi dọc con đường theo vị trí cuộn (ScrollTrigger `scrub`); đoạn đường đã đi qua đậm hơn đoạn chưa tới. Chấm của cảnh đang xem được tô màu.
+- Chuyển động chính của từng cảnh chạy một lần khi cảnh vào màn hình; vòng lặp chạy khi cảnh đang thấy (`onToggle`).
+- **Không ghim** ở cỡ màn hình nào. Bỏ thanh tiến độ 8 hạt lúa (con đường đã cho thấy tiến độ).
 - Link "Bỏ qua câu chuyện" ở đầu khối, hiện khi được focus bằng bàn phím, nhảy tới khối kế tiếp.
 
-**Không có chuyển động** (`prefers-reduced-motion`, chưa có JavaScript, GSAP tải lỗi): danh sách `<ol>` 8 cảnh xếp dọc, mỗi cảnh là hình tĩnh ở khung cuối. Không có nội dung nào bị ẩn trước khi code chuyển động chạy.
+**Không có chuyển động** (`prefers-reduced-motion`, chưa có JavaScript, GSAP tải lỗi): vẫn là timeline con đường như trên (danh sách `<ol>` 8 cảnh), đường vẽ đủ, không có hạt gạo chạy, mỗi cảnh là hình tĩnh ở khung cuối. Không có nội dung nào bị ẩn trước khi code chuyển động chạy.
 
 ### 4.4 Cách tải hình
 - Mỗi cảnh là một file SVG trong `web/public/story/`: `canh-1-cay-ma.svg`, `canh-2-nang-mua-gio.svg`, `canh-3-gat.svg`, `canh-4-say.svg`, `canh-5-xay-xat.svg`, `canh-6-dong-goi.svg`, `canh-7-den-tay-khach.svg`, `canh-8-mam-com.svg`.
@@ -185,7 +184,7 @@ Không thêm thư viện mới: dùng GSAP 3.15 và ScrollTrigger đã có ở B
 - **Hero:** `FieldBackdrop` hiện chỉ dùng ở Hero; thay bằng component nền Hero mới.
 - **Màu:** làm theo quyết định 0007 (`tokens.json`, `tokens.css`, `brand/README.md`, `colors.ts`, test `brand-sync`).
 - **Chữ:** thêm vào `web/src/lib/i18n/dictionaries.ts` (vi / en): 3 chú thích túi, 8 cảnh, nhãn nút dừng (hai trạng thái), "Bỏ qua câu chuyện", tiêu đề khối.
-- **Trợ năng:** các SVG trang trí có `aria-hidden="true"`; nội dung nằm trong chữ HTML. Danh sách cảnh dùng `<ol>`. Thứ tự focus không nhảy khi khối bị ghim.
+- **Trợ năng:** các SVG trang trí có `aria-hidden="true"`; nội dung nằm trong chữ HTML. Danh sách cảnh dùng `<ol>`; con đường, chấm và hạt gạo có `aria-hidden="true"`. Nhãn "Bước N" là chữ thật trong mỗi cảnh.
 
 ## 8. Thứ tự làm
 
@@ -201,14 +200,14 @@ Bước 1, 2 và phần cảnh vật của bước 4 không phụ thuộc bướ
 - **Test đơn vị (Vitest):** các `id` nhóm hình có mặt trong SVG; chữ có đủ vi / en; khi giảm chuyển động thì hiện danh sách hình tĩnh; nút dừng đổi `aria-pressed` và lưu lựa chọn; vòng lặp chỉ chạy khi đang thấy và chưa bị dừng; các setup chuyển động dùng GSAP giả như test B4.
 - **Test dung lượng:** báo lỗi nếu một file vượt ngân sách mục 6.
 - **Test đồng bộ màu:** `brand-sync` kiểm tra nhóm màu chỉ dùng trong minh hoạ.
-- **Test đầu-cuối (Playwright):** điện thoại xếp dọc không ghim; máy tính ghim và trượt ngang, thanh tiến độ đổi theo cảnh; "Bỏ qua câu chuyện" bằng bàn phím; chế độ giảm chuyển động hiện đủ nội dung.
+- **Test đầu-cuối (Playwright):** điện thoại: đường bên trái, cảnh xếp dọc; máy tính: cảnh xen kẽ trái / phải, không ghim, hạt gạo đi xuống khi cuộn và chấm của cảnh đang xem đổi màu; "Bỏ qua câu chuyện" bằng bàn phím; chế độ giảm chuyển động hiện đủ nội dung.
 - **Đo lại Lighthouse mobile** (`/vi`, `/en`) theo `docs/setup.md`.
 - **Trước khi giao:** antislop Delivery Gate, trình kiểm tra của taste-skill (`inspect.mjs`), review theo `web-interface-guidelines`.
 
 ## 10. Rủi ro và việc cần xác nhận
 
 - **Công cụ vẽ người:** Nano Banana hiện không kết nối được và `GEMINI_API_KEY` chưa đặt; Recraft cần chủ dự án đăng nhập qua `/mcp`. Nếu chưa có công cụ, bước 3 phải chờ; các bước khác làm trước.
-- **Phần ghim trên máy tính:** khối ghim dài làm trang dài thêm khoảng 5 màn hình; cần thử với bàn phím, cuộn bằng chuột cảm ứng, và khi đổi kích thước cửa sổ (ScrollTrigger tự `refresh`).
+- **Hai timeline dọc liền nhau:** khối này nằm ngay trước "Hành trình". Khác nhau ở đường (con đường đất uốn / thân lúa thẳng), nền (Trắng gạo / Vàng rơm) và nhãn (Bước / năm). Nếu vẫn trông lặp, xem lại khi có bản thật.
 - **Màu áo của ba:** chưa rõ xanh lá hay xanh dương (đang tạm xanh lá).
 - **Câu chữ:** 3 chú thích và chữ 8 cảnh cần chủ dự án đọc lại; câu "giữ khô và thơm lâu" là một lời hứa về sản phẩm.
 - **Quy tắc màu mở rộng:** quyết định 0007 cho phép Hồng má, `da`, `toc` dùng trong mọi hình minh hoạ (không chỉ mascot); cần chủ dự án đồng ý.
