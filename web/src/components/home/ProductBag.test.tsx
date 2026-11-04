@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -167,5 +168,17 @@ describe("ProductBag", () => {
   it("fits the 6 KB gzip budget", () => {
     const size = gzipSync(renderToStaticMarkup(<ProductBag dict={viDict} images={[]} />)).length;
     expect(size).toBeLessThanOrEqual(6 * 1024);
+  });
+});
+
+describe("the bag of story scene 6", () => {
+  it("has the same data-bag groups as this bag, so buildBagTimeline fits both", () => {
+    const { container } = renderBag();
+    const names = (root: ParentNode) =>
+      [...new Set(Array.from(root.querySelectorAll("[data-bag]"), (el) => el.getAttribute("data-bag")))].sort();
+    const source = readFileSync("../brand/story/parts/bag.svg", "utf8");
+    const scenePart = new DOMParser().parseFromString(source, "image/svg+xml");
+    expect(names(scenePart)).toEqual(names(container));
+    expect(names(container)).toEqual([...PARTS].sort());
   });
 });
