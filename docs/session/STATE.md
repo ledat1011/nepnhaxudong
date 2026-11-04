@@ -3,26 +3,26 @@
 Cập nhật: 2026-11-04 — máy công ty
 
 ## Giai đoạn hiện tại
-Phần B1 (API và cơ sở dữ liệu) đã viết xong code, chờ review cả nhánh, PR và merge.
+Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã xong trên nhánh `feat/phan-b2-web`, đang mở PR để merge.
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
-- Phần C (nền tảng làm việc) đã merge vào `main`.
-- Phần B1 trên nhánh `feat/phan-b1-api`: 11 task đã review, 492 test, API đã chạy thật ở local và đã thử bằng `curl` (xem "Thử API" trong `docs/setup.md`).
+- Phần C (nền tảng làm việc) đã merge vào `main` (PR #1).
+- Phần B1 (API và cơ sở dữ liệu) đã merge vào `main` (PR #3): 11 task đã review, 492 test, API đã chạy thật ở local và đã thử bằng `curl` (xem "Thử API" trong `docs/setup.md`).
+- Phần B2 (web công khai): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
+- Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
 
 ## Đang làm
-- Phần B1: review cả nhánh, rồi mở PR và merge vào `main` (chủ dự án đã đồng ý).
-- Phần B2 (web công khai) chạy song song ở phiên khác, nhánh `feat/phan-b2-web`, thư mục worktree `D:\workspaces\nepnhaxudong-phan-b2`. B2 merge sau B1.
+- Phần B2: mở PR, chờ CI, merge vào `main` (chủ dự án đã đồng ý).
 - Phần A (logo) chờ chủ dự án duyệt linh vật, nhánh `feat/phan-a-thuong-hieu`.
 
 ## Việc tiếp theo
-1. Review cả nhánh B1, mở PR, merge vào `main`.
-2. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)`.
-3. Merge B2 sau B1.
-4. Viết plan B3 (trang quản trị).
-5. B4 (hiệu ứng GSAP) sau khi có linh vật cuối cùng.
-6. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới.
-7. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
+1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
+2. Viết plan B3 (trang quản trị).
+3. B4 (hiệu ứng GSAP) sau khi có linh vật cuối cùng.
+4. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới.
+5. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
+6. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
 
 ## Vướng mắc
 - Chưa đặt `GEMINI_API_KEY`.
@@ -44,8 +44,14 @@ Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, 
 - Sau khi đóng gói, thử một lần tải ảnh WebP lên bản `java -jar` (kiểm tra plugin TwelveMonkeys có được đăng ký).
 - Sự kiện làm mới trang (revalidate) chỉ nằm trong bộ nhớ: nếu mất một sự kiện thì trang cũ còn đến lần sửa sau (web dùng `force-cache` với tag, không có thời gian dự phòng). Cách bổ sung sau này: nút "làm mới trang web" trong trang quản trị (trang chủ và các bài viết), hoặc đặt thời gian `revalidate` dài ở phía web.
 - Sửa chữ thay thế hoặc xoá ảnh chỉ làm mới trang chủ; các trang bài viết có ảnh đó chưa được làm mới.
-- Trước khi lên production, chạy thử một lệnh revalidate thật từ API sang Next.js (`next start`).
+- Trước khi lên production, chạy thử một lệnh revalidate thật từ API sang server web (bản `node .next/standalone/server.js`).
 - Ảnh tải lên chưa hiện ở web local vì chưa ai phục vụ `/media/*`; Caddy làm việc này (có thể dùng cả cho compose local).
+
+Các việc phát sinh khi làm B2 (web công khai):
+- Cloudflare không được cache HTML (chỉ cache `/_next/static/*` và `/media/*`). Caddy không được cache, và phải chuyển tiếp header `rsc` và tham số `_rsc`. Các trang gửi `Cache-Control: s-maxage=31536000`, nên nếu cache ở rìa thì khách không thấy thay đổi từ admin. Trang 404 chung (đường dẫn lạ) cũng gửi header này.
+- `SITE_URL` phải đặt cả lúc build (cấu hình ảnh) và lúc chạy (canonical, sitemap). Server web chạy bằng `node .next/standalone/server.js`, không phải `next start`. Server này nghe theo biến `HOSTNAME`: trong Docker phải đặt `HOSTNAME=0.0.0.0`, vì trong container biến này mặc định là ID của container.
+- `POST /api/revalidate` của web chỉ gọi được trong mạng nội bộ (`WEB_BASE_URL=http://web:3000`), vì Caddy chuyển `/api/*` sang Spring. Route này nhận từ 1 đến 50 tag (`home`, `stories`, `story:<slug>`); một tag sai thì cả lần gọi bị trả 400.
+- Các điểm web giả định về hợp đồng API nằm ở bảng "Khoảng trống của hợp đồng API" đầu `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`.
 
 ## Quyết định gần nhất
 - `docs/decisions/0005-spring-boot-4.md`

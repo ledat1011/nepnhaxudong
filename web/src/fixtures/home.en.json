@@ -1,0 +1,73 @@
+{
+  "lang": "en",
+  "brand": {
+    "tagline": "[MẪU] Golden-flower sticky rice from one family in xứ Đông"
+  },
+  "products": [
+    {
+      "name": "[MẪU] Golden-flower sticky rice",
+      "description": "[MẪU] Round, even, ivory-white grains grown and milled by the family in xứ Đông (Hải Dương). Cooks into soft sticky rice with the scent of new harvest.",
+      "features": [
+        "[MẪU] Grown by season and harvested by hand",
+        "[MẪU] Soft, lightly fragrant grains that rarely break when cooked",
+        "[MẪU] Clean packing, sent from each milling batch"
+      ],
+      "cookingTips": "[MẪU] Ngâm nếp 6 đến 8 tiếng, để ráo rồi đồ xôi khoảng 30 phút. Rắc chút muối và đảo đều giữa chừng cho xôi chín đều.",
+      "showPrice": false,
+      "packagings": [
+        { "weightGrams": 1000, "priceVnd": null },
+        { "weightGrams": 2000, "priceVnd": null }
+      ],
+      "images": []
+    }
+  ],
+  "timeline": [
+    {
+      "year": 1998,
+      "title": "[MẪU] The first field",
+      "description": "[MẪU] The grandparents start growing golden-flower sticky rice on a small family field.",
+      "image": null
+    },
+    {
+      "year": 2015,
+      "title": "[MẪU] Milling at home",
+      "description": "[MẪU] Gia đình tự xay xát để giữ trọn hương vị và chọn từng mẻ gạo.",
+      "image": null
+    },
+    {
+      "year": 2026,
+      "title": "[MẪU] Nếp Nhà opens",
+      "description": "[MẪU] Nếp Nhà brings the family's sticky rice to more kitchens.",
+      "image": null
+    }
+  ],
+  "press": [
+    {
+      "title": "[MẪU] Hạt nếp cái hoa vàng giữ nghề của xứ Đông",
+      "sourceName": "[MẪU] Báo Mẫu Một",
+      "url": "https://example.com/bao-chi/nep-cai-hoa-vang",
+      "publishedOn": "2026-03-20",
+      "image": null
+    },
+    {
+      "title": "[MẪU] A small family and the new rice season",
+      "sourceName": "[MẪU] Tạp chí Mẫu Hai",
+      "url": "https://example.com/bao-chi/mua-nep-moi",
+      "publishedOn": null,
+      "image": null
+    }
+  ],
+  "contact": {
+    "phone": "0000 000 000",
+    "zalo": "0000 000 000",
+    "messenger": "https://example.com/messenger",
+    "address": "[MẪU] Xứ Đông, tỉnh Hải Dương",
+    "mapUrl": "https://example.com/ban-do",
+    "hours": "[MẪU] Every day, 8:00 to 20:00"
+  },
+  "social": {
+    "facebook": "https://example.com/facebook",
+    "youtube": "https://example.com/youtube",
+    "tiktok": null
+  }
+}
