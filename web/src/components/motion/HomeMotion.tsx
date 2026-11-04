@@ -11,9 +11,16 @@ import {
   prefersReducedMotion,
   REDUCED_MOTION_QUERY,
 } from "@/lib/motion/reduced-motion";
+import { setupProductBag } from "@/lib/motion/product-bag";
 import { setupReveals } from "@/lib/motion/reveal";
 
-const HOME_SETUPS: MotionSetup[] = [setupReveals, setupMascot, setupHeroScene, setupJourney];
+const HOME_SETUPS: MotionSetup[] = [
+  setupReveals,
+  setupProductBag,
+  setupMascot,
+  setupHeroScene,
+  setupJourney,
+];
 const IDLE_TIMEOUT_MS = 2000;
 const IDLE_FALLBACK_MS = 200;
 
@@ -22,7 +29,9 @@ type MatchMediaHandle = { revert: () => void };
 /** Waits until the browser is idle. Returns a function that cancels the wait. */
 function whenIdle(callback: () => void): () => void {
   if (typeof window.requestIdleCallback === "function") {
-    const id = window.requestIdleCallback(callback, { timeout: IDLE_TIMEOUT_MS });
+    const id = window.requestIdleCallback(callback, {
+      timeout: IDLE_TIMEOUT_MS,
+    });
     return () => window.cancelIdleCallback(id);
   }
   const id = window.setTimeout(callback, IDLE_FALLBACK_MS);

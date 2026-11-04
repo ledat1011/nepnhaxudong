@@ -151,9 +151,7 @@ async function openWithClock(page: Page) {
 async function wheelStep(page: Page, deltaY: number) {
   const before = await page.evaluate(() => window.scrollY);
   await page.mouse.wheel(0, deltaY);
-  await expect
-    .poll(() => page.evaluate(() => window.scrollY))
-    .toBe(Math.max(0, before + deltaY));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(Math.max(0, before + deltaY));
   await page.clock.runFor(WHEEL_GAP_MS);
 }
 
@@ -184,7 +182,9 @@ async function recordFirstWrites(page: Page) {
     }
   });
   return () =>
-    page.evaluate(() => (window as unknown as { __firstAngle: Record<string, number> }).__firstAngle);
+    page.evaluate(
+      () => (window as unknown as { __firstAngle: Record<string, number> }).__firstAngle,
+    );
 }
 
 test("motion starts and nothing stays hidden after scrolling to the end", async ({ page }) => {
@@ -266,7 +266,10 @@ test("a deep link into the journey lands on it and keeps what is in view visible
   expect(events.every((opacity) => opacity === "1")).toBe(true);
   const leafScales = await page.$$eval("[data-journey-leaf]", (els) =>
     els
-      .filter((el) => el.closest("[data-journey-event]")!.getBoundingClientRect().top < window.innerHeight)
+      .filter(
+        (el) =>
+          el.closest("[data-journey-event]")!.getBoundingClientRect().top < window.innerHeight,
+      )
       .map((el) => {
         const transform = getComputedStyle(el).transform;
         return transform === "none" ? 1 : new DOMMatrix(transform).a;
@@ -353,7 +356,9 @@ test("a journey leaf grows out of the stem tip, not below it", async ({ page }) 
 // The mock content has no product image, so the lightbox cannot be opened here. The lightbox is a
 // non-portal `fixed inset-0` element inside the revealed block, so this test puts the same kind
 // of element in that block and checks that it still covers the whole screen.
-test("a fixed overlay inside the revealed gallery block covers the whole screen", async ({ page }) => {
+test("a fixed overlay inside the revealed gallery block covers the whole screen", async ({
+  page,
+}) => {
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);
   await scrollThroughPage(page);
@@ -368,7 +373,12 @@ test("a fixed overlay inside the revealed gallery block covers the whole screen"
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   });
   const viewport = page.viewportSize();
-  expect(box).toEqual({ x: 0, y: 0, width: viewport?.width, height: viewport?.height });
+  expect(box).toEqual({
+    x: 0,
+    y: 0,
+    width: viewport?.width,
+    height: viewport?.height,
+  });
 });
 
 test("no layout shift while scrolling", async ({ page }) => {
@@ -479,7 +489,9 @@ test("a new scroll after the mascot settled starts from the current angle", asyn
   expect(Math.abs(first.rice)).toBeLessThan(0.1);
 });
 
-test("turning reduced motion off again tilts the mascot about the same pivots", async ({ page }) => {
+test("turning reduced motion off again tilts the mascot about the same pivots", async ({
+  page,
+}) => {
   await openWithClock(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForSelector("html:not([data-motion])");
@@ -576,6 +588,28 @@ test("reduced motion hides the pause button and leaves the clouds still", async 
   expect(await cloudTransform(page)).toBe("none");
 });
 
+test("the bag animation ends in the static final frame", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await page.locator("[data-product-bag]").first().scrollIntoViewIfNeeded();
+  await page.waitForTimeout(3000);
+  const label = await page.$eval("[data-bag='label']", (el) => getComputedStyle(el).transform);
+  expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(label);
+  const notes = await revealOpacities(page, "[data-bag-note]");
+  expect(notes).toHaveLength(3);
+  expect(notes.every((o) => o === "1")).toBe(true);
+  // The falling grains keep their own rotation: grain 0 is turned -20 degrees.
+  const grain = await page.$eval(
+    "[data-bag='grains'] ellipse",
+    (el) => getComputedStyle(el).transform,
+  );
+  const [a, b] = grain
+    .replace(/matrix\(|\)/g, "")
+    .split(",")
+    .map(Number);
+  expect(Math.atan2(b, a) * (180 / Math.PI)).toBeCloseTo(-20, 0);
+});
+
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
@@ -613,7 +647,16 @@ test.describe("reduced motion", () => {
     expect(await page.$eval("[data-journey-line]", (el) => getComputedStyle(el).transform)).toBe(
       "none",
     );
-    expect((await revealOpacities(page, "[data-journey-event]")).every((o) => o === "1")).toBe(true);
+    expect((await revealOpacities(page, "[data-journey-event]")).every((o) => o === "1")).toBe(
+      true,
+    );
     expect((await plantScales(page)).every((scale) => scale === 1)).toBe(true);
+  });
+  test("reduced motion: the bag notes are visible at once", async ({ page }) => {
+    await page.goto("/vi");
+    await page.locator("[data-product-bag]").first().scrollIntoViewIfNeeded();
+    const notes = await revealOpacities(page, "[data-bag-note]");
+    expect(notes).toHaveLength(3);
+    expect(notes.every((o) => o === "1")).toBe(true);
   });
 });
