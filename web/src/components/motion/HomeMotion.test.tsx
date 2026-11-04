@@ -9,6 +9,7 @@ vi.mock("@/lib/motion/load-gsap", () => ({ loadGsap: vi.fn() }));
 type Listener = (event: { matches: boolean }) => void;
 
 const revert = vi.fn();
+const refresh = vi.fn();
 const modules = {
   gsap: {
     matchMedia: () => ({
@@ -19,7 +20,7 @@ const modules = {
       revert,
     }),
   },
-  ScrollTrigger: {},
+  ScrollTrigger: { refresh },
 };
 
 let reducedMatches = false;
@@ -41,6 +42,7 @@ beforeEach(() => {
   vi.mocked(loadGsap).mockReset();
   vi.mocked(loadGsap).mockResolvedValue(modules as never);
   revert.mockReset();
+  refresh.mockReset();
   listeners = [];
   reducedMatches = false;
   delete document.documentElement.dataset.motion;
@@ -72,6 +74,17 @@ describe("HomeMotion", () => {
     expect(second).toHaveBeenCalledTimes(1);
     expect(second).toHaveBeenCalledWith(modules, document);
     expect(document.documentElement.dataset.motion).toBe("on");
+  });
+
+  it("refreshes ScrollTrigger once, after every setup", async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    render(<HomeMotion setups={[first, second]} />);
+    await vi.runAllTimersAsync();
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(refresh.mock.invocationCallOrder[0]).toBeGreaterThan(
+      second.mock.invocationCallOrder[0],
+    );
   });
 
   it("starts when the user turns reduced motion off", async () => {

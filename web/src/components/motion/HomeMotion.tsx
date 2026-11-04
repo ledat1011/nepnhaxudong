@@ -48,6 +48,8 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
         mm = media;
         media.add(MOTION_OK_QUERY, () => {
           setups.forEach((setup) => setup(modules, document));
+          // A clamped start is applied only by a refresh, and the page load refresh is over.
+          modules.ScrollTrigger.refresh();
           document.documentElement.dataset.motion = "on";
           return () => {
             delete document.documentElement.dataset.motion;

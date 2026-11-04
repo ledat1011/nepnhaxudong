@@ -40,9 +40,14 @@ test("motion starts and nothing stays hidden after scrolling to the end", async 
   const opacities = await revealOpacities(page);
   expect(opacities.length).toBeGreaterThan(0);
   expect(opacities.every((opacity) => opacity === "1")).toBe(true);
+  const transforms = await page.$$eval("[data-reveal]", (els) =>
+    els.map((el) => getComputedStyle(el).transform),
+  );
+  expect(transforms.every((transform) => transform === "none")).toBe(true);
 });
 
 test("elements in the first screen are never hidden", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1200 });
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);
   await page.waitForTimeout(300);
@@ -51,6 +56,7 @@ test("elements in the first screen are never hidden", async ({ page }) => {
       .filter((el) => el.getBoundingClientRect().top < window.innerHeight)
       .map((el) => getComputedStyle(el).opacity),
   );
+  expect(opacities.length).toBeGreaterThan(0);
   expect(opacities.every((opacity) => opacity === "1")).toBe(true);
 });
 
@@ -77,11 +83,34 @@ test("a deep link keeps the sections above and in view visible", async ({ page }
 test("the contact block at the end of the page appears", async ({ page }) => {
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);
+  const contact = "section[aria-labelledby='lien-he'] [data-reveal]";
+  expect((await revealOpacities(page, contact)).every((opacity) => opacity === "0")).toBe(true);
   await page.keyboard.press("End");
   await page.waitForTimeout(1500);
   const opacities = await revealOpacities(page, "section[aria-labelledby='lien-he'] [data-reveal]");
   expect(opacities.length).toBeGreaterThan(0);
   expect(opacities.every((opacity) => opacity === "1")).toBe(true);
+});
+
+// The mock content has no product image, so the lightbox cannot be opened here. The lightbox is a
+// non-portal `fixed inset-0` element inside the revealed block, so this test puts the same kind
+// of element in that block and checks that it still covers the whole screen.
+test("a fixed overlay inside the revealed gallery block covers the whole screen", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await scrollThroughPage(page);
+  const box = await page.evaluate(() => {
+    const article = document.querySelector("article");
+    const block = article?.querySelector("[data-reveal]");
+    if (!block) return null;
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position: fixed; inset: 0;";
+    block.appendChild(overlay);
+    const rect = overlay.getBoundingClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  });
+  const viewport = page.viewportSize();
+  expect(box).toEqual({ x: 0, y: 0, width: viewport?.width, height: viewport?.height });
 });
 
 test("no layout shift while scrolling", async ({ page }) => {

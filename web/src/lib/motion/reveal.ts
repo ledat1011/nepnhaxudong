@@ -53,6 +53,8 @@ export const setupReveals: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
         duration: REVEAL_DURATION,
         ease: "power2.out",
         stagger: REVEAL_STAGGER,
+        // A leftover transform would make the element the containing block of fixed children.
+        clearProps: "transform",
       }),
   });
 };
