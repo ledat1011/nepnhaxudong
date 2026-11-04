@@ -6,7 +6,7 @@
 ## Quyết định
 - Câu chuyện mới là một khối riêng, không gộp với "Hành trình". "Hành trình" hiện tại = hành trình phát triển sản phẩm của thương hiệu (các mốc năm). Khối mới = hành trình từ hạt lúa tới người dùng.
 - Hình hoạt hoạ sản phẩm vẽ theo túi trong suốt (thấy hạt gạo).
-- Hình túi đặt cạnh 3 đặc điểm trong khối Sản phẩm; bộ ảnh thật giữ nguyên. Hiệu ứng chạy một lần: gạo rơi vào túi, túi co thành khối vuông, nhãn và chú thích hiện ra.
+- Hình túi đặt trong ô vàng của bộ ảnh, là ảnh đầu tiên; ảnh thật nằm sau; 3 chú thích dưới ô vàng (thay cho ý "đặt cạnh 3 đặc điểm" trước đó). Hiệu ứng chạy một lần: gạo rơi vào túi, túi co thành khối vuông, nhãn và chú thích hiện ra.
 - Hero có trời xanh: thêm 2 màu xanh trời nhạt chỉ dùng trong hình minh hoạ (không dùng cho chữ, nút). Cần ghi quyết định trong `docs/decisions/`.
 - Mascot là mẹ của chủ dự án. Câu chuyện có 3 người: mẹ (mascot), ba, anh 2. Họ làm các bước thu hoạch, sấy, xát, đóng gói.
 - Phần phân phối sau đóng gói: xe ô tô, xe tải nhỏ của nhà phân phối chở tới chuỗi siêu thị; khách hàng tới nhà lấy gạo.

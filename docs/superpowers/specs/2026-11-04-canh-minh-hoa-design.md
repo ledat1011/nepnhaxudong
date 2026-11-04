@@ -84,8 +84,10 @@ Mascot giữ nguyên (`brand/mascot/mascot-layered.svg`).
 - **Nhãn:** giống nhãn thật của túi "Gạo nếp cái hoa vàng Duy Tân": khung Xanh mạ `#6E8B3D`, hình nhỏ đồng lúa và trời xanh vẽ lại, chữ "GẠO NẾP CÁI HOA VÀNG" và "DUY TÂN", huy hiệu tròn "2KG". Không có hotline, logo hiệp hội, mã QR.
 - **Cạnh túi:** một nong tre nhỏ đựng gạo rời.
 
-### Vị trí
-- Máy tính: cột phải của khối sản phẩm, ngay trên danh sách 3 đặc điểm. Điện thoại: rộng khoảng 60% màn hình, trên 3 đặc điểm. Bộ ảnh thật bên trái giữ nguyên.
+### Vị trí (sửa theo quyết định của chủ dự án, 2026-11-04)
+- Hình túi nằm **trong ô vàng của bộ ảnh** (cột trái) và là **ảnh đầu tiên** của bộ ảnh. Khi có ảnh thật, ảnh thật nằm sau; khách bấm ảnh nhỏ để xem. Khi chưa có ảnh thật, ô vàng chỉ hiện hình túi (không còn ô trống).
+- Hình túi không mở lightbox; lightbox chỉ dùng cho ảnh thật. Ảnh nhỏ của hình túi chỉ hiện khi có ít nhất một ảnh thật.
+- 3 chú thích nằm ngay dưới ô vàng. Cột phải chỉ còn mô tả, đặc điểm, quy cách đóng gói, gợi ý món.
 - Chỉ hiện ở sản phẩm đầu tiên (trang hiện có một sản phẩm).
 
 ### 3 chú thích (chữ HTML, vi / en; chủ dự án có thể sửa câu)
