@@ -2,7 +2,9 @@ import { render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadGsap } from "@/lib/motion/load-gsap";
 import { REDUCED_MOTION_QUERY } from "@/lib/motion/reduced-motion";
-import { HomeMotion } from "./HomeMotion";
+import { setupJourney } from "@/lib/motion/journey";
+import { setupRiceStory } from "@/lib/motion/story/rice-story";
+import { HOME_SETUPS, HomeMotion } from "./HomeMotion";
 
 vi.mock("@/lib/motion/load-gsap", () => ({ loadGsap: vi.fn() }));
 
@@ -10,6 +12,7 @@ type Listener = (event: { matches: boolean }) => void;
 
 const revert = vi.fn();
 const refresh = vi.fn();
+const sort = vi.fn();
 const modules = {
   gsap: {
     matchMedia: () => ({
@@ -20,7 +23,7 @@ const modules = {
       revert,
     }),
   },
-  ScrollTrigger: { refresh },
+  ScrollTrigger: { refresh, sort },
 };
 
 let reducedMatches = false;
@@ -70,6 +73,7 @@ beforeEach(() => {
   vi.mocked(loadGsap).mockResolvedValue(modules as never);
   revert.mockReset();
   refresh.mockReset();
+  sort.mockReset();
   listeners = [];
   reducedMatches = false;
   delete document.documentElement.dataset.motion;
@@ -112,6 +116,20 @@ describe("HomeMotion", () => {
     expect(refresh.mock.invocationCallOrder[0]).toBeGreaterThan(
       second.mock.invocationCallOrder[0],
     );
+  });
+
+  it("sorts the triggers into page order before that refresh", async () => {
+    const setup = vi.fn();
+    render(<HomeMotion setups={[setup]} />);
+    await vi.runAllTimersAsync();
+    expect(sort).toHaveBeenCalledTimes(1);
+    expect(sort.mock.invocationCallOrder[0]).toBeGreaterThan(setup.mock.invocationCallOrder[0]);
+    expect(sort.mock.invocationCallOrder[0]).toBeLessThan(refresh.mock.invocationCallOrder[0]);
+  });
+
+  it("runs the story setup before the journey setup", () => {
+    expect(HOME_SETUPS).toContain(setupRiceStory);
+    expect(HOME_SETUPS.indexOf(setupRiceStory)).toBeLessThan(HOME_SETUPS.indexOf(setupJourney));
   });
 
   it("waits for a running scroll to end before it runs the setups", async () => {

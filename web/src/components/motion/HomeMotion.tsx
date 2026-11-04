@@ -13,12 +13,15 @@ import {
 } from "@/lib/motion/reduced-motion";
 import { setupProductBag } from "@/lib/motion/product-bag";
 import { setupReveals } from "@/lib/motion/reveal";
+import { setupRiceStory } from "@/lib/motion/story/rice-story";
 
-const HOME_SETUPS: MotionSetup[] = [
+/** In page order where it matters: the pinned story comes before the sections below it. */
+export const HOME_SETUPS: MotionSetup[] = [
   setupReveals,
   setupProductBag,
   setupMascot,
   setupHeroScene,
+  setupRiceStory,
   setupJourney,
 ];
 const IDLE_TIMEOUT_MS = 2000;
@@ -82,6 +85,9 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
               const cleanup = setup(modules, document);
               if (typeof cleanup === "function") cleanups.push(cleanup);
             }
+            // The setups do not create their triggers in page order. Sorted, the refresh measures
+            // them top to bottom, so a trigger below the pinned story sees the pin's spacing.
+            modules.ScrollTrigger.sort();
             // A clamped start is applied only by a refresh, and the page load refresh is over.
             modules.ScrollTrigger.refresh();
             document.documentElement.dataset.motion = "on";

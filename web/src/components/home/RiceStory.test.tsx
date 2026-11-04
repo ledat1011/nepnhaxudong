@@ -26,6 +26,18 @@ describe("RiceStory", () => {
     expect(container.querySelector("div[data-story-viewport] > ol[data-story-track]")).not.toBeNull();
   });
 
+  it("pins one block that holds the title, the progress dots and the track", () => {
+    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
+    const pin = container.querySelector("section[data-rice-story] > div[data-story-pin]") as HTMLElement;
+    expect(pin).not.toBeNull();
+    expect(pin.querySelector("#tu-hat-lua")).not.toBeNull();
+    expect(pin.querySelector("ol[data-story-progress]")).not.toBeNull();
+    expect(pin.querySelector("div[data-story-viewport]")).not.toBeNull();
+    expect(pin.contains(container.querySelector("#sau-cau-chuyen"))).toBe(false);
+    // Room for the sticky header, only in the horizontal layout.
+    expect(pin.className).toContain("[section[data-story-mode=horizontal]_&]:pt-[var(--story-header,0px)]");
+  });
+
   it("lists the eight scenes in order with a fixed-size lazy image", () => {
     const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
     const items = [...container.querySelectorAll("li[data-story-scene]")];
