@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { draftKey, writeDraft } from "./story-draft";
 import { AdminApiError } from "./errors";
 import type { UserResponse } from "./types";
 
@@ -131,6 +132,26 @@ describe("signOut", () => {
     expect(resetCsrfToken).toHaveBeenCalled();
     expect(screen.getByTestId("status")).toHaveTextContent("signed-out");
     expect(replace).toHaveBeenCalledWith("/admin/dang-nhap");
+  });
+
+  it("removes the story drafts kept in the browser, also when logout fails, and allows them again after a sign-in", async () => {
+    meReturns(user);
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    localStorage.setItem(draftKey(5), "{}");
+    localStorage.setItem(draftKey(undefined), "{}");
+    adminFetch.mockRejectedValue(new AdminApiError(503, "Bận."));
+    await act(() => latest.current.signOut());
+    expect(localStorage.getItem(draftKey(5))).toBeNull();
+    expect(localStorage.getItem(draftKey(undefined))).toBeNull();
+    const draft = { version: 1 as const, userId: user.id, savedAt: 1, base: {}, state: {} };
+    expect(writeDraft(draftKey(5), draft)).toBe(false);
+
+    meReturns(user);
+    await act(() => latest.current.refresh());
+    expect(screen.getByTestId("status")).toHaveTextContent("ready");
+    expect(writeDraft(draftKey(5), draft)).toBe(true);
+    localStorage.clear();
   });
 
   it("still clears the local state when logout fails", async () => {
