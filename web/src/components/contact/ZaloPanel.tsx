@@ -5,15 +5,18 @@ import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-export type ZaloPanelMode = "dialog" | "sheet";
+export type ZaloPanelLayout = "dialog" | "sheet";
 
 export type ZaloPanelProps = {
-  mode: ZaloPanelMode;
+  /** Centered dialog on wide screens, bottom sheet on narrow ones. */
+  layout: ZaloPanelLayout;
+  /** A touch screen: no QR code, and Open Zalo in the same tab so the Zalo app takes over. */
+  touch: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** The zalo.me link of the chat. */
   href: string;
-  /** Digits to copy, or null when the setting is a URL with no number. */
+  /** Digits to copy, or null when the setting is a link with no number. */
   number: string | null;
   /** The number as the family typed it in the admin, for reading. */
   displayNumber: string;
@@ -24,6 +27,11 @@ export type ZaloPanelProps = {
 
 const QR_SIZE_PX = 192;
 const COPY_NOTE_MS = 3000;
+/**
+ * Right after the panel opens, a click outside does not close it. The second click of a double
+ * click (common with older visitors) lands on the backdrop, and must not close the panel at once.
+ */
+const OUTSIDE_CLICK_GRACE_MS = 400;
 // Earth on rice, the brand text pair: dark modules on a light ground, which every scanner reads.
 const QR_COLORS = { dark: "#4a2c1aff", light: "#fbf7eeff" };
 
@@ -105,108 +113,173 @@ function ZaloQrCode({ href, labels }: { href: string; labels: Dictionary["zalo"]
   );
 }
 
+/**
+ * Copies with the older `execCommand("copy")`, for pages served over plain http (for example
+ * on the home network), where the clipboard API does not exist. The temporary field goes inside
+ * the panel: the focus trap would pull focus back from a field in the body.
+ */
+function copyWithCommand(text: string, container: HTMLElement): boolean {
+  const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const field = document.createElement("textarea");
+  field.value = text;
+  field.setAttribute("readonly", "");
+  field.setAttribute("aria-hidden", "true");
+  // 16 px, so iOS does not zoom in on focus. Fixed and transparent, so nothing moves.
+  Object.assign(field.style, { position: "fixed", top: "0", left: "0", opacity: "0", fontSize: "16px" });
+  container.append(field);
+  try {
+    field.focus();
+    field.select();
+    field.setSelectionRange(0, text.length);
+    return document.execCommand("copy");
+  } catch {
+    return false;
+  } finally {
+    field.remove();
+    previous?.focus();
+  }
+}
+
 type CopyState = "idle" | "copied" | "failed";
 
-function useCopyNumber(number: string | null) {
+function useCopyNumber(number: string | null, container: RefObject<HTMLElement | null>) {
   const [state, setState] = useState<CopyState>("idle");
   const timer = useRef<number | undefined>(undefined);
+  const frame = useRef<number | undefined>(undefined);
 
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(timer.current);
+      if (frame.current !== undefined) window.cancelAnimationFrame(frame.current);
+    },
+    [],
+  );
 
   async function copy() {
     if (number === null) return;
     window.clearTimeout(timer.current);
+    // Empty the status first and write the result on the next frame, so a screen reader
+    // announces the same result again when the visitor copies twice.
+    setState("idle");
+    let copied: boolean;
     try {
-      if (!navigator.clipboard) throw new Error("No clipboard");
+      if (!navigator.clipboard) throw new Error("No clipboard API");
       await navigator.clipboard.writeText(number);
-      setState("copied");
-      // The note goes away by itself; the failure note stays, because it says what to do.
-      timer.current = window.setTimeout(() => setState("idle"), COPY_NOTE_MS);
+      copied = true;
     } catch {
-      setState("failed");
+      copied = container.current !== null && copyWithCommand(number, container.current);
     }
+    frame.current = window.requestAnimationFrame(() => {
+      setState(copied ? "copied" : "failed");
+      // The note goes away by itself; the failure note stays, because it says what to do.
+      if (copied) timer.current = window.setTimeout(() => setState("idle"), COPY_NOTE_MS);
+    });
   }
 
   return { state, copy };
 }
 
+type BodyProps = Omit<ZaloPanelProps, "open" | "onOpenChange" | "returnFocusTo">;
+
 /**
- * The Zalo contact panel: a dialog with a QR code on wide screens, a bottom sheet on phones.
- * Radix gives the focus trap, Escape, the click outside and the scroll lock. Loaded on demand
- * by `ZaloLink`.
+ * Everything inside the panel. Radix removes it when the panel closes, so a reopened panel
+ * starts clean: no copy note from the last time.
  */
-export function ZaloPanel({
-  mode,
-  open,
-  onOpenChange,
-  href,
-  number,
-  displayNumber,
-  labels,
-  returnFocusTo,
-}: ZaloPanelProps) {
-  const sheet = mode === "sheet";
-  const { state, copy } = useCopyNumber(number);
+function ZaloPanelBody({ layout, touch, href, number, displayNumber, labels }: BodyProps) {
+  const sheet = layout === "sheet";
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { state, copy } = useCopyNumber(number, containerRef);
   const sizeClass = sheet ? "min-h-12 w-full text-lg" : "";
+
+  return (
+    <div ref={containerRef}>
+      <div className="flex items-start justify-between gap-3">
+        <Dialog.Title className="pt-2 text-xl font-bold leading-snug">{labels.title}</Dialog.Title>
+        <Dialog.Close
+          aria-label={labels.close}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-earth hover:bg-straw ${FOCUS_CLASS}`}
+        >
+          <CloseIcon />
+        </Dialog.Close>
+      </div>
+      <Dialog.Description className="mt-1 font-medium leading-relaxed">
+        {touch ? labels.phoneHint : labels.scan}
+      </Dialog.Description>
+
+      {!touch && <ZaloQrCode href={href} labels={labels} />}
+
+      {number !== null && (
+        <p className={sheet ? "mt-5" : "mt-5 text-center"}>
+          <span className="block text-sm font-bold text-coat">{labels.number}</span>
+          <span className="text-2xl font-bold tabular-nums">{displayNumber}</span>
+        </p>
+      )}
+
+      <div className={sheet ? "mt-6 flex flex-col gap-3" : "mt-6 flex flex-wrap justify-center gap-3"}>
+        {touch ? (
+          // Same tab: on a touch screen the zalo.me link hands the chat to the Zalo app.
+          <a href={href} className={`${PRIMARY_CLASS} ${sizeClass}`}>
+            {labels.open}
+          </a>
+        ) : (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${PRIMARY_CLASS} ${sizeClass}`}
+          >
+            {labels.open}
+            <span className="sr-only"> {labels.newTab}</span>
+          </a>
+        )}
+        {number !== null && (
+          <button type="button" onClick={copy} className={`${SECONDARY_CLASS} ${sizeClass}`}>
+            {labels.copy}
+          </button>
+        )}
+      </div>
+
+      {number !== null && (
+        <p role="status" className={`mt-3 min-h-6 text-sm font-bold ${sheet ? "" : "text-center"}`}>
+          {state === "copied" && labels.copied}
+          {state === "failed" && labels.copyFailed}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The Zalo contact panel: a centered dialog on wide screens, a bottom sheet on narrow ones,
+ * with a QR code unless the screen is a touch screen. Radix gives the focus trap, Escape, the
+ * click outside and the scroll lock. Loaded on demand by `ZaloLink`.
+ */
+export function ZaloPanel({ open, onOpenChange, returnFocusTo, ...body }: ZaloPanelProps) {
+  const openedAt = useRef(0);
+
+  useEffect(() => {
+    if (open) openedAt.current = Date.now();
+  }, [open]);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-earth/60 motion-safe:animate-overlay-in" />
+        <Dialog.Overlay
+          data-zalo-overlay
+          className="fixed inset-0 z-50 bg-earth/60 motion-safe:animate-overlay-in"
+        />
         <Dialog.Content
-          className={sheet ? SHEET_CLASS : DIALOG_CLASS}
+          data-layout={body.layout}
+          className={body.layout === "sheet" ? SHEET_CLASS : DIALOG_CLASS}
+          onPointerDownOutside={(event) => {
+            if (Date.now() - openedAt.current < OUTSIDE_CLICK_GRACE_MS) event.preventDefault();
+          }}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             returnFocusTo.current?.focus();
           }}
         >
-          <div className="flex items-start justify-between gap-3">
-            <Dialog.Title className="pt-2 text-xl font-bold leading-snug">{labels.title}</Dialog.Title>
-            <Dialog.Close
-              aria-label={labels.close}
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-earth hover:bg-straw ${FOCUS_CLASS}`}
-            >
-              <CloseIcon />
-            </Dialog.Close>
-          </div>
-          <Dialog.Description className="mt-1 font-medium leading-relaxed">
-            {sheet ? labels.phoneHint : labels.scan}
-          </Dialog.Description>
-
-          {!sheet && <ZaloQrCode href={href} labels={labels} />}
-
-          {number !== null && (
-            <p className={sheet ? "mt-5" : "mt-5 text-center"}>
-              <span className="block text-sm font-bold text-coat">{labels.number}</span>
-              <span className="text-2xl font-bold tabular-nums">{displayNumber}</span>
-            </p>
-          )}
-
-          <div className={sheet ? "mt-6 flex flex-col gap-3" : "mt-6 flex flex-wrap justify-center gap-3"}>
-            {sheet ? (
-              // Same tab: on a phone the zalo.me link hands the chat to the Zalo app.
-              <a href={href} className={`${PRIMARY_CLASS} ${sizeClass}`}>
-                {labels.open}
-              </a>
-            ) : (
-              <a href={href} target="_blank" rel="noopener noreferrer" className={PRIMARY_CLASS}>
-                {labels.open}
-                <span className="sr-only"> {labels.newTab}</span>
-              </a>
-            )}
-            {number !== null && (
-              <button type="button" onClick={copy} className={`${SECONDARY_CLASS} ${sizeClass}`}>
-                {labels.copy}
-              </button>
-            )}
-          </div>
-
-          {number !== null && (
-            <p role="status" className={`mt-3 min-h-6 text-sm font-bold ${sheet ? "" : "text-center"}`}>
-              {state === "copied" && labels.copied}
-              {state === "failed" && labels.copyFailed}
-            </p>
-          )}
+          <ZaloPanelBody {...body} />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

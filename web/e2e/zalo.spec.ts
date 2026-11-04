@@ -42,8 +42,21 @@ test.describe("Zalo contact on a wide screen", () => {
     await headerZalo(page).click();
     const dialog = page.getByRole("dialog", { name: vi.zalo.title });
     await expect(dialog).toBeVisible();
+    // A click outside in the first 400 ms is taken as the second click of a double click.
+    await page.waitForTimeout(500);
     await page.mouse.click(10, 400);
     await expect(dialog).toBeHidden();
+  });
+
+  test("a double click opens the dialog and keeps it open", async ({ page }) => {
+    await page.goto("/vi");
+    await headerZalo(page).dblclick();
+    const dialog = page.getByRole("dialog", { name: vi.zalo.title });
+    await expect(dialog).toBeVisible();
+    // Long enough for the second click to have closed it, without the guard.
+    await page.waitForTimeout(500);
+    await expect(dialog).toBeVisible();
+    await expect(page).toHaveURL(/\/vi$/);
   });
 
   test("Copy number puts the digits on the clipboard and says so", async ({ page, context }) => {
@@ -56,16 +69,35 @@ test.describe("Zalo contact on a wide screen", () => {
   });
 });
 
+test.describe("Zalo contact in a narrow desktop window", () => {
+  test.use({ viewport: { width: 600, height: 800 } });
+
+  test("uses the sheet layout but keeps the QR code and a new tab", async ({ page }) => {
+    await page.goto("/vi");
+    await page.getByRole("link", { name: vi.hero.zaloCta }).click();
+    const sheet = page.getByRole("dialog", { name: vi.zalo.title });
+    await expect(sheet).toHaveAttribute("data-layout", "sheet");
+    await expect(sheet.getByRole("img", { name: vi.zalo.qrAlt })).toBeVisible();
+    await expect(sheet.getByRole("link", { name: new RegExp(vi.zalo.open) })).toHaveAttribute(
+      "target",
+      "_blank",
+    );
+  });
+});
+
 test.describe("Zalo contact on a 375 px phone", () => {
   test.use({ viewport: PHONE, hasTouch: true, isMobile: true });
 
   test("the hero button opens a bottom sheet with Open Zalo and no QR code", async ({ page }) => {
     await page.goto("/vi");
+    expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
     await page.getByRole("link", { name: vi.hero.zaloCta }).click();
     const sheet = page.getByRole("dialog", { name: vi.zalo.title });
     await expect(sheet).toBeVisible();
+    await expect(sheet).toHaveAttribute("data-layout", "sheet");
     await expect(page).toHaveURL(/\/vi$/);
     await expect(sheet.getByRole("img")).toHaveCount(0);
+    await expect(sheet.getByRole("link", { name: vi.zalo.open })).not.toHaveAttribute("target");
     const open = sheet.getByRole("link", { name: vi.zalo.open });
     await expect(open).toHaveAttribute("href", ZALO_URL);
     await expect(sheet.getByRole("button", { name: vi.zalo.copy })).toBeVisible();
