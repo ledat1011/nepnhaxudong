@@ -205,8 +205,11 @@ function iconLogo(headFull) {
 // ---------- mono ----------
 
 const INK = '#FFFFFF';
-// Colors that print as ink in the one-color logo: the outlines and the black hair.
-const INK_COLORS = [color('nau-dat'), color('toc')].map((c) => c.toLowerCase());
+// Colors that print as ink in the one-color logo: the outlines and the black hair. In the light
+// version (light ink on a dark background) the hair is paper, so it shows the dark background like
+// the real hair, inside its Nâu đất outline, which stays ink.
+const INK_TOKENS = ['nau-dat', 'toc'];
+const LIGHT_INK_TOKENS = ['nau-dat'];
 const PAPER = '#000000';
 const MONO_SHAPES = new Set(['g', 'defs', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'use']);
 // Kept as they are: they only shape the geometry, which the mask copy keeps unchanged.
@@ -220,23 +223,23 @@ const MONO_ANIMATION = new Set(['id', 'data-pivot', 'style']);
 const MONO_OPACITY = new Set(['opacity', 'fill-opacity', 'stroke-opacity']);
 const ANIMATION_STYLE =/^\s*(transform-box|transform-origin)\s*:/;
 
-function monoColor(value, where) {
+function monoColor(value, where, inkColors) {
   if (value === 'none') return value;
   const hex = value.toLowerCase();
-  if (INK_COLORS.includes(hex)) return INK;
+  if (inkColors.includes(hex)) return INK;
   if (Object.values(tokens.color).some((c) => c.value.toLowerCase() === hex)) return PAPER;
   throw new Error(`logo-mono: ${where} has color "${value}", not a palette color`);
 }
 
-// Copy of one mascot node for the mask: Nâu đất and the hair become ink (white), every other palette color
+// Copy of one mascot node for the mask: the ink colors become ink (white), every other palette color
 // becomes paper (black), geometry stays. Anything else throws, so a redrawn mascot cannot lose
 // something silently: opacity has no one-color form, and unknown attributes or elements may paint.
-function monoNode(node, keepIds) {
+function monoNode(node, keepIds, inkColors) {
   const where = `<${node.name}${node.attributes.id ? ` id="${node.attributes.id}"` : ''}>`;
   if (!MONO_SHAPES.has(node.name)) throw new Error(`logo-mono: unsupported element ${where}`);
   const attributes = {};
   for (const [key, value] of Object.entries(node.attributes)) {
-    if (key === 'fill' || key === 'stroke') attributes[key] = monoColor(value, `${where} ${key}`);
+    if (key === 'fill' || key === 'stroke') attributes[key] = monoColor(value, `${where} ${key}`, inkColors);
     else if (MONO_GEOMETRY.has(key)) attributes[key] = value;
     else if (key === 'id' && keepIds) attributes[key] = value;
     else if (key === 'style') {
@@ -247,7 +250,7 @@ function monoNode(node, keepIds) {
     } else if (!MONO_ANIMATION.has(key)) throw new Error(`logo-mono: ${where} attribute ${key} is not handled`);
   }
   const children = node.children.map((child) => {
-    if (child.type === 'element') return monoNode(child, keepIds || node.name === 'defs');
+    if (child.type === 'element') return monoNode(child, keepIds || node.name === 'defs', inkColors);
     if (child.type === 'text' && child.value.trim() !== '') throw new Error(`logo-mono: text inside ${where}`);
     return null;
   });
@@ -258,10 +261,11 @@ function monoNode(node, keepIds) {
 // shape covers in the color mascot stays covered: the hair stays solid around an empty face, and
 // lines under the hands, grains and sleeves stay hidden. One Nâu đất rectangle shows through the
 // ink. The mask region is the 512 x 512 canvas, which also cuts the bust at its bottom edge.
-export function monoMascot(source, ink = 'nau-dat') {
+export function monoMascot(source, ink = 'nau-dat', inkTokens = INK_TOKENS) {
   const mascot = parseSync(source);
   const { xmlns, viewBox, ...rootPaint } = mascot.attributes;
-  const root = monoNode({ ...mascot, name: 'g', attributes: rootPaint }, false);
+  const inkColors = inkTokens.map((token) => color(token).toLowerCase());
+  const root = monoNode({ ...mascot, name: 'g', attributes: rootPaint }, false, inkColors);
   const [, , width, height] = viewBox.trim().split(/[\s,]+/);
   return (
     `<defs>\n<mask id="mono-ink" maskUnits="userSpaceOnUse" x="0" y="0" width="${width}" height="${height}">\n` +
@@ -301,7 +305,7 @@ export function buildLogos() {
     'logo-full-light.svg': frame(fullLight),
     'logo-icon.svg': iconLogo(parseSync(readFileSync(logoMascotHeadPath, 'utf8'))),
     'logo-mono.svg': wrap(viewBox, monoMascot(logoMascot) + wordmark('nau-dat', 'nau-dat')),
-    'logo-mono-light.svg': wrap(viewBox, monoMascot(logoMascot, LIGHT_INK) + wordmark(LIGHT_INK, LIGHT_INK)),
+    'logo-mono-light.svg': wrap(viewBox, monoMascot(logoMascot, LIGHT_INK, LIGHT_INK_TOKENS) + wordmark(LIGHT_INK, LIGHT_INK)),
   };
 }
 

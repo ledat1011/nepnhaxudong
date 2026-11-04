@@ -602,10 +602,41 @@ test('logo-mono / logo-mono-light: chi mot mau (Nau dat / Trang gao); mask chi t
   }
 });
 
-test('logo-mono-light: cung hinh voi logo-mono, chi doi mau muc', () => {
+// Elements in document order, with their own fill.
+const flatFills = (node) =>
+  node.children
+    .filter((c) => c.type === 'element')
+    .flatMap((c) => [{ name: c.name, fill: c.attributes.fill?.toLowerCase() }, ...flatFills(c)]);
+const maskOf = (svg) => {
+  const find = (node) => (node.name === 'mask' ? node : node.children?.map(find).find(Boolean));
+  return find(parseSync(svg));
+};
+
+// The mask copies the logo mascot element by element, so element i of each mask is element i of
+// the mascot. Light differs from logo-mono only in the ink color and in the hair (toc), which is
+// ink in logo-mono and paper in logo-mono-light (the dark background shows as the hair, inside
+// its Nâu đất outline, which stays ink).
+test('logo-mono-light: nhu logo-mono, chi doi mau muc va toc thanh nen', () => {
   const { color } = readTokens();
   const [mono, light] = ['logo-mono.svg', 'logo-mono-light.svg'].map((file) => readFileSync(logoDir + file, 'utf8'));
-  assert.equal(light, mono.replaceAll(color['nau-dat'].value, color['trang-gao'].value));
+  const outside = (svg) => svg.replace(/<mask[\s\S]*<\/mask>/, '');
+  assert.equal(outside(light), outside(mono).replaceAll(color['nau-dat'].value, color['trang-gao'].value));
+  const mascot = flatFills(parseSync(readFileSync(logoMascotPath, 'utf8')));
+  const [monoMask, lightMask] = [mono, light].map((svg) => flatFills(maskOf(svg)).slice(1));
+  assert.equal(monoMask.length, mascot.length);
+  assert.equal(lightMask.length, mascot.length);
+  const hair = color.toc.value.toLowerCase();
+  let hairCount = 0;
+  mascot.forEach((element, i) => {
+    if (element.fill === hair) {
+      hairCount++;
+      assert.equal(monoMask[i].fill, '#ffffff', `logo-mono: toc #${i} phai la muc`);
+      assert.equal(lightMask[i].fill, '#000000', `logo-mono-light: toc #${i} phai la nen`);
+    } else {
+      assert.deepEqual(lightMask[i], monoMask[i], `phan tu #${i} khac logo-mono`);
+    }
+  });
+  assert.ok(hairCount > 0, 'logo mascot khong co toc');
 });
 
 // The text of a logo: its top-level paths after the mascot (title, then tagline).
