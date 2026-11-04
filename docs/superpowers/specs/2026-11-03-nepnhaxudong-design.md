@@ -67,6 +67,11 @@ Mọi cặp chữ / nền dùng trên web phải đạt WCAG AA (4,5:1 cho chữ
 - **Pacifico**: chữ "Nếp Nhà" trong logo và tiêu đề lớn của từng khối. Chỉ có một độ đậm; không dùng cho chữ nhỏ.
 - **Quicksand** (400, 500, 700): tiêu đề nhỏ, menu, nút, nội dung.
 
+Lý do chọn (đề xuất, chờ chủ dự án xác nhận):
+- **Pacifico**: nét viết tay tròn và mềm, hợp với mascot hoạt hình cười hiền (mục 2.3) và với một sản phẩm do gia đình làm (mục 0). Nét viết tay khó đọc ở cỡ nhỏ, nên chỉ dùng cho chữ lớn.
+- **Quicksand**: nét tròn đều, cùng tính cách với Pacifico, nhưng rõ ở cỡ nhỏ và có đủ dấu tiếng Việt. Hai font hợp nhau, mỗi font một việc.
+- **Nhãn nhỏ** (tiêu đề phụ trong khối Sản phẩm, tên báo, "Địa chỉ", "Giờ liên hệ"): Quicksand 700, màu Nâu áo (mục 2.1: tiêu đề phụ), viết như câu thường. Không viết hoa toàn bộ và không giãn chữ, vì chữ hoa tiếng Việt có dấu ở cỡ nhỏ khó đọc hơn, và bảng màu, font ở trên không có lý do nào cho kiểu chữ đó.
+
 ### 2.3 Logo
 - **Hình:** người phụ nữ nửa người, mặt tròn, má hồng, cười hiền, đội nón lá, mặc áo cánh nâu, ôm bó bông lúa nếp vàng cong qua vai. Phong cách hoạt hình phẳng, viền nâu đất, giống phong cách ảnh tham khảo `C:\Users\lvdat\Documents\logo\logo-ba-noi-dau-bep-cam-dia-trong-cho-nha-hang-banh-va-logo-am-thuc-tu-lam_513640-1319.avif` (của Freepik, chỉ tham khảo phong cách, không sao chép).
 - **Ba bản:**
@@ -88,6 +93,14 @@ Mọi cặp chữ / nền dùng trên web phải đạt WCAG AA (4,5:1 cho chữ
 
 ## 3. Website công khai
 
+### 3.0 Design Read (đề xuất, chờ chủ dự án xác nhận)
+Đọc trang này là: trang giới thiệu một sản phẩm của gia đình (gạo nếp cái hoa vàng xứ Đông) cho khách trong nước, Việt kiều và khách nước ngoài muốn xem rồi liên hệ, theo phong cách hoạt hình phẳng ấm áp (mascot, màu đất và vàng lúa, hình cánh đồng), dial ENERGY 2 / RHYTHM 2 / MOTION 2.
+
+Ba mức dial do chủ dự án chọn ngày 2026-11-04. Lý do của từng mức:
+- **ENERGY 2**: thương hiệu có mascot, màu ấm và chữ Pacifico, nên trang không lặng như một trang hành chính (mức 1). Nhưng việc chính của trang là cho xem sản phẩm, câu chuyện và cách liên hệ, nên phần trang trí không được nổi hơn nội dung (không lên mức 3).
+- **RHYTHM 2**: thứ tự khối đi theo câu chuyện sản phẩm (mục 3.2). Mỗi khối có dạng riêng theo nội dung (hero hai cột, timeline dọc, thẻ báo và thẻ bài viết, liên hệ hai cột), nhưng mọi khối dùng chung lưới, khoảng cách và bảng màu.
+- **MOTION 2**: hiệu ứng theo cuộn đã chọn ở mục 1 và 3.3 (khối trượt lên, mascot, cây lúa). Không ghim khối, không parallax, vì khách cần đọc nhanh rồi liên hệ, và trang phải đạt mục tiêu đo Lighthouse mobile (mục 0).
+
 ### 3.1 Đường dẫn
 - `/` → chuyển sang `/vi` hoặc `/en` theo `Accept-Language`, mặc định `/vi`.
 - Blog: `/vi/cau-chuyen/<slug>`, `/en/stories/<slug>`.
@@ -105,6 +118,10 @@ Mọi cặp chữ / nền dùng trên web phải đạt WCAG AA (4,5:1 cho chữ
 
 ### 3.3 Hiệu ứng
 - GSAP + ScrollTrigger. Mascot phản ứng theo tốc độ cuộn rồi dừng nhẹ; cây lúa timeline mọc theo tiến độ cuộn; các khối trượt nhẹ lên khi vào màn hình.
+- Mục đích của từng chuyển động (đề xuất, chờ chủ dự án xác nhận):
+  - **Khối trượt nhẹ lên**: báo cho người đọc biết một khối mới vừa tới, và giúp người đọc đi theo thứ tự câu chuyện. Mỗi khối chỉ chạy một lần, quãng ngắn, nên không làm chậm việc đọc.
+  - **Mascot nghiêng đầu, lắc bó lúa**: cho thấy thương hiệu phản hồi lại việc cuộn của khách. Góc nhỏ (±3°, ±6°, mục 2.3) và mascot về đứng yên khi khách ngừng cuộn, nên người đọc vẫn tập trung vào nội dung.
+  - **Cây lúa mọc dọc timeline**: hành trình là các mốc phát triển theo năm (mục 0, 3.2). Cây lúa mọc theo tiến độ cuộn cho khách thấy mình đang ở mốc nào, và hình cây lúa nối hành trình với sản phẩm.
 - Chỉ animate `transform` và `opacity`.
 - `prefers-reduced-motion: reduce` → tắt mọi chuyển động, mascot đứng yên.
 
@@ -122,7 +139,7 @@ Mobile-first, thanh menu dưới cùng.
 | Màn hình | Chức năng |
 |---|---|
 | Tổng quan | Lối tắt + thay đổi gần đây |
-| Sản phẩm | Tên, mô tả, đặc điểm (VI/EN), quy cách đóng gói, bật/tắt giá, chọn ảnh |
+| Sản phẩm | Tên, mô tả, đặc điểm (VI/EN), quy cách đóng gói, bật/tắt giá, chọn ảnh. Đặc điểm nhập đúng thứ tự tròn mẩy, dẻo, thơm (mục 3.2): web gắn icon theo thứ tự này; đặc điểm thứ tư trở đi không có icon (đề xuất, chờ chủ dự án xác nhận) |
 | Hành trình | Thêm / sửa mốc (năm, tiêu đề, mô tả, ảnh), kéo thả sắp xếp |
 | Báo chí | Dán link → tự điền tiêu đề + ngày từ thẻ meta của trang báo, sửa được |
 | Câu chuyện | Trình soạn thảo Tiptap, VI/EN, Nháp / Đã đăng, xem trước |
