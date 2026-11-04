@@ -26,6 +26,33 @@ const modules = {
 let reducedMatches = false;
 let listeners: Listener[] = [];
 
+/** Enough time for the frames the scroll wait watches after a scroll ends. */
+const CONFIRM_MS = 50;
+
+/** Makes `document.readyState` report a page that is still loading, until the returned call. */
+function pendLoad(): () => void {
+  Object.defineProperty(document, "readyState", { value: "interactive", configurable: true });
+  return () => {
+    delete (document as unknown as Record<string, unknown>).readyState;
+  };
+}
+
+/** Records the `load` listeners added to and removed from the window. */
+function watchLoadListeners() {
+  const added = vi.spyOn(window, "addEventListener");
+  const removed = vi.spyOn(window, "removeEventListener");
+  const loadListeners = (spy: typeof added) =>
+    spy.mock.calls.filter(([type]) => type === "load").map(([, listener]) => listener);
+  return {
+    added: () => loadListeners(added),
+    removed: () => loadListeners(removed),
+    restore: () => {
+      added.mockRestore();
+      removed.mockRestore();
+    },
+  };
+}
+
 function installMatchMedia() {
   window.matchMedia = vi.fn((query: string) => ({
     matches: query === REDUCED_MOTION_QUERY ? reducedMatches : !reducedMatches,
@@ -97,9 +124,27 @@ describe("HomeMotion", () => {
     expect(setup).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
     window.dispatchEvent(new Event("scrollend"));
+    await vi.advanceTimersByTimeAsync(CONFIRM_MS);
     expect(setup).toHaveBeenCalledTimes(1);
     expect(refresh).toHaveBeenCalledTimes(1);
     expect(document.documentElement.dataset.motion).toBe("on");
+  });
+
+  it("goes back to waiting when a scroll starts in the frames after the wait ended", async () => {
+    const setup = vi.fn();
+    render(<HomeMotion setups={[setup]} />);
+    await vi.advanceTimersByTimeAsync(250);
+    expect(loadGsap).toHaveBeenCalled();
+    // The quiet time ends at 350 ms; a smooth scroll shows its first scroll event a frame later.
+    await vi.advanceTimersByTimeAsync(105);
+    window.dispatchEvent(new Event("scroll"));
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(setup).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
+    window.dispatchEvent(new Event("scrollend"));
+    await vi.advanceTimersByTimeAsync(CONFIRM_MS);
+    expect(setup).toHaveBeenCalledTimes(1);
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 
   it("leaves the page as it is when GSAP fails to load", async () => {
@@ -159,6 +204,77 @@ describe("HomeMotion", () => {
     expect(document.documentElement.dataset.motion).toBeUndefined();
   });
 
+  it("waits for the window load event when the page is still loading", async () => {
+    const restoreLoad = pendLoad();
+    try {
+      const setup = vi.fn();
+      render(<HomeMotion setups={[setup]} />);
+      await vi.runAllTimersAsync();
+      expect(loadGsap).not.toHaveBeenCalled();
+      window.dispatchEvent(new Event("load"));
+      expect(loadGsap).not.toHaveBeenCalled();
+      await vi.runAllTimersAsync();
+      expect(loadGsap).toHaveBeenCalledTimes(1);
+      expect(setup).toHaveBeenCalledTimes(1);
+      expect(document.documentElement.dataset.motion).toBe("on");
+    } finally {
+      restoreLoad();
+    }
+  });
+
+  it("does not wait for the load event when the page has already loaded", async () => {
+    expect(document.readyState).toBe("complete");
+    const load = watchLoadListeners();
+    try {
+      render(<HomeMotion setups={[vi.fn()]} />);
+      await vi.runAllTimersAsync();
+      expect(load.added()).toEqual([]);
+      expect(loadGsap).toHaveBeenCalledTimes(1);
+    } finally {
+      load.restore();
+    }
+  });
+
+  it("stops waiting for the load event on unmount", async () => {
+    const restoreLoad = pendLoad();
+    const load = watchLoadListeners();
+    try {
+      const { unmount } = render(<HomeMotion setups={[vi.fn()]} />);
+      expect(load.added()).toHaveLength(1);
+      unmount();
+      expect(load.removed()).toEqual(load.added());
+      window.dispatchEvent(new Event("load"));
+      await vi.runAllTimersAsync();
+      expect(loadGsap).not.toHaveBeenCalled();
+    } finally {
+      load.restore();
+      restoreLoad();
+    }
+  });
+
+  it("stops waiting for the load event when reduced motion is turned on", async () => {
+    const restoreLoad = pendLoad();
+    const load = watchLoadListeners();
+    try {
+      render(<HomeMotion setups={[vi.fn()]} />);
+      listeners.forEach((listener) => listener({ matches: true }));
+      expect(load.removed()).toEqual(load.added());
+      window.dispatchEvent(new Event("load"));
+      await vi.runAllTimersAsync();
+      expect(loadGsap).not.toHaveBeenCalled();
+      // Turned off again before the load: the motion waits for the load once more.
+      listeners.forEach((listener) => listener({ matches: false }));
+      expect(load.added()).toHaveLength(2);
+      restoreLoad();
+      window.dispatchEvent(new Event("load"));
+      await vi.runAllTimersAsync();
+      expect(loadGsap).toHaveBeenCalledTimes(1);
+    } finally {
+      load.restore();
+      restoreLoad();
+    }
+  });
+
   it("renders nothing", () => {
     const { container } = render(<HomeMotion setups={[]} />);
     expect(container).toBeEmptyDOMElement();
@@ -192,6 +308,7 @@ describe("HomeMotion with a pending hash scroll", () => {
     expect(setup).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
     window.dispatchEvent(new Event("scrollend"));
+    await vi.advanceTimersByTimeAsync(CONFIRM_MS);
     expect(setup).toHaveBeenCalledTimes(1);
     expect(refresh).toHaveBeenCalledTimes(1);
   });

@@ -28,11 +28,18 @@ function whenIdle(callback: () => void): () => void {
   return () => window.clearTimeout(id);
 }
 
+/** Calls `callback` at the window `load` event. Returns a function that cancels the wait. */
+function whenLoaded(callback: () => void): () => void {
+  window.addEventListener("load", callback, { once: true });
+  return () => window.removeEventListener("load", callback);
+}
+
 type HomeMotionProps = { setups?: MotionSetup[] };
 
 /**
- * Starts the home page motion after the page is idle and the user has not asked for reduced
- * motion. GSAP is not downloaded at all when reduced motion is on. Renders nothing.
+ * Starts the home page motion after the page has loaded and is idle, and only when the user has
+ * not asked for reduced motion. GSAP is not downloaded at all when reduced motion is on, and
+ * never before the page's own files have loaded. Renders nothing.
  */
 export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
   useEffect(() => {
@@ -41,9 +48,7 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
     let cancelWait: (() => void) | null = null;
     let mm: MatchMediaHandle | null = null;
 
-    const start = () => {
-      if (started) return;
-      started = true;
+    const waitForIdle = () => {
       cancelWait = whenIdle(async () => {
         let modules: GsapModules;
         try {
@@ -72,6 +77,17 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
           });
         });
       });
+    };
+
+    const start = () => {
+      if (started) return;
+      started = true;
+      // The idle wait has a time limit, which can end before `load` on a busy page.
+      if (document.readyState === "complete") {
+        waitForIdle();
+      } else {
+        cancelWait = whenLoaded(waitForIdle);
+      }
     };
 
     const query = window.matchMedia(REDUCED_MOTION_QUERY);

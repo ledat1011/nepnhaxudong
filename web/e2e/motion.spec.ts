@@ -21,11 +21,13 @@ function recordScripts(page: Page) {
   const pending: Promise<void>[] = [];
   page.on("response", (response: Response) => {
     if (!response.url().endsWith(".js") && !response.url().includes(".js?")) return;
+    // The time the response arrived, not the later time its body has been read.
+    const at = Date.now();
     pending.push(
       response
         .text()
         .then((body) => {
-          bodies.push({ url: response.url(), body, at: Date.now() });
+          bodies.push({ url: response.url(), body, at });
         })
         .catch(() => undefined),
     );
