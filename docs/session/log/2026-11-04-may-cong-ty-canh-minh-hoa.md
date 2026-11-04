@@ -20,10 +20,12 @@
 - Máy sấy thóc (phác thảo của chủ dự án): quạt bên trái thổi qua lò than; khí nóng vào gầm của một buồng dài; thóc nằm trên lưới sắt phía trên gầm; khí nóng đi từ gầm lên xuyên qua lưới và lớp thóc.
 - Phần 4 (thứ tự làm: màu + Hero → túi gạo → 5 tư thế người → câu chuyện; kiểm thử, rủi ro) đã duyệt.
 
+- Chủ dự án duyệt spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md` và storyboard (gồm cả việc mở rộng quy tắc Hồng má / da / tóc trong quyết định 0007). Bước tiếp: viết plan.
+
 ## Còn mở
-- Chủ dự án duyệt spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md` và storyboard. Sau đó mới viết plan.
-- Xác nhận: áo của ba là xanh lá hay xanh dương; câu chữ 3 chú thích túi và 8 cảnh; mở rộng quy tắc Hồng má / da / tóc sang mọi hình minh hoạ (quyết định 0007).
+- Xác nhận khi duyệt tư thế người: áo của ba là xanh lá hay xanh dương. Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.
 - Công cụ vẽ người: Nano Banana không kết nối được, `GEMINI_API_KEY` chưa đặt, Recraft cần đăng nhập `/mcp`.
 
 ## Đã làm
 - Viết spec, storyboard phác (`docs/superpowers/specs/2026-11-04-canh-minh-hoa-storyboard.html`) và quyết định `docs/decisions/0007-mau-troi-minh-hoa.md`.
+- Viết plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md` (12 task). Sửa spec theo plan: script ghép cảnh ở `web/scripts/`, nhóm chuyển động dùng `data-part`, mây màu Trắng gạo.

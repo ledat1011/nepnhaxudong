@@ -50,7 +50,7 @@ Trang chủ có thêm ba phần minh hoạ có chuyển động, theo hướng "
 ### Hình (từ xa đến gần)
 1. **Trời:** chuyển dần Xanh trời `#CFE4EE` → Xanh trời nhạt `#E9F2F1` → Trắng gạo ở chân trời.
 2. **Mặt trời:** hình tròn Vàng lúa, viền Nâu đất, một vòng tia nắng Vàng rơm; đặt ở góc trên, sau mascot, để vùng chữ bên trái thoáng.
-3. **Mây:** 3 đám, trắng, viền mảnh Nâu đất như nét mascot.
+3. **Mây:** 3 đám, màu Trắng gạo (không dùng trắng `#fff`, vì mọi màu trong hình phải nằm trong bảng màu), viền mảnh Nâu đất như nét mascot.
 4. **Làng xa:** dải luỹ tre và vài mái nhà, Nâu áo nhạt (độ mờ khoảng 35%).
 5. **Ruộng:** 2–3 lớp ruộng (Vàng rơm, Vàng lúa) và lớp gần nhất có 20–24 cây lúa trĩu bông, chia thành 5 nhóm.
 
@@ -141,7 +141,8 @@ Màu máy theo ảnh xưởng, đổi sang màu thương hiệu gần nhất: th
 - Mỗi cảnh là một file SVG trong `web/public/story/`: `canh-1-cay-ma.svg`, `canh-2-nang-mua-gio.svg`, `canh-3-gat.svg`, `canh-4-say.svg`, `canh-5-xay-xat.svg`, `canh-6-dong-goi.svg`, `canh-7-den-tay-khach.svg`, `canh-8-mam-com.svg`.
 - Mặc định, trang hiện file đó bằng `<img loading="lazy">` có `width` và `height`, nên bố cục không xô lệch.
 - Khi chuyển động bật: lúc người xem còn cách cảnh khoảng 1 màn hình, code tải lại chính file đó dưới dạng chữ (đã có trong cache), đọc bằng `DOMParser` và thay `<img>` bằng SVG nằm trong trang để điều khiển từng nhóm. File là của chính trang web, cùng nguồn gốc. Nếu tải lỗi, `<img>` tĩnh ở lại.
-- Các file cảnh được ghép bằng một script trong `brand/tools/` từ các phần dùng chung (tư thế người, máy, đồ vật) đặt trong `brand/story/`. Mỗi nhóm cần chuyển động có `id` cố định với tiền tố riêng của cảnh (để không trùng `id` khi nhiều SVG nằm cùng một trang).
+- Các phần hình (tư thế người, máy, đồ vật, nền mỗi cảnh) đặt trong `brand/story/`. Script `web/scripts/build-story.mjs` (cùng kiểu với `web/scripts/sync-brand.mjs` đang có) ghép chúng thành các file cảnh, kiểm tra an toàn (không `<script>`, không thuộc tính `on*`, không link ngoài) và kiểm tra ngân sách mục 6.
+- Mỗi nhóm cần chuyển động có thuộc tính `data-part` cố định; code chuyển động tìm nhóm trong phạm vi một cảnh (`[data-scene]`), nên không cần `id`. Script thêm tiền tố của cảnh vào mọi `id` còn lại (ví dụ `gradient` của hình trace), để không trùng `id` khi nhiều SVG nằm cùng một trang.
 
 ## 5. Cách làm hình
 
