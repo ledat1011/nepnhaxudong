@@ -16,6 +16,7 @@
 - Chủ dự án bảo merge PR #6 → đã merge vào `main` (abc538d).
 - "Lần sau tự mở PR nhé" → khi nhánh xong, đã review và test qua thì tự push và mở PR, không cần hỏi. Merge vẫn hỏi chủ dự án. Đã ghi vào `CLAUDE.md`.
 - Popup Zalo và thanh đang tải: làm trên nhánh `feat/zalo-popup-dang-tai` sau khi B3 merge. Agent tự chọn màu thanh là Vàng lúa `#D9A13B` (Vàng rơm gần như không thấy trên nền) — chờ chủ dự án xác nhận.
+- Hộp tải ảnh: API bắt buộc đủ mô tả vi và en, nên không tải lên ngay khi chọn được. Chủ dự án chọn "Giữ điền đủ mô tả": ảnh tải lên khi đã có đủ 2 mô tả, không sửa API. Đã sửa dòng đó trong quyết định 0008.
 - PR #11 (B3): "merge luôn nếu nó không phức tạp" → merge khi CI đạt hết và không có xung đột (repo không cho bật auto-merge của GitHub).
 - "Commit push hết đi, tôi muốn coi sản phẩm để feedback" → commit và push nhánh B3 và B4 ngay khi vòng sửa cuối commit xong; mở server local để chủ dự án xem cả trang quản trị (B3) và hiệu ứng (B4). Mở PR / merge: vẫn hỏi trước.
 - Góp ý sau khi xem web (hướng chung: mộc mạc, thôn quê nhưng hiện đại, bắt mắt, chuyển động mượt; dùng các skill giao diện mới để đề xuất):
