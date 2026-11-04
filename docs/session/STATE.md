@@ -18,9 +18,11 @@ Cập nhật: 2026-11-04 — máy công ty
   - Mascot nằm gọn trong hero. Logo ở header rõ ở cỡ 36 px.
   - Chưa xem favicon thật trên tab trình duyệt. Chỉ mới mở file `/icon.svg`: file này hiện đúng.
 - Rà soát prompt các file hướng dẫn Claude (nhánh `hacka/workspace-prompt-audit-1ff3bc`): báo cáo `docs/session/prompt-audit-2026-11-04.md`. Đã sửa 5 lỗi trong skill `call-chain` và `visual-deck`; 4 mục chỉ ghi nhận (6–9 trong báo cáo) chờ chủ dự án quyết định.
+- Review trang quản trị B3 về độ dễ dùng (nhánh `hacka/admin-ux-review-d606fa`): báo cáo `docs/reviews/2026-11-04-admin-ux.md`, ảnh chụp trong `docs/reviews/2026-11-04-admin-ux/`. Chỉ review, chưa sửa mã.
 
 ## Đang làm
 - Phần B3 (trang quản trị): nhánh `feat/phan-b3-admin`, plan `docs/superpowers/plans/2026-11-04-phan-b3-admin.md` nằm trên nhánh đó. PR #9 (review trang quản trị B3) đang mở.
+- Review admin B3: chủ dự án đã duyệt 5 việc ưu tiên (`docs/decisions/0008-uu-tien-sua-admin.md`). Việc tiếp theo là sửa trên nhánh B3.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
