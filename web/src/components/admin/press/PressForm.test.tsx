@@ -206,6 +206,27 @@ describe("PressForm preview", () => {
     expect(screen.queryByText(NOTHING_READ)).not.toBeInTheDocument();
   });
 
+  it("clears the old preview message as soon as the link is edited", async () => {
+    const user = userEvent.setup();
+    render(<PressForm onClose={vi.fn()} onChanged={vi.fn()} />);
+    await user.type(urlBox(), "https://a.example/1");
+    await user.click(screen.getByRole("button", { name: "Lấy thông tin" }));
+    expect(await screen.findByText(NOTHING_READ)).toBeInTheDocument();
+    await user.type(urlBox(), "2");
+    expect(screen.queryByText(NOTHING_READ)).not.toBeInTheDocument();
+  });
+
+  it("clears an old preview error as soon as the link is edited", async () => {
+    previewAnswers(new AdminApiError(400, "Đường dẫn không hợp lệ."));
+    const user = userEvent.setup();
+    render(<PressForm onClose={vi.fn()} onChanged={vi.fn()} />);
+    await user.type(urlBox(), "ftp://x");
+    await user.click(screen.getByRole("button", { name: "Lấy thông tin" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await user.type(urlBox(), "y");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("signs in again on session-expired and asks the preview once more", async () => {
     requireReLogin.mockResolvedValue(undefined);
     let first = true;

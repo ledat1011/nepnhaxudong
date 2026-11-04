@@ -4,7 +4,7 @@ import { useId, useLayoutEffect, useRef, useState, type ClipboardEvent } from "r
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
-import { MediaPicker } from "@/components/admin/media/MediaPicker";
+import { SingleImageSection } from "@/components/admin/media/SingleImageSection";
 import { Button } from "@/components/admin/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/admin/ui/dialog";
 import { Input } from "@/components/admin/ui/input";
@@ -14,7 +14,6 @@ import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
 import { toRequestText } from "@/lib/admin/localized";
 import { useAdminSession } from "@/lib/admin/session";
 import type { LocalizedText, PressMentionAdminDto, PressMentionRequest, PressPreviewDto } from "@/lib/admin/types";
-import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
 import { useSave } from "@/lib/admin/use-save";
 import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 import { withReLogin } from "@/lib/admin/with-relogin";
@@ -221,7 +220,12 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
                   inputMode="url"
                   autoComplete="off"
                   value={state.url}
-                  onChange={(e) => patch({ url: e.target.value })}
+                  onChange={(e) => {
+                    patch({ url: e.target.value });
+                    // The message was about the old link.
+                    setPreviewError(null);
+                    setNothingRead(false);
+                  }}
                   onPaste={onPaste}
                   placeholder="https://"
                 />
@@ -259,7 +263,7 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
               <Input id={dateId} type="date" value={state.publishedOn} onChange={(e) => patch({ publishedOn: e.target.value })} />
             </div>
             <BilingualField label="Tiêu đề" value={state.title} onChange={(title) => patch({ title })} viRequired />
-            <ImageSection mediaId={state.mediaId} onChange={(mediaId) => patch({ mediaId })} />
+            <SingleImageSection mediaId={state.mediaId} onChange={(mediaId) => patch({ mediaId })} />
 
             <ProblemMessage error={saving.error ?? deleting.error} />
 
@@ -298,37 +302,5 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
         onConfirm={onClose}
       />
     </>
-  );
-}
-
-function ImageSection({ mediaId, onChange }: { mediaId: number | null; onChange(mediaId: number | null): void }) {
-  const ids = mediaId === null ? [] : [mediaId];
-  const { items } = useMediaByIds(ids);
-  const media = items.find((item) => item.id === mediaId);
-  return (
-    <fieldset className="flex min-w-0 flex-col gap-3">
-      <legend className="mb-2 text-base font-semibold">Ảnh</legend>
-      {mediaId !== null ? (
-        <div className="flex items-center gap-2 rounded-md border p-2">
-          {media !== undefined ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={media.url}
-              alt={media.altVi ?? ""}
-              width={media.width}
-              height={media.height}
-              className="size-16 rounded object-cover"
-            />
-          ) : (
-            <span className="size-16 rounded bg-muted" aria-hidden />
-          )}
-          <span className="min-w-0 flex-1 truncate text-sm">{media?.altVi ?? `Ảnh số ${mediaId}`}</span>
-          <Button type="button" variant="outline" onClick={() => onChange(null)}>
-            Bỏ ảnh
-          </Button>
-        </div>
-      ) : null}
-      <MediaPicker mode="single" value={ids} onChange={(next) => onChange(next[0] ?? null)} />
-    </fieldset>
   );
 }

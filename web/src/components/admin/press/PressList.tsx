@@ -49,17 +49,18 @@ function toBody(item: PressMentionAdminDto, sortOrder: number): PressMentionRequ
 
 /**
  * The mentions to write for moving the item at `index` by `delta`, and the list as it will look.
- * The two items swap their sort orders. When both have the same number a swap would change nothing,
- * so every item gets its position as its number and only the items whose number changed are written.
+ * Normally the two items swap their sort orders. If any two mentions in the list share a number, a swap
+ * cannot be trusted (the server sorts equal numbers by id), so every item gets its position as its number
+ * and only the items whose number changed are written.
  */
 function plan(shown: PressMentionAdminDto[], index: number, delta: -1 | 1) {
   const target = index + delta;
-  const tie = shown[index].sortOrder === shown[target].sortOrder;
+  const hasTie = new Set(shown.map((item) => item.sortOrder)).size !== shown.length;
   const next = shown.slice();
   [next[index], next[target]] = [next[target], next[index]];
   const numbered = next.map((item, position) => {
-    // Each of the two places keeps its own number; a tie gets position numbers instead.
-    if (tie) return { ...item, sortOrder: position };
+    // Each of the two places keeps its own number; a list with a tie gets position numbers instead.
+    if (hasTie) return { ...item, sortOrder: position };
     if (position === index) return { ...item, sortOrder: shown[index].sortOrder };
     if (position === target) return { ...item, sortOrder: shown[target].sortOrder };
     return item;

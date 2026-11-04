@@ -100,6 +100,17 @@ describe("PressList", () => {
     expect(sortOrdersWritten()).toEqual({ "/admin/press/1": 1, "/admin/press/3": 2 });
   });
 
+  it("renumbers the whole list when a mention outside the swap shares a sort order", async () => {
+    // A=1, B=2, C=2, D=3: swapping A and B would leave B=1, A=2, C=2, and the server would sort C before A.
+    const list = [mention(1, 1), mention(2, 2), mention(3, 2), mention(4, 3)];
+    render(<PressList items={list} onSelect={vi.fn()} onPartialFailure={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Đưa bài Bài 1 xuống" }));
+    await waitFor(() => expect(shownOrder()).toEqual(["Bài 2", "Bài 1", "Bài 3", "Bài 4"]));
+    await waitFor(() => expect(puts()).toHaveLength(1));
+    // New order B, A, C, D gets 0, 1, 2, 3. Only B changes (2 to 0); A, C and D already have their number.
+    expect(sortOrdersWritten()).toEqual({ "/admin/press/2": 0 });
+  });
+
   it("restores the old order and shows the detail when the first PUT fails, and reports no partial failure", async () => {
     adminFetch.mockRejectedValue(new AdminApiError(400, "Không lưu được."));
     const onPartialFailure = vi.fn();
