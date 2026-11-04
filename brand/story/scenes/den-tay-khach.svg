@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <!-- Scene 7, to the customer. Left: a customer comes to the house and mother hands over a bag, with a gift box.
+       Right: a distributor's small truck in front of a supermarket shelf full of bags. Final frame: shelf full, truck parked. -->
+  <defs>
+    <pattern id="gq" width="10" height="8" patternUnits="userSpaceOnUse">
+      <g fill="#D9A13B" fill-opacity="0.45">
+        <ellipse cx="2.5" cy="2" rx="2" ry="1.2" transform="rotate(-25 2.5 2)"/>
+        <ellipse cx="7.5" cy="5.5" rx="2" ry="1.2" transform="rotate(40 7.5 5.5)"/>
+      </g>
+    </pattern>
+    <g id="ub" stroke="#4A2C1A" stroke-linejoin="round">
+      <path d="M2 -10L1 -22H25L24 -10Z" fill="#E9F2F1" stroke-width="1.5"/>
+      <path d="M0 -10H26V36H0Z" fill="#FBF7EE" stroke-width="2.5"/>
+      <path d="M0 -10H26V36H0Z" fill="url(#gq)" stroke="none"/>
+      <path d="M4 2H22V30H4Z" fill="#6E8B3D" stroke-width="1.8"/>
+      <path d="M8 12H18" fill="none" stroke="#FBF7EE" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <g id="wh">
+      <circle r="24" fill="#4A2C1A"/>
+      <circle r="12" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="3"/>
+      <path d="M0 -12V12M-12 0H12" fill="none" stroke="#4A2C1A" stroke-width="3"/>
+    </g>
+  </defs>
+  <rect width="800" height="600" fill="#CFE4EE"/>
+  <rect y="230" width="800" height="70" fill="#E9F2F1"/>
+  <g fill="#FBF7EE" stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round">
+    <path d="M196 70q4-18 24-14q10-16 30-8q18-4 20 14q14 4 9 14H192q-11-2 4-6z"/>
+  </g>
+  <path d="M0 470H800V560H0Z" fill="#F2E2B6"/>
+  <path d="M0 470H800" stroke="#8B5A2B" stroke-width="2.5"/>
+  <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <!-- the family house -->
+    <path d="M20 200H380V470H20Z" fill="#F2E2B6"/>
+    <path d="M0 210L60 120H340L400 210Z" fill="#E59A84"/>
+    <path d="M30 165H370M14 188H386" fill="none" stroke-width="2.5" stroke-opacity="0.5"/>
+    <path d="M70 250H180V470H70Z" fill="#4A2C1A"/>
+    <path d="M70 250H180V470H70Z" fill="none" stroke="#8B5A2B" stroke-width="8"/>
+    <path d="M230 260H340V350H230Z" fill="#CFE4EE"/>
+    <path d="M230 260H340V350H230ZM285 260V350" fill="none" stroke="#8B5A2B" stroke-width="7"/>
+    <!-- the supermarket -->
+    <path d="M410 90H800V470H410Z" fill="#FBF7EE"/>
+    <path d="M410 90H800V150H410Z" fill="#6E8B3D"/>
+    <g transform="translate(605 120)">
+      <ellipse rx="10" ry="16" transform="rotate(-30)" fill="#D9A13B" stroke-width="3"/>
+      <ellipse cx="22" rx="10" ry="16" transform="rotate(30 22 0)" fill="#D9A13B" stroke-width="3"/>
+      <ellipse cx="-22" rx="10" ry="16" transform="rotate(30 -22 0)" fill="#FBF7EE" stroke-width="3"/>
+    </g>
+    <path d="M404 150H806V172Q781 194 756 172Q731 194 706 172Q681 194 656 172Q631 194 606 172Q581 194 556 172Q531 194 506 172Q481 194 456 172Q431 194 404 172Z" fill="#E59A84"/>
+    <path d="M456 150V172M506 150V172M556 150V172M606 150V172M656 150V172M706 150V172M756 150V172" fill="none" stroke="#FBF7EE" stroke-width="8"/>
+    <path d="M436 200H782V470H436Z" fill="#E9F2F1"/>
+    <path d="M444 270H774M444 340H774M444 410H774" fill="none" stroke="#8B5A2B" stroke-width="9"/>
+  </g>
+  <g>
+    <use data-part="shelf-bag" href="#ub" x="456" y="228"/>
+    <use data-part="shelf-bag" href="#ub" x="490" y="228"/>
+    <use data-part="shelf-bag" href="#ub" x="524" y="228"/>
+    <use data-part="shelf-bag" href="#ub" x="558" y="228"/>
+    <use data-part="shelf-bag" href="#ub" x="592" y="228"/>
+    <use data-part="shelf-bag" href="#ub" x="626" y="228"/>
+    <use data-part="shelf-bag" href="#ub" x="660" y="228"/>
+    <use data-part="shelf-bag" href="#ub" x="694" y="228"/>
+    <use data-part="shelf-bag" href="#ub" x="728" y="228"/>
+    <use data-part="shelf-bag" href="#ub" x="456" y="298"/>
+    <use data-part="shelf-bag" href="#ub" x="490" y="298"/>
+    <use data-part="shelf-bag" href="#ub" x="524" y="298"/>
+    <use data-part="shelf-bag" href="#ub" x="558" y="298"/>
+    <use data-part="shelf-bag" href="#ub" x="592" y="298"/>
+    <use data-part="shelf-bag" href="#ub" x="626" y="298"/>
+    <use data-part="shelf-bag" href="#ub" x="660" y="298"/>
+    <use data-part="shelf-bag" href="#ub" x="694" y="298"/>
+    <use data-part="shelf-bag" href="#ub" x="728" y="298"/>
+    <use data-part="shelf-bag" href="#ub" x="456" y="368"/>
+    <use data-part="shelf-bag" href="#ub" x="490" y="368"/>
+    <use data-part="shelf-bag" href="#ub" x="524" y="368"/>
+    <use data-part="shelf-bag" href="#ub" x="558" y="368"/>
+    <use data-part="shelf-bag" href="#ub" x="592" y="368"/>
+    <use data-part="shelf-bag" href="#ub" x="626" y="368"/>
+    <use data-part="shelf-bag" href="#ub" x="660" y="368"/>
+    <use data-part="shelf-bag" href="#ub" x="694" y="368"/>
+    <use data-part="shelf-bag" href="#ub" x="728" y="368"/>
+  </g>
+  <use data-include="road" x="0" y="560"/>
+  <g data-part="truck" stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M540 424H776V552H540Z" fill="#F2E2B6"/>
+    <path d="M556 440H760V536H556Z" fill="none" stroke-width="2.5" stroke-opacity="0.5"/>
+    <g transform="translate(658 488)">
+      <path d="M-30 -18L0 -34L30 -18V18L0 34L-30 18Z" fill="#6E8B3D" stroke-width="3"/>
+      <ellipse rx="8" ry="13" transform="rotate(-20)" fill="#D9A13B" stroke-width="2.5"/>
+    </g>
+    <path d="M540 470H492Q468 470 462 494L454 530V552H540Z" fill="#8B5A2B"/>
+    <path d="M532 480H500Q486 480 482 494L476 514H532Z" fill="#CFE4EE" stroke-width="3"/>
+    <path d="M454 538H468" fill="none" stroke="#D9A13B" stroke-width="8"/>
+    <path d="M450 552H782" fill="none" stroke-width="8"/>
+    <g data-part="wheel" transform="translate(500 568)"><use href="#wh"/></g>
+    <g data-part="wheel" transform="translate(720 568)"><use href="#wh"/></g>
+  </g>
+  <use data-person="me-trao-tui" data-slot="mother" x="66" y="334" width="222" height="222"/>
+  <g data-part="customer" stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M318 476L314 548M340 476L346 548" fill="none" stroke-width="22"/>
+    <path d="M318 476L314 548M340 476L346 548" fill="none" stroke="#8B5A2B" stroke-width="14"/>
+    <path d="M304 552H322M340 552H358" fill="none" stroke-width="8"/>
+    <path d="M304 408Q306 396 328 394Q350 396 354 410L358 484Q328 492 300 484Z" fill="#E59A84"/>
+    <path d="M316 412L292 444L278 446" fill="none" stroke-width="20"/>
+    <path d="M316 412L292 444L278 446" fill="none" stroke="#E59A84" stroke-width="12"/>
+    <circle cx="276" cy="446" r="7" fill="#F4CDA8"/>
+    <path d="M322 378V394H336V378Z" fill="#F4CDA8"/>
+    <circle cx="350" cy="346" r="12" fill="#222222"/>
+    <circle cx="330" cy="358" r="26" fill="#F4CDA8"/>
+    <path d="M304 356Q302 330 330 330Q356 330 356 352Q344 340 326 342Q312 344 304 356Z" fill="#222222"/>
+    <path d="M312 360q4 -5 8 0M326 360q4 -5 8 0M318 370q5 4 10 0" fill="none" stroke-width="3"/>
+    <circle cx="312" cy="368" r="4.5" fill="#E59A84" stroke="none"/>
+  </g>
+  <g data-part="handover-bag" transform="translate(246 412) rotate(-6)"><use href="#ub" transform="scale(1.25)"/></g>
+  <g data-part="gift" stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M376 506H440V552H376Z" fill="#E59A84"/>
+    <path d="M370 492H446V508H370Z" fill="#E59A84"/>
+    <path d="M408 492V552" fill="none" stroke="#D9A13B" stroke-width="9"/>
+    <path d="M408 492Q390 470 384 484Q382 494 408 492Q426 470 432 484Q434 494 408 492Z" fill="#D9A13B"/>
+  </g>
+</svg>

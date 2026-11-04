@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 130">
+  <!-- Chamber vacuum sealer, body only (the clear lid is drawn by scene 6 over the bag).
+       Stainless steel in Trắng gạo and Vàng rơm with Nâu đất lines. The deck front edge is at y 20. -->
+  <g stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M14 112h18v10h-18zM218 112h18v10h-18z" fill="#4A2C1A"/>
+    <path d="M250 20L270 6V96L250 110Z" fill="#F2E2B6"/>
+    <path d="M0 20L20 6H270L250 20Z" fill="#FBF7EE"/>
+    <path d="M30 17L40 10H236L228 17Z" fill="#F2E2B6" stroke-width="2"/>
+    <path d="M0 20H250V112H0Z" fill="#FBF7EE"/>
+    <path d="M8 30L40 30M8 98L24 82M230 30L242 24" fill="none" stroke="#F2E2B6" stroke-width="4"/>
+    <rect x="118" y="32" width="120" height="66" rx="5" fill="#F2E2B6"/>
+    <circle cx="146" cy="65" r="20" fill="#CFE4EE"/>
+    <path d="M146 65L158 54" fill="none" stroke-width="3"/>
+    <circle cx="146" cy="65" r="3" fill="#4A2C1A"/>
+    <rect x="178" y="42" width="48" height="16" rx="3" fill="#4A2C1A"/>
+    <path d="M184 50h14" stroke="#D9A13B" stroke-width="4"/>
+    <circle cx="186" cy="80" r="6" fill="#6E8B3D" stroke-width="2"/>
+    <circle cx="204" cy="80" r="6" fill="#D9A13B" stroke-width="2"/>
+    <circle cx="222" cy="80" r="6" fill="#E59A84" stroke-width="2"/>
+    <g fill="#8B5A2B" stroke="none">
+      <circle cx="12" cy="30" r="2.5"/><circle cx="12" cy="102" r="2.5"/><circle cx="104" cy="30" r="2.5"/><circle cx="104" cy="102" r="2.5"/>
+    </g>
+  </g>
+</svg>

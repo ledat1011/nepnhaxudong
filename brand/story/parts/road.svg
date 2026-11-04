@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 40">
+  <!-- The dirt road along the bottom of every scene. Placed at y 560, so its top edge meets x 0 and x 800 at the same height in all eight scenes. -->
+  <rect width="800" height="40" fill="#F2E2B6"/>
+  <path d="M0 1.5H800" stroke="#8B5A2B" stroke-width="3"/>
+  <g fill="none" stroke="#8B5A2B" stroke-width="2.5" stroke-linecap="round" stroke-opacity="0.45">
+    <path d="M40 22H180M260 22H330M420 22H600M680 22H760"/>
+    <path d="M90 32H230M330 32H470M540 32H720"/>
+  </g>
+  <g fill="#D9A13B" stroke="#8B5A2B" stroke-width="1.5">
+    <ellipse cx="214" cy="12" rx="5" ry="3"/>
+    <ellipse cx="388" cy="27" rx="4" ry="2.5"/>
+    <ellipse cx="642" cy="13" rx="5" ry="3"/>
+  </g>
+</svg>
