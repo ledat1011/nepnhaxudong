@@ -72,7 +72,7 @@ export default async function StoryPage({ params }: StoryPageProps) {
               image={story.cover}
               sizes="(min-width: 768px) 48rem, 100vw"
               placeholderLabel={dict.image.placeholder}
-              priority
+              fetchPriority="high"
               className="h-full w-full object-cover"
             />
           </div>
