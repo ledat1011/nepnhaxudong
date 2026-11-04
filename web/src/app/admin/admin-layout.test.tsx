@@ -8,18 +8,17 @@ vi.mock("@/app/fonts", () => ({ fontClassName: "font-test" }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }));
 
 import AdminLayout, { metadata } from "./layout";
-import AdminPage from "./(app)/page";
 
 describe("admin root layout", () => {
   it("renders its own <html lang=vi> document around the page", () => {
     const html = renderToStaticMarkup(
       <AdminLayout>
-        <AdminPage />
+        <p>Nội dung thử</p>
       </AdminLayout>,
     );
     expect(html).toMatch(/^<html lang="vi" class="font-test[^"]*">/);
     expect(html).toContain("<body");
-    expect(html).toContain("Quản trị Nếp Nhà");
+    expect(html).toContain("Nội dung thử");
   });
 
   it("is never indexed and has a title template", () => {
