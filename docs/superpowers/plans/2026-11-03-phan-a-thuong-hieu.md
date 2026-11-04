@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Ghi chú sau khi làm (2026-11-04):** plan này đã được chủ dự án thay đổi trong lúc làm. Mascot cuối cùng không vẽ tay: chủ dự án chọn tạo ảnh bằng ChatGPT / Gemini trên web (không gọi API trả phí), duyệt ảnh Gemini v5, rồi chuyển sang SVG bằng vtracer. Có thêm logo rút gọn (bản B), hai bản logo sáng cho nền tối, và màu `toc`. Các quyết định đầy đủ nằm ở `docs/session/log/2026-11-03-may-cong-ty-phan-a-thuong-hieu.md`; khi plan và log khác nhau, log đúng.
+
 **Goal:** Tạo bộ nhận diện Nếp Nhà: token màu + font, 6 ý tưởng mascot, mascot SVG tách lớp, 3 bản logo SVG và PNG biểu tượng 32/192/512.
 
 **Architecture:** Mọi file nằm trong `brand/`. Công cụ là các script Node nhỏ trong `brand/tools/`, có `package.json` riêng, không đụng `package.json` gốc của phần C. Claude tự vẽ mascot bằng SVG viết tay (không dùng dịch vụ tạo ảnh), có sẵn các nhóm `<g id>` ngay từ bản ý tưởng; mỗi lần vẽ được render ra PNG bằng resvg để xem lại. Ba bản logo được script ghép từ mascot + chữ đã đổi thành path. Test bằng `node --test` kiểm tra token, font, cấu trúc SVG, màu và kích thước PNG; phần nhìn (đẹp, rõ ở 32px, điểm xoay đúng) do chủ dự án duyệt trên `brand/preview.html`.
@@ -19,7 +21,7 @@
 - Logo đầy đủ: mascot + "Nếp Nhà" (Pacifico) + dòng nhỏ "Xứ Đông · Gạo nếp cái hoa vàng" (Quicksand).
 - Biểu tượng: đầu đội nón lá, rõ ở 32px. Một màu: chỉ `#4A2C1A`.
 - SVG tách lớp: `<g id="head">` xoay quanh cổ, `<g id="rice">` xoay quanh bàn tay, `<g id="body">` đứng yên, `<g id="eyes">` tùy chọn.
-- Ảnh tham khảo `C:\Users\lvdat\Documents\logo\logo-ba-noi-dau-bep-cam-dia-trong-cho-nha-hang-banh-va-logo-am-thuc-tu-lam_513640-1319.avif` (Freepik) chỉ để tham khảo phong cách (nét viền nâu dày, mảng màu phẳng, má hồng, nửa người): không chép hình, không đưa ảnh vào repo.
+- Ảnh tham khảo Freepik (giữ ngoài repo, trên máy chủ dự án) chỉ để tham khảo phong cách (nét viền nâu dày, mảng màu phẳng, má hồng, nửa người): không chép hình, không đưa ảnh vào repo.
 - Không dùng dịch vụ tạo ảnh hay chuyển ảnh có phí (Nano Banana / Gemini, Recraft).
 - Không sửa `CLAUDE.md`, `docs/session/STATE.md`, `.claude/**`, `.mcp.json`, `package.json`, `scripts/**` (thuộc phần C). Ghi trạng thái vào `docs/session/log/2026-11-03-may-cong-ty-phan-a-thuong-hieu.md`.
 - Commit trên nhánh `feat/phan-a-thuong-hieu`, identity `ledat1011`, không có dòng Co-Authored-By. Không push, không merge khi chưa có đồng ý của chủ dự án.

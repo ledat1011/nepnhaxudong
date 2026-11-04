@@ -44,16 +44,35 @@ Chạy song song với session phần C (nhánh `feat/phan-c-nen-tang`). Không 
 - Ở `logo-mono-light`, tóc đen đảo thành mảng trắng; chủ dự án: "tóc theo nền" → ở bản một màu sáng, tóc là phần nền (trong suốt), chỉ giữ viền Trắng gạo.
 
 ## Quyết định
-- Không dùng Nano Banana / Recraft (khác quy trình ở spec 2.3) — chủ dự án quyết định; Claude vẽ SVG trực tiếp, có nhóm `<g id>` ngay từ đầu, nên không cần bước chuyển ảnh sang SVG.
+- Không dùng Nano Banana / Recraft qua API trả phí (khác quy trình ở spec 2.3) — chủ dự án quyết định.
+- Mascot: thử vẽ tay SVG 3 vòng nhưng chưa đủ đẹp; chủ dự án chọn tạo ảnh bằng ChatGPT và Gemini trên web, trong Chrome của chủ dự án (không gọi API, không tốn phí API). Ảnh duyệt cuối: Gemini v5 (mặt và tóc theo bản vẽ của Claude; nón chóp, áo, tay, bó lúa theo ChatGPT v2). Chuyển sang SVG bằng vtracer (`brand/tools/vectorize-mascot.py`), ép bảng màu, tách lớp; phần rơm và dây buộc vẽ lại bằng script — chủ dự án duyệt.
+- Mascot có thêm nhóm `g#hands` (thứ tự body → rice → hands → head) để bàn tay nằm trước bó lúa.
+- Bó lúa ôm trong khuỷu tay, nằm chéo người, bông rủ về bên trái người xem — thay cho "cong qua vai" ở spec 2.3 (chủ dự án).
+- Hai bản mascot: bản minh họa chi tiết (`brand/mascot/mascot-layered.svg`) và bản logo rút gọn B (`brand/logo/mascot-logo.svg`, mặt lấy từ bản minh họa, thân và bó lúa vẽ gọn) — chủ dự án chọn B.
+- Logo đầy đủ dựng từ bản minh họa chi tiết (dùng ở cỡ lớn); icon và logo một màu dựng từ bản B (cỡ nhỏ, in một màu) — chủ dự án chọn.
+- Icon có màu; chỉ logo một màu là một màu Nâu đất (spec 2.3 liệt kê 3 bản, chỉ bản một màu là một màu).
+- Thêm hai bản sáng cho nền tối: `logo-full-light.svg` (chữ Trắng gạo, dòng nhỏ Vàng lúa, viền sticker Trắng gạo) và `logo-mono-light.svg` (nét Trắng gạo, tóc theo màu nền) — chủ dự án chọn.
+- Áo mascot giữ như hiện tại (đã xem các kiểu áo miền Bắc) — chủ dự án chọn.
 - Thêm màu `da` = `#F4CDA8`, chỉ dùng trong mascot — chủ dự án duyệt theo plan.
 - Thêm màu `toc` = `#222222` (tóc đen), chỉ dùng trong mascot — chủ dự án chọn tóc đen như ảnh gốc.
 - Ảnh gốc của mascot (ảnh Gemini v5 đã duyệt) lưu lâu dài ngoài repo, trong thư mục logo riêng của chủ dự án, tên `nepnha-mascot-source-gemini-v5.png`, SHA-256 `65ae40db…b352`; script `vectorize-mascot.py` kiểm tra mã này — chủ dự án chọn.
-- Được tải font Pacifico / Quicksand + OFL, gói npm `@resvg/resvg-js`, `opentype.js`, `svgo`, `svgson` — chủ dự án duyệt theo plan.
+- Được tải font Pacifico / Quicksand + OFL, gói npm `@resvg/resvg-js`, `opentype.js`, `svgson` (không dùng `svgo`), gói Python `vtracer`, `numpy`, `Pillow` (phiên bản ghi trong `brand/tools/requirements-mascot.txt`) — chủ dự án duyệt.
 
 ## Còn mở
 - (Từ session chính, chủ dự án nói) "Duy Tân" là tên phường, thương hiệu vẫn là "Nếp Nhà", bảng màu nâu / vàng / trắng không đổi. Bao bì hiện tại màu xanh lá, khẩu hiệu "Hạt Ngọc Xứ Đông", "Mềm - Dẻo - Thơm ngon". Có thể hỏi chủ dự án: dòng nhỏ của logo có muốn dùng "Hạt Ngọc Xứ Đông" thay cho "Xứ Đông · Gạo nếp cái hoa vàng" không. Không đưa số hotline và logo hội nông dân vào repo.
 - Quyết định "không dùng Nano Banana / Recraft" nên được ghi vào `docs/decisions/` khi session phần C gộp trạng thái; `.mcp.json` của phần C có thể bỏ `nanobanana` và `recraft`.
+- Logo một màu làm bằng `<mask>`: máy cắt decal và công cụ bỏ qua mask không dùng được; khi cần cắt decal phải làm thêm một bản riêng.
+- Ở nền Nâu áo, dòng nhỏ Vàng lúa của logo sáng chỉ đạt tỷ lệ 2,53 (chưa đạt AA); khi logo rộng khoảng 120px, dòng nhỏ quá bé để đọc.
+- Phần B (web) đang dùng màu và logo tạm trong `web/src/lib/brand/` (7 màu, tên khác, không có `da` / `toc`); nên chuyển sang dùng `brand/tokens` và `brand/logo/*` sau khi gộp.
+- CI chưa chạy test của `brand/tools` (51 test); cần một workflow riêng (thuộc phần C hoặc gộp chung).
+- Spec trên `main` (mục 2.3) và plan phần C còn ghi đường dẫn ảnh tham khảo trên máy; phần C nên xóa.
 
 ## Đã làm
-- Tạo worktree và nhánh `feat/phan-a-thuong-hieu`.
-- Viết plan phần A.
+- Tạo worktree và nhánh `feat/phan-a-thuong-hieu`; viết plan phần A (duyệt, chạy Subagent-driven).
+- Token màu và chữ (`brand/tokens/`), font Pacifico + Quicksand 400 / 500 / 700 kèm OFL (`brand/fonts/`).
+- 6 ý tưởng mascot (`brand/concepts/`).
+- Mascot tách lớp từ ảnh Gemini v5 (`brand/mascot/mascot-layered.svg`, script `vectorize-mascot.py`, kiểm tra SHA-256 ảnh gốc), có điểm xoay cho đầu ±3° và bó lúa ±6°; test kiểm tra lỗ hở khi xoay.
+- Logo rút gọn B (`brand/logo/mascot-logo.svg`, `mascot-logo-head.svg`, script `build-logo-mascot.mjs` + `trace-logo-head.py`).
+- 5 logo do script dựng (`build-logos.mjs`): `logo-full`, `logo-icon`, `logo-mono`, `logo-full-light`, `logo-mono-light`.
+- PNG icon 32 / 192 / 512 (`export-png.mjs`), trang xem `brand/preview.html` (`build-preview.mjs`), `brand/README.md` (Task 6 làm ở session riêng, nhánh `feat/phan-a-task6`, đã gộp).
+- Review từng task, review mã Task 4c, review toàn nhánh; đã sửa theo review.
