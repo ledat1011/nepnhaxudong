@@ -13,10 +13,12 @@ API (B1), web công khai (B2) và thương hiệu (phần A) đã merge vào `ma
 - Phần A (thương hiệu, logo) đã merge vào `main` (PR #5, commit `ac2f1b3`).
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
 - Phần B3 (trang quản trị) đã xong trên nhánh `feat/phan-b3-admin`, sẵn sàng mở PR: 9 màn hình (Tổng quan, Sản phẩm, Hành trình, Báo chí, Câu chuyện, Ảnh, Liên hệ & cài đặt, Tài khoản, Lịch sử), đã review từng task và review cuối cả nhánh. Form có thay đổi chưa lưu thì hỏi trước khi rời trang, kể cả khi bấm nút quay lại của trình duyệt. Có bộ test đầu-cuối với API thật (`npm run test:fullstack`) và workflow CI `fullstack`. Cách chạy ở local và cách chạy test nằm trong `docs/setup.md`.
+- Rà soát prompt các file hướng dẫn Claude (nhánh `hacka/workspace-prompt-audit-1ff3bc`): báo cáo `docs/session/prompt-audit-2026-11-04.md`. Đã sửa 5 lỗi trong skill `call-chain` và `visual-deck`; 4 mục chỉ ghi nhận (6–9 trong báo cáo) chờ chủ dự án quyết định.
+- Các skill giao diện đã merge vào `main` (PR #6): anti-slop, taste-skill, gsap-skills dạng plugin trong `.claude/settings.json`, và `web-interface-guidelines` trong `.claude/skills/` (quyết định `0006`).
 
 ## Đang làm
-- Phần B4 (hiệu ứng GSAP và linh vật thật) đang làm song song ở một session khác, trên nhánh `feat/phan-b4-gsap`.
-- Các skill giao diện (antislop) nằm trên nhánh `feat/anti-slop-taste`, chờ chủ dự án xem.
+- Phần B4 (hiệu ứng GSAP và linh vật thật) đã push nhánh `feat/phan-b4-gsap`, đang chạy Delivery Gate của antislop.
+- Chủ dự án đang xem B3 và B4 ở local để góp ý, trước khi mở PR.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).

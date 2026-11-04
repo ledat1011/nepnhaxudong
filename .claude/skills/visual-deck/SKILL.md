@@ -1,6 +1,6 @@
 ---
 name: visual-deck
-description: Use when creating a visual, low-text PowerPoint (.pptx) slide deck from scratch — branded, icon-driven, minimal words, with an agenda slide and a full speaker-script in the notes. Encodes the user's preferred style (dark title/closing slides, icons in colored circles, big-number callouts, card grids) and renders + visually QAs the result via WPS Office on this Windows machine (no PowerPoint/LibreOffice installed).
+description: Use when creating a visual, low-text PowerPoint (.pptx) slide deck from scratch — branded, icon-driven, minimal words, with an agenda slide and a full speaker-script in the notes. Encodes the user's preferred style (dark title/closing slides, icons in colored circles, big-number callouts, card grids) and renders + visually QAs the result via WPS Office (needs a Windows machine with WPS; see docs/setup.md).
 ---
 
 # Visual Deck
@@ -20,11 +20,9 @@ Build polished, **low-text, visual** slide decks with pptxgenjs and verify them 
 
 ## Content principles (earn the slot, don't just fill slides)
 
-- **Lead with value, not removal.** "What this unlocked" beats "what we replaced." If the story reads as "we got rid of X," reframe around what the audience gains.
-- **One vivid concrete example beats six adjectives.** A real before/after walkthrough (a bug fixed in minutes, a feature shipped end-to-end) lands harder than "faster / faster / faster."
-- **Tell the human moment.** The most motivating slide is usually a person ("someone who never coded now ships"), not a process diagram. Give it its own slide.
+- **One vivid concrete example beats six adjectives.** A real before/after example lands harder than a list of claims.
 - **Be honest about weak spots.** Mark in-progress work as in-progress; for "results," show real early numbers + an explicit "hard metrics still being instrumented" rather than unquantified claims.
-- **Make hints operational.** "Your first week / what Monday looks like" beats an abstract bullet list.
+- **Make advice concrete.** Say what the audience does next, not an abstract bullet list.
 
 ## Extra visual components (beyond cards/grids)
 
@@ -33,12 +31,12 @@ Build polished, **low-text, visual** slide decks with pptxgenjs and verify them 
 - **Pipeline / process flow:** N equal cards with `arrowInk` images in the gaps; highlight the final card in the brand color. Compute `gap = (CW - N*cardW)/(N-1)`.
 - Watch chip rows: equal-width chips (`w = (CW - (n-1)*gap)/n`) never overflow; length-based widths do.
 
-## Environment (this Windows machine)
+## Environment (a Windows machine with WPS Office)
 
 - Node 22 is on PATH. Global modules live in the folder printed by `npm root -g` — **set `NODE_PATH` to it** when running the build script.
   Installed globally: `pptxgenjs`, `react-icons`, `react`, `react-dom`, `sharp`. (If missing: `npm install -g pptxgenjs react-icons react react-dom sharp`.)
 - The bundled **pptx skill** has the pptxgenjs API reference + `scripts/rezip.py` (always run it after `writeFile` to compress the output). Path pattern: `…/skills-plugin/**/skills/pptx/`. Read `pptxgenjs.md` there for API details.
-- **No PowerPoint or LibreOffice.** Render/QA goes through **WPS Office COM** (`kwpp.Application`) → export PDF → rasterize with PyMuPDF (`fitz`). Python has `pymupdf` and `pypdf` available.
+- Render/QA goes through **WPS Office COM** (`kwpp.Application`) → export PDF → rasterize with PyMuPDF (`fitz`), with `pymupdf` and `pypdf` installed. Without WPS (another machine, a cloud session), skip the render step and tell the user the deck was not checked visually.
 
 ## Workflow
 
