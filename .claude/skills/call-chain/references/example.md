@@ -24,7 +24,7 @@ POST /api/admin/timeline  (admin saves a story, then the page is revalidated)
 │
 ├─ TimelineController.create                                     :47   ← catch → "Cannot save story…" (:49)
 │  └─ TimelineService.saveStory                                  :31
-│     ══ @Transactional (:30) → TRANSACTION STARTS HERE, limit 30 s ══
+│     ══ @Transactional (:30) → TRANSACTION STARTS HERE ══
 │     ├─ loadCoverImage                                          :38   → GET media-service /images/42
 │     ├─ renumberStories (120 stories)                           :61
 │     │
