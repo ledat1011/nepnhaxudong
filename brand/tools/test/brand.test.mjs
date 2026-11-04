@@ -200,6 +200,7 @@ test('rotateGroups xoay nhom quanh data-pivot', () => {
 });
 
 const mascotPath = fileURLToPath(new URL('../../mascot/mascot-layered.svg', import.meta.url));
+const headFullPath = fileURLToPath(new URL('../../mascot/head-full.svg', import.meta.url));
 const ANIMATED = { head: 3, rice: 6 };
 
 const pivotOf = (facts, id) => {
@@ -227,9 +228,10 @@ test('mascot tach lop dung cau truc', () => {
   }
 });
 
-// The mascot is traced from the approved illustration by vectorize-mascot.py (about 75 KB). The
-// limit leaves room for a re-trace with small changes, and still catches an untuned trace: near
-// the vtracer defaults the same picture gives about 150 KB.
+// The mascot is traced from the approved illustration by vectorize-mascot.py: 89,962 bytes, with
+// the drawn straw bundle and rope. The ~8 KB left under the limit is on purpose: it blocks adding
+// more detail (logo-full, mascot + 24 KB, has about 2.7 KB left), and it still catches an untuned
+// trace (near the vtracer defaults the same picture gives about 150 KB).
 const MASCOT_MAX_BYTES = 96 * 1024;
 
 test('mascot dung mau, khong the cam, nhe', () => {
@@ -247,24 +249,26 @@ test('mascot dung mau, khong the cam, nhe', () => {
 // color (Trang gao) is left transparent, not painted.
 const TRACED_ATTRIBUTES = new Set(['d', 'fill', 'transform']);
 
-test('mascot: chi gom path to mau, nen trong suot', () => {
-  const root = parseSync(readFileSync(mascotPath, 'utf8'));
+test('mascot va head-full: chi gom path to mau, nen trong suot', () => {
   const background = readTokens().color['trang-gao'].value.toLowerCase();
-  const groups = root.children.filter((child) => child.type === 'element');
-  const visit = (node, where) => {
-    for (const child of node.children.filter((c) => c.type === 'element')) {
-      if (child.name === 'g') {
-        visit(child, `${where} > g`);
-        continue;
+  for (const file of [mascotPath, headFullPath]) {
+    const root = parseSync(readFileSync(file, 'utf8'));
+    const groups = root.children.filter((child) => child.type === 'element');
+    const visit = (node, where) => {
+      for (const child of node.children.filter((c) => c.type === 'element')) {
+        if (child.name === 'g') {
+          visit(child, `${where} > g`);
+          continue;
+        }
+        assert.equal(child.name, 'path', `${where} co the <${child.name}>`);
+        const extra = Object.keys(child.attributes).filter((key) => !TRACED_ATTRIBUTES.has(key));
+        assert.deepEqual(extra, [], `${where} path co thuoc tinh ${extra.join(', ')}`);
+        assert.notEqual(child.attributes.fill?.toLowerCase(), background, `${where} to mau nen`);
       }
-      assert.equal(child.name, 'path', `${where} co the <${child.name}>`);
-      const extra = Object.keys(child.attributes).filter((key) => !TRACED_ATTRIBUTES.has(key));
-      assert.deepEqual(extra, [], `${where} path co thuoc tinh ${extra.join(', ')}`);
-      assert.notEqual(child.attributes.fill?.toLowerCase(), background, `${where} to mau nen`);
-    }
-  };
-  for (const group of groups) visit(group, `g#${group.attributes.id}`);
-  assert.ok(!('stroke' in root.attributes), 'svg goc co stroke');
+    };
+    for (const group of groups) visit(group, `${file.split(/[\\/]/).pop()} g#${group.attributes.id}`);
+    assert.ok(!('stroke' in root.attributes), 'svg goc co stroke');
+  }
 });
 
 const vectorizePath = fileURLToPath(new URL('../vectorize-mascot.py', import.meta.url));
@@ -304,7 +308,6 @@ test('mascot: toc den chi trong head, vien van Nau dat', () => {
   }
 });
 
-const headFullPath = fileURLToPath(new URL('../../mascot/head-full.svg', import.meta.url));
 const HEAD_FULL_SIZE = 512;
 // A few pixels of antialiasing can touch between two shapes; a real loose piece is far larger.
 const SPECK_PIXELS = 24;
@@ -381,6 +384,25 @@ test('mascot: pivot head / rice khop transform-origin va nam trong nhom', () => 
     assert.ok(inside(pivot, contentBBox(svg, id)), `pivot ${id} nam ngoai khung nhom`);
   }
   assert.ok(inside(pivotOf(facts, 'rice'), contentBBox(svg, 'hands')), 'tay khong che diem nam bo lua');
+});
+
+// Enclosed transparent pixels at 1024 px when the head / rice tilt (the animation's range). The
+// trace today gives at most 205 (rice -6 deg: real background between grains); a hole the parts
+// do not paint under (the head's colors behind the rice, rice under the hands) gives thousands.
+const ROTATION_HOLE_BUDGET = 400;
+const ROTATION_SIZE = 1024;
+
+test('mascot: xoay head / rice khong lo nen', () => {
+  const svg = readFileSync(mascotPath, 'utf8');
+  const frames = [{}];
+  for (const sign of [1, -1]) {
+    frames.push({ head: sign * ANIMATED.head }, { rice: sign * ANIMATED.rice });
+    frames.push({ head: sign * ANIMATED.head, rice: sign * ANIMATED.rice });
+  }
+  for (const angles of frames) {
+    const { enclosed } = alphaFacts(rotateGroups(svg, angles), ROTATION_SIZE);
+    assert.ok(enclosed <= ROTATION_HOLE_BUDGET, `${JSON.stringify(angles)}: ${enclosed} px lo`);
+  }
 });
 
 test('mascot: xoay head / rice van nam trong viewBox', () => {

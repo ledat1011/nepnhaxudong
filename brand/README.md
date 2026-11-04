@@ -9,6 +9,7 @@
 | `logo/logo-mono.svg` | Logo một màu Nâu đất: in một màu, khắc, đóng dấu. |
 | `png/logo-icon-{32,192,512}.png` | Favicon (32), icon ứng dụng web (192, 512). |
 | `mascot/mascot-layered.svg` | Mascot tách lớp `#head`, `#rice`, `#hands`, `#body` (có `data-pivot` để làm hiệu ứng). |
+| `mascot/head-full.svg` | Cả cái đầu (không bị bó lúa che), nguồn của `logo-icon.svg`. |
 | `tokens/tokens.json` | Nguồn gốc màu, font, các cặp chữ / nền hợp lệ. |
 | `tokens/tokens.css` | Biến CSS sinh từ `tokens.json` (`--color-*`, `--font-*`). |
 | `fonts/` | Pacifico, Quicksand 400 / 500 / 700 (giấy phép OFL). |
@@ -18,7 +19,7 @@
 ## Quy tắc màu
 
 - Vàng lúa `#D9A13B` không dùng làm màu chữ trên nền sáng (không đủ tương phản). Chỉ dùng cho điểm nhấn, hoặc làm chữ trên nền Nâu đất.
-- Hồng má `#E59A84` và `da` `#F4CDA8` chỉ dùng trong mascot.
+- Hồng má `#E59A84`, `da` `#F4CDA8` và `toc` `#222222` chỉ dùng trong mascot, không dùng làm màu chữ.
 - Xanh mạ `#6E8B3D` dùng rất ít (lá lúa).
 - Chỉ ghép chữ / nền theo `textPairs` trong `tokens.json`; mọi cặp đạt WCAG AA (4,5 : 1).
 
@@ -39,6 +40,7 @@ Trong `brand/tools` (Node 22), lần đầu chạy `npm ci`, sau đó:
 | `npm run png` | `logo/logo-icon.svg` → `png/logo-icon-{32,192,512}.png` |
 | `npm run preview` | mascot + tokens → `preview.html` |
 | `npm test` | Kiểm tra token, font, SVG, PNG, preview |
+| `python vectorize-mascot.py <png> ../mascot/mascot-layered.svg` | Ảnh mascot gốc đã duyệt (PNG giữ ngoài repo) → `mascot/mascot-layered.svg` và `mascot/head-full.svg`. Cần Python: `pip install -r requirements-mascot.txt`. Sau đó chạy `npm run logos`, `npm run png`, `npm run preview`. |
 
 Khi mascot đổi: chạy `npm run logos`, rồi `npm run png`, rồi `npm run preview`, rồi `npm test`.
 Test báo lỗi nếu PNG hoặc `preview.html` cũ hơn SVG.

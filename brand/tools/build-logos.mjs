@@ -29,6 +29,8 @@ const TAGLINE_WIDTH = 0.86 * MASCOT_SIZE;
 const TAGLINE_GAP = 22;
 const TAGLINE_LETTER_SPACING = 0.16;
 
+// These three only act on a stroked, hand-drawn head (lines and eye ellipses). The traced head-full.svg
+// is filled paths only, so for it they do nothing; they stay for a future simplified logo mascot.
 const ICON_STROKE_SCALE = 1.9;
 const ICON_EYE_SCALE = 1.35;
 const ICON_DETAIL_STROKE = 4;
@@ -143,8 +145,9 @@ const inherit = (node, inherited) => ({
 
 const same = (a, b) => a !== undefined && b !== undefined && a.toLowerCase() === b.toLowerCase();
 
-// Head only, simplified for small sizes: the age lines, hair shine and hat strap (Nâu áo lines) and
-// the thin hair strands go; every other line gets thicker and the eyes bigger.
+// Head only, for the icon. On the traced head (filled paths) it lifts the Vàng rơm hat to Trắng gạo
+// and drops id, data-pivot and style. On a stroked, hand-drawn head it also drops Nâu áo lines and
+// thin Nâu đất lines, thickens the other lines and enlarges the eye ellipses.
 function simplifyHead(node, inherited) {
   const own = paint(node, inherited);
   const copy = { ...node, attributes: { ...node.attributes }, children: [] };

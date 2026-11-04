@@ -1,9 +1,12 @@
 """Builds brand/mascot/mascot-layered.svg and head-full.svg from the approved mascot illustration.
 
 Source: an AI-generated raster illustration (1024 x 1024 PNG, girl with a nón lá holding a rice
-sheaf) that the owner approved on 2026-11-03. The PNG is not kept in the repository; pass its path.
+sheaf) that the owner approved on 2026-11-03. The PNG is not kept in the repository: the owner keeps
+a copy outside it, and that copy must be kept, since every rule below fits this one image. The
+script stops when the input's SHA-256 is not SOURCE_SHA256 (--any-source skips the check, for a new
+image whose zones are measured again).
 
-    python vectorize-mascot.py SOURCE.png OUT.svg [--head-full HEAD.svg] [--debug DIR]
+    python vectorize-mascot.py SOURCE.png OUT.svg [--head-full HEAD.svg] [--debug DIR] [--any-source]
 
 Steps:
 1. Classify every pixel to one of the source colors (ANCHORS), in CIE Lab. A pixel between two
@@ -21,11 +24,16 @@ Steps:
 6. Write head-full.svg for logo-icon: the head with the pixels the rice hides painted in, cut below
    the chin (head_full()). The mascot's own head keeps those holes, since the leaves lie in front.
 
-Needs Python 3 with numpy, Pillow and vtracer (built with vtracer 0.6.15).
+Needs Python 3 with the versions in requirements-mascot.txt (pip install -r requirements-mascot.txt).
+Another vtracer version may trace differently, so the script warns about it.
 
-The rules and pixel positions below fit this one illustration (1024 x 1024 source coordinates).
+The rules and pixel positions below fit this one illustration. All zones, polygons and points are
+in source pixels (1024 x 1024), measured by hand on the source: to check one, draw it over the
+source picture (for example with PIL ImageDraw) and look at it.
 """
 import argparse
+import hashlib
+import importlib.metadata
 import re
 import sys
 from collections import deque
@@ -36,6 +44,8 @@ import vtracer
 from PIL import Image, ImageDraw
 
 SOURCE_SIZE = 1024
+SOURCE_SHA256 = '65ae40db2d27c6ae96d5298b33aac5c914cc96ce0e70a1cb4f1b94c14453b352'
+VTRACER_VERSION = '0.6.15'
 OUT_SIZE = 512
 SCALE = OUT_SIZE / SOURCE_SIZE
 
@@ -48,6 +58,8 @@ LEAF = '#6E8B3D'
 SKIN = '#F4CDA8'
 HAIR = '#222222'
 BRAND = [DARK, BLOUSE, GOLD, STRAW, CHEEK, LEAF, SKIN, HAIR]
+PACK = 16
+assert len(BRAND) < PACK, 'assign_parts() packs part and color index + 1 into one number below PACK'
 
 # Source color -> brand color (None = background, left transparent). Ink colors are outlines,
 # hair and eyes: a pixel between ink and another color goes to the ink when it is nearer to it.
@@ -111,6 +123,10 @@ STRAW_SAMPLES = 60
 # Each line between two straws wavers by up to this share of the straw width, so no straw is a
 # straight plank of constant width.
 STRAW_WAVE = 0.22
+# The waver is a slow and a fast sine (cycles over the bundle's length) mixed by these weights.
+WAVE_SLOW = (1.0, 2.2)
+WAVE_FAST = (2.5, 4.0)
+WAVE_WEIGHTS = (0.6, 0.4)
 STRAW_LINE_WIDTH = 3
 # The shade: at this share across the straw, this wide, from this share of the bundle's length.
 STRAW_SHADE_AT = 0.35
@@ -132,6 +148,9 @@ END_STEP = 0.06
 END_ZONE = 0.3
 END_LINE_WIDTH = 4
 END_DEPTHS = (0.55, 0.8, 1.0)
+END_POINTS = 11
+# Tries to find the uneven end lengths; running out means END_STEP is too large for END_JITTER.
+END_TRIES = 1000
 STRAW_SEED = 7
 # Grains and leaves stay as traced, with the outline this close to them; they only lie above the
 # upper hand (GRAIN_ZONE). A gold (green) region there is a grain (leaf) when it is thicker than
@@ -159,6 +178,12 @@ ROPE_STEP = 6.5
 ROPE_ANGLE = 40
 ROPE_OUTLINE = 2.5
 ROPE_POINTS = 10
+# Half width of a strand across its slant, as a share of ROPE_STEP; strands overlap a little.
+ROPE_STRAND_WIDTH = 0.6
+# The gold strand sits ROPE_SHADE_SHIFT pixels up the cord and ROPE_STRAND_INSET shorter along its
+# slant than the Nâu áo under it, so the shade shows on its lower side.
+ROPE_SHADE_SHIFT = 1
+ROPE_STRAND_INSET = 1
 # How much thinner a gold strand is than its outline, so the Nâu áo core shows between strands.
 ROPE_SHADE = 2.1
 # Where it is tied, the bundle's edge pinches in by this much next to the rope.
@@ -200,7 +225,9 @@ BODY_EDGE_WIDTH = 6
 RICE_UNDER_HANDS_CLOSE = 60
 HEAD_CLOSE = 64
 
-# Pivots in OUT_SIZE units: head at mid-neck, rice at the upper gripping hand.
+# Pivots in OUT_SIZE units, measured by hand on the source. Head: middle of the visible neck skin
+# (source x 493-628, y 488-557, center (556, 514) -> (278, 257)). Rice: middle of the upper
+# gripping fist (source x 540-670, y 650-770, center (605, 710) -> (302, 356)).
 PIVOTS = {'head': (278, 257), 'rice': (302, 356)}
 
 TRACE = dict(
@@ -427,8 +454,9 @@ def assign_parts(anchor):
     # speckles take part and color of their nearest pixel.
     part = spread(part, part >= 0, part == -2)
     known = part != -3
-    both = spread(part * 16 + color + 1, known, ~known)
-    part, color = both // 16, both % 16 - 1
+    # Part and color packed into one number, so both spread together (color + 1 < PACK).
+    both = spread(part * PACK + color + 1, known, ~known)
+    part, color = both // PACK, both % PACK - 1
     part = np.where(color < 0, -1, part)
     return part, color
 
@@ -470,6 +498,8 @@ def extend(part, color):
 
 
 def largest_region(mask):
+    if not mask.any():
+        raise SystemExit('no head pixels: wrong source image?')
     ids, regions = components(mask.astype(np.int8))
     best = max((rid for rid, r in enumerate(regions) if r['value']), key=lambda rid: regions[rid]['area'])
     return ids == best
@@ -481,6 +511,7 @@ def head_full(part, color):
     head = part == HEAD
     rows = np.arange(SOURCE_SIZE)[:, None]
     full = fill_holes(erode(dilate(head, HEAD_FULL_CLOSE), HEAD_FULL_CLOSE) | head)
+    # Box filter, then keep the pixels more than half inside: a smoothed silhouette.
     full = (box_mean(full.astype(float), HEAD_FULL_BLUR) >= 0.5) & (rows < HEAD_FULL_CUT)
     full = fill_holes(largest_region(full))
     # Hat ribs (gold) are thin lines, not a fill to extend.
@@ -545,17 +576,21 @@ def straw_layer():
         wave = 0.0
         if 0 < k < STRAWS:
             phase = rng.uniform(0, 2 * np.pi, 2)
-            slow, fast = rng.uniform(1.0, 2.2), rng.uniform(2.5, 4.0)
-            wave = STRAW_WAVE / STRAWS * (0.6 * np.sin(2 * np.pi * slow * along + phase[0])
-                                          + 0.4 * np.sin(2 * np.pi * fast * along + phase[1]))
+            slow, fast = rng.uniform(*WAVE_SLOW), rng.uniform(*WAVE_FAST)
+            wave = STRAW_WAVE / STRAWS * (WAVE_WEIGHTS[0] * np.sin(2 * np.pi * slow * along + phase[0])
+                                          + WAVE_WEIGHTS[1] * np.sin(2 * np.pi * fast * along + phase[1]))
         share.append(k / STRAWS + wave)
     lines = [edge_a + (edge_b - edge_a) * np.asarray(f)[..., None] for f in share]
     pairs = STRAWS // 2
     cuts = [rng.uniform(0, END_JITTER)]
-    while len(cuts) < pairs:
+    for _ in range(END_TRIES):
+        if len(cuts) == pairs:
+            break
         cut = rng.uniform(0, END_JITTER)
         if abs(cut - cuts[-1]) >= END_STEP:
             cuts.append(cut)
+    else:
+        raise SystemExit(f'no uneven straw ends after {END_TRIES} tries: END_STEP too large for END_JITTER')
     ends = [count - 1 - int(cut * STRAW_SAMPLES) for cut in cuts]
     depths = [rng.choice(END_DEPTHS) for _ in range(pairs)]
     canvas = label_canvas()
@@ -569,7 +604,7 @@ def straw_layer():
         middle, half = (left[-1] + right[-1]) / 2, (right[-1] - left[-1]) / 2
         depth = np.hypot(*half) * depths[i]
         caps.append(depth)
-        cap = [middle - half * np.cos(t) + forward * depth * np.sin(t) for t in np.linspace(0, np.pi, 11)]
+        cap = [middle - half * np.cos(t) + forward * depth * np.sin(t) for t in np.linspace(0, np.pi, END_POINTS)]
         draw.polygon([tuple(q) for q in [*left, *cap, *right[::-1]]], fill=BRAND.index(STRAW) + 1)
     for k in range(1, STRAWS):
         pair = k // 2
@@ -647,26 +682,27 @@ def rope_shapes():
     across = np.array([-axis[1], axis[0]])
     slant = np.arctan2(axis[1], axis[0]) + np.radians(ROPE_ANGLE)
     a = ROPE_HALF / np.sin(np.radians(ROPE_ANGLE))
-    b = ROPE_STEP * 0.6
+    b = ROPE_STEP * ROPE_STRAND_WIDTH
     gap = 2 * (ROPE_HALF + ROPE_OUTLINE) - ROPE_OUTLINE
     length = np.hypot(*(end - start))
     layers = {DARK: [], BLOUSE: [], GOLD: []}
     for wrap in range(ROPE_WRAPS):
-        shift = across * gap * (wrap - (ROPE_WRAPS - 1) / 2)
+        offset = across * gap * (wrap - (ROPE_WRAPS - 1) / 2)
         # The Nâu áo core of the cord, under the strands.
-        core = [start + shift + axis * d for d in (ROPE_STEP / 2, length - ROPE_STEP)]
+        core = [start + offset + axis * d for d in (ROPE_STEP / 2, length - ROPE_STEP)]
         layers[BLOUSE].append(band(np.array(core), ROPE_HALF - ROPE_OUTLINE / 2))
         for d in np.arange(0, length, ROPE_STEP):
-            center = start + shift + axis * d
+            center = start + offset + axis * d
             layers[DARK].append(ellipse(center, a + ROPE_OUTLINE, b + ROPE_OUTLINE, slant, ROPE_POINTS))
-            layers[GOLD].append(ellipse(center - axis, a - 1, b - ROPE_SHADE, slant, ROPE_POINTS))
+            layers[GOLD].append(ellipse(center - axis * ROPE_SHADE_SHIFT, a - ROPE_STRAND_INSET,
+                                        b - ROPE_SHADE, slant, ROPE_POINTS))
     return [(tone, layers[tone]) for tone in (DARK, BLOUSE, GOLD)]
 
 
 def rope_mask(shapes):
     canvas = Image.new('1', (SOURCE_SIZE, SOURCE_SIZE), 0)
     draw = ImageDraw.Draw(canvas)
-    for polygon in shapes[0][1]:
+    for polygon in dict(shapes)[DARK]:
         draw.polygon(polygon, fill=1)
     return np.asarray(canvas, dtype=bool)
 
@@ -932,8 +968,20 @@ def main(argv):
     parser.add_argument('--head-full', type=Path,
                         help='where to write the whole head for logo-icon (default: head-full.svg next to OUT)')
     parser.add_argument('--debug', type=Path, help='folder for the part masks as PNG')
+    parser.add_argument('--any-source', action='store_true',
+                        help='skip the SHA-256 check of the source (for a new image: measure the zones again)')
     args = parser.parse_args(argv)
-    image = Image.open(args.source).convert('RGB')
+    digest = hashlib.sha256(Path(args.source).read_bytes()).hexdigest()
+    if digest != SOURCE_SHA256 and not args.any_source:
+        raise SystemExit(f'{args.source} is not the approved illustration (SHA-256 {digest}); '
+                         'the zones fit only that image. Use --any-source for a new one.')
+    found = importlib.metadata.version('vtracer')
+    if found != VTRACER_VERSION:
+        print(f'warning: vtracer {found}, built with {VTRACER_VERSION}: the trace may differ', file=sys.stderr)
+    source = Image.open(args.source)
+    if 'A' in source.getbands() and source.getchannel('A').getextrema()[0] < 255:
+        print('warning: the source has transparent pixels; they are read as if opaque', file=sys.stderr)
+    image = source.convert('RGB')
     if image.size != (SOURCE_SIZE, SOURCE_SIZE):
         raise SystemExit(f'expected a {SOURCE_SIZE} x {SOURCE_SIZE} image, got {image.size}')
     pixels = np.asarray(image)
