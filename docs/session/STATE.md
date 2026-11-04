@@ -12,10 +12,12 @@ Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã x
 - Phần B2 (web công khai): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
 - Rà soát prompt các file hướng dẫn Claude (nhánh `hacka/workspace-prompt-audit-1ff3bc`): báo cáo `docs/session/prompt-audit-2026-11-04.md`. Đã sửa 5 lỗi trong skill `call-chain` và `visual-deck`; 4 mục chỉ ghi nhận (6–9 trong báo cáo) chờ chủ dự án quyết định.
+- Review trang quản trị B3 về độ dễ dùng (nhánh `hacka/admin-ux-review-d606fa`): báo cáo `docs/reviews/2026-11-04-admin-ux.md`, ảnh chụp trong `docs/reviews/2026-11-04-admin-ux/`. Chỉ review, chưa sửa mã.
 
 ## Đang làm
 - Phần B2: mở PR, chờ CI, merge vào `main` (chủ dự án đã đồng ý).
 - Phần A (logo) chờ chủ dự án duyệt linh vật, nhánh `feat/phan-a-thuong-hieu`.
+- Review admin B3: chờ chủ dự án duyệt 5 việc ưu tiên (mục 7 của `docs/reviews/2026-11-04-admin-ux.md`). Chưa push, chưa mở PR.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
