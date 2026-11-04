@@ -8,6 +8,8 @@
   --color-rice: #fbf7ee;
   --color-blush: #e59a84;
   --color-sprout: #6e8b3d;
+  --color-sky: #cfe4ee;
+  --color-sky-light: #e9f2f1;
 }
 
 /* Font variables are attached to <html> by next/font in the root layout. */
