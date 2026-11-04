@@ -3,7 +3,7 @@
 Cập nhật: 2026-11-04 — máy công ty
 
 ## Giai đoạn hiện tại
-`main` đã có API (B1, PR #3), web công khai (B2, PR #4) và logo, mascot (phần A, PR #5). Hiệu ứng GSAP (B4) đã xong trên nhánh `feat/phan-b4-gsap`, chưa push. Trang quản trị (B3) làm song song trên nhánh `feat/phan-b3-admin`.
+`main` đã có API (B1, PR #3), web công khai (B2, PR #4) và logo, mascot (phần A, PR #5). Hiệu ứng GSAP (B4) đã xong trên nhánh `feat/phan-b4-gsap`, đã push, đang chờ PR. Trang quản trị (B3) làm song song trên nhánh `feat/phan-b3-admin`.
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
@@ -12,14 +12,15 @@ Cập nhật: 2026-11-04 — máy công ty
 - Phần B2 (web công khai) đã merge vào `main` (PR #4): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
 - Phần A (logo, mascot, icon) đã merge vào `main` (PR #5).
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
-- Phần B4 (hiệu ứng GSAP) xong trên nhánh `feat/phan-b4-gsap`, 5 task đã review và đã sửa theo review cuối của cả nhánh: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 nằm trong `docs/setup.md`.
+- Phần B4 (hiệu ứng GSAP) xong trên nhánh `feat/phan-b4-gsap`, 5 task đã review và đã sửa theo review cuối của cả nhánh: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 nằm trong `docs/setup.md`. Đã chạy Delivery Gate của antislop trên trang công khai và sửa các mục FAIL (vùng bấm 44 px, dòng chữ "đang tải", con trỏ và trạng thái khi bấm, trang 404 có header và footer, ảnh bìa câu chuyện tải trước, icon đặc điểm theo đúng thứ tự).
 - Kết quả xem bằng mắt sau B4. Chromium có cửa sổ không mở được trên máy, nên đã xem bằng Chromium không cửa sổ (headless), cùng bộ máy vẽ:
   - Đầu và bó lúa xoay đúng tâm, không có mảnh nào bị tách ra. Góc lớn nhất đo được khi cuộn nhanh: đầu 2,7°, bó lúa 4,2°.
   - Mascot nằm gọn trong hero. Logo ở header rõ ở cỡ 36 px.
   - Chưa xem favicon thật trên tab trình duyệt. Chỉ mới mở file `/icon.svg`: file này hiện đúng.
+- Rà soát prompt các file hướng dẫn Claude (nhánh `hacka/workspace-prompt-audit-1ff3bc`): báo cáo `docs/session/prompt-audit-2026-11-04.md`. Đã sửa 5 lỗi trong skill `call-chain` và `visual-deck`; 4 mục chỉ ghi nhận (6–9 trong báo cáo) chờ chủ dự án quyết định.
 
 ## Đang làm
-- Phần B4: nhánh `feat/phan-b4-gsap` CHƯA push. Chủ dự án quyết định push, mở PR và merge.
+- Phần B4: nhánh `feat/phan-b4-gsap` đã push. Chủ dự án đồng ý mở PR; chủ dự án quyết định merge. Các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec (mục 2.2, 3.0, 3.3) chờ chủ dự án đọc và xác nhận.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).

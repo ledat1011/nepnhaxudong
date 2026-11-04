@@ -28,7 +28,7 @@ markers for the things that explain the bug.
 ## 2. Check the line numbers against the code
 
 The stack trace line numbers belong to the **deployed** version. Compare a few frames with the
-local file (and with `origin/master` via `git show origin/master:<path>`). If they match, say so.
+local file (and with `origin/main` via `git show origin/main:<path>`). If they match, say so.
 If they do not, keep the stack numbers in the tree, say which version they come from, and give
 the links with the local line numbers. A link that opens on the wrong line wastes the user's time.
 
@@ -38,7 +38,7 @@ Read each method in the chain, then add these. Each one answers a question the u
 
 | Marker | When | How to find it |
 |---|---|---|
-| `══ @Transactional (:N) → TRANSACTION STARTS HERE, limit 30 s ══` | a method opens the transaction | `@Transactional`; inner `REQUIRED` methods join it, so the marker goes on the outermost one only |
+| `══ @Transactional (:N) → TRANSACTION STARTS HERE ══` | a method opens the transaction | `@Transactional`; inner `REQUIRED` methods join it, so the marker goes on the outermost one only. Add `, limit N s` only when a timeout is set (`timeout =` on the annotation or `spring.transaction.default-timeout`) |
 | `← catch → "<log text>" (:N)` | a frame catches, wraps, retries or swallows the error | try/catch in that method; quote the real log message |
 | `→ GET <service>/<path>` | an external call (REST, message publish, other database) | rest clients, publishers |
 | sibling line `├─ foo() :N` | a call that ran and **returned** before the failing call, but matters (took time, changed state) | code read of the parent method; it is not in the stack |
@@ -76,7 +76,7 @@ After the tree, add in the user's language:
 
 1. **Links table** — `Step | Link`, one row per important frame, as markdown links with the
    full path from the working directory (for example
-   `[TimelineService.java:42](backend/src/main/java/vn/nepnhaxudong/timeline/TimelineService.java:42)`).
+   `[LoginService.java:79](api/src/main/java/vn/nepnhaxudong/auth/LoginService.java:79)`).
    Never shorten a path with `.../`.
 2. **Exception chain** — a second code block, root cause first, each wrapper on its own line,
    the misleading message and the alert line marked, and the end of the chain
