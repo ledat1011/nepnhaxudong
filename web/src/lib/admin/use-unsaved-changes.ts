@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useId } from "react";
+import { useCallback, useContext, useEffect, useId, useRef } from "react";
 import { NavGuardContext } from "./nav-guard";
 
 /**
@@ -9,15 +9,23 @@ import { NavGuardContext } from "./nav-guard";
  * - the shell's NavGuardProvider asks before any link to another page and before the browser back button
  *   (one extra history entry with the same URL, removed again when the form is clean).
  */
-export function useUnsavedChanges(dirty: boolean): void {
+export function useUnsavedChanges(dirty: boolean, options: { keepsDraft?: boolean } = {}): void {
   const guard = useContext(NavGuardContext);
   const id = useId();
+  const keepsDraft = options.keepsDraft ?? false;
+  const keepsDraftRef = useRef(keepsDraft);
 
   useEffect(() => {
     if (!dirty || guard === null) return;
-    guard.markDirty(id);
+    guard.markDirty(id, keepsDraftRef.current);
     return () => guard.markClean(id);
   }, [dirty, guard, id]);
+
+  // A change of `keepsDraft` only updates the flag: a clean-then-dirty step would move the back-button entry.
+  useEffect(() => {
+    keepsDraftRef.current = keepsDraft;
+    if (dirty && guard !== null) guard.markDirty(id, keepsDraft);
+  }, [keepsDraft, dirty, guard, id]);
 
   useEffect(() => {
     if (!dirty) return;
