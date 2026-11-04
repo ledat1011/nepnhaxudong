@@ -230,15 +230,19 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
 
   /**
    * The editor wrote the body in its own form when it opened. If the box still holds the API value, both the box
-   * and the saved baseline take the new form, so an untouched story is not "changed". An image that the editor
-   * dropped is reported, because saving would remove it.
+   * and the saved baseline take the new form, so an untouched story is not "changed". If the editor dropped an
+   * image, nothing is replaced and the writer is warned: the stored body stays until the body is really edited.
    */
   function bodyNormalized(lang: Lang, html: string, from: string) {
     const take = (current: FormState): FormState =>
       current[lang].bodyHtml === from ? { ...current, [lang]: { ...current[lang], bodyHtml: html } } : current;
+    if (countImages(html) < countImages(from)) {
+      // The stored body is kept as it is: it is sent again until the writer edits the body, so no image is lost silently.
+      setLostImages((current) => ({ ...current, [lang]: true }));
+      return;
+    }
     setState(take);
     setBaselineState(take);
-    if (countImages(html) < countImages(from)) setLostImages((current) => ({ ...current, [lang]: true }));
   }
 
   function changeTitle(lang: Lang, title: string) {

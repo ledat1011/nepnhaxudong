@@ -345,6 +345,18 @@ describe("StoryForm untouched story", () => {
     expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
   });
 
+  it("keeps an image the editor cannot show when only the title is changed", async () => {
+    const events = userEvent.setup();
+    const body = '<p>x</p><img src="https://e.example/a.png" alt="e">';
+    render(<StoryForm initial={story({ bodyHtml: { vi: body, en: null } })} />);
+    await ready();
+    await screen.findByText(IMAGE_WARNING);
+    await events.type(screen.getByLabelText("Tiêu đề"), "!");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    expect(writes()[0].body.bodyHtml?.vi).toBe(body);
+  });
+
   it("shows no warning for a body whose images are all from the library", async () => {
     render(<StoryForm initial={story({ bodyHtml: { vi: '<img src="/media/1.webp" alt="a">', en: null } })} />);
     await ready();
