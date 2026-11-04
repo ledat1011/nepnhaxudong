@@ -15,11 +15,15 @@ type StoryCardProps = {
   headingLevel?: 2 | 3;
 };
 
+/** Frame of a story card. The loading skeleton uses it too, so both have the same size. */
+export const STORY_CARD_CLASS =
+  "group relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-grain bg-rice has-[a:hover]:border-coat";
+
 /** Card for the home page and the story list. The title link covers the whole card. */
 export function StoryCard({ lang, story, dict, headingLevel = 3 }: StoryCardProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-grain bg-rice has-[a:hover]:border-coat">
+    <article className={STORY_CARD_CLASS}>
       <div className="aspect-[16/9] overflow-hidden">
         <ContentImage
           image={story.cover}
