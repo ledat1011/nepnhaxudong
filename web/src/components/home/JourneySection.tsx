@@ -31,7 +31,7 @@ export function JourneySection({ dict, events }: JourneySectionProps) {
           >
             <RiceEar className="block" />
           </span>
-          <ol>
+          <ol role="list">
             {events.map((event, i) => {
               const onLeft = i % 2 === 0;
               return (
