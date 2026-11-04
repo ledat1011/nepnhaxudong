@@ -71,7 +71,7 @@ export type PressMentionAdminDto = {
   id: number;
   url: string;
   sourceName: string;
-  publishedOn: string;
+  publishedOn: string | null;
   title: LocalizedText;
   mediaId: number | null;
   sortOrder: number;
@@ -81,7 +81,7 @@ export type PressMentionAdminDto = {
 export type PressMentionRequest = {
   url: string;
   sourceName: string;
-  publishedOn: string;
+  publishedOn: string | null;
   title: LocalizedText;
   mediaId?: number | null;
   sortOrder?: number | null;
