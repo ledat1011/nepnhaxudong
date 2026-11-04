@@ -21,6 +21,10 @@ type StoryListProps = {
  * page can show `StoryListSkeleton` in a Suspense boundary while it waits.
  */
 export async function StoryList({ lang, dict, page, client }: StoryListProps) {
+  // Accepted trade-off for the skeleton: on the first page the header and title have already
+  // streamed with status 200 when this runs. If the content API fails here, the visitor still
+  // sees the error page, but the HTTP status stays 200, not 500. Later pages load their
+  // stories in the page before streaming, so their errors keep the real status.
   const stories = await client.getStories(lang, page);
   const hasNext = await hasNextPage(client, lang, page, stories);
 

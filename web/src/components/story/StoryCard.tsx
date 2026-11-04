@@ -19,6 +19,14 @@ type StoryCardProps = {
 export const STORY_CARD_CLASS =
   "group relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-grain bg-rice has-[a:hover]:border-coat";
 
+/** Text classes of the card. The skeleton draws its lines with the same classes and line heights. */
+export const STORY_CARD_TEXT = {
+  date: "text-sm font-bold text-coat",
+  title: "text-xl font-bold leading-snug",
+  excerpt: "leading-relaxed",
+  readMore: "mt-auto pt-2 font-bold text-coat",
+} as const;
+
 /** Card for the home page and the story list. The title link covers the whole card. */
 export function StoryCard({ lang, story, dict, headingLevel = 3 }: StoryCardProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
@@ -33,10 +41,10 @@ export function StoryCard({ lang, story, dict, headingLevel = 3 }: StoryCardProp
         />
       </div>
       <div className="flex flex-1 flex-col gap-2 p-5">
-        <time dateTime={story.publishedAt} className="text-sm font-bold text-coat">
+        <time dateTime={story.publishedAt} className={STORY_CARD_TEXT.date}>
           {formatDate(story.publishedAt, lang)}
         </time>
-        <Heading className="text-xl font-bold leading-snug">
+        <Heading className={STORY_CARD_TEXT.title}>
           <Link
             href={storyPath(lang, story.slug)}
             className="rounded after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
@@ -45,8 +53,8 @@ export function StoryCard({ lang, story, dict, headingLevel = 3 }: StoryCardProp
             <LinkPendingStatus label={dict.loading.page} />
           </Link>
         </Heading>
-        <p className="leading-relaxed">{story.excerpt}</p>
-        <p aria-hidden="true" className="mt-auto pt-2 font-bold text-coat">
+        <p className={STORY_CARD_TEXT.excerpt}>{story.excerpt}</p>
+        <p aria-hidden="true" className={STORY_CARD_TEXT.readMore}>
           {dict.stories.readMore} →
         </p>
       </div>

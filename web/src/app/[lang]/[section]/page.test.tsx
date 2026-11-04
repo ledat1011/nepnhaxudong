@@ -19,6 +19,9 @@ const home: HomeData = {
 
 let stories: StorySummary[] = [];
 
+// The error `notFound()` throws; Next answers it with the 404 page and status.
+const NOT_FOUND = "NEXT_HTTP_ERROR_FALLBACK;404";
+
 vi.mock("@/lib/content/client", () => ({
   getContentClient: () => ({
     getHome: async () => home,
@@ -57,10 +60,10 @@ describe("StoryListPage", () => {
   });
 
   it("answers 404 for a page that is not a number", async () => {
-    await expect(open("abc")).rejects.toThrow();
+    await expect(open("abc")).rejects.toMatchObject({ digest: NOT_FOUND });
   });
 
   it("answers 404 for a later page with no stories, before the page streams", async () => {
-    await expect(open("3")).rejects.toThrow();
+    await expect(open("3")).rejects.toMatchObject({ digest: NOT_FOUND });
   });
 });
