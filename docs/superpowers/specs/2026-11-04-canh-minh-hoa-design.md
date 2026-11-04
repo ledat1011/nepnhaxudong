@@ -80,7 +80,7 @@ Mascot giữ nguyên (`brand/mascot/mascot-layered.svg`).
 ## 3. Hình túi gạo trong khối Sản phẩm
 
 ### Hình
-- **Túi:** khối hút chân không trong suốt, vẽ nghiêng 3/4 (mặt trước, mặt trên, cạnh bên). Hạt gạo trắng ngà vẽ bằng một `<pattern>` lặp, mép màng nilon thừa ở hai đầu.
+- **Túi:** khối hút chân không trong suốt, **dáng đứng, cao và mỏng** như túi 2 kg mẫu (`.superpowers/ref/tui-mau-mong.png`): mặt trước là hình chữ nhật đứng (cao khoảng 1,7 lần rộng), cạnh bên rất mỏng (khoảng 1/4 chiều rộng), vẽ nghiêng nhẹ để thấy cạnh mỏng. Mép màng nilon thừa (có đường hàn) chỉ ở phía trên. Nhãn dán trên mặt trước. (Sửa theo góp ý của chủ dự án: bản đầu quá dày.) Hạt gạo trắng ngà vẽ bằng một `<pattern>` lặp, mép màng nilon thừa ở hai đầu.
 - **Nhãn:** giống nhãn thật của túi "Gạo nếp cái hoa vàng Duy Tân": khung Xanh mạ `#6E8B3D`, hình nhỏ đồng lúa và trời xanh vẽ lại, chữ "GẠO NẾP CÁI HOA VÀNG" và "DUY TÂN", huy hiệu tròn "2KG". Không có hotline, logo hiệp hội, mã QR.
 - **Cạnh túi:** một nong tre nhỏ đựng gạo rời.
 
