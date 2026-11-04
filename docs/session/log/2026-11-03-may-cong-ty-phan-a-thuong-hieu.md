@@ -64,7 +64,7 @@ Chạy song song với session phần C (nhánh `feat/phan-c-nen-tang`). Không 
 - Quyết định "không dùng Nano Banana / Recraft" nên được ghi vào `docs/decisions/` khi session phần C gộp trạng thái; `.mcp.json` của phần C có thể bỏ `nanobanana` và `recraft`.
 - Logo một màu làm bằng `<mask>`: máy cắt decal và công cụ bỏ qua mask không dùng được; khi cần cắt decal phải làm thêm một bản riêng.
 - Ở nền Nâu áo, dòng nhỏ Vàng lúa của logo sáng chỉ đạt tỷ lệ 2,53 (chưa đạt AA); khi logo rộng khoảng 120px, dòng nhỏ quá bé để đọc.
-- Phần B (web) đang dùng màu và logo tạm trong `web/src/lib/brand/` (7 màu, tên khác, không có `da` / `toc`); nên chuyển sang dùng `brand/tokens` và `brand/logo/*` sau khi gộp.
+- Phần B (web) đang dùng màu và logo tạm trong `web/src/lib/brand/` (7 màu, tên khác, không có `da` / `toc`); nên chuyển sang dùng `brand/tokens` và `brand/logo/*` sau khi gộp. Id trong các file logo có tiền tố riêng (ví dụ `nn-logo-full-head`); hiệu ứng nghiêng đầu / lắc lúa dùng `brand/mascot/mascot-layered.svg` (`#head`, `#rice`).
 - CI chưa chạy test của `brand/tools` (51 test); cần một workflow riêng (thuộc phần C hoặc gộp chung).
 - Spec trên `main` (mục 2.3) và plan phần C còn ghi đường dẫn ảnh tham khảo trên máy; phần C nên xóa.
 
