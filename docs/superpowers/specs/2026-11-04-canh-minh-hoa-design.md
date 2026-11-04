@@ -54,7 +54,15 @@ Trang chủ có thêm ba phần minh hoạ có chuyển động, theo hướng "
 4. **Làng xa:** dải luỹ tre và vài mái nhà, Nâu áo nhạt (độ mờ khoảng 35%).
 5. **Ruộng:** 2–3 lớp ruộng (Vàng rơm, Vàng lúa) và lớp gần nhất có 20–24 cây lúa trĩu bông, chia thành 5 nhóm.
 
-Mascot giữ nguyên (`brand/mascot/mascot-layered.svg`). Điện thoại: mascot ở trên, chữ ở dưới, trời phía sau mascot, ruộng ở đáy. Chữ Nâu đất trên Xanh trời đạt khoảng 8,9 : 1.
+Mascot giữ nguyên (`brand/mascot/mascot-layered.svg`).
+
+### Bố cục (sửa theo góp ý của chủ dự án, 2026-11-04)
+- **Cảnh chỉ chiếm khoảng một nửa chiều ngang**, phía sau mascot (máy tính: nửa phải). Bên chữ "Nếp Nhà", tagline và nút giữ nền Trắng gạo trơn.
+- **Mép cảnh mờ dần** về Trắng gạo (mép giáp phần chữ và mép dưới giáp khối Sản phẩm), bằng `mask-image` dạng gradient, nên không thấy vệt cắt.
+- **Mascot đứng trước đồng lúa, ruộng ở sau.** Mascot neo vào đáy cảnh (phần dưới của mascot chạm mép dưới, như ảnh chụp ngang hông), không lơ lửng.
+- **Đường chân trời** (ngọn lúa giáp bầu trời) nằm **ngang lưng** mascot.
+- **Bông lúa dày, trĩu hạt:** mỗi bông nhiều hạt mẩy, thân cong xuống vì nặng; ruộng dày; hàng xa nhỏ dần.
+- Điện thoại: cảnh nằm sau mascot ở nửa trên, rộng hết màn hình, mờ dần ở mép dưới trước chữ "Nếp Nhà". Chữ Nâu đất trên Xanh trời đạt khoảng 8,9 : 1.
 
 ### Chuyển động: một chu kỳ chung 60 giây, lặp liền mạch
 - Mọi vòng lặp dùng chung chu kỳ 60 giây, nên hết chu kỳ mọi thứ về đúng vị trí đầu và vòng sau nối liền vòng trước. Không thấy chỗ bắt đầu lại.
