@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/session";
+import { useConfirmLeave } from "@/lib/admin/use-unsaved-changes";
 import { cn } from "@/lib/admin/utils";
 import { Button } from "@/components/admin/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/admin/ui/sheet";
@@ -14,6 +15,7 @@ type Props = { open: boolean; onOpenChange(open: boolean): void };
 export function MoreSheet({ open, onOpenChange }: Props) {
   const pathname = usePathname();
   const { signOut } = useAdminSession();
+  const confirmLeave = useConfirmLeave();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -37,7 +39,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
                   onClick={() => onOpenChange(false)}
                   className={cn(
                     "flex min-h-12 items-center gap-3 rounded-md px-3 text-base outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                    active && "bg-secondary font-bold",
+                    active ? "bg-secondary font-bold" : "hover:bg-muted active:bg-secondary",
                   )}
                 >
                   <Icon aria-hidden className="size-5" />
@@ -53,7 +55,8 @@ export function MoreSheet({ open, onOpenChange }: Props) {
             variant="outline"
             onClick={() => {
               onOpenChange(false);
-              void signOut();
+              // Signing out leaves the page, so a form with unsaved changes asks first.
+              confirmLeave(() => void signOut());
             }}
           >
             <LogOut aria-hidden />

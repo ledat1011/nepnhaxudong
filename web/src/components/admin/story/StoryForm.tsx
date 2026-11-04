@@ -20,7 +20,7 @@ import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { slugify } from "@/lib/admin/slugify";
 import type { StoryAdminDto, StoryRequest } from "@/lib/admin/types";
 import { useSave } from "@/lib/admin/use-save";
-import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
+import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 import { StoryPreview } from "./StoryPreview";
 
 // The editor (Tiptap and ProseMirror) is large. It is loaded only here, in the admin, and never on a public page.
@@ -152,6 +152,7 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const [leaving, setLeaving] = useState(false);
   const dirty = snapshot(state) !== snapshot(baselineState);
   useUnsavedChanges(dirty && !leaving);
+  const leavePage = useLeavePage();
 
   // The newest state, for the save action: after a sign-in again the action runs once more and must send what is typed now.
   const latestState = useRef(state);
@@ -193,7 +194,7 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
     const { saved, sent } = result;
     if (baseline === undefined) {
       setLeaving(true);
-      router.replace(`${ADMIN_ROUTES.stories}/${saved.id}`);
+      leavePage(() => router.replace(`${ADMIN_ROUTES.stories}/${saved.id}`));
       return;
     }
     const fresh = stateFrom(saved);

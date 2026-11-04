@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
@@ -17,7 +17,7 @@ import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
 import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
 import { useSave } from "@/lib/admin/use-save";
-import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
+import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 import { FeatureList, newFeatureRow, type FeatureRow } from "./FeatureList";
 import { PackagingList, newPackagingRow, type PackagingRow } from "./PackagingList";
 import { moved } from "./rows";
@@ -132,10 +132,15 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   // True after a create or delete succeeded, until the page changes: no second tap may write again.
   const [leaving, setLeaving] = useState(false);
   const dirty = snapshot(state) !== baselineSnapshot;
-  useUnsavedChanges(dirty);
+  useUnsavedChanges(dirty && !leaving);
+  const leavePage = useLeavePage();
+
+  // The form as it was when the running save was sent, to tell later whether the user typed something else meanwhile.
+  const sent = useRef<string | null>(null);
 
   const saving = useSave(async () => {
     const body = toRequest(state, baseline?.sortOrder);
+    sent.current = snapshot(state);
     return baseline === undefined
       ? adminFetch<ProductAdminDto>("/admin/products", { method: "POST", body })
       : adminFetch<ProductAdminDto>(`/admin/products/${baseline.id}`, {
@@ -158,19 +163,20 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
     if (saved === undefined) return;
     if (baseline === undefined) {
       setLeaving(true);
-      router.replace(`${ADMIN_ROUTES.products}/${saved.id}`);
+      leavePage(() => router.replace(`${ADMIN_ROUTES.products}/${saved.id}`));
       return;
     }
     const fresh = stateFrom(saved);
     setBaseline(saved);
-    setState(fresh);
     setBaselineSnapshot(snapshot(fresh));
+    // Show what the API stored, unless the user typed more while it was saving: that text stays, and stays unsaved.
+    setState((current) => (snapshot(current) === sent.current ? fresh : current));
   }
 
   async function remove() {
     if (await deleting.save()) {
       setLeaving(true);
-      router.push(ADMIN_ROUTES.products);
+      leavePage(() => router.push(ADMIN_ROUTES.products));
     }
   }
 
@@ -185,8 +191,11 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
     setState((current) => ({ ...current, ...change }));
   }
 
+  // While a new product is created the fields cannot change: the page goes to the new product and would lose the text.
+  const locked = baseline === undefined && (saving.pending || leaving);
+
   return (
-    <div className="flex flex-col gap-6 p-4 pb-44">
+    <fieldset disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
       <BilingualField label="Tên sản phẩm" value={state.name} onChange={(name) => patch({ name })} viRequired />
       <BilingualField
         label="Mô tả"
@@ -241,7 +250,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
       />
 
       <SaveBar dirty={dirty} pending={saving.pending || leaving} onSave={() => void save()} onCancel={cancel} />
-    </div>
+    </fieldset>
   );
 }
 

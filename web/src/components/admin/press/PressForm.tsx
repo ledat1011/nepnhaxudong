@@ -210,7 +210,8 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
             <DialogTitle>{initial === undefined ? "Thêm bài báo" : "Sửa bài báo"}</DialogTitle>
             <DialogDescription>Bài báo hiện trong mục Báo chí của website.</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-5">
+          {/* Nothing can be typed while a save runs: the dialog closes after it and would drop that text. */}
+          <fieldset disabled={busy} className="flex min-w-0 flex-col gap-5">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={urlId}>Đường dẫn bài báo</Label>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -280,7 +281,7 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
                 </Button>
               ) : null}
             </div>
-          </div>
+          </fieldset>
         </DialogContent>
       </Dialog>
       <ConfirmDialog

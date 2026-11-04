@@ -202,7 +202,7 @@ Nếu máy không có `python`, đọc token bằng `jq -r .token` thay cho ph�
 
 Một lệnh ghi thiếu header `X-XSRF-TOKEN` trả 403. Token chỉ được đọc từ header này; API không nhận token gửi trong phần thân form hay trên đường dẫn.
 
-Lưu ý về ảnh: ở môi trường local, API chỉ ghi file vào `MEDIA_DIR`; đường dẫn `/media/*` chưa có ai phục vụ. Caddy sẽ phục vụ `/media/*` ở phần D, nên web local chưa hiện được ảnh đã tải lên. Đây là cách làm đã chốt: API chỉ lưu file, việc phục vụ file thuộc về máy chủ web phía trước.
+Lưu ý về ảnh: API chỉ ghi file vào `MEDIA_DIR`, không phục vụ đường dẫn `/media/*`. Ở môi trường local, web phục vụ `/media/*` từ thư mục `MEDIA_DEV_DIR` (xem bước 3 của phần "Chạy trang quản trị ở local" bên dưới), nên web local hiện được ảnh đã tải lên khi `MEDIA_DEV_DIR` trùng `MEDIA_DIR`. Ở production, Caddy sẽ phục vụ `/media/*` (phần D). Đây là cách làm đã chốt: API chỉ lưu file, việc phục vụ file thuộc về máy chủ web phía trước.
 
 ## Chạy trang quản trị ở local
 Trang quản trị nằm ở `/admin` của web và gọi API qua đường dẫn `/api/...` cùng gốc. Cần Docker, JDK 21 và Node 22.
@@ -242,4 +242,4 @@ Lệnh `run.mjs` làm lần lượt:
 4. Chạy Playwright: đăng nhập lần đầu, đổi mật khẩu, thêm mốc, tạo và đăng bài, tải ảnh, khôi phục từ Lịch sử, đăng nhập lại khi phiên hết hạn, kiểm tra màn hình 375 px và kiểm tra axe.
 5. Dừng web và API, xóa container và các thư mục tạm, kể cả khi test lỗi.
 
-Các cổng và mật khẩu được sinh lúc chạy, không ghi ra file. Mất khoảng 3 phút (đến 8 phút khi máy bận), phần lớn là hai lần build. Khi test lỗi, xem báo cáo bằng `npx playwright show-report`. Trên GitHub, workflow `fullstack` chạy bộ test này cho mỗi pull request đổi `api/` hoặc `web/`.
+Các cổng và mật khẩu được sinh lúc chạy, không ghi ra file. Mất khoảng 3 phút (đến 8 phút khi máy bận), phần lớn là hai lần build. Mỗi lần chạy, báo cáo HTML được ghi vào `web/playwright-report`. Khi test lỗi, mở báo cáo bằng `npx playwright show-report` (chạy trong `web/`). Trên GitHub, workflow `fullstack` chạy bộ test này cho mỗi pull request đổi `api/` hoặc `web/`.

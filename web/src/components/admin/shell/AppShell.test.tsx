@@ -72,6 +72,13 @@ describe("AppShell", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
+  it("names the screen in the one level-1 heading of the page", async () => {
+    adminFetch.mockResolvedValue(user);
+    renderShell();
+    expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Ảnh");
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
+
   it("shows a retry screen, not the login page, when the server cannot be reached", async () => {
     adminFetch.mockRejectedValueOnce(new AdminApiError(0, "Không kết nối được máy chủ."));
     renderShell();

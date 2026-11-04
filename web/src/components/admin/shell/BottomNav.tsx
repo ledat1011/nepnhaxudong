@@ -11,7 +11,7 @@ import { NAV_ITEMS, isActivePath, isMoreActive } from "./nav-items";
 const ITEM_CLASS =
   "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
 const ACTIVE_CLASS = "bg-secondary font-bold text-secondary-foreground";
-const IDLE_CLASS = "text-muted-foreground";
+const IDLE_CLASS = "text-muted-foreground hover:text-foreground active:bg-muted";
 
 export function BottomNav() {
   const pathname = usePathname();

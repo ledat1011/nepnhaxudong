@@ -19,7 +19,7 @@ export function Shortcuts() {
         <li key={href}>
           <Link
             href={href}
-            className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-lg border bg-card p-3 text-center font-semibold"
+            className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-lg border bg-card p-3 text-center font-semibold hover:bg-muted active:bg-secondary"
           >
             <Icon aria-hidden="true" className="size-6" />
             <span className="min-w-0 break-words">{label}</span>

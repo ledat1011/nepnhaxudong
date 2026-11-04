@@ -13,6 +13,11 @@ const EDITED_TITLE = `${EVENT_TITLE} đã sửa`;
 const STORY_TITLE = `[E2E] Câu chuyện ${run}`;
 const ALT_VI = `[E2E] Ảnh thử ${run}`;
 const ALT_EN = `[E2E] Test image ${run}`;
+const PRESS_TITLE = `[E2E] Bài báo ${run}`;
+// 200 characters, ending in one long part with no place to break, as tracking links often do.
+const LONG_URL = `https://baochi.example/${run}/lang-nghe-gao-nep-cai-hoa-vang-xu-dong?utm_source=`.padEnd(200, "x");
+const ADDRESS_LINE = `Thôn Xuân Đông, xã Cẩm Văn, huyện Cẩm Giàng, tỉnh Hải Dương, Việt Nam`;
+const LONG_ADDRESS = `[E2E] ${run} ${ADDRESS_LINE}. ${ADDRESS_LINE}. ${ADDRESS_LINE}.`;
 
 let context: BrowserContext;
 let page: Page;
@@ -155,6 +160,57 @@ test("an expired session opens the sign-in dialog over the edit dialog and the s
   await expect(form).toBeHidden();
   await expect(eventRow(EDITED_TITLE)).toBeVisible();
   await expectPublicText(page, "/vi", EDITED_TITLE);
+});
+
+test("the browser back button asks before it leaves a form with unsaved changes", async () => {
+  const settingsUrl = new RegExp(`${ADMIN_ROUTES.settings}$`);
+  const homeUrl = new RegExp(`${ADMIN_ROUTES.home}$`);
+  const question = page.getByRole("alertdialog", { name: "Bạn có thay đổi chưa lưu. Rời trang?" });
+  await page.goto(ADMIN_ROUTES.home);
+  await page.getByRole("link", { name: "Liên hệ & cài đặt" }).click();
+  await expect(page).toHaveURL(settingsUrl);
+  const phone = page.getByLabel("Điện thoại");
+  await phone.fill("0912 345 678");
+
+  await page.goBack();
+  await expect(question).toBeVisible();
+  await expect(page).toHaveURL(settingsUrl);
+  await question.getByRole("button", { name: "Ở lại" }).click();
+  await expect(phone).toHaveValue("0912 345 678");
+
+  await page.goBack();
+  await question.getByRole("button", { name: "Rời trang" }).click();
+  await expect(page).toHaveURL(homeUrl);
+
+  // A form that is clean again has removed its extra history entry, so one press of back leaves at once.
+  await page.getByRole("link", { name: "Liên hệ & cài đặt" }).click();
+  await page.getByLabel("Điện thoại").fill("0912 345 678");
+  await page.getByRole("button", { name: "Hủy", exact: true }).click();
+  await page.goBack();
+  await expect(page).toHaveURL(homeUrl);
+  await expect(question).toBeHidden();
+});
+
+test("a press item with a 200-character link and a long contact address are saved", async () => {
+  expect(LONG_URL).toHaveLength(200);
+  await page.goto(ADMIN_ROUTES.press);
+  await page.getByRole("button", { name: "Thêm bài báo" }).click();
+  const form = dialog("Thêm bài báo");
+  // fill() does not paste, so the page preview (an outside request) does not run.
+  await form.getByLabel("Đường dẫn bài báo").fill(LONG_URL);
+  await form.getByLabel(/^Tên báo/).fill("[E2E] Báo thử");
+  await titleVi(form).fill(PRESS_TITLE);
+  await form.getByRole("button", { name: "Lưu", exact: true }).click();
+  await expect(form).toBeHidden();
+  // Anchored: the move buttons of the row ("Đưa bài … lên") also contain the title.
+  await expect(page.getByRole("button", { name: new RegExp(`^${escapeRegExp(PRESS_TITLE)}`) })).toBeVisible();
+
+  await page.goto(ADMIN_ROUTES.settings);
+  await page.getByRole("group", { name: /^Địa chỉ/ }).getByLabel("Tiếng Việt").fill(LONG_ADDRESS);
+  const save = page.getByRole("button", { name: "Lưu", exact: true });
+  await save.click();
+  // Lưu turns off again once the API has stored the address.
+  await expect(save).toBeDisabled();
 });
 
 test("the session is saved for the mobile and accessibility checks", async () => {

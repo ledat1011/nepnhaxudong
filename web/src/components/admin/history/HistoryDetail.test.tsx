@@ -69,6 +69,14 @@ describe("HistoryDetail", () => {
     expect(rows[1]).toHaveTextContent("packagings.0.weightGrams");
   });
 
+  it("marks a side that has no value with (trống), not with a dash", async () => {
+    adminFetch.mockResolvedValue(detail({ action: "CREATE", before: null, after: { a: "Nếp" } }));
+    render(<HistoryDetail id={7} onRestored={vi.fn()} onClose={vi.fn()} />);
+    const rows = within(await screen.findByRole("table")).getAllByRole("row").slice(1);
+    expect(within(rows[0]).getAllByRole("cell")[0]).toHaveTextContent(/^\(trống\)$/);
+    expect(screen.getByRole("table")).not.toHaveTextContent("—");
+  });
+
   it("shows a value that looks like markup as plain text", async () => {
     adminFetch.mockResolvedValue(detail({ before: { t: "<b>x</b>" }, after: { t: "<img src=x onerror=alert(1)>" } }));
     const { container } = render(<HistoryDetail id={7} onRestored={vi.fn()} onClose={vi.fn()} />);

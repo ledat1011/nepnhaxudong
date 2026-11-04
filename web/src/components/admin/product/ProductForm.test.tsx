@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
@@ -17,6 +17,7 @@ vi.mock("@/lib/admin/session", () => ({
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
+import { NavGuardProvider } from "@/lib/admin/nav-guard";
 import { ProductForm } from "./ProductForm";
 
 function media(id: number): MediaAdminDto {
@@ -267,6 +268,106 @@ describe("ProductForm", () => {
     );
     await events.click(save());
     await waitFor(() => expect(save()).toBeDisabled());
+  });
+
+  it("keeps text typed while a save runs, and leaves it unsaved", async () => {
+    const events = userEvent.setup();
+    let finish: (value: ProductAdminDto) => void = () => undefined;
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") return new Promise<ProductAdminDto>((resolve) => (finish = resolve));
+      return undefined;
+    });
+    render(<ProductForm initial={product()} />);
+    const [nameVi] = screen.getAllByLabelText(/^Tiếng Việt/);
+    const [nameEn] = screen.getAllByLabelText(/^English/);
+    await events.type(nameVi, " mới");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writeBodies()).toHaveLength(1));
+    await events.type(nameEn, " new");
+    await act(async () => finish(product({ name: { vi: "Gạo ST25 mới", en: "ST25 rice" } })));
+    expect(nameVi).toHaveValue("Gạo ST25 mới");
+    expect(nameEn).toHaveValue("ST25 rice new");
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeEnabled();
+  });
+
+  it("shows what the API stored when nothing was typed during the save", async () => {
+    const events = userEvent.setup();
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") return product({ name: { vi: "Gạo ST25 mới", en: "ST25 rice" } });
+      return undefined;
+    });
+    render(<ProductForm initial={product()} />);
+    const [nameVi] = screen.getAllByLabelText(/^Tiếng Việt/);
+    await events.type(nameVi, " mới  ");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(nameVi).toHaveValue("Gạo ST25 mới"));
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
+  });
+
+  it("makes the fields read-only while a new product is being created", async () => {
+    const events = userEvent.setup();
+    let finish: (value: ProductAdminDto) => void = () => undefined;
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "POST") return new Promise<ProductAdminDto>((resolve) => (finish = resolve));
+      return undefined;
+    });
+    render(<ProductForm />);
+    const [nameVi] = screen.getAllByLabelText(/^Tiếng Việt/);
+    await events.type(nameVi, "Gạo mới");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writeBodies()).toHaveLength(1));
+    expect(nameVi).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Thêm đặc điểm" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Chọn ảnh" })).toBeDisabled();
+    await events.type(nameVi, "xyz");
+    expect(nameVi).toHaveValue("Gạo mới");
+    await act(async () => finish(product({ id: 9 })));
+    expect(replace).toHaveBeenCalledWith("/admin/san-pham/9");
+  });
+
+  it("can be edited again after a failed create", async () => {
+    const events = userEvent.setup();
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "POST") throw new AdminApiError(503, "Máy chủ đang bận.");
+      return undefined;
+    });
+    render(<ProductForm />);
+    const [nameVi] = screen.getAllByLabelText(/^Tiếng Việt/);
+    await events.type(nameVi, "Gạo mới");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await screen.findByText("Máy chủ đang bận.");
+    expect(nameVi).toBeEnabled();
+  });
+
+  it("stops asking before the page closes once a new product is created", async () => {
+    const events = userEvent.setup();
+    render(<ProductForm />);
+    await events.type(screen.getAllByLabelText(/^Tiếng Việt/)[0], "Gạo mới");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/san-pham/7"));
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it("goes to the new product only after the back-button guard removed its history entry", async () => {
+    const events = userEvent.setup();
+    window.history.pushState({ page: "new-product" }, "");
+    const statesAtReplace: unknown[] = [];
+    replace.mockImplementation(() => statesAtReplace.push(window.history.state));
+    render(
+      <NavGuardProvider>
+        <ProductForm />
+      </NavGuardProvider>,
+    );
+    await events.type(screen.getAllByLabelText(/^Tiếng Việt/)[0], "Gạo mới");
+    expect(window.history.state).not.toEqual({ page: "new-product" });
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(statesAtReplace).toEqual([{ page: "new-product" }]));
   });
 
   it("does not let a 31st image be added", async () => {

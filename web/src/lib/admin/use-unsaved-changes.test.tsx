@@ -1,16 +1,27 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Link from "next/link";
-import { describe, expect, it, vi } from "vitest";
+import { useState } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/admin/anh" }));
-vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ signOut: vi.fn() }) }));
+const { replace, signOut } = vi.hoisted(() => ({ replace: vi.fn(), signOut: vi.fn() }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/admin/anh", useRouter: () => ({ replace }) }));
+vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ signOut }) }));
 
 import { BottomNav } from "@/components/admin/shell/BottomNav";
+import { MoreSheet } from "@/components/admin/shell/MoreSheet";
 import { NavGuardProvider } from "./nav-guard";
-import { useUnsavedChanges } from "./use-unsaved-changes";
+import { useLeavePage, useUnsavedChanges } from "./use-unsaved-changes";
 
 const QUESTION = "Bạn có thay đổi chưa lưu. Rời trang?";
+
+afterEach(async () => {
+  // Unmount now and let the guard remove its history entry, so the next test starts on a quiet history.
+  cleanup();
+  await settle();
+  replace.mockReset();
+  signOut.mockReset();
+});
 
 function Form({ dirty }: { dirty: boolean }) {
   useUnsavedChanges(dirty);
@@ -57,7 +68,8 @@ describe("useUnsavedChanges", () => {
     screen.getByRole("navigation", { name: "Menu chính" }).addEventListener("click", reached);
     await events.click(screen.getByRole("link", { name: "Câu chuyện" }));
     await events.click(await screen.findByRole("button", { name: "Rời trang" }));
-    expect(reached).toHaveBeenCalledTimes(1);
+    // The click goes through after the guard has removed its back-button entry (one popstate later).
+    await waitFor(() => expect(reached).toHaveBeenCalledTimes(1));
   });
 
   it("also guards any other link inside /admin", async () => {
@@ -143,5 +155,185 @@ describe("nav guard scope", () => {
     expect(remove).toHaveBeenCalledWith("click", added![1], added![2]);
     add.mockRestore();
     remove.mockRestore();
+  });
+
+  it("does not guard a link inside text that is being edited", () => {
+    const reached = vi.fn((event: Event) => event.preventDefault());
+    render(
+      <NavGuardProvider>
+        <Form dirty />
+        <div contentEditable="true" suppressContentEditableWarning onClick={(event) => reached(event.nativeEvent)}>
+          <p>
+            {/* The story editor renders a plain <a> inside its editable area, so the test does the same. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/vi/san-pham">Liên kết trong bài</a>
+          </p>
+        </div>
+      </NavGuardProvider>,
+    );
+    fireEvent.click(screen.getByRole("link", { name: "Liên kết trong bài" }));
+    expect(screen.queryByText(QUESTION)).not.toBeInTheDocument();
+    expect(reached).toHaveBeenCalledTimes(1);
+  });
+});
+
+/** Waits until the popstate events that jsdom delivers a moment after back() / go() have arrived. */
+async function settle() {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  });
+}
+
+function goBackInBrowser() {
+  act(() => window.history.back());
+}
+
+describe("back button guard", () => {
+  it("adds one history entry while dirty, removes it when clean, and does not add a second one", async () => {
+    window.history.pushState({ page: "form" }, "");
+    const length = window.history.length;
+    const { rerender } = render(<Page dirty={false} />);
+    expect(window.history.length).toBe(length);
+
+    rerender(<Page dirty />);
+    expect(window.history.length).toBe(length + 1);
+    rerender(<Page dirty />);
+    expect(window.history.length).toBe(length + 1);
+
+    rerender(<Page dirty={false} />);
+    await settle();
+    expect(window.history.state).toEqual({ page: "form" });
+
+    rerender(<Page dirty />);
+    expect(window.history.length).toBe(length + 1);
+    expect(screen.queryByText(QUESTION)).not.toBeInTheDocument();
+  });
+
+  it("asks when the back button is pressed on a dirty form, and stays on Ở lại", async () => {
+    const events = userEvent.setup();
+    window.history.pushState({ page: "form" }, "");
+    const length = window.history.length;
+    render(<Page dirty />);
+
+    goBackInBrowser();
+    expect(await screen.findByText(QUESTION)).toBeInTheDocument();
+    // The extra entry is back, so a second press is caught too.
+    expect(window.history.length).toBe(length + 1);
+    expect(window.history.state).not.toEqual({ page: "form" });
+
+    await events.click(screen.getByRole("button", { name: "Ở lại" }));
+    expect(screen.queryByText(QUESTION)).not.toBeInTheDocument();
+    await settle();
+    expect(window.history.length).toBe(length + 1);
+  });
+
+  it("goes back past the page and its extra entry on Rời trang, without a second question", async () => {
+    const events = userEvent.setup();
+    window.history.pushState({ page: "list" }, "");
+    window.history.pushState({ page: "form" }, "");
+    render(<Page dirty />);
+
+    goBackInBrowser();
+    await events.click(await screen.findByRole("button", { name: "Rời trang" }));
+    await settle();
+    expect(window.history.state).toEqual({ page: "list" });
+    expect(screen.queryByText(QUESTION)).not.toBeInTheDocument();
+    expect(beforeUnload().defaultPrevented).toBe(false);
+  });
+
+  it("opens the admin home on Rời trang when the form was the first page of the tab", async () => {
+    const events = userEvent.setup();
+    window.history.pushState({ page: "form" }, "");
+    render(<Page dirty />);
+    goBackInBrowser();
+    await screen.findByText(QUESTION);
+    const length = vi.spyOn(window.history, "length", "get").mockReturnValue(2);
+    await events.click(screen.getByRole("button", { name: "Rời trang" }));
+    await settle();
+    length.mockRestore();
+    expect(replace).toHaveBeenCalledWith("/admin");
+    expect(window.history.state).toEqual({ page: "form" });
+  });
+
+  it("removes the extra entry before a guarded link is followed", async () => {
+    const events = userEvent.setup();
+    window.history.pushState({ page: "form" }, "");
+    render(<Page dirty />);
+    const statesAtClick: unknown[] = [];
+    screen.getByRole("navigation", { name: "Menu chính" }).addEventListener("click", (event) => {
+      event.preventDefault();
+      statesAtClick.push(window.history.state);
+    });
+
+    await events.click(screen.getByRole("link", { name: "Câu chuyện" }));
+    await events.click(await screen.findByRole("button", { name: "Rời trang" }));
+    await settle();
+    expect(statesAtClick).toEqual([{ page: "form" }]);
+  });
+
+  it("lets a form navigate by itself only after the extra entry is gone", async () => {
+    window.history.pushState({ page: "new" }, "");
+    const statesAtNavigation: unknown[] = [];
+
+    function CreateForm() {
+      const [leaving, setLeaving] = useState(false);
+      const leavePage = useLeavePage();
+      useUnsavedChanges(!leaving);
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            setLeaving(true);
+            leavePage(() => statesAtNavigation.push(window.history.state));
+          }}
+        >
+          Tạo
+        </button>
+      );
+    }
+    render(
+      <NavGuardProvider>
+        <CreateForm />
+      </NavGuardProvider>,
+    );
+    // fireEvent is synchronous, so the popstate of the guard's back() cannot have arrived yet.
+    fireEvent.click(screen.getByRole("button", { name: "Tạo" }));
+    expect(statesAtNavigation).toEqual([]);
+    await settle();
+    expect(statesAtNavigation).toEqual([{ page: "new" }]);
+  });
+
+  it("asks before signing out from the More sheet while a form is dirty", async () => {
+    const events = userEvent.setup();
+    window.history.pushState({ page: "form" }, "");
+    render(
+      <NavGuardProvider>
+        <Form dirty />
+        <MoreSheet open onOpenChange={() => undefined} />
+      </NavGuardProvider>,
+    );
+    await events.click(screen.getByRole("button", { name: "Đăng xuất" }));
+    expect(await screen.findByText(QUESTION)).toBeInTheDocument();
+    expect(signOut).not.toHaveBeenCalled();
+    await events.click(screen.getByRole("button", { name: "Ở lại" }));
+    expect(signOut).not.toHaveBeenCalled();
+
+    await events.click(screen.getByRole("button", { name: "Đăng xuất" }));
+    await events.click(await screen.findByRole("button", { name: "Rời trang" }));
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
+    expect(window.history.state).toEqual({ page: "form" });
+  });
+
+  it("signs out at once from the More sheet when nothing is dirty", async () => {
+    const events = userEvent.setup();
+    render(
+      <NavGuardProvider>
+        <Form dirty={false} />
+        <MoreSheet open onOpenChange={() => undefined} />
+      </NavGuardProvider>,
+    );
+    await events.click(screen.getByRole("button", { name: "Đăng xuất" }));
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(QUESTION)).not.toBeInTheDocument();
   });
 });

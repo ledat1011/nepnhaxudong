@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdminApiError } from "@/lib/admin/errors";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -99,6 +99,26 @@ describe("TimelineEventForm", () => {
     expect(writes()[0][1].method).toBe("PUT");
     expect(writes()[0][1].body).not.toHaveProperty("sortOrder");
     expect(writes()[0][1].body.title).toEqual({ vi: "Thành lập", en: "Founded 2" });
+  });
+
+  it("disables every box while the save runs, so nothing typed is lost when the dialog closes", async () => {
+    const user = userEvent.setup();
+    let finish: (value: TimelineEventAdminDto) => void = () => undefined;
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") return new Promise<TimelineEventAdminDto>((resolve) => (finish = resolve));
+      return undefined;
+    });
+    render(<TimelineEventForm initial={existing()} onClose={vi.fn()} onChanged={vi.fn()} />);
+    await user.type(screen.getAllByLabelText("English")[0], " 2");
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    expect(screen.getByLabelText(/^Năm/)).toBeDisabled();
+    for (const box of [...screen.getAllByLabelText("Tiếng Việt"), ...screen.getAllByLabelText("English")]) {
+      expect(box).toBeDisabled();
+    }
+    expect(screen.getByRole("button", { name: "Chọn ảnh" })).toBeDisabled();
+    await act(async () => finish(existing()));
   });
 
   it("deletes after confirmation and then locks the form", async () => {

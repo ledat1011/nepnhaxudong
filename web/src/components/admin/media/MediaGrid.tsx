@@ -25,7 +25,7 @@ export function MediaGrid({ items, onSelect, selectedIds }: Props) {
               onClick={() => onSelect(media)}
               aria-pressed={selectedIds === undefined ? undefined : selected}
               className={cn(
-                "relative block aspect-square w-full min-h-11 overflow-hidden rounded-md border bg-muted outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                "relative block aspect-square w-full min-h-11 overflow-hidden rounded-md border bg-muted outline-none hover:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 active:opacity-80",
                 selected && "ring-4 ring-primary",
               )}
             >

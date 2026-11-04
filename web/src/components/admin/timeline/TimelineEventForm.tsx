@@ -122,7 +122,8 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
             <DialogTitle>{initial === undefined ? "Thêm mốc" : "Sửa mốc"}</DialogTitle>
             <DialogDescription>Mốc hiện trên trang Hành trình của website.</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-5">
+          {/* Nothing can be typed while a save runs: the dialog closes after it and would drop that text. */}
+          <fieldset disabled={busy} className="flex min-w-0 flex-col gap-5">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={yearId}>Năm</Label>
               <Input
@@ -159,7 +160,7 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
                 </Button>
               ) : null}
             </div>
-          </div>
+          </fieldset>
         </DialogContent>
       </Dialog>
       <ConfirmDialog

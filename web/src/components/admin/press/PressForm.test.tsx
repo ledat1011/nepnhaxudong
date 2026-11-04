@@ -325,6 +325,25 @@ describe("PressForm saving", () => {
     expect(writes()[0][1].body).toMatchObject({ publishedOn: "2023-01-02", title: { vi: "Bài một", en: "Article one 2" } });
   });
 
+  it("disables every box while the save runs, so nothing typed is lost when the dialog closes", async () => {
+    const user = userEvent.setup();
+    let finish: (value: PressMentionAdminDto) => void = () => undefined;
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") return new Promise<PressMentionAdminDto>((resolve) => (finish = resolve));
+      return undefined;
+    });
+    render(<PressForm initial={existing()} onClose={vi.fn()} onChanged={vi.fn()} />);
+    await user.type(screen.getAllByLabelText("English")[0], " 2");
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    for (const box of [urlBox(), sourceBox(), dateBox(), titleViBox(), screen.getAllByLabelText("English")[0]]) {
+      expect(box).toBeDisabled();
+    }
+    expect(screen.getByRole("button", { name: "Chọn ảnh" })).toBeDisabled();
+    await act(async () => finish(existing()));
+  });
+
   it("deletes after confirmation and then locks the form", async () => {
     const user = userEvent.setup();
     const onChanged = vi.fn();

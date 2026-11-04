@@ -91,7 +91,7 @@ function PressRow({ item, index, count, busy, selectDisabled, onSelect, onMove }
         type="button"
         disabled={selectDisabled}
         onClick={() => onSelect(item)}
-        className="flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center gap-0.5 rounded-md px-1 text-left disabled:opacity-50"
+        className="flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center gap-0.5 rounded-md px-1 text-left enabled:hover:bg-muted enabled:active:bg-secondary disabled:opacity-50"
       >
         <span className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="min-w-0 break-words font-semibold">{name}</span>

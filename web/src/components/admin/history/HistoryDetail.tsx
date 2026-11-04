@@ -21,7 +21,7 @@ type Props = {
 
 /** One value cell. Text only: a stored value that looks like HTML is shown as typed. */
 function Value({ text }: { text: string | null }) {
-  if (text === null) return <span className="text-muted-foreground">—</span>;
+  if (text === null) return <span className="text-muted-foreground">(trống)</span>;
   return <span className="whitespace-pre-wrap break-words">{text}</span>;
 }
 

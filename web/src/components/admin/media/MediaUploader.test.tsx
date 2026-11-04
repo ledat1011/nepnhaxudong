@@ -46,7 +46,30 @@ async function fill(events: ReturnType<typeof userEvent.setup>, en = "Rice") {
   if (en) await events.type(screen.getByLabelText(/English/), en);
 }
 
+function asksBeforeUnload(): boolean {
+  const event = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(event);
+  return event.defaultPrevented;
+}
+
 describe("MediaUploader", () => {
+  it("asks before the page closes while a file or a description is waiting, and not after the upload", async () => {
+    const events = userEvent.setup();
+    adminUpload.mockResolvedValue(created);
+    render(<MediaUploader onUploaded={() => {}} />);
+    expect(asksBeforeUnload()).toBe(false);
+    await events.type(screen.getByLabelText(/English/), "R");
+    expect(asksBeforeUnload()).toBe(true);
+    await events.clear(screen.getByLabelText(/English/));
+    expect(asksBeforeUnload()).toBe(false);
+    await events.upload(screen.getByLabelText("Chọn ảnh"), jpeg());
+    expect(asksBeforeUnload()).toBe(true);
+    await events.type(screen.getByLabelText(/Tiếng Việt/), "Gạo");
+    await events.type(screen.getByLabelText(/English/), "Rice");
+    await events.click(screen.getByRole("button", { name: "Tải lên" }));
+    await waitFor(() => expect(asksBeforeUnload()).toBe(false));
+  });
+
   it("accepts JPEG, PNG and WebP without forcing the camera", () => {
     render(<MediaUploader onUploaded={() => {}} />);
     const input = screen.getByLabelText("Chọn ảnh");

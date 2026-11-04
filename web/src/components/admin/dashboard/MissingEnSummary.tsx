@@ -49,7 +49,7 @@ export function MissingEnSummary() {
           const count = counts[index];
           return (
             <li key={source.href} className="min-w-0 rounded-lg border bg-card">
-              <Link href={source.href} className="flex min-h-11 flex-col gap-1 p-3">
+              <Link href={source.href} className="flex min-h-11 flex-col gap-1 rounded-lg p-3 hover:bg-muted active:bg-secondary">
                 <span className="min-w-0 break-words text-sm text-muted-foreground">{source.label}</span>
                 <span className="text-2xl font-bold">{count === null ? "…" : count === "failed" ? "?" : count}</span>
               </Link>

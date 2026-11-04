@@ -3,20 +3,20 @@
 Cập nhật: 2026-11-04 — máy công ty
 
 ## Giai đoạn hiện tại
-Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã xong trên nhánh `feat/phan-b2-web`, đang mở PR để merge. Trang quản trị (B3) đã xong trên nhánh `feat/phan-b3-admin`.
+API (B1), web công khai (B2) và thương hiệu (phần A) đã merge vào `main`. Trang quản trị (B3) đã xong trên nhánh `feat/phan-b3-admin` và sẵn sàng mở PR. B4 (GSAP) đang làm song song. Phần tiếp theo là phần D (hạ tầng).
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
 - Phần C (nền tảng làm việc) đã merge vào `main` (PR #1).
 - Phần B1 (API và cơ sở dữ liệu) đã merge vào `main` (PR #3): 11 task đã review, 492 test, API đã chạy thật ở local và đã thử bằng `curl` (xem "Thử API" trong `docs/setup.md`).
-- Phần B2 (web công khai): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
+- Phần B2 (web công khai) đã merge vào `main` (PR #4): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
+- Phần A (thương hiệu, logo) đã merge vào `main` (PR #5, commit `ac2f1b3`).
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
-- Phần B3 (trang quản trị) đã xong trên nhánh `feat/phan-b3-admin`: 9 màn hình (Tổng quan, Sản phẩm, Hành trình, Báo chí, Câu chuyện, Ảnh, Liên hệ & cài đặt, Tài khoản, Lịch sử), đã review từng task. Có bộ test đầu-cuối với API thật (`npm run test:fullstack`) và workflow CI `fullstack`. Cách chạy ở local và cách chạy test nằm trong `docs/setup.md`.
+- Phần B3 (trang quản trị) đã xong trên nhánh `feat/phan-b3-admin`, sẵn sàng mở PR: 9 màn hình (Tổng quan, Sản phẩm, Hành trình, Báo chí, Câu chuyện, Ảnh, Liên hệ & cài đặt, Tài khoản, Lịch sử), đã review từng task và review cuối cả nhánh. Form có thay đổi chưa lưu thì hỏi trước khi rời trang, kể cả khi bấm nút quay lại của trình duyệt. Có bộ test đầu-cuối với API thật (`npm run test:fullstack`) và workflow CI `fullstack`. Cách chạy ở local và cách chạy test nằm trong `docs/setup.md`.
 
 ## Đang làm
-- Phần B2: mở PR, chờ CI, merge vào `main` (chủ dự án đã đồng ý).
 - Phần B4 (hiệu ứng GSAP và linh vật thật) đang làm song song ở một session khác, trên nhánh `feat/phan-b4-gsap`.
-- Phần A (logo) chờ chủ dự án duyệt linh vật, nhánh `feat/phan-a-thuong-hieu`.
+- Các skill giao diện (antislop) nằm trên nhánh `feat/anti-slop-taste`, chờ chủ dự án xem.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
@@ -47,7 +47,7 @@ Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, 
 - Sự kiện làm mới trang (revalidate) chỉ nằm trong bộ nhớ: nếu mất một sự kiện thì trang cũ còn đến lần sửa sau (web dùng `force-cache` với tag, không có thời gian dự phòng). Cách bổ sung sau này: nút "làm mới trang web" trong trang quản trị (trang chủ và các bài viết), hoặc đặt thời gian `revalidate` dài ở phía web.
 - Sửa chữ thay thế hoặc xoá ảnh chỉ làm mới trang chủ; các trang bài viết có ảnh đó chưa được làm mới.
 - Trước khi lên production, chạy thử một lệnh revalidate thật từ API sang server web (bản `node .next/standalone/server.js`).
-- Ảnh tải lên chưa hiện ở web local vì chưa ai phục vụ `/media/*`; Caddy làm việc này (có thể dùng cả cho compose local).
+- Ở local, web phục vụ ảnh tải lên từ `MEDIA_DEV_DIR` (chỉ ngoài production). Ở production, Caddy phục vụ `/media/*`.
 
 Các việc phát sinh khi làm B2 (web công khai):
 - Cloudflare không được cache HTML (chỉ cache `/_next/static/*` và `/media/*`). Caddy không được cache, và phải chuyển tiếp header `rsc` và tham số `_rsc`. Các trang gửi `Cache-Control: s-maxage=31536000`, nên nếu cache ở rìa thì khách không thấy thay đổi từ admin. Trang 404 chung (đường dẫn lạ) cũng gửi header này.

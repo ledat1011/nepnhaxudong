@@ -67,4 +67,23 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Tailwind's reset gives buttons the arrow cursor. Every enabled control shows the hand instead. */
+  a[href],
+  button,
+  summary,
+  select,
+  label[for],
+  [role="button"],
+  [role="tab"],
+  [role="switch"],
+  [role="checkbox"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"] {
+    cursor: pointer;
+  }
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }

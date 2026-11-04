@@ -17,7 +17,8 @@ export default defineConfig({
   retries: 0,
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  reporter: isCi ? [["list"], ["html", { open: "never", outputFolder: "../playwright-report" }]] : "list",
+  // The html report goes to web/playwright-report on every machine: CI uploads it, `npx playwright show-report` opens it.
+  reporter: [["list"], ["html", { open: "never", outputFolder: "../playwright-report" }]],
   outputDir: "../test-results",
   use: { baseURL, trace: "retain-on-failure", locale: "vi-VN" },
   projects: [

@@ -44,7 +44,7 @@ export function StoryList({ stories }: { stories: StoryAdminDto[] }) {
           <li key={story.id}>
             <Link
               href={`${ADMIN_ROUTES.stories}/${story.id}`}
-              className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-card p-3"
+              className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-card p-3 hover:bg-muted active:bg-secondary"
             >
               <span className="min-w-0 flex-1 break-words font-semibold">{story.title.vi ?? story.title.en}</span>
               {story.missingEn ? <MissingEnBadge /> : null}

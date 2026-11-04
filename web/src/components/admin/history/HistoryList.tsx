@@ -118,7 +118,7 @@ export function HistoryList() {
                 <button
                   type="button"
                   onClick={() => setOpenId(entry.id)}
-                  className="flex min-h-11 w-full min-w-0 flex-col items-start gap-0.5 rounded-md border bg-card p-3 text-left"
+                  className="flex min-h-11 w-full min-w-0 flex-col items-start gap-0.5 rounded-md border bg-card p-3 text-left hover:bg-muted active:bg-secondary"
                 >
                   <span className="min-w-0 break-words font-semibold">{entry.label}</span>{" "}
                   <span className="min-w-0 break-words text-sm text-muted-foreground">

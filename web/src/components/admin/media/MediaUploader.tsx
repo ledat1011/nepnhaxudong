@@ -11,6 +11,7 @@ import { toRequestText } from "@/lib/admin/localized";
 import type { LocalizedText, MediaAdminDto } from "@/lib/admin/types";
 import { IMAGE_ACCEPT, checkImageFile } from "@/lib/admin/upload-check";
 import { useSave } from "@/lib/admin/use-save";
+import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 
 /** Same limit as the API (MediaService.MAX_ALT_LENGTH). */
 export const MAX_ALT_LENGTH = 300;
@@ -30,6 +31,8 @@ export function MediaUploader({ onUploaded }: { onUploaded(media: MediaAdminDto)
   const [inputKey, setInputKey] = useState(0);
   const fileInputId = useId();
   const previewRef = useRef<string | null>(null);
+  // A chosen photo or a typed description is lost when the user leaves before the upload.
+  useUnsavedChanges(file !== null || alt.vi !== null || alt.en !== null);
 
   const { save, pending, error, reset } = useSave(
     () => {
@@ -97,9 +100,10 @@ export function MediaUploader({ onUploaded }: { onUploaded(media: MediaAdminDto)
         </p>
       ) : null}
       {previewUrl !== null ? (
-        // A blob: URL of the chosen file; next/image cannot optimize it.
+        // A blob: URL of the chosen file; next/image cannot optimize it. The photo's size is unknown
+        // until it loads, so the box has a fixed height and the form below does not jump.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={previewUrl} alt="Xem trước" className="max-h-60 w-full rounded-md border object-contain" />
+        <img src={previewUrl} alt="Xem trước" className="h-60 w-full rounded-md border object-contain" />
       ) : null}
       <BilingualField label="Mô tả ảnh" value={alt} onChange={setAlt} maxLength={MAX_ALT_LENGTH} viRequired enRequired />
       <ProblemMessage error={error} />

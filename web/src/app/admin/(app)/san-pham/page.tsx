@@ -68,7 +68,7 @@ export default function ProductsPage() {
             <li key={product.id}>
               <Link
                 href={`${ADMIN_ROUTES.products}/${product.id}`}
-                className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-card p-3"
+                className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-card p-3 hover:bg-muted active:bg-secondary"
               >
                 <span className="min-w-0 flex-1 break-words font-semibold">{product.name.vi ?? product.name.en}</span>
                 {product.missingEn ? <MissingEnBadge /> : null}
