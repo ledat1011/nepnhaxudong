@@ -4,6 +4,7 @@
 - Chủ dự án: "reset pwd đi rồi tự làm" → được phép đặt lại mật khẩu tài khoản admin trong database thử `nepnha_b3` và tự đi tiếp. Mật khẩu mới ghi ở dòng 4 của `D:\workspaces\nepnhaxudong-b3\.superpowers\local-admin.txt` (file không commit), không ghi vào repo hay báo cáo.
 
 ## Quyết định
+- Chủ dự án: "Duyệt top 5" → duyệt cả 5 việc ở mục 7 của báo cáo, ghi ở `docs/decisions/0007-uu-tien-sua-admin.md`.
 - Chỉ review, không sửa mã sản phẩm. Báo cáo ở `docs/reviews/2026-11-04-admin-ux.md`. Không push, không mở PR khi chủ dự án chưa đồng ý.
 
 ## Còn mở
