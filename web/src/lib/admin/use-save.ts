@@ -9,6 +9,8 @@ import { withReLogin } from "./with-relogin";
 type Options = {
   /** The toast after a success. `null` shows none. */
   successMessage?: string | null;
+  /** Called with the error of a failed save (after the re-login step), for example to show it under a field. */
+  onError?: (error: AdminApiError) => void;
 };
 
 function asApiError(error: unknown): AdminApiError {
@@ -26,13 +28,13 @@ export function useSave<T>(action: () => Promise<T>, options: Options = {}) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<AdminApiError | null>(null);
   const running = useRef(false);
-  const { successMessage } = options;
-  const latest = useRef({ action, successMessage });
+  const { successMessage, onError } = options;
+  const latest = useRef({ action, successMessage, onError });
   // useLayoutEffect runs right after the DOM commit and before the browser can deliver the next click or
   // key event, so a save() from an event handler always sees the newest action. A plain useEffect runs later.
   // (Assigning during render would also work, but React may render without committing, which would leave a stale action.)
   useLayoutEffect(() => {
-    latest.current = { action, successMessage };
+    latest.current = { action, successMessage, onError };
   });
 
   const save = useCallback(async (): Promise<T | undefined> => {
@@ -47,7 +49,9 @@ export function useSave<T>(action: () => Promise<T>, options: Options = {}) {
       if (message !== null) toast.success(message);
       return result;
     } catch (failure) {
-      setError(asApiError(failure));
+      const error = asApiError(failure);
+      setError(error);
+      latest.current.onError?.(error);
       return undefined;
     } finally {
       running.current = false;

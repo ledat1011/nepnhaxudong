@@ -5,21 +5,23 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
+import { RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
 import { MediaPicker } from "@/components/admin/media/MediaPicker";
 import { Button } from "@/components/admin/ui/button";
 import { Switch } from "@/components/admin/ui/switch";
 import { adminFetch } from "@/lib/admin/api";
-import { AdminApiError } from "@/lib/admin/errors";
+import { fieldOfDetail, langOfDetail, NOT_SAVED_NOTICE, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
 import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
+import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 import { FeatureList, newFeatureRow, type FeatureRow } from "./FeatureList";
-import { PackagingList, newPackagingRow, type PackagingRow } from "./PackagingList";
+import { PackagingList, newPackagingRow, packagingErrorKey, type PackagingRow } from "./PackagingList";
 import { moved } from "./rows";
 
 /** Most images one product can have (the API refuses more). */
@@ -80,30 +82,41 @@ function snapshot(state: FormState): string {
   });
 }
 
-function invalid(message: string): AdminApiError {
-  return new AdminApiError(400, message);
+/** The API messages that name a field of this form (see `ProductService` and `ProductRequest`). */
+const FIELD_RULES: FieldRule[] = [
+  { prefix: "Tên sản phẩm", field: (detail) => `name.${langOfDetail(detail)}` },
+  { prefix: "Đặc điểm", field: "features" },
+];
+
+function priceOf(row: PackagingRow): number | null {
+  const text = row.price.trim();
+  return text === "" ? null : Number(text);
 }
 
-function toPackagings(rows: PackagingRow[]): PackagingDto[] {
-  return rows.map((row, index) => {
+/** The pack boxes that the API would refuse, checked here so the error can sit under the right box. */
+function packagingErrors(rows: PackagingRow[]): FieldErrors {
+  const errors: Record<string, string> = {};
+  for (const row of rows) {
     const weight = Number(row.weight);
     if (row.weight.trim() === "" || !Number.isInteger(weight) || weight <= 0) {
-      throw invalid(`Quy cách ${index + 1}: khối lượng phải là số nguyên lớn hơn 0.`);
+      errors[packagingErrorKey(row, "weight")] = "Khối lượng phải là số nguyên lớn hơn 0.";
+    } else if (weight > MAX_WEIGHT_GRAMS) {
+      errors[packagingErrorKey(row, "weight")] = "Khối lượng quá lớn.";
     }
-    if (weight > MAX_WEIGHT_GRAMS) {
-      throw invalid(`Quy cách ${index + 1}: khối lượng quá lớn.`);
-    }
-    // A hidden price is still sent: the API hides it on the public pages while "Hiện giá" is off.
-    const priceText = row.price.trim();
-    const price = priceText === "" ? null : Number(priceText);
+    const price = priceOf(row);
     if (price !== null && (!Number.isInteger(price) || price < 0)) {
-      throw invalid(`Quy cách ${index + 1}: giá phải là số nguyên không âm.`);
+      errors[packagingErrorKey(row, "price")] = "Giá phải là số nguyên không âm.";
+    } else if (price !== null && price > Number.MAX_SAFE_INTEGER) {
+      errors[packagingErrorKey(row, "price")] = "Giá quá lớn.";
     }
-    if (price !== null && price > Number.MAX_SAFE_INTEGER) {
-      throw invalid(`Quy cách ${index + 1}: giá quá lớn.`);
-    }
-    return { weightGrams: weight, priceVnd: price, sortOrder: null };
-  });
+  }
+  return errors;
+}
+
+/** The pack sizes of the request. `packagingErrors` has checked the rows. */
+function toPackagings(rows: PackagingRow[]): PackagingDto[] {
+  // A hidden price is still sent: the API hides it on the public pages while "Hiện giá" is off.
+  return rows.map((row) => ({ weightGrams: Number(row.weight), priceVnd: priceOf(row), sortOrder: null }));
 }
 
 /** The request body. A blank English box is `null`; the lists keep only the rows that have text. */
@@ -134,6 +147,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const dirty = snapshot(state) !== baselineSnapshot;
   useUnsavedChanges(dirty && !leaving);
   const leavePage = useLeavePage();
+  const fields = useFieldErrors();
 
   // The form as it was when the running save was sent, to tell later whether the user typed something else meanwhile.
   const sent = useRef<string | null>(null);
@@ -147,6 +161,11 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
           method: "PUT",
           body,
         });
+  }, {
+    onError: (error) => {
+      const field = fieldOfDetail(error.detail, FIELD_RULES);
+      if (field !== null) fields.show({ [field]: error.detail });
+    },
   });
   const deleting = useSave(
     async () => {
@@ -159,6 +178,13 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   );
 
   async function save() {
+    const problems = packagingErrors(state.packagings);
+    if (Object.keys(problems).length > 0) {
+      saving.reset();
+      fields.show(problems);
+      return;
+    }
+    fields.reset();
     const saved = await saving.save();
     if (saved === undefined) return;
     if (baseline === undefined) {
@@ -185,25 +211,37 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
     setState(original);
     setBaselineSnapshot(snapshot(original));
     saving.reset();
+    fields.reset();
   }
 
   function patch(change: Partial<FormState>) {
     setState((current) => ({ ...current, ...change }));
+    // The error of a field goes away once the user changes that field.
+    fields.clear(...Object.keys(change).flatMap((key) => [key, `${key}.`]));
   }
 
   // While a new product is created the fields cannot change: the page goes to the new product and would lose the text.
   const locked = baseline === undefined && (saving.pending || leaving);
+  // An error that names a field is shown under that field, not here.
+  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, FIELD_RULES) === null ? saving.error : null;
 
   return (
-    <fieldset disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
-      <BilingualField label="Tên sản phẩm" value={state.name} onChange={(name) => patch({ name })} viRequired />
+    <fieldset ref={fields.root} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
+      <RequiredNote />
+      <BilingualField
+        label="Tên sản phẩm"
+        value={state.name}
+        onChange={(name) => patch({ name })}
+        viRequired
+        errors={{ vi: fields.errors["name.vi"], en: fields.errors["name.en"] }}
+      />
       <BilingualField
         label="Mô tả"
         value={state.description}
         onChange={(description) => patch({ description })}
         multiline
       />
-      <FeatureList rows={state.features} onChange={(features) => patch({ features })} />
+      <FeatureList rows={state.features} onChange={(features) => patch({ features })} error={fields.errors.features} />
       <BilingualField
         label="Mẹo nấu"
         value={state.cookingTips}
@@ -223,11 +261,12 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
         rows={state.packagings}
         showPrice={state.showPrice}
         onChange={(packagings) => patch({ packagings })}
+        errors={fields.errors}
       />
 
       <ImageSection ids={state.mediaIds} onChange={(mediaIds) => patch({ mediaIds })} />
 
-      <ProblemMessage error={saving.error ?? deleting.error} />
+      <ProblemMessage error={saveError ?? deleting.error} />
 
       {baseline !== undefined ? (
         <Button
@@ -249,7 +288,13 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
         onConfirm={() => void remove()}
       />
 
-      <SaveBar dirty={dirty} pending={saving.pending || leaving} onSave={() => void save()} onDiscard={cancel} />
+      <SaveBar
+        dirty={dirty}
+        pending={saving.pending || leaving}
+        onSave={() => void save()}
+        onDiscard={cancel}
+        notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}
+      />
     </fieldset>
   );
 }

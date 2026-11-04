@@ -155,4 +155,16 @@ describe("useSave latest action and reset", () => {
     act(() => result.current.reset());
     expect(result.current.error).toBeNull();
   });
+
+  it("passes the error of a failed save to onError, after the re-login step", async () => {
+    const onError = vi.fn();
+    const failure = new AdminApiError(400, "Tên báo không được để trống.");
+    const { result } = renderHook(() => useSave(() => Promise.reject(failure), { onError }));
+    await act(async () => {
+      await result.current.save();
+    });
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledWith(failure);
+    expect(result.current.error).toBe(failure);
+  });
 });

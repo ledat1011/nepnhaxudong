@@ -1,9 +1,11 @@
 "use client";
 
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
+import { FieldError, RequiredMark } from "@/components/admin/form/FieldError";
 import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
+import { invalidProps, type FieldErrors } from "@/lib/admin/field-errors";
 import { moved, nextRowKey } from "./rows";
 
 /** Most pack sizes one product can have (the API refuses more). */
@@ -20,10 +22,17 @@ type Props = {
   rows: PackagingRow[];
   showPrice: boolean;
   onChange(rows: PackagingRow[]): void;
+  /** Errors by `packagingErrorKey`. */
+  errors?: FieldErrors;
 };
 
+/** The key of the error of one box of one row. */
+export function packagingErrorKey(row: PackagingRow, box: "weight" | "price"): string {
+  return `packagings.${row.key}.${box}`;
+}
+
 /** Pack sizes in order. The price box is shown only while the product shows its price. */
-export function PackagingList({ rows, showPrice, onChange }: Props) {
+export function PackagingList({ rows, showPrice, onChange, errors = {} }: Props) {
   function update(index: number, patch: Partial<PackagingRow>) {
     onChange(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
@@ -34,19 +43,27 @@ export function PackagingList({ rows, showPrice, onChange }: Props) {
       <ul className="flex flex-col gap-3">
         {rows.map((row, index) => {
           const n = index + 1;
+          const weightError = errors[packagingErrorKey(row, "weight")];
+          const priceError = errors[packagingErrorKey(row, "price")];
           return (
             <li key={row.key} className="flex flex-col gap-2 rounded-md border p-3">
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`${row.key}-w`}>Khối lượng (gam)</Label>
+                  <Label htmlFor={`${row.key}-w`}>
+                    Khối lượng (gam)
+                    <RequiredMark />
+                  </Label>
                   <Input
                     id={`${row.key}-w`}
                     type="number"
                     inputMode="numeric"
                     min={1}
+                    required
                     value={row.weight}
+                    {...invalidProps(`${row.key}-w`, weightError)}
                     onChange={(e) => update(index, { weight: e.target.value })}
                   />
+                  <FieldError id={`${row.key}-w`} message={weightError} />
                 </div>
                 {showPrice ? (
                   <div className="flex flex-col gap-1.5">
@@ -57,8 +74,10 @@ export function PackagingList({ rows, showPrice, onChange }: Props) {
                       inputMode="numeric"
                       min={0}
                       value={row.price}
+                      {...invalidProps(`${row.key}-p`, priceError)}
                       onChange={(e) => update(index, { price: e.target.value })}
                     />
+                    <FieldError id={`${row.key}-p`} message={priceError} />
                   </div>
                 ) : null}
               </div>
