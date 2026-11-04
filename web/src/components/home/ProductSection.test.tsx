@@ -24,8 +24,8 @@ const PRODUCT: Product = {
   images: [],
 };
 
-function renderProduct(product: Product = PRODUCT) {
-  return render(<ProductSection lang="vi" dict={dict} product={product} />);
+function renderProduct(product: Product = PRODUCT, showBag = false) {
+  return render(<ProductSection lang="vi" dict={dict} product={product} showBag={showBag} />);
 }
 
 describe("ProductSection", () => {
@@ -99,5 +99,20 @@ describe("ProductSection", () => {
     expect(
       screen.getByRole("button", { name: dict.gallery.viewLarge }).querySelector("img"),
     ).toHaveAttribute("src", "https://cdn.example.com/a.webp");
+  });
+
+  it("shows the bag drawing just before the features when asked", () => {
+    const { container } = renderProduct(PRODUCT, true);
+    const bag = container.querySelector("[data-product-bag]");
+    const features = screen.getByRole("heading", { name: dict.product.features });
+    expect(bag).not.toBeNull();
+    expect(bag!.compareDocumentPosition(features) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // The bag sits in the same column as the features, not in the gallery column.
+    expect(bag!.parentElement).toBe(features.closest("[data-reveal]")?.parentElement);
+  });
+
+  it("shows no bag drawing when not asked", () => {
+    const { container } = renderProduct(PRODUCT, false);
+    expect(container.querySelector("[data-product-bag]")).toBeNull();
   });
 });

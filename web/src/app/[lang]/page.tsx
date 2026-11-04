@@ -72,8 +72,14 @@ export default async function HomePage({ params }: HomePageProps) {
           <section aria-labelledby="san-pham">
             <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
               <SectionHeading id="san-pham" title={dict.sections.product} />
-              {home.products.map((product) => (
-                <ProductSection key={product.name} lang={lang} dict={dict} product={product} />
+              {home.products.map((product, place) => (
+                <ProductSection
+                  key={product.name}
+                  lang={lang}
+                  dict={dict}
+                  product={product}
+                  showBag={place === 0}
+                />
               ))}
             </div>
           </section>
