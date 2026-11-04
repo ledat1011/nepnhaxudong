@@ -80,13 +80,15 @@ export function ProductSection({ lang, dict, product }: ProductSectionProps) {
 
   return (
     <article className="grid gap-8 md:grid-cols-2 md:gap-12 [&+&]:mt-16">
-      <Gallery images={images} dict={dict} />
+      <div data-reveal>
+        <Gallery images={images} dict={dict} />
+      </div>
       <div>
         <h3 className="text-2xl font-bold md:text-3xl">{product.name}</h3>
         <p className="mt-3 text-lg leading-relaxed">{product.description}</p>
 
         {product.features.length > 0 && (
-          <div className="mt-8">
+          <div data-reveal className="mt-8">
             <h4 className={SUBHEADING_CLASS}>{dict.product.features}</h4>
             <ul className="space-y-3">
               {product.features.map((feature, i) => {
@@ -103,7 +105,7 @@ export function ProductSection({ lang, dict, product }: ProductSectionProps) {
         )}
 
         {product.packagings.length > 0 && (
-          <div className="mt-8">
+          <div data-reveal className="mt-8">
             <h4 className={SUBHEADING_CLASS}>{dict.product.packaging}</h4>
             <ul className="flex flex-wrap gap-3">
               {product.packagings.map(({ weightGrams, priceVnd }) => (
@@ -124,7 +126,7 @@ export function ProductSection({ lang, dict, product }: ProductSectionProps) {
         )}
 
         {product.cookingTips && (
-          <div className="mt-8 rounded-2xl bg-straw p-5">
+          <div data-reveal className="mt-8 rounded-2xl bg-straw p-5">
             <h4 className={SUBHEADING_CLASS}>{dict.product.dishes}</h4>
             <p className="leading-relaxed">{product.cookingTips}</p>
           </div>

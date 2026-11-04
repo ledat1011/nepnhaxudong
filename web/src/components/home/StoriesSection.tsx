@@ -21,7 +21,7 @@ export function StoriesSection({ lang, dict, stories }: StoriesSectionProps) {
         <SectionHeading id="cau-chuyen" title={dict.sections.story} />
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {stories.slice(0, MAX_STORIES).map((story) => (
-            <li key={story.slug}>
+            <li key={story.slug} data-reveal>
               <StoryCard lang={lang} story={story} dict={dict} />
             </li>
           ))}

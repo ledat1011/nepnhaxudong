@@ -7,7 +7,7 @@ type SectionHeadingProps = {
 /** Section title; `id` is the anchor target for the header menu. */
 export function SectionHeading({ id, title, kicker }: SectionHeadingProps) {
   return (
-    <div className="mb-8">
+    <div data-reveal className="mb-8">
       {kicker && (
         <p className="mb-1 text-sm font-bold uppercase tracking-wide text-coat">{kicker}</p>
       )}

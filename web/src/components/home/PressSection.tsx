@@ -18,7 +18,7 @@ export function PressSection({ lang, dict, items }: PressSectionProps) {
         <SectionHeading id="bao-chi" title={dict.sections.press} />
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <li key={item.url}>
+            <li key={item.url} data-reveal>
               <a
                 href={item.url}
                 target="_blank"

@@ -21,7 +21,7 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
     <section aria-labelledby="lien-he">
       <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
         <SectionHeading id="lien-he" title={dict.sections.contact} />
-        <div className="grid gap-8 md:grid-cols-2 md:items-start">
+        <div data-reveal className="grid gap-8 md:grid-cols-2 md:items-start">
           {hasButtons && (
             <ul className="flex flex-wrap gap-3">
               {phone !== null && (
