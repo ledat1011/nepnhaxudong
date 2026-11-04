@@ -89,9 +89,9 @@ Mascot giữ nguyên (`brand/mascot/mascot-layered.svg`).
 - Chỉ hiện ở sản phẩm đầu tiên (trang hiện có một sản phẩm).
 
 ### 3 chú thích (chữ HTML, vi / en; chủ dự án có thể sửa câu)
-1. "Túi trong — nhìn rõ từng hạt gạo"
-2. "Hút chân không — gạo giữ khô và thơm lâu"
-3. "Khối vuông — dễ cất, dễ làm quà"
+1. "Túi trong: nhìn rõ từng hạt gạo"
+2. "Hút chân không: gạo giữ khô và thơm lâu"
+3. "Khối vuông: dễ cất, dễ làm quà"
 
 ### Chuyển động: chạy một lần khi vào màn hình (khoảng 2,5 giây), rồi đứng yên
 1. Túi còn phồng; khoảng 10 hạt gạo rơi vào, hạt sau chậm hơn hạt trước (`stagger`).
