@@ -39,6 +39,13 @@ describe("classifyPath", () => {
     }
   });
 
+  it("lets the story scene files through, and nothing else under /story", () => {
+    expect(classifyPath("/story/canh-1-cay-ma.svg")).toBe("pass");
+    expect(classifyPath("/story")).toBe("not-found");
+    expect(classifyPath("/story/a/b.svg")).toBe("not-found");
+    expect(classifyPath("/story/a.php")).toBe("not-found");
+  });
+
   it("answers 404 for a first segment that is not a language", () => {
     for (const path of ["/fr", "/fr/x", "/wp-login.php", "/favicon.ico", "/admin", "/VI", "/vi.php", "/a/b/c/d"]) {
       expect(classifyPath(path), path).toBe("not-found");

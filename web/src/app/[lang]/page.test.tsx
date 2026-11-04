@@ -21,7 +21,7 @@ const product = (name: string): Product => ({
   images: [],
 });
 
-const home: HomeData = {
+const BASE_HOME: HomeData = {
   lang: "vi",
   brand: { tagline: "t" },
   products: [product("[MẪU] Nếp cái hoa vàng"), product("[MẪU] Nếp thứ hai")],
@@ -31,6 +31,8 @@ const home: HomeData = {
   contact: { phone: null, zalo: null, messenger: null, address: null, mapUrl: null, hours: null },
   social: { facebook: null, youtube: null, tiktok: null },
 };
+
+let home: HomeData = BASE_HOME;
 
 vi.mock("@/lib/content/client", () => ({
   getContentClient: () => ({ getHome: async () => home }),
@@ -59,5 +61,36 @@ describe("home page products", () => {
     expect(articles[0].querySelectorAll("[data-product-bag]")).toHaveLength(1);
     expect(articles[1].querySelector("[data-product-bag]")).toBeNull();
     expect(container.querySelectorAll("[data-product-bag]")).toHaveLength(1);
+  });
+});
+
+describe("home page rice story", () => {
+  it("sits after the product section and before the journey section", async () => {
+    const withTimeline: HomeData = {
+      ...home,
+      timeline: [{ year: 2020, title: "[MẪU]", description: "[MẪU]", image: null }],
+    };
+    home = withTimeline;
+    try {
+      const { container } = render(await HomePage(params("vi")));
+      const ids = [...container.querySelectorAll("section[aria-labelledby]")].map((s) =>
+        s.getAttribute("aria-labelledby"),
+      );
+      expect(ids.indexOf("san-pham")).toBeGreaterThanOrEqual(0);
+      expect(ids.indexOf("tu-hat-lua")).toBe(ids.indexOf("san-pham") + 1);
+      expect(ids.indexOf("hanh-trinh")).toBe(ids.indexOf("tu-hat-lua") + 1);
+    } finally {
+      home = BASE_HOME;
+    }
+  });
+
+  it("still renders with no products", async () => {
+    home = { ...BASE_HOME, products: [] };
+    try {
+      const { container } = render(await HomePage(params("vi")));
+      expect(container.querySelector("section[data-rice-story]")).not.toBeNull();
+    } finally {
+      home = BASE_HOME;
+    }
   });
 });
