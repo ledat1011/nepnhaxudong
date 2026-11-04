@@ -109,7 +109,7 @@ export function HistoryList() {
           </p>
         ) : null}
         {entries !== null && entries.length === 0 ? (
-          <p className="py-6 text-center text-muted-foreground">Chưa có thay đổi nào.</p>
+          <p className="py-6 text-center text-muted-foreground">{page === 0 ? "Chưa có thay đổi nào." : "Hết danh sách."}</p>
         ) : null}
         {entries !== null && entries.length > 0 ? (
           <ul className="flex flex-col gap-2">

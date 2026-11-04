@@ -131,6 +131,16 @@ describe("HistoryList", () => {
     expect(screen.getByRole("button", { name: /Mục 100/ })).toBeInTheDocument();
   });
 
+  it("says the list is over on an empty page after the first, and keeps the previous-page button", async () => {
+    adminFetch.mockImplementation(async (path: string) => (path.includes("page=0") ? fullPage(1) : []));
+    render(<HistoryList />);
+    await screen.findByRole("button", { name: /^Mục 1 / });
+    await userEvent.click(screen.getByRole("button", { name: "Trang sau" }));
+    expect(await screen.findByText("Hết danh sách.")).toBeInTheDocument();
+    expect(screen.queryByText("Chưa có thay đổi nào.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Trang trước" })).toBeEnabled();
+  });
+
   it("shows a load error with a retry button", async () => {
     adminFetch.mockRejectedValueOnce(new AdminApiError(503, "Máy chủ đang bận."));
     adminFetch.mockResolvedValue([entry(1)]);

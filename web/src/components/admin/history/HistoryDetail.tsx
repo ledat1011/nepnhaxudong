@@ -32,6 +32,8 @@ export function HistoryDetail({ id, onRestored, onClose }: Props) {
   const [loadError, setLoadError] = useState<AdminApiError | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [confirming, setConfirming] = useState(false);
+  // True from a successful restore until the line has loaded again: what is on screen is the old copy.
+  const [stale, setStale] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +42,7 @@ export function HistoryDetail({ id, onRestored, onClose }: Props) {
       (value) => {
         if (cancelled) return;
         setLine(value);
+        setStale(false);
         setLoadError(null);
       },
       (failure: unknown) => {
@@ -64,6 +67,7 @@ export function HistoryDetail({ id, onRestored, onClose }: Props) {
   async function onConfirm() {
     const done = await restore.save();
     if (done === undefined) return;
+    setStale(true);
     // Both the open line (it may no longer be restorable) and the list change after a restore.
     setAttempt((n) => n + 1);
     onRestored();
@@ -80,12 +84,12 @@ export function HistoryDetail({ id, onRestored, onClose }: Props) {
           Thử lại
         </Button>
       ) : null}
-      {line === null && loadError === null ? (
+      {(line === null || stale) && loadError === null ? (
         <p role="status" className="text-center text-muted-foreground">
           Đang tải…
         </p>
       ) : null}
-      {line !== null ? (
+      {line !== null && !stale ? (
         <>
           <div className="flex flex-col gap-1">
             <h2 className="break-words text-lg font-bold">{line.label}</h2>

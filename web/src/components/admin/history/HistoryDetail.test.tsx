@@ -125,7 +125,45 @@ describe("HistoryDetail", () => {
     await userEvent.click(button);
     expect(posts()).toHaveLength(1);
     finish();
-    await waitFor(() => expect(button).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Khôi phục bản trước" })).toBeEnabled());
+  });
+
+  it("keeps the restore button away until the detail has loaded again after a restore", async () => {
+    let finishReload: (value: AuditDetailDto) => void = () => {};
+    let loads = 0;
+    adminFetch.mockImplementation(async (_path: string, init?: { method?: string }) => {
+      if (init?.method === "POST") return undefined;
+      loads += 1;
+      return loads === 1 ? detail() : new Promise<AuditDetailDto>((resolve) => (finishReload = resolve));
+    });
+    render(<HistoryDetail id={7} onRestored={vi.fn()} onClose={vi.fn()} />);
+    const dialog = await askToRestore();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Khôi phục" }));
+    await waitFor(() => expect(loads).toBe(2));
+    expect(screen.queryByRole("button", { name: "Khôi phục bản trước" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(posts()).toHaveLength(1);
+    finishReload(detail({ restorable: false }));
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(posts()).toHaveLength(1);
+  });
+
+  it("hides the old table and the restore button when the reload after a restore fails", async () => {
+    let loads = 0;
+    adminFetch.mockImplementation(async (_path: string, init?: { method?: string }) => {
+      if (init?.method === "POST") return undefined;
+      loads += 1;
+      if (loads === 2) throw new AdminApiError(503, "Máy chủ đang bận.");
+      return detail();
+    });
+    render(<HistoryDetail id={7} onRestored={vi.fn()} onClose={vi.fn()} />);
+    const dialog = await askToRestore();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Khôi phục" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Máy chủ đang bận.");
+    expect(screen.queryByRole("button", { name: "Khôi phục bản trước" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+    expect(await screen.findByRole("button", { name: "Khôi phục bản trước" })).toBeInTheDocument();
   });
 
   it("shows the API detail on a 409 and does not tell the list", async () => {
