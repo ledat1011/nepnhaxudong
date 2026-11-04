@@ -33,6 +33,60 @@ function recordScripts(page: Page) {
   return { bodies, settle: () => Promise.all(pending) };
 }
 
+type MascotGroup = "head" | "rice";
+
+const HEAD_PIVOT = { x: 278, y: 257 };
+const RICE_PIVOT = { x: 302, y: 356 };
+const HEAD_LIMIT_DEG = 3.01;
+const RICE_LIMIT_DEG = 6.01;
+const MOBILE = { width: 375, height: 812 };
+
+/** The rotation of a mascot group in degrees, relative to the mascot svg. */
+async function rotationOf(page: Page, id: MascotGroup) {
+  return page.evaluate((groupId) => {
+    const svg = document.querySelector<SVGSVGElement>("svg[data-mascot]");
+    const group = svg?.querySelector<SVGGElement>(`g#${groupId}`);
+    const svgCtm = svg?.getCTM();
+    const groupCtm = group?.getCTM();
+    if (!svgCtm || !groupCtm) throw new Error(`mascot group ${groupId} not found`);
+    const m = svgCtm.inverse().multiply(groupCtm);
+    return (Math.atan2(m.b, m.a) * 180) / Math.PI;
+  }, id);
+}
+
+/** Screen distance (px) between the pivot moved by the group transform and by the svg alone. */
+async function pivotDrift(page: Page, id: MascotGroup, x: number, y: number) {
+  return page.evaluate(
+    ({ groupId, px, py }) => {
+      const svg = document.querySelector<SVGSVGElement>("svg[data-mascot]");
+      const group = svg?.querySelector<SVGGElement>(`g#${groupId}`);
+      const svgCtm = svg?.getScreenCTM();
+      const groupCtm = group?.getScreenCTM();
+      if (!svgCtm || !groupCtm) throw new Error(`mascot group ${groupId} not found`);
+      const point = new DOMPoint(px, py);
+      const a = point.matrixTransform(groupCtm);
+      const b = point.matrixTransform(svgCtm);
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    },
+    { groupId: id, px: x, py: y },
+  );
+}
+
+// The mascot sits at the top of the page, so its scroll range at 375x812 is only about 260 px.
+// Headless Chromium applies a wheel step at once. The steps must stay inside that range:
+// otherwise the last scroll update comes early and the mascot is already settling at the reading.
+const WHEEL_STEP_PX = 80;
+const WHEEL_COUNT = 3;
+const WHEEL_GAP_MS = 30;
+
+async function wheelDown(page: Page) {
+  await page.mouse.move(MOBILE.width / 2, MOBILE.height / 2);
+  for (let i = 0; i < WHEEL_COUNT; i++) {
+    await page.mouse.wheel(0, WHEEL_STEP_PX);
+    await page.waitForTimeout(WHEEL_GAP_MS);
+  }
+}
+
 test("motion starts and nothing stays hidden after scrolling to the end", async ({ page }) => {
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);
@@ -156,6 +210,55 @@ test("turning reduced motion on while the page is open reverts the motion", asyn
   expect(opacities.every((opacity) => opacity === "1")).toBe(true);
 });
 
+test("the mascot tilts while scrolling and settles after", async ({ page }) => {
+  await page.setViewportSize(MOBILE);
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await wheelDown(page);
+  const head = await rotationOf(page, "head");
+  const rice = await rotationOf(page, "rice");
+  expect(Math.abs(head)).toBeGreaterThan(0.5);
+  expect(Math.abs(head)).toBeLessThanOrEqual(HEAD_LIMIT_DEG);
+  expect(Math.abs(rice)).toBeLessThanOrEqual(RICE_LIMIT_DEG);
+  expect(await pivotDrift(page, "head", HEAD_PIVOT.x, HEAD_PIVOT.y)).toBeLessThan(1);
+  expect(await pivotDrift(page, "rice", RICE_PIVOT.x, RICE_PIVOT.y)).toBeLessThan(1);
+  await page.waitForTimeout(2500);
+  expect(Math.abs(await rotationOf(page, "head"))).toBeLessThan(0.1);
+  expect(Math.abs(await rotationOf(page, "rice"))).toBeLessThan(0.1);
+});
+
+test("very fast scrolling stays within the limits", async ({ page }) => {
+  await page.setViewportSize(MOBILE);
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  for (let i = 0; i < 3; i++) {
+    await page.keyboard.press("End");
+    await page.keyboard.press("Home");
+  }
+  for (let i = 0; i < 10; i++) {
+    expect(Math.abs(await rotationOf(page, "head"))).toBeLessThanOrEqual(HEAD_LIMIT_DEG);
+    expect(Math.abs(await rotationOf(page, "rice"))).toBeLessThanOrEqual(RICE_LIMIT_DEG);
+    await page.waitForTimeout(50);
+  }
+});
+
+test("turning reduced motion on puts a tilted mascot back at 0 degrees", async ({ page }) => {
+  await page.setViewportSize(MOBILE);
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await wheelDown(page);
+  expect(Math.abs(await rotationOf(page, "head"))).toBeGreaterThan(0.5);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.waitForSelector("html:not([data-motion])");
+  // With reduced motion, globals.css gives every property a 0.01 ms transition. The reverted
+  // transform therefore shows from the next animation frame on, not in the same task.
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  expect(Math.abs(await rotationOf(page, "head"))).toBe(0);
+  expect(Math.abs(await rotationOf(page, "rice"))).toBe(0);
+});
+
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
@@ -176,5 +279,14 @@ test.describe("reduced motion", () => {
     );
     expect(styles.length).toBeGreaterThan(0);
     expect(styles.every((s) => s.opacity === "1" && s.transform === "none")).toBe(true);
+  });
+
+  test("reduced motion: the mascot does not move", async ({ page }) => {
+    await page.setViewportSize(MOBILE);
+    await page.goto("/vi");
+    await page.waitForTimeout(3000);
+    await wheelDown(page);
+    expect(Math.abs(await rotationOf(page, "head"))).toBe(0);
+    expect(Math.abs(await rotationOf(page, "rice"))).toBe(0);
   });
 });

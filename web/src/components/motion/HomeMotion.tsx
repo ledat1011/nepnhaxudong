@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { loadGsap, type MotionSetup } from "@/lib/motion/load-gsap";
+import { setupMascot } from "@/lib/motion/mascot";
 import {
   MOTION_OK_QUERY,
   prefersReducedMotion,
@@ -9,7 +10,7 @@ import {
 } from "@/lib/motion/reduced-motion";
 import { setupReveals } from "@/lib/motion/reveal";
 
-const HOME_SETUPS: MotionSetup[] = [setupReveals];
+const HOME_SETUPS: MotionSetup[] = [setupReveals, setupMascot];
 const IDLE_TIMEOUT_MS = 2000;
 const IDLE_FALLBACK_MS = 200;
 
