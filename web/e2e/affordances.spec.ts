@@ -133,19 +133,17 @@ test.describe("controls show that they can be used", () => {
     }) => {
       const context = await browser.newContext({ baseURL, viewport: PHONE, reducedMotion });
       const page = await context.newPage();
-      await page.goto("/vi");
+      await page.goto("/vi", { waitUntil: "load" });
       const button = page.getByRole("button", { name: vi.nav.openMenu });
-      const box = await button.boundingBox();
-      if (box === null) throw new Error("menu button has no box");
-      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      // hover() waits until the button is stable and under the pointer.
+      await button.hover();
       await page.mouse.down();
+      await expect(button).toHaveCSS("translate", "0px 1px");
       const pressed = await button.evaluate((el) => ({
-        translate: getComputedStyle(el).translate,
         transition: getComputedStyle(el).transitionDuration,
         animations: el.getAnimations().length,
       }));
       await page.mouse.up();
-      expect(pressed.translate).toBe("0px 1px");
       expect(pressed.animations).toBe(0);
       expect(pressed.transition.split(",").every((d) => parseFloat(d) < 0.001)).toBe(true);
       await context.close();
