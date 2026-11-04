@@ -101,14 +101,17 @@ describe("ProductSection", () => {
     ).toHaveAttribute("src", "https://cdn.example.com/a.webp");
   });
 
-  it("shows the bag drawing just before the features when asked", () => {
+  it("shows the bag drawing in the gallery column, not next to the features, when asked", () => {
     const { container } = renderProduct(PRODUCT, true);
     const bag = container.querySelector("[data-product-bag]");
     const features = screen.getByRole("heading", { name: dict.product.features });
     expect(bag).not.toBeNull();
-    expect(bag!.compareDocumentPosition(features) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // The bag sits in the same column as the features, not in the gallery column.
-    expect(bag!.parentElement).toBe(features.closest("[data-reveal]")?.parentElement);
+    const [galleryColumn, textColumn] = [...(container.querySelector("article")?.children ?? [])];
+    expect(galleryColumn).toContainElement(bag as HTMLElement);
+    expect(textColumn).toContainElement(features);
+    expect(textColumn.querySelector("[data-product-bag]")).toBeNull();
+    // The drawing takes the place of the empty photo placeholder.
+    expect(screen.queryByRole("img", { name: dict.image.placeholder })).not.toBeInTheDocument();
   });
 
   it("shows no bag drawing when not asked", () => {

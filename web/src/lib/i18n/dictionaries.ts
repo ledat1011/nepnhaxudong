@@ -69,6 +69,7 @@ const vi = {
     previous: "Ảnh trước",
     next: "Ảnh sau",
     close: "Đóng",
+    bag: "Hình túi gạo",
   },
   stories: {
     readMore: "Đọc tiếp",
@@ -165,6 +166,7 @@ const en: Dictionary = {
     previous: "Previous image",
     next: "Next image",
     close: "Close",
+    bag: "Drawing of the rice bag",
   },
   stories: {
     readMore: "Read more",

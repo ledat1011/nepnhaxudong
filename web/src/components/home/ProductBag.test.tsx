@@ -1,19 +1,32 @@
 import { render } from "@testing-library/react";
 import { gzipSync } from "node:zlib";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ILLUSTRATION_PALETTE } from "@/lib/brand/colors";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { ProductBag } from "./ProductBag";
+import type { GalleryImage } from "./Gallery";
+import { BAG_FRONT, BAG_SIDE_DEPTH, ProductBag } from "./ProductBag";
 
-const vi = getDictionary("vi");
-const en = getDictionary("en");
+vi.mock("next/image", () => ({
+  // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+  default: (props: Record<string, unknown>) => <img {...props} />,
+}));
+
+const PHOTOS: GalleryImage[] = [1, 2].map((n) => ({
+  src: `https://cdn.example.com/${n}.webp`,
+  width: 800,
+  height: 600,
+  alt: `Ảnh số ${n}`,
+}));
+
+const viDict = getDictionary("vi");
+const enDict = getDictionary("en");
 
 /** The parts the motion code (Task 6) moves. The static markup is the final frame. */
 const PARTS = ["puffy", "brick", "grains", "wrinkles", "air", "seal", "label", "tray"];
 
-function renderBag(dict = vi) {
-  return render(<ProductBag dict={dict} />);
+function renderBag(dict = viDict, images: GalleryImage[] = []) {
+  return render(<ProductBag dict={dict} images={images} />);
 }
 
 function part(container: HTMLElement, name: string) {
@@ -29,6 +42,36 @@ describe("ProductBag", () => {
     for (const name of PARTS) {
       expect(container.querySelectorAll(`svg [data-bag="${name}"]`), name).toHaveLength(1);
     }
+  });
+
+  it("is drawn slim and upright: the front is about 1.7 times as tall as wide, the side about 1/4", () => {
+    expect(BAG_FRONT.height / BAG_FRONT.width).toBeGreaterThan(1.6);
+    expect(BAG_FRONT.height / BAG_FRONT.width).toBeLessThan(1.8);
+    expect(BAG_SIDE_DEPTH / BAG_FRONT.width).toBeGreaterThan(0.2);
+    expect(BAG_SIDE_DEPTH / BAG_FRONT.width).toBeLessThan(0.3);
+  });
+
+  it("is the first item of the product gallery, with the notes under the gallery box", () => {
+    const { container } = renderBag();
+    const figure = container.querySelector("figure[data-product-bag]") as HTMLElement;
+    const svg = figure.querySelector("svg") as SVGElement;
+    const notes = figure.querySelector("ul:has([data-bag-note])") as HTMLElement;
+    expect(svg.closest(".bg-straw")).not.toBeNull();
+    expect(svg.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // With no photos there is no placeholder and no thumbnail row.
+    expect(figure.querySelector("[role='img']")).toBeNull();
+    expect(figure.querySelectorAll("button")).toHaveLength(0);
+  });
+
+  it("keeps each part once when photos follow it, with a plain thumbnail of the drawing first", () => {
+    const { container } = renderBag(viDict, PHOTOS);
+    for (const name of PARTS) {
+      expect(container.querySelectorAll(`[data-bag="${name}"]`), name).toHaveLength(1);
+    }
+    const thumbs = container.querySelectorAll("figure li > button");
+    expect(thumbs).toHaveLength(3);
+    expect(thumbs[0].querySelector("svg")).not.toBeNull();
+    expect(thumbs[0]).toHaveAccessibleName(viDict.gallery.bag);
   });
 
   it("draws the final frame: a square block with a label, no puffy bag, no falling grains, no air", () => {
@@ -49,7 +92,7 @@ describe("ProductBag", () => {
   });
 
   it("prints the packaging text on the label, the same in both languages", () => {
-    for (const dict of [vi, en]) {
+    for (const dict of [viDict, enDict]) {
       const { container, unmount } = renderBag(dict);
       const label = part(container, "label")?.textContent ?? "";
       expect(label).toContain("GẠO NẾP CÁI HOA VÀNG");
@@ -60,7 +103,7 @@ describe("ProductBag", () => {
   });
 
   it("shows the 3 notes as HTML text, in order, in Vietnamese", () => {
-    const { container } = renderBag(vi);
+    const { container } = renderBag(viDict);
     const notes = [...container.querySelectorAll("ul [data-bag-note]")].map((n) => n.textContent);
     expect(notes).toEqual([
       "Túi trong: nhìn rõ từng hạt gạo",
@@ -70,7 +113,7 @@ describe("ProductBag", () => {
   });
 
   it("shows the 3 notes in English", () => {
-    const { container } = renderBag(en);
+    const { container } = renderBag(enDict);
     const notes = [...container.querySelectorAll("ul [data-bag-note]")].map((n) => n.textContent);
     expect(notes).toEqual([
       "Clear bag: you can see every grain",
@@ -122,7 +165,7 @@ describe("ProductBag", () => {
   });
 
   it("fits the 6 KB gzip budget", () => {
-    const size = gzipSync(renderToStaticMarkup(<ProductBag dict={vi} />)).length;
+    const size = gzipSync(renderToStaticMarkup(<ProductBag dict={viDict} images={[]} />)).length;
     expect(size).toBeLessThanOrEqual(6 * 1024);
   });
 });

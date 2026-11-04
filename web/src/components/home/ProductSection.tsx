@@ -12,7 +12,7 @@ type ProductSectionProps = {
   lang: Lang;
   dict: Dictionary;
   product: Product;
-  /** Show the drawing of the vacuum-packed bag above the features (the first product only). */
+  /** Show the drawing of the vacuum-packed bag first in the gallery (the first product only). */
   showBag: boolean;
 };
 
@@ -98,13 +98,15 @@ export function ProductSection({ lang, dict, product, showBag }: ProductSectionP
   return (
     <article className="grid gap-8 md:grid-cols-2 md:gap-12 [&+&]:mt-16">
       <div data-reveal>
-        <Gallery images={images} dict={dict} />
+        {showBag ? (
+          <ProductBag dict={dict} images={images} />
+        ) : (
+          <Gallery images={images} dict={dict} />
+        )}
       </div>
       <div>
         <h3 className="text-2xl font-bold md:text-3xl">{product.name}</h3>
         <p className="mt-3 text-lg leading-relaxed">{product.description}</p>
-
-        {showBag && <ProductBag dict={dict} />}
 
         {product.features.length > 0 && (
           <div data-reveal className="mt-8">
