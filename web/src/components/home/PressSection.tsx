@@ -18,7 +18,7 @@ export function PressSection({ lang, dict, items }: PressSectionProps) {
         <SectionHeading id="bao-chi" title={dict.sections.press} />
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <li key={item.url}>
+            <li key={item.url} data-reveal>
               <a
                 href={item.url}
                 target="_blank"
@@ -34,7 +34,7 @@ export function PressSection({ lang, dict, items }: PressSectionProps) {
                   />
                 </div>
                 <div className="flex flex-1 flex-col gap-2 p-5">
-                  <p className="text-sm font-bold uppercase tracking-wide text-coat">
+                  <p className="text-sm font-bold text-coat">
                     {item.sourceName}
                   </p>
                   <p className="text-lg font-bold leading-snug group-hover:underline">

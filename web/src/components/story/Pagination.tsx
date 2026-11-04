@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LinkPendingStatus } from "@/components/ui/LinkPendingStatus";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { storiesPath } from "@/lib/i18n/routes";
@@ -12,7 +13,7 @@ type PaginationProps = {
 };
 
 const LINK_CLASS =
-  "inline-flex min-h-11 items-center justify-center rounded-full border-2 border-coat px-6 py-2 font-bold text-coat hover:bg-coat hover:text-rice focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
+  "inline-flex min-h-11 items-center justify-center rounded-full border-2 border-coat px-6 py-2 font-bold text-coat underline-offset-4 hover:underline hover:bg-coat hover:text-rice focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
 
 export function Pagination({ lang, page, hasNext, dict }: PaginationProps) {
   const hasPrevious = page > 0;
@@ -23,11 +24,13 @@ export function Pagination({ lang, page, hasNext, dict }: PaginationProps) {
       {hasPrevious && (
         <Link href={storiesPath(lang, page - 1)} rel="prev" className={LINK_CLASS}>
           {dict.stories.previousPage}
+          <LinkPendingStatus label={dict.loading.page} />
         </Link>
       )}
       {hasNext && (
         <Link href={storiesPath(lang, page + 1)} rel="next" className={LINK_CLASS}>
           {dict.stories.nextPage}
+          <LinkPendingStatus label={dict.loading.page} />
         </Link>
       )}
     </nav>

@@ -7,6 +7,10 @@ export type Packaging = { weightGrams: number; priceVnd: number | null };
 export type Product = {
   name: string;
   description: string;
+  /**
+   * In this order (spec 3.2): round and plump, soft, fragrant. The site shows one icon per
+   * place in that order, so the admin must keep it. Features after the third get no icon.
+   */
   features: string[];
   cookingTips: string;
   showPrice: boolean;

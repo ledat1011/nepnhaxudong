@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ContentImage } from "@/components/ui/ContentImage";
+import { LinkPendingStatus } from "@/components/ui/LinkPendingStatus";
 import type { StorySummary } from "@/lib/content/types";
 import { formatDate } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -37,6 +38,7 @@ export function StoryCard({ lang, story, dict, headingLevel = 3 }: StoryCardProp
             className="rounded after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
           >
             {story.title}
+            <LinkPendingStatus label={dict.loading.page} />
           </Link>
         </Heading>
         <p className="leading-relaxed">{story.excerpt}</p>

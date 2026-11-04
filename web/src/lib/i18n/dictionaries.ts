@@ -73,6 +73,9 @@ const vi = {
   image: {
     placeholder: "Ảnh sắp được cập nhật",
   },
+  loading: {
+    page: "Đang tải trang…",
+  },
   error: {
     title: "Có lỗi xảy ra",
     message: "Trang này tạm thời không tải được. Bạn hãy thử lại sau ít phút.",
@@ -156,6 +159,9 @@ const en: Dictionary = {
   },
   image: {
     placeholder: "Photo coming soon",
+  },
+  loading: {
+    page: "Loading the page…",
   },
   error: {
     title: "Something went wrong",

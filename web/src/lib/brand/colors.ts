@@ -7,3 +7,9 @@ export const BRAND = {
   blush: "#E59A84",
   sprout: "#6E8B3D",
 } as const;
+
+/** Colors that exist only in the mascot (brand/README.md). */
+export const MASCOT_ONLY_COLORS = {
+  skin: "#F4CDA8",
+  hair: "#222222",
+} as const;
