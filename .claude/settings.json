@@ -8,11 +8,17 @@
     "frontend-design@claude-plugins-official": true,
     "playwright@claude-plugins-official": true,
     "claude-seo@agricidaniel-claude-seo": true,
-    "andrej-karpathy-skills@karpathy-skills": true
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "antislop@anti-slop": true,
+    "taste-skill@taste-skill": true,
+    "gsap-skills@gsap-skills": true
   },
   "extraKnownMarketplaces": {
     "agricidaniel-claude-seo": { "source": { "source": "github", "repo": "AgriciDaniel/claude-seo" } },
-    "karpathy-skills": { "source": { "source": "github", "repo": "forrestchang/andrej-karpathy-skills" } }
+    "karpathy-skills": { "source": { "source": "github", "repo": "forrestchang/andrej-karpathy-skills" } },
+    "anti-slop": { "source": { "source": "github", "repo": "miqdadbadjuber/anti-slop", "ref": "v3.2.25" } },
+    "taste-skill": { "source": { "source": "github", "repo": "leonxlnx/taste-skill", "ref": "v2.1.5" } },
+    "gsap-skills": { "source": { "source": "github", "repo": "greensock/gsap-skills" } }
   },
   "permissions": {
     "allow": ["Bash(npm run test:tools)", "Bash(node --test:*)", "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)"],

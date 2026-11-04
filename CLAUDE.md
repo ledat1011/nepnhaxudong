@@ -43,17 +43,19 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
 ## Front-end work (UI, copy, motion)
 - Design direction is fixed: `brand/README.md` (colors, fonts, logo, mascot) and sections 2 and 3 of the spec.
   Treat them as this project's `DESIGN.md`. Do not invent a new palette, font pair or layout style.
+- The front-end skills come from plugins declared in `.claude/settings.json` (`antislop`, `taste-skill`,
+  `gsap-skills`). If a skill below is missing, tell the owner to install the plugin. Do not install it yourself.
 - Then use the `antislop` skills as the filter for UI, copy and front-end code (`antislop`, `antislop-ui`,
   `antislop-layoutmobile`, `antislop-human`, `antislop-copywriting`, `antislop-code`).
   - The owner chose antislop mode `during` (2026-11-04): apply the rules while you build, and run the antislop
     Delivery Gate (PASS/FAIL report with evidence) before you deliver any UI work or open a PR with UI changes.
   - Dials, inferred from the spec: public site `ENERGY 2 / RHYTHM 2 / MOTION 2` (warm family brand, mascot
     and scroll motion); admin `ENERGY 1 / RHYTHM 1 / MOTION 1` (a tool for family members on a phone).
-- `taste-skill`: use its critique, its browser inspector (`inspect.mjs`, and `--app` for admin screens) and its
+- `taste-skill` (skill name `design-taste-frontend`): use its critique, its browser inspector (`inspect.mjs`, and `--app` for admin screens) and its
   look-and-fix loop. Do not use `draw.mjs` to pick a new direction, because the brand is already decided.
 - GSAP code (part B4 and later): follow the `gsap-*` skills.
-- Review UI code against the pinned rules with the `web-interface-guidelines` skill.
-- Sources, commits and licenses of these skills: `.claude/skills/THIRD_PARTY.md`.
+- Review UI code against the pinned rules with the `web-interface-guidelines` skill (in `.claude/skills/`).
+- Sources and licenses: `.claude/skills/THIRD_PARTY.md`. Why plugins: `docs/decisions/0006-skill-frontend.md`.
 
 ## Tools
 - Test the tools: `npm run test:tools`.
