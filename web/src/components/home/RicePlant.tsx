@@ -61,3 +61,31 @@ export function RiceEar({ className }: RicePlantProps) {
     </svg>
   );
 }
+
+/**
+ * One white rice grain with a dark outline: the falling grains of ProductBag, twice as large.
+ * The story road's moving marker. Its center is the middle of the box.
+ */
+export function RiceGrain({ className }: RicePlantProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      viewBox="0 0 20 28"
+      width="20"
+      height="28"
+      className={className}
+    >
+      <ellipse
+        cx="10"
+        cy="14"
+        rx="7"
+        ry="11"
+        transform="rotate(-20 10 14)"
+        fill={BRAND.rice}
+        stroke={BRAND.earth}
+        strokeWidth="2.5"
+      />
+    </svg>
+  );
+}

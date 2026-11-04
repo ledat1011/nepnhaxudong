@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { BRAND } from "@/lib/brand/colors";
+import { roadBend, roadPath } from "@/lib/story/road";
 import { STORY_SCENES } from "@/lib/story/scenes";
 import { RiceStory } from "./RiceStory";
 
@@ -23,19 +25,60 @@ describe("RiceStory", () => {
     expect(heading).toHaveAttribute("id", "tu-hat-lua");
     const section = container.querySelector("section[data-rice-story]");
     expect(section).toHaveAttribute("aria-labelledby", "tu-hat-lua");
-    expect(container.querySelector("div[data-story-viewport] > ol[data-story-track]")).not.toBeNull();
+    expect(container.querySelectorAll("div[data-story-road-wrap] > ol[data-story-list] > li")).toHaveLength(8);
   });
 
-  it("pins one block that holds the title, the progress dots and the track", () => {
+  it("is one vertical road timeline: no pinned track, no progress bar", () => {
     const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
-    const pin = container.querySelector("section[data-rice-story] > div[data-story-pin]") as HTMLElement;
-    expect(pin).not.toBeNull();
-    expect(pin.querySelector("#tu-hat-lua")).not.toBeNull();
-    expect(pin.querySelector("ol[data-story-progress]")).not.toBeNull();
-    expect(pin.querySelector("div[data-story-viewport]")).not.toBeNull();
-    expect(pin.contains(container.querySelector("#sau-cau-chuyen"))).toBe(false);
-    // Room for the sticky header, only in the horizontal layout.
-    expect(pin.className).toContain("[section[data-story-mode=horizontal]_&]:pt-[var(--story-header,0px)]");
+    for (const hook of ["data-story-pin", "data-story-viewport", "data-story-track", "data-story-progress"]) {
+      expect(container.querySelector(`[${hook}]`), hook).toBeNull();
+    }
+    expect(container.innerHTML).not.toContain("data-story-mode");
+  });
+
+  it("draws one stretch of road and one stop per scene, hidden from screen readers", () => {
+    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
+    const items = [...container.querySelectorAll("li[data-story-scene]")];
+    items.forEach((li, i) => {
+      const road = li.querySelector("[data-story-road]") as HTMLElement;
+      expect(road).toHaveAttribute("aria-hidden", "true");
+      expect(road).toHaveAttribute("data-bend", String(roadBend(i)));
+      const paths = [...road.querySelectorAll("path")];
+      expect(paths.length).toBeGreaterThanOrEqual(3);
+      paths.forEach((path) => {
+        expect(path).toHaveAttribute("d", roadPath(roadBend(i)));
+        expect(path).toHaveAttribute("vector-effect", "non-scaling-stroke");
+      });
+      const strokes = paths.map((path) => path.getAttribute("stroke"));
+      expect(strokes).toEqual(expect.arrayContaining([BRAND.coat, BRAND.straw]));
+      // The darker part already passed shows only when the motion code runs.
+      expect(road.querySelector("[data-story-road-passed]")?.getAttribute("class")).toContain("opacity-0");
+      expect(li.querySelector("[data-story-stop]")).toHaveAttribute("aria-hidden", "true");
+    });
+    const grain = container.querySelector("[data-story-road-wrap] > [data-story-grain]") as HTMLElement;
+    expect(grain).toHaveAttribute("aria-hidden", "true");
+    expect(grain.getAttribute("class")).toContain("opacity-0");
+  });
+
+  it("puts the scenes left and right of the road from 768 px, the first one on the left", () => {
+    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
+    const items = [...container.querySelectorAll("li[data-story-scene]")];
+    items.forEach((li, i) => {
+      const classes = li.getAttribute("class") ?? "";
+      // Below 768 px the road is on the left and every scene is to its right.
+      expect(classes).toContain("pl-14");
+      expect(classes).toContain("md:w-1/2");
+      if (i % 2 === 0) expect(classes).toContain("md:pr-16");
+      else expect(classes).toContain("md:ml-auto");
+    });
+  });
+
+  it.each(["vi", "en"] as const)("labels each %s scene with its step number", (lang) => {
+    const dict = getDictionary(lang);
+    const { container } = render(<RiceStory dict={dict} zalo={null} />);
+    const labels = [...container.querySelectorAll("li[data-story-scene] [data-story-step]")].map((el) => el.textContent);
+    expect(labels).toEqual(STORY_SCENES.map((_, i) => `${dict.story.step} ${i + 1}`));
+    expect(dict.story.step).toBe(lang === "vi" ? "Bước" : "Step");
   });
 
   it("lists the eight scenes in order with a fixed-size lazy image", () => {
@@ -65,15 +108,8 @@ describe("RiceStory", () => {
       const text = dict.story[`${key}Text` as keyof typeof dict.story];
       expect(title).not.toBe("");
       expect(li.querySelector("h3")).toHaveTextContent(title);
-      expect(li.querySelector("p")).toHaveTextContent(text);
+      expect(li.querySelector("[data-story-text]")).toHaveTextContent(text);
     }
-  });
-
-  it("has an 8-item progress list that screen readers skip", () => {
-    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
-    const progress = container.querySelector("ol[data-story-progress]");
-    expect(progress).toHaveAttribute("aria-hidden", "true");
-    expect(progress?.querySelectorAll("li")).toHaveLength(8);
   });
 
   it("has a skip link to an element that exists", () => {
@@ -97,14 +133,4 @@ describe("RiceStory", () => {
     expect(screen.queryByRole("link", { name: dict.hero.zaloCta })).toBeNull();
   });
 
-  it("is a vertical list until the story motion sets its own flag", () => {
-    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
-    const section = container.querySelector("section[data-rice-story]") as HTMLElement;
-    expect(section).not.toHaveAttribute("data-story-mode");
-    // The horizontal layout is keyed to the section's own flag, never to the page-wide motion flag.
-    expect(section.innerHTML).not.toContain("data-motion");
-    const progress = container.querySelector("ol[data-story-progress]") as HTMLElement;
-    expect(progress.className).toContain("hidden");
-    expect(progress.className).toContain("[section[data-story-mode=horizontal]_&]:flex");
-  });
 });

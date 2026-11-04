@@ -45,6 +45,7 @@ const vi = {
   story: {
     title: "Từ hạt lúa tới người dùng",
     skip: "Bỏ qua câu chuyện",
+    step: "Bước",
     cayMaTitle: "Cấy mạ",
     cayMaText: "Mẹ cùng bà con trong xóm cấy từng khóm mạ nếp cái hoa vàng xuống ruộng nước.",
     nangMuaGioTitle: "Nắng, mưa, gió",
@@ -164,6 +165,7 @@ const en: Dictionary = {
   story: {
     title: "From the rice seed to your table",
     skip: "Skip the story",
+    step: "Step",
     cayMaTitle: "Planting seedlings",
     cayMaText:
       "Mother and the neighbours plant the yellow-flower sticky rice seedlings, bunch by bunch, in the flooded field.",
