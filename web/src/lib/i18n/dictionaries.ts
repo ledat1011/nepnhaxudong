@@ -51,7 +51,7 @@ const vi = {
   bag: {
     note1: "Túi trong: nhìn rõ từng hạt gạo",
     note2: "Hút chân không: gạo giữ khô và thơm lâu",
-    note3: "Khối vuông: dễ cất, dễ làm quà",
+    note3: "Túi gọn: dễ cất, dễ làm quà",
   },
   contact: {
     phone: "Điện thoại",
@@ -148,7 +148,7 @@ const en: Dictionary = {
   bag: {
     note1: "Clear bag: you can see every grain",
     note2: "Vacuum packed: the rice stays dry and fragrant for longer",
-    note3: "A firm square block: easy to store and to give",
+    note3: "Compact bag: easy to store and to give",
   },
   contact: {
     phone: "Phone",

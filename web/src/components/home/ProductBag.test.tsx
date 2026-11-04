@@ -108,7 +108,7 @@ describe("ProductBag", () => {
     expect(notes).toEqual([
       "Túi trong: nhìn rõ từng hạt gạo",
       "Hút chân không: gạo giữ khô và thơm lâu",
-      "Khối vuông: dễ cất, dễ làm quà",
+      "Túi gọn: dễ cất, dễ làm quà",
     ]);
   });
 
@@ -118,7 +118,7 @@ describe("ProductBag", () => {
     expect(notes).toEqual([
       "Clear bag: you can see every grain",
       "Vacuum packed: the rice stays dry and fragrant for longer",
-      "A firm square block: easy to store and to give",
+      "Compact bag: easy to store and to give",
     ]);
   });
 
