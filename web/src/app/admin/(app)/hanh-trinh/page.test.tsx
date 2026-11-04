@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TimelineEventAdminDto } from "@/lib/admin/types";
@@ -27,7 +27,9 @@ function event(id: number, year: number): TimelineEventAdminDto {
   };
 }
 
-beforeEach(() => adminFetch.mockReset());
+beforeEach(() => {
+  adminFetch.mockReset();
+});
 
 describe("Hành trình page", () => {
   it("lists the events and opens the edit dialog on tap", async () => {
@@ -44,5 +46,28 @@ describe("Hành trình page", () => {
     expect(await screen.findByText("Chưa có mốc nào.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Thêm mốc" }));
     expect(await screen.findByRole("heading", { name: "Thêm mốc" })).toBeInTheDocument();
+  });
+
+  it("loads the list again and closes the dialog after a save, and locks moves meanwhile", async () => {
+    let finishReload: (value: TimelineEventAdminDto[]) => void = () => {};
+    let loads = 0;
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "POST") return event(2, 2000);
+      loads += 1;
+      if (loads === 1) return [event(1, 1990)];
+      return new Promise<TimelineEventAdminDto[]>((resolve) => (finishReload = resolve));
+    });
+    render(<TimelinePage />);
+    await userEvent.click(await screen.findByRole("button", { name: "Thêm mốc" }));
+    await userEvent.type(await screen.findByLabelText(/^Năm/), "2000");
+    await userEvent.type(screen.getAllByLabelText(/Tiếng Việt/)[0], "Mốc 2");
+    await userEvent.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Thêm mốc" })).not.toBeInTheDocument());
+    expect(adminFetch.mock.calls.filter(([path, init]) => path === "/admin/timeline" && init === undefined)).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Đưa mốc Mốc 1 xuống" })).toBeDisabled();
+    finishReload([event(1, 1990), event(2, 2000)]);
+    expect(await screen.findByRole("button", { name: /^2000/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Đưa mốc Mốc 1 xuống" })).toBeEnabled();
   });
 });

@@ -21,16 +21,23 @@ export default function TimelinePage() {
   const [error, setError] = useState<AdminApiError | null>(null);
   const [editing, setEditing] = useState<Editing>(null);
   const [attempt, setAttempt] = useState(0);
+  // True while a GET runs: the list on screen may be out of date.
+  const [reloading, setReloading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- marks the reload as started
+    setReloading(true);
     withReLogin(() => adminFetch<TimelineEventAdminDto[]>("/admin/timeline"), requireReLogin).then(
       (value) => {
-        if (!cancelled) setEvents(value);
+        if (cancelled) return;
+        setEvents(value);
+        setReloading(false);
       },
       (failure: unknown) => {
-        if (!cancelled)
-          setError(failure instanceof AdminApiError ? failure : new AdminApiError(0, GENERIC_ERROR_MESSAGE));
+        if (cancelled) return;
+        setError(failure instanceof AdminApiError ? failure : new AdminApiError(0, GENERIC_ERROR_MESSAGE));
+        setReloading(false);
       },
     );
     return () => {
@@ -64,7 +71,7 @@ export default function TimelinePage() {
       {events !== null && events.length === 0 ? (
         <p className="py-6 text-center text-muted-foreground">Chưa có mốc nào.</p>
       ) : null}
-      {events !== null && events.length > 0 ? <TimelineList events={events} onSelect={setEditing} /> : null}
+      {events !== null && events.length > 0 ? <TimelineList events={events} refreshing={reloading || error !== null} onSelect={setEditing} /> : null}
       {editing !== null ? (
         <TimelineEventForm
           key={editing === "new" ? "new" : editing.id}

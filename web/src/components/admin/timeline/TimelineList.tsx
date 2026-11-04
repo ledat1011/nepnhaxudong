@@ -13,7 +13,7 @@ import {
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MissingEnBadge } from "@/components/admin/form/MissingEnBadge";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { Button } from "@/components/admin/ui/button";
@@ -26,15 +26,26 @@ const TOUCH_DRAG_DELAY_MS = 250;
 /** How far (px) a finger may move during the delay before the touch counts as a scroll. */
 const TOUCH_DRAG_TOLERANCE_PX = 8;
 
-const ANNOUNCEMENTS = {
-  onDragStart: () => "Đã nhấc mốc lên.",
-  onDragOver: () => undefined,
-  onDragEnd: () => "Đã thả mốc vào vị trí mới.",
-  onDragCancel: () => "Đã hủy kéo mốc.",
-};
+function announcementsFor(shown: TimelineEventAdminDto[]) {
+  function where(id: string | number): string {
+    const index = shown.findIndex((item) => item.id === id);
+    if (index < 0) return "";
+    return `${eventName(shown[index])}, vị trí ${index + 1} trên ${shown.length}`;
+  }
+  return {
+    onDragStart: ({ active }: { active: { id: string | number } }) => `Đã nhấc mốc ${where(active.id)}.`,
+    onDragOver: ({ active, over }: { active: { id: string | number }; over: { id: string | number } | null }) =>
+      over === null ? undefined : `Mốc ${eventName(shown.find((item) => item.id === active.id) ?? shown[0])} đang ở trên mốc ${where(over.id)}.`,
+    onDragEnd: ({ active, over }: { active: { id: string | number }; over: { id: string | number } | null }) =>
+      over === null ? `Đã thả mốc ${where(active.id)}.` : `Đã thả mốc ${eventName(shown.find((item) => item.id === active.id) ?? shown[0])} vào vị trí ${shown.findIndex((item) => item.id === over.id) + 1} trên ${shown.length}.`,
+    onDragCancel: ({ active }: { active: { id: string | number } }) => `Đã hủy kéo mốc ${where(active.id)}.`,
+  };
+}
 
 type Props = {
   events: TimelineEventAdminDto[];
+  /** True while the parent loads the list again: the shown events may be out of date, so nothing can move. */
+  refreshing?: boolean;
   onSelect(event: TimelineEventAdminDto): void;
 };
 
@@ -47,11 +58,12 @@ type RowProps = {
   index: number;
   count: number;
   busy: boolean;
+  selectDisabled: boolean;
   onSelect(event: TimelineEventAdminDto): void;
   onMove(index: number, delta: -1 | 1): void;
 };
 
-function TimelineRow({ event, index, count, busy, onSelect, onMove }: RowProps) {
+function TimelineRow({ event, index, count, busy, selectDisabled, onSelect, onMove }: RowProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: event.id,
     disabled: busy,
@@ -77,8 +89,9 @@ function TimelineRow({ event, index, count, busy, onSelect, onMove }: RowProps) 
         </button>
         <button
           type="button"
+          disabled={selectDisabled}
           onClick={() => onSelect(event)}
-          className="flex min-h-11 min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 rounded-md px-1 text-left"
+          className="flex min-h-11 min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 rounded-md px-1 text-left disabled:opacity-50"
         >
           <span className="font-bold">{event.year}</span>
           <span className="min-w-0 flex-1 break-words font-semibold">{name}</span>
@@ -116,15 +129,14 @@ function TimelineRow({ event, index, count, busy, onSelect, onMove }: RowProps) 
  * A move shows at once and is saved with PUT /admin/timeline/order. If that fails the old order comes back.
  * While one move is being saved, every move control is disabled, so a second move cannot start.
  */
-export function TimelineList({ events, onSelect }: Props) {
+export function TimelineList({ events, refreshing = false, onSelect }: Props) {
   // The order the user made. It is dropped when the parent passes a new list (for example after a reload).
   const [seen, setSeen] = useState(events);
   const [ordered, setOrdered] = useState<TimelineEventAdminDto[] | null>(null);
-  if (seen !== events) {
-    setSeen(events);
-    setOrdered(null);
-  }
-  const shown = ordered ?? events;
+  const latestEvents = useRef(events);
+  useLayoutEffect(() => {
+    latestEvents.current = events;
+  });
 
   const idsToSend = useRef<number[]>([]);
   const reorder = useSave(
@@ -135,6 +147,15 @@ export function TimelineList({ events, onSelect }: Props) {
     { successMessage: null },
   );
 
+  if (seen !== events) {
+    setSeen(events);
+    setOrdered(null);
+    reorder.reset();
+  }
+  const shown = ordered ?? events;
+  const announcements = useMemo(() => announcementsFor(shown), [shown]);
+  const busy = reorder.pending || refreshing;
+
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, {
@@ -144,12 +165,14 @@ export function TimelineList({ events, onSelect }: Props) {
   );
 
   async function apply(next: TimelineEventAdminDto[]) {
-    if (reorder.pending) return;
+    if (busy) return;
     const previous = ordered;
+    const loadedFrom = events;
     idsToSend.current = next.map((item) => item.id);
     setOrdered(next);
     const saved = await reorder.save();
-    if (saved === undefined) setOrdered(previous);
+    // A reload that replaced the list while the save ran makes the old order meaningless: keep the new list.
+    if (saved === undefined && latestEvents.current === loadedFrom) setOrdered(previous);
   }
 
   function move(index: number, delta: -1 | 1) {
@@ -174,7 +197,7 @@ export function TimelineList({ events, onSelect }: Props) {
         collisionDetection={closestCenter}
         onDragEnd={onDragEnd}
         accessibility={{
-          announcements: ANNOUNCEMENTS,
+          announcements,
           screenReaderInstructions: {
             draggable: "Nhấn phím cách để nhấc mốc, dùng phím mũi tên để di chuyển, nhấn phím cách lần nữa để thả.",
           },
@@ -188,7 +211,8 @@ export function TimelineList({ events, onSelect }: Props) {
                 event={event}
                 index={index}
                 count={shown.length}
-                busy={reorder.pending}
+                busy={busy}
+                selectDisabled={reorder.pending}
                 onSelect={onSelect}
                 onMove={move}
               />

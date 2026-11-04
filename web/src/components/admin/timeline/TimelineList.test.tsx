@@ -104,4 +104,38 @@ describe("TimelineList", () => {
     expect(screen.getByRole("button", { name: "Đưa mốc Mốc 1 lên" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Đưa mốc Mốc 3 xuống" })).toBeDisabled();
   });
+
+  it("disables every move control and row while the parent reloads the list", () => {
+    render(<TimelineList events={EVENTS} refreshing onSelect={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Đưa mốc Mốc 2 lên" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Đưa mốc Mốc 2 xuống" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Kéo mốc Mốc 2" })).toBeDisabled();
+  });
+
+  it("clears an old reorder error when a new list arrives", async () => {
+    adminFetch.mockRejectedValue(new AdminApiError(400, "Thiếu mã mốc: 3."));
+    const { rerender } = render(<TimelineList events={EVENTS} onSelect={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Đưa mốc Mốc 1 xuống" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    rerender(<TimelineList events={[...EVENTS, event(4, 2020)]} onSelect={vi.fn()} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("does not roll back to the old list when the failing save finishes after a reload", async () => {
+    let fail: (e: Error) => void = () => {};
+    adminFetch.mockReturnValue(new Promise<void>((_, reject) => (fail = reject)));
+    const { rerender } = render(<TimelineList events={EVENTS} onSelect={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Đưa mốc Mốc 1 xuống" }));
+    rerender(<TimelineList events={[event(2, 2000), event(3, 2010)]} onSelect={vi.fn()} />);
+    fail(new AdminApiError(400, "Lỗi."));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Đưa mốc Mốc 3 lên" })).toBeEnabled());
+    expect(shownOrder()).toEqual(["Mốc 2", "Mốc 3"]);
+  });
+
+  it("does not open a row while a reorder is being saved", async () => {
+    adminFetch.mockReturnValue(new Promise<void>(() => {}));
+    render(<TimelineList events={EVENTS} onSelect={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Đưa mốc Mốc 1 xuống" }));
+    expect(screen.getByRole("button", { name: /^2000/ })).toBeDisabled();
+  });
 });

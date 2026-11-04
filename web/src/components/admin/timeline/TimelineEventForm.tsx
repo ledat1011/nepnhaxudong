@@ -128,10 +128,8 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
               <Label htmlFor={yearId}>Năm</Label>
               <Input
                 id={yearId}
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={MIN_YEAR}
-                max={MAX_YEAR}
                 value={state.year}
                 aria-invalid={yearInvalid}
                 onChange={(e) => patch({ year: e.target.value })}
