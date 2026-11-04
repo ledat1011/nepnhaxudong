@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GsapModules } from "../load-gsap";
+import { roadBend, roadPoint } from "@/lib/story/road";
 import { STORY_SCENES } from "@/lib/story/scenes";
 import {
   setupRiceStory,
-  STORY_DESKTOP_QUERY,
+  STORY_INTRO_LINE,
   STORY_LOAD_AHEAD,
   STORY_LOOP_UPDATES_PER_S,
-  STORY_PHONE_QUERY,
-  STORY_PIN_SCREENS,
+  STORY_ROAD_LINE,
   throttledLoop,
 } from "./rice-story";
 
@@ -26,18 +26,21 @@ vi.mock("../loops", () => ({ getLoopController: () => ({ add: mocks.add }) }));
 type Vars = Record<string, unknown> & {
   onEnter?: () => void;
   onToggle?: (self: { isActive: boolean }) => void;
+  onUpdate?: () => void;
 };
-type FakeTrigger = { vars: Vars; kill: ReturnType<typeof vi.fn>; isActive: boolean; start: number; end: number; scroll: () => number };
-type FakeTween = { target: unknown; vars: Vars & { scrollTrigger: Vars }; scrollTrigger: FakeTrigger; kill: () => void };
+type FakeTrigger = { vars: Vars; kill: ReturnType<typeof vi.fn>; isActive: boolean };
+type FakeTween = { target: Record<string, number>; vars: Vars & { scrollTrigger?: Vars } };
 
-function fakeModules(screen: "desktop" | "phone") {
+function fakeModules() {
   const triggers: FakeTrigger[] = [];
   const tweens: FakeTween[] = [];
-  const reverts: Array<() => void> = [];
+  const sets: Array<{ target: unknown; vars: Record<string, unknown> }> = [];
+  const written = new Map<Element, Record<string, number>>();
   const listeners: Record<string, Array<() => void>> = {};
+  const contextRevert = vi.fn();
   const ScrollTrigger = {
     create: vi.fn((vars: Vars) => {
-      const t: FakeTrigger = { vars, kill: vi.fn(), isActive: false, start: 0, end: 1000, scroll: () => 0 };
+      const t: FakeTrigger = { vars, kill: vi.fn(), isActive: false };
       triggers.push(t);
       return t;
     }),
@@ -48,29 +51,21 @@ function fakeModules(screen: "desktop" | "phone") {
       listeners[type] = (listeners[type] ?? []).filter((f) => f !== fn);
     }),
   };
-  const modeAtTween: Array<string | undefined> = [];
   const gsap = {
-    matchMedia: vi.fn(() => {
-      const cleanups: Array<() => void> = [];
-      return {
-        add: (query: string, fn: (context: { add: (f: () => void) => void }) => (() => void) | void) => {
-          const matches = query === (screen === "desktop" ? STORY_DESKTOP_QUERY : STORY_PHONE_QUERY);
-          if (!matches) return;
-          const cleanup = fn({ add: (f) => f() });
-          if (cleanup) cleanups.push(cleanup);
-        },
-        revert: vi.fn(() => {
-          cleanups.splice(0).forEach((c) => c());
-          reverts.forEach((r) => r());
-        }),
-      };
+    context: vi.fn((fn?: () => void) => {
+      fn?.();
+      return { add: (f: () => void) => f(), revert: contextRevert };
     }),
-    to: vi.fn((target: unknown, vars: FakeTween["vars"]) => {
-      modeAtTween.push(document.querySelector<HTMLElement>("[data-rice-story]")?.dataset.storyMode);
-      const scrollTrigger: FakeTrigger = { vars: vars.scrollTrigger, kill: vi.fn(), isActive: false, start: 1000, end: 5000, scroll: () => 0 };
-      const tween = { target, vars, scrollTrigger, kill: vi.fn() };
-      tweens.push(tween);
-      return tween;
+    matchMedia: vi.fn(),
+    to: vi.fn((target: Record<string, number>, vars: FakeTween["vars"]) => {
+      tweens.push({ target, vars });
+      return { kill: vi.fn() };
+    }),
+    set: vi.fn((target: unknown, vars: Record<string, unknown>) => {
+      sets.push({ target, vars });
+    }),
+    quickSetter: vi.fn((el: Element, prop: string) => (value: number) => {
+      written.set(el, { ...written.get(el), [prop]: value });
     }),
     ticker: { add: vi.fn(), remove: vi.fn() },
   };
@@ -80,7 +75,9 @@ function fakeModules(screen: "desktop" | "phone") {
     ScrollTrigger,
     triggers,
     tweens,
-    modeAtTween,
+    sets,
+    written,
+    contextRevert,
     fire: (type: string) => (listeners[type] ?? []).slice().forEach((fn) => fn()),
   };
 }
@@ -101,30 +98,39 @@ function fakeMotion(withLoop = true) {
 }
 
 const MARKUP = `
-  <header style="height:60px"></header>
   <section data-rice-story>
-    <div data-story-pin>
-      <a href="#sau-cau-chuyen" data-story-skip>skip</a>
-      <ol data-story-progress aria-hidden="true">${STORY_SCENES.map(() => "<li></li>").join("")}</ol>
-      <div data-story-viewport>
-        <ol data-story-track>${STORY_SCENES.map(
-          (s) => `<li data-story-scene="${s.slug}"><img src="${s.src}" alt=""><h3>t</h3></li>`,
-        ).join("")}</ol>
-      </div>
+    <a href="#sau-cau-chuyen" data-story-skip>skip</a>
+    <div data-story-road-wrap>
+      <span data-story-grain aria-hidden="true"></span>
+      <ol data-story-list>${STORY_SCENES.map(
+        (s, i) => `<li data-story-scene="${s.slug}">
+          <span data-story-road data-bend="${roadBend(i)}" aria-hidden="true">
+            <svg></svg><span data-story-road-passed><span></span></span>
+          </span>
+          <span data-story-stop aria-hidden="true"></span>
+          <img src="${s.src}" alt=""><h3>t</h3></li>`,
+      ).join("")}</ol>
     </div>
     <div id="sau-cau-chuyen" tabindex="-1"></div>
   </section>`;
 
 const items = () => Array.from(document.querySelectorAll<HTMLElement>("li[data-story-scene]"));
-const section = () => document.querySelector("[data-rice-story]") as HTMLElement;
+const wrap = () => document.querySelector("[data-story-road-wrap]") as HTMLElement;
+const SCENE_H = 600;
+const ROAD_LEFT = 0;
+const ROAD_W = 40;
+const STOP = 14;
 
-/** Places every scene: `top` of the scene list on screen, scene i at `i * 900` px to the right. */
+/** Places the list `top` px from the top of the screen; each scene is 600 px high. */
 function place(top: number) {
+  const rect = (t: number, h: number, l = 0, w = 400) =>
+    ({ top: t, bottom: t + h, left: l, right: l + w, width: w, height: h, x: l, y: t }) as DOMRect;
+  wrap().getBoundingClientRect = () => rect(top, SCENE_H * 8);
   items().forEach((li, i) => {
-    li.getBoundingClientRect = () => ({ top, bottom: top + 600, left: 16 + i * 900, right: 16 + i * 900 + 880 }) as DOMRect;
+    li.getBoundingClientRect = () => rect(top + i * SCENE_H, SCENE_H);
+    const road = li.querySelector("[data-story-road]") as HTMLElement;
+    road.getBoundingClientRect = () => rect(top + i * SCENE_H + STOP, SCENE_H, ROAD_LEFT, ROAD_W);
   });
-  (document.querySelector("[data-story-track]") as HTMLElement).getBoundingClientRect = () =>
-    ({ top, left: 16 }) as DOMRect;
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -142,12 +148,13 @@ async function load(fake: ReturnType<typeof fakeModules>) {
   await flush();
 }
 
+const introStart = () => `clamp(top ${STORY_INTRO_LINE * 100}%)`;
+const roadLine = () => `${STORY_ROAD_LINE * 100}%`;
 let motions: ReturnType<typeof fakeMotion>[] = [];
 
 beforeEach(() => {
   document.body.innerHTML = MARKUP;
   Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
-  Object.defineProperty(window, "innerWidth", { value: 1280, configurable: true });
   place(2000);
   motions = [];
   mocks.inlineSvg.mockReset();
@@ -173,165 +180,211 @@ afterEach(() => {
 describe("setupRiceStory", () => {
   it("does nothing without the story section", () => {
     document.body.innerHTML = "<main></main>";
-    const fake = fakeModules("phone");
+    const fake = fakeModules();
     expect(setupRiceStory(fake.modules, document)).toBeUndefined();
     expect(fake.ScrollTrigger.create).not.toHaveBeenCalled();
-    expect(fake.gsap.matchMedia).not.toHaveBeenCalled();
+    expect(fake.gsap.to).not.toHaveBeenCalled();
   });
 
   it("loads the eight drawings once, one screen before the section", async () => {
-    const fake = fakeModules("phone");
+    const fake = fakeModules();
     setupRiceStory(fake.modules, document);
     expect(STORY_LOAD_AHEAD).toBe("top bottom+=100%");
     const trigger = fake.triggers.find((t) => t.vars.start === STORY_LOAD_AHEAD);
-    expect(trigger?.vars).toMatchObject({ trigger: section(), once: true });
+    expect(trigger?.vars).toMatchObject({
+      trigger: document.querySelector("[data-rice-story]"),
+      once: true,
+    });
     expect(mocks.inlineSvg).not.toHaveBeenCalled();
     await load(fake);
     expect(mocks.inlineSvg).toHaveBeenCalledTimes(8);
   });
 
-  describe("on a phone", () => {
-    it("never pins and keeps the vertical list", async () => {
-      const fake = fakeModules("phone");
-      setupRiceStory(fake.modules, document);
-      await load(fake);
-      expect(fake.gsap.to).not.toHaveBeenCalled();
-      for (const t of fake.triggers) expect(t.vars.pin).toBeUndefined();
-      expect(section().dataset.storyMode).toBeUndefined();
-    });
+  it("never pins and never uses a sideways container animation", async () => {
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    await load(fake);
+    expect(fake.gsap.matchMedia).not.toHaveBeenCalled();
+    const all = [
+      ...fake.triggers.map((t) => t.vars),
+      ...fake.tweens.map((t) => t.vars.scrollTrigger ?? {}),
+    ];
+    for (const vars of all) {
+      expect(vars.pin).toBeUndefined();
+      expect(vars.containerAnimation).toBeUndefined();
+    }
+    expect(document.querySelector("[data-rice-story]")?.hasAttribute("data-story-mode")).toBe(false);
+  });
 
-    it("plays each intro once when its scene reaches 75 % of the screen", async () => {
-      const fake = fakeModules("phone");
-      setupRiceStory(fake.modules, document);
-      await load(fake);
-      expect(mocks.build).toHaveBeenCalledTimes(8);
-      const intros = fake.triggers.filter((t) => t.vars.start === "clamp(top 75%)");
-      expect(intros).toHaveLength(8);
-      intros.forEach((t, i) => {
-        expect(t.vars).toMatchObject({ trigger: items()[i], once: true });
-        expect(motions[i].intro.play).not.toHaveBeenCalled();
-        t.vars.onEnter?.();
-        expect(motions[i].intro.play).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    it("shows the final frame at once for a scene that is already past its line", async () => {
-      place(100);
-      const fake = fakeModules("phone");
-      setupRiceStory(fake.modules, document);
-      await load(fake);
-      motions.forEach((m) => {
-        expect(m.intro.progress).toHaveBeenCalledWith(1);
-        expect(m.intro.play).not.toHaveBeenCalled();
-      });
-      expect(fake.triggers.filter((t) => t.vars.start === "clamp(top 75%)")).toHaveLength(0);
-    });
-
-    it("runs a loop only while its scene is on screen and after its intro", async () => {
-      const fake = fakeModules("phone");
-      setupRiceStory(fake.modules, document);
-      await load(fake);
-      expect(mocks.add).toHaveBeenCalledTimes(8);
-      const entry = mocks.add.mock.results[0].value as { setVisible: ReturnType<typeof vi.fn> };
-      const loopTrigger = fake.triggers.find((t) => t.vars.trigger === items()[0] && t.vars.start === "top bottom");
-      expect(loopTrigger?.vars.end).toBe("bottom top");
-      loopTrigger?.vars.onToggle?.({ isActive: true });
-      expect(entry.setVisible).not.toHaveBeenCalledWith(true);
-      motions[0].complete();
-      expect(entry.setVisible).toHaveBeenLastCalledWith(true);
-      loopTrigger?.vars.onToggle?.({ isActive: false });
-      expect(entry.setVisible).toHaveBeenLastCalledWith(false);
-    });
-
-    it("registers no loop for a scene without one", async () => {
-      mocks.build.mockImplementation(() => {
-        const motion = fakeMotion(false);
-        motions.push(motion);
-        return motion;
-      });
-      const fake = fakeModules("phone");
-      setupRiceStory(fake.modules, document);
-      await load(fake);
-      expect(mocks.add).not.toHaveBeenCalled();
-      expect(fake.triggers.filter((t) => t.vars.start === "top bottom")).toHaveLength(0);
+  it("plays each intro once when its scene reaches 75 % of the screen", async () => {
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    await load(fake);
+    expect(STORY_INTRO_LINE).toBe(0.75);
+    expect(mocks.build).toHaveBeenCalledTimes(8);
+    const intros = fake.triggers.filter((t) => t.vars.start === introStart());
+    expect(intros).toHaveLength(8);
+    intros.forEach((t, i) => {
+      expect(t.vars).toMatchObject({ trigger: items()[i], once: true });
+      expect(motions[i].intro.play).not.toHaveBeenCalled();
+      t.vars.onEnter?.();
+      expect(motions[i].intro.play).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe("on a desktop", () => {
-    it("switches the section to the horizontal layout before it pins", () => {
-      const fake = fakeModules("desktop");
-      setupRiceStory(fake.modules, document);
-      expect(section().dataset.storyMode).toBe("horizontal");
-      expect(fake.modeAtTween).toEqual(["horizontal"]);
+  it("shows the final frame at once for a scene that is already past its line", async () => {
+    place(-6000);
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    await load(fake);
+    motions.forEach((m) => {
+      expect(m.intro.progress).toHaveBeenCalledWith(1);
+      expect(m.intro.play).not.toHaveBeenCalled();
     });
+    expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(0);
+  });
 
-    it("pins the story and slides the track sideways with the scroll", () => {
-      const fake = fakeModules("desktop");
-      setupRiceStory(fake.modules, document);
-      const [move] = fake.tweens;
-      expect(move.target).toBe(document.querySelector("[data-story-track]"));
-      expect(move.vars.ease).toBe("none");
-      expect(typeof move.vars.x).toBe("function");
-      expect(move.vars.scrollTrigger).toMatchObject({
-        trigger: document.querySelector("[data-story-pin]"),
-        pin: true,
-        start: "top top",
-        scrub: 1,
-        invalidateOnRefresh: true,
-      });
-      const end = move.vars.scrollTrigger.end as () => string;
-      expect(end()).toBe(`+=${STORY_PIN_SCREENS * 800}`);
+  it("runs a loop only while its scene is on screen and after its intro", async () => {
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    await load(fake);
+    expect(mocks.add).toHaveBeenCalledTimes(8);
+    const entry = mocks.add.mock.results[0].value as { setVisible: ReturnType<typeof vi.fn> };
+    const loopTrigger = fake.triggers.find(
+      (t) => t.vars.trigger === items()[0] && t.vars.start === "top bottom",
+    );
+    expect(loopTrigger?.vars.end).toBe("bottom top");
+    loopTrigger?.vars.onToggle?.({ isActive: true });
+    expect(entry.setVisible).not.toHaveBeenCalledWith(true);
+    motions[0].complete();
+    expect(entry.setVisible).toHaveBeenLastCalledWith(true);
+    loopTrigger?.vars.onToggle?.({ isActive: false });
+    expect(entry.setVisible).toHaveBeenLastCalledWith(false);
+  });
+
+  it("registers no loop for a scene without one", async () => {
+    mocks.build.mockImplementation(() => {
+      const motion = fakeMotion(false);
+      motions.push(motion);
+      return motion;
     });
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    await load(fake);
+    expect(mocks.add).not.toHaveBeenCalled();
+    expect(fake.triggers.filter((t) => t.vars.start === "top bottom")).toHaveLength(0);
+  });
 
-    it("ties the scene intros, loops and progress dots to the sideways motion", async () => {
-      const fake = fakeModules("desktop");
-      setupRiceStory(fake.modules, document);
-      await load(fake);
-      const [move] = fake.tweens;
-      // Scene 1 is in the first frame (left at 16 px), so it starts with the vertical scroll.
-      const sideways = fake.triggers.filter((t) => t.vars.start === "left 70%");
-      expect(sideways.length).toBe(7);
-      sideways.forEach((t) => expect(t.vars).toMatchObject({ containerAnimation: move, once: true }));
-      const first = fake.triggers.find((t) => t.vars.trigger === items()[0] && t.vars.start === "clamp(top 75%)");
-      expect(first?.vars.containerAnimation).toBeUndefined();
+  it("fills the stop of the scene in the middle of the screen", () => {
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    const stops = Array.from(document.querySelectorAll("[data-story-stop]"));
+    const triggers = fake.triggers.filter((t) => t.vars.start === `top ${roadLine()}`);
+    expect(triggers).toHaveLength(8);
+    triggers.forEach((t, i) =>
+      expect(t.vars).toMatchObject({ trigger: items()[i], end: `bottom ${roadLine()}` }),
+    );
+    triggers[2].vars.onToggle?.({ isActive: true });
+    expect(stops[2].hasAttribute("data-active")).toBe(true);
+    triggers[2].vars.onToggle?.({ isActive: false });
+    expect(stops[2].hasAttribute("data-active")).toBe(false);
+  });
 
-      const loops = fake.triggers.filter((t) => t.vars.start === "left right");
-      expect(loops).toHaveLength(8);
-      loops.forEach((t) => expect(t.vars).toMatchObject({ containerAnimation: move, end: "right left" }));
-
-      const dots = Array.from(document.querySelectorAll("[data-story-progress] > li"));
-      const dotTriggers = fake.triggers.filter((t) => t.vars.start === "left center");
-      expect(dotTriggers).toHaveLength(8);
-      dotTriggers[2].vars.onToggle?.({ isActive: true });
-      expect(dots[2].hasAttribute("data-active")).toBe(true);
-      dotTriggers[2].vars.onToggle?.({ isActive: false });
-      expect(dots[2].hasAttribute("data-active")).toBe(false);
-      for (const t of fake.triggers) {
-        if (t.vars.containerAnimation) expect(t.vars.pin).toBeUndefined();
-      }
-    });
-
-    it("returns to the vertical list when the desktop layout ends", () => {
-      const fake = fakeModules("desktop");
+  describe("the grain on the road", () => {
+    function road() {
+      const fake = fakeModules();
       const cleanup = setupRiceStory(fake.modules, document);
-      const dot = document.querySelector("[data-story-progress] > li") as HTMLElement;
-      dot.setAttribute("data-active", "");
-      (cleanup as () => void)();
-      expect(section().dataset.storyMode).toBeUndefined();
-      expect(section().style.getPropertyValue("--story-header")).toBe("");
-      expect(dot.hasAttribute("data-active")).toBe(false);
+      const follow = fake.tweens.find((t) => t.vars.scrollTrigger?.trigger === wrap());
+      const grain = document.querySelector("[data-story-grain]") as Element;
+      const passed = Array.from(document.querySelectorAll("[data-story-road-passed]"));
+      /** Moves the scroll-linked proxy to `part` of the road and draws. */
+      const at = (part: number) => {
+        if (!follow) throw new Error("no road tween");
+        for (const key of Object.keys(follow.target)) follow.target[key] = part;
+        follow.vars.onUpdate?.();
+      };
+      return { fake, cleanup, follow, grain, passed, at };
+    }
+
+    it("follows the scroll with a scrubbed tween on the road, not a pin", () => {
+      const { follow } = road();
+      expect(follow?.vars.ease).toBe("none");
+      expect(follow?.vars.scrollTrigger).toMatchObject({
+        start: `top ${roadLine()}`,
+        end: `bottom ${roadLine()}`,
+      });
+      expect(Number(follow?.vars.scrollTrigger?.scrub)).toBeGreaterThan(0);
+    });
+
+    it("shows the grain and the passed layer only when the motion runs", () => {
+      const { fake, grain, passed } = road();
+      const shownGrain = fake.sets.some((s) => s.target === grain && s.vars.opacity === 1);
+      expect(shownGrain).toBe(true);
+      const shownPassed = fake.sets.some(
+        (s) =>
+          Array.isArray(s.target) &&
+          (s.target as Element[]).includes(passed[0]) &&
+          s.vars.opacity === 1,
+      );
+      expect(shownPassed).toBe(true);
+    });
+
+    it("puts the grain on the road at the height the scroll has reached", () => {
+      const { fake, grain, at } = road();
+      // Half way down the third scene's stretch.
+      const y = STOP + 2.5 * SCENE_H;
+      at(2.5 / 8);
+      const point = roadPoint(roadBend(2), 0.5);
+      const written = fake.written.get(grain) ?? {};
+      expect(written.y).toBeCloseTo(y, 0);
+      expect(written.x).toBeCloseTo(ROAD_LEFT + (point.x / 100) * ROAD_W, 0);
+    });
+
+    it("darkens the road above the grain: whole stretches above, part of the current one", () => {
+      const { fake, passed, at } = road();
+      at(2.25 / 8);
+      const reveal = (i: number) => fake.written.get(passed[i])?.yPercent;
+      const inner = (i: number) => fake.written.get(passed[i].firstElementChild as Element)?.yPercent;
+      expect(reveal(0)).toBeCloseTo(0);
+      expect(reveal(1)).toBeCloseTo(0);
+      expect(reveal(2)).toBeCloseTo(-75);
+      expect(inner(2)).toBeCloseTo(75);
+      expect(reveal(5)).toBeCloseTo(-100);
+    });
+
+    it("starts the grain at the first stop and ends it at the end of the road", () => {
+      const { fake, grain, at } = road();
+      at(0);
+      expect(fake.written.get(grain)?.y).toBeCloseTo(STOP, 0);
+      at(1);
+      expect(fake.written.get(grain)?.y).toBeCloseTo(STOP + 8 * SCENE_H, 0);
+    });
+
+    it("measures the road again after every refresh", () => {
+      const { fake, grain, at } = road();
+      expect(fake.ScrollTrigger.addEventListener).toHaveBeenCalledWith("refresh", expect.any(Function));
+      // The page above grew: everything is 300 px lower, relative to the road nothing moved.
+      place(2300);
+      fake.fire("refresh");
+      at(0);
+      expect(fake.written.get(grain)?.y).toBeCloseTo(STOP, 0);
     });
   });
 
-  it("removes every loop on cleanup", async () => {
-    const fake = fakeModules("phone");
+  it("removes every loop, stop fill and listener on cleanup", async () => {
+    const fake = fakeModules();
     const cleanup = setupRiceStory(fake.modules, document);
     await load(fake);
+    const stop = document.querySelector("[data-story-stop]") as HTMLElement;
+    stop.setAttribute("data-active", "");
     const entries = mocks.add.mock.results.map((r) => r.value as { remove: ReturnType<typeof vi.fn> });
     expect(entries).toHaveLength(8);
     (cleanup as () => void)();
     entries.forEach((e) => expect(e.remove).toHaveBeenCalled());
     expect(fake.triggers.find((t) => t.vars.start === STORY_LOAD_AHEAD)?.kill).toHaveBeenCalled();
+    expect(fake.contextRevert).toHaveBeenCalled();
+    expect(stop.hasAttribute("data-active")).toBe(false);
+    expect(fake.ScrollTrigger.removeEventListener).toHaveBeenCalledWith("refresh", expect.any(Function));
   });
 
   it("keeps the static image of a scene whose file fails and moves the others", async () => {
@@ -339,25 +392,27 @@ describe("setupRiceStory", () => {
       const slug = img.closest("li")?.getAttribute("data-story-scene") ?? "";
       return slug === "say" ? null : svgFor(slug);
     });
-    const fake = fakeModules("phone");
+    const fake = fakeModules();
     setupRiceStory(fake.modules, document);
     await load(fake);
     expect(mocks.build).toHaveBeenCalledTimes(7);
-    const triggered = fake.triggers.filter((t) => t.vars.start === "clamp(top 75%)").map((t) => t.vars.trigger);
+    const triggered = fake.triggers
+      .filter((t) => t.vars.start === introStart())
+      .map((t) => t.vars.trigger);
     expect(triggered).toHaveLength(7);
     expect(triggered).not.toContain(document.querySelector("li[data-story-scene='say']"));
   });
 
   it("skips a scene whose drawing lacks a part", async () => {
     mocks.build.mockImplementationOnce(() => null);
-    const fake = fakeModules("phone");
+    const fake = fakeModules();
     setupRiceStory(fake.modules, document);
     await load(fake);
-    expect(fake.triggers.filter((t) => t.vars.start === "clamp(top 75%)")).toHaveLength(7);
+    expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(7);
   });
 
   it("does not move the drawings that arrive after cleanup", async () => {
-    const fake = fakeModules("phone");
+    const fake = fakeModules();
     const cleanup = setupRiceStory(fake.modules, document);
     fake.triggers.find((t) => t.vars.start === STORY_LOAD_AHEAD)?.vars.onEnter?.();
     (cleanup as () => void)();

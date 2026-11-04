@@ -1,48 +1,41 @@
+import { roadPoint } from "@/lib/story/road";
 import type { SceneSlug } from "@/lib/story/scenes";
 import type { GsapModules, MotionSetup } from "../load-gsap";
-import { getLoopController, type Loop } from "../loops";
+import { getLoopController, type Loop, type LoopEntry } from "../loops";
 import { inlineSvg } from "./inline-svg";
 import { SCENE_MOTIONS } from "./scene-motions";
 
 type Gsap = GsapModules["gsap"];
-type ScrollTriggerStatic = GsapModules["ScrollTrigger"];
-type Trigger = ScrollTrigger;
 
-/** From this width the story is pinned and slides sideways; below it, it stays a vertical list. */
-export const STORY_DESKTOP_QUERY = "(min-width: 1024px)";
-/** Every other screen. */
-export const STORY_PHONE_QUERY = `not all and ${STORY_DESKTOP_QUERY}`;
-/** The pinned story takes this many screen heights of scrolling. */
-export const STORY_PIN_SCREENS = 5;
 /** The drawings start to load when the section is one screen below the bottom of the screen. */
 export const STORY_LOAD_AHEAD = "top bottom+=100%";
+/** A scene's intro plays when its top reaches this part of the screen height. */
+export const STORY_INTRO_LINE = 0.75;
+/**
+ * The grain is where this line of the screen (a part of its height) crosses the road, and the
+ * stop of the scene on this line is filled.
+ */
+export const STORY_ROAD_LINE = 0.5;
+/** The grain follows the scroll this many seconds late, so it glides instead of jumping. */
+export const STORY_ROAD_SCRUB_S = 0.6;
 /**
  * The scene loops draw at most this many frames per second, like the hero loop: their motion is
  * slow, and every frame repaints the scene's svg. GSAP's own ticker keeps 60/s for the rest.
  */
 export const STORY_LOOP_UPDATES_PER_S = 30;
 
-/** On a phone, an intro plays when its scene's top reaches this part of the screen height. */
-const PHONE_INTRO_LINE = 0.75;
-/** On a desktop, an intro plays when its scene's left edge reaches this part of the width. */
-const DESKTOP_INTRO_LINE = 0.7;
 /** Less than one frame of 30/s, so a frame that a 60 Hz screen shows a little early still draws. */
 const LOOP_MIN_GAP_S = 1 / STORY_LOOP_UPDATES_PER_S - 0.004;
 /** After a long gap (a background tab), the loop goes on from where it was, not far ahead. */
 const LOOP_MAX_STEP_S = 0.1;
 
 type Scene = { li: HTMLElement; slug: SceneSlug; svg: SVGSVGElement | null; played: boolean };
-type Context = { add: (fn: () => void) => unknown };
-type Branch = { attach: (scene: Scene) => (() => void) | void; cleanup: () => void };
 
 /**
  * Plays a paused GSAP loop by stepping it from GSAP's ticker, at most STORY_LOOP_UPDATES_PER_S
  * times a second. The time while it is paused does not count.
  */
-export function throttledLoop(
-  gsap: Gsap,
-  loop: Pick<gsap.core.Timeline, "totalTime">,
-): Loop {
+export function throttledLoop(gsap: Gsap, loop: Pick<gsap.core.Timeline, "totalTime">): Loop {
   let last: number | null = null;
   let running = false;
   const tick = (time: number) => {
@@ -70,79 +63,148 @@ export function throttledLoop(
   };
 }
 
-const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-
-function horizontalPadding(el: HTMLElement): { left: number; right: number } {
-  const style = getComputedStyle(el);
-  return { left: parseFloat(style.paddingLeft) || 0, right: parseFloat(style.paddingRight) || 0 };
-}
-
-/** The element named by `location.hash`, or null. */
-function hashTarget(root: Document): HTMLElement | null {
-  const raw = window.location.hash.slice(1);
-  if (raw === "") return null;
-  try {
-    return root.getElementById(decodeURIComponent(raw));
-  } catch {
-    return root.getElementById(raw);
-  }
-}
+type Setter = (value: number) => void;
+type Stretch = {
+  el: HTMLElement;
+  bend: number;
+  /** Moves the passed layer's window and, the other way, its content (both `yPercent`). */
+  setWindow: Setter | null;
+  setContent: Setter | null;
+  /** The part of the stretch already passed, last drawn. */
+  shown: number;
+  box: { top: number; left: number; width: number; height: number };
+};
 
 /**
- * The scroll story "Từ hạt lúa tới người dùng". Each scene's drawing is swapped for its inline
- * svg one screen before the section, then gets its own intro (once) and loop (while on screen,
- * after the intro, and not paused by the visitor). Below 1024 px the scenes stay a vertical
- * list; from 1024 px the section is pinned and the scenes slide sideways. A scene whose file
- * fails, or whose drawing lacks a part, keeps its static image (the final frame).
+ * Moves the rice grain down the road with the scroll and darkens the road it has passed. One
+ * scrubbed tween drives a proxy from 0 (the top of the road reaches the screen line) to 1 (its
+ * bottom does); each update writes two transforms per stretch that changed and the grain's x
+ * and y. The road is measured again at every refresh. Returns the cleanup.
  */
-export const setupRiceStory: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
-  const section = root.querySelector<HTMLElement>("[data-rice-story]");
-  const pin = section?.querySelector<HTMLElement>("[data-story-pin]");
-  const viewport = section?.querySelector<HTMLElement>("[data-story-viewport]");
-  const track = viewport?.querySelector<HTMLElement>("[data-story-track]");
-  if (!section || !pin || !viewport || !track) return;
+function setupRoad(
+  { gsap, ScrollTrigger }: GsapModules,
+  wrap: HTMLElement,
+  grain: HTMLElement,
+  scenes: Scene[],
+): () => void {
+  const stretches: Stretch[] = [];
+  for (const { li } of scenes) {
+    const el = li.querySelector<HTMLElement>("[data-story-road]");
+    if (!el) continue;
+    const passed = el.querySelector<HTMLElement>("[data-story-road-passed]");
+    const content = passed?.firstElementChild ?? null;
+    stretches.push({
+      el,
+      bend: Number(el.dataset.bend) || 50,
+      setWindow: passed ? (gsap.quickSetter(passed, "yPercent") as Setter) : null,
+      setContent: content ? (gsap.quickSetter(content, "yPercent") as Setter) : null,
+      shown: -1,
+      box: { top: 0, left: 0, width: 0, height: 0 },
+    });
+  }
+  if (stretches.length === 0) return () => undefined;
 
-  const scenes: Scene[] = Array.from(
-    track.querySelectorAll<HTMLElement>("li[data-story-scene]"),
-    (li) => ({ li, slug: li.dataset.storyScene as SceneSlug, svg: null, played: false }),
+  const passedLayers = stretches.flatMap(
+    (s) => s.el.querySelector<HTMLElement>("[data-story-road-passed]") ?? [],
   );
-  const dots = Array.from(section.querySelectorAll<HTMLElement>("[data-story-progress] > li"));
-  const controller = getLoopController();
-  const attachers = new Set<(scene: Scene) => void>();
-  let disposed = false;
+  gsap.set(grain, { opacity: 1, xPercent: -50, yPercent: -50 });
+  if (passedLayers.length > 0) gsap.set(passedLayers, { opacity: 1 });
+  const grainX = gsap.quickSetter(grain, "x", "px") as Setter;
+  const grainY = gsap.quickSetter(grain, "y", "px") as Setter;
 
-  const load = ScrollTrigger.create({
-    trigger: section,
-    start: STORY_LOAD_AHEAD,
-    once: true,
-    onEnter: () => {
-      for (const scene of scenes) {
-        const img = scene.li.querySelector("img");
-        if (!img) continue;
-        void inlineSvg(img).then((svg) => {
-          if (!svg || disposed) return;
-          scene.svg = svg;
-          attachers.forEach((attach) => attach(scene));
-        });
+  const measure = () => {
+    const outer = wrap.getBoundingClientRect();
+    for (const s of stretches) {
+      const box = s.el.getBoundingClientRect();
+      s.box = { top: box.top - outer.top, left: box.left - outer.left, width: box.width, height: box.height };
+      s.shown = -1;
+    }
+  };
+
+  const proxy = { part: 0 };
+  const draw = () => {
+    const first = stretches[0].box;
+    const last = stretches[stretches.length - 1].box;
+    // The proxy runs while the road's top to bottom crosses the screen line, so the grain
+    // reaches each stop when that scene's top is on the line (and its stop fills).
+    const span = last.top + last.height - first.top;
+    const y = first.top + Math.min(1, Math.max(0, proxy.part)) * span;
+    let index = stretches.findIndex((s) => y < s.box.top + s.box.height);
+    if (index === -1) index = stretches.length - 1;
+    stretches.forEach((s, i) => {
+      const part = i < index ? 1 : i > index ? 0 : s.box.height > 0 ? (y - s.box.top) / s.box.height : 0;
+      const clamped = Math.min(1, Math.max(0, part));
+      if (i === index) {
+        const point = roadPoint(s.bend, clamped);
+        grainX(s.box.left + (point.x / 100) * s.box.width);
+        grainY(s.box.top + (point.y / 100) * s.box.height);
       }
+      if (clamped === s.shown) return;
+      s.shown = clamped;
+      // The window slides down over the stretch while its content stays in place.
+      s.setWindow?.(-100 * (1 - clamped));
+      s.setContent?.(100 * (1 - clamped));
+    });
+  };
+
+  const onRefresh = () => {
+    measure();
+    draw();
+  };
+  measure();
+  draw();
+  ScrollTrigger.addEventListener("refresh", onRefresh);
+
+  const line = `${STORY_ROAD_LINE * 100}%`;
+  gsap.to(proxy, {
+    part: 1,
+    ease: "none",
+    onUpdate: draw,
+    scrollTrigger: {
+      trigger: wrap,
+      start: `top ${line}`,
+      end: `bottom ${line}`,
+      scrub: STORY_ROAD_SCRUB_S,
     },
   });
 
-  /**
-   * Builds the scene's motion and connects its loop. `startIntro` creates the trigger that plays
-   * the intro, or returns false when the scene is already past it: then it shows the final
-   * frame at once and hides nothing. `watchLoop` creates the trigger that reports whether the
-   * scene is on screen.
-   */
-  const connect = (
-    scene: Scene,
-    startIntro: (play: () => void) => boolean,
-    watchLoop: (onToggle: (self: { isActive: boolean }) => void) => Trigger,
-  ): (() => void) | void => {
+  return () => ScrollTrigger.removeEventListener("refresh", onRefresh);
+}
+
+/**
+ * The scroll story "Từ hạt lúa tới người dùng": a vertical timeline along a dirt road, the same
+ * at every screen size, never pinned. A rice grain moves down the road with the scroll, the
+ * road it has passed turns darker and the stop of the scene in the middle of the screen is
+ * filled. Each scene's drawing is swapped for its inline svg one screen before the section,
+ * then gets its own intro (once) and loop (while on screen, after the intro, and not paused by
+ * the visitor). A scene whose file fails, or whose drawing lacks a part, keeps its static image
+ * (the final frame).
+ */
+export const setupRiceStory: MotionSetup = (modules, root) => {
+  const { gsap, ScrollTrigger } = modules;
+  const section = root.querySelector<HTMLElement>("[data-rice-story]");
+  const wrap = section?.querySelector<HTMLElement>("[data-story-road-wrap]");
+  if (!section || !wrap) return;
+
+  const scenes: Scene[] = Array.from(
+    wrap.querySelectorAll<HTMLElement>("li[data-story-scene]"),
+    (li) => ({ li, slug: li.dataset.storyScene as SceneSlug, svg: null, played: false }),
+  );
+  const stops = scenes.flatMap(({ li }) => li.querySelector<HTMLElement>("[data-story-stop]") ?? []);
+  const grain = wrap.querySelector<HTMLElement>("[data-story-grain]");
+  const controller = getLoopController();
+  const entries: LoopEntry[] = [];
+  let disposed = false;
+  let undoRoad: () => void = () => undefined;
+  let load: ScrollTrigger | null = null;
+
+  /** Builds the scene's motion and connects its intro and loop to the scroll. */
+  const attach = (scene: Scene) => {
     const motion = scene.svg ? SCENE_MOTIONS[scene.slug](gsap, scene.svg) : null;
     if (!motion) return;
     const { intro, loop } = motion;
     const entry = loop ? controller.add(throttledLoop(gsap, loop)) : null;
+    if (entry) entries.push(entry);
     let onScreen = false;
     const sync = () => entry?.setVisible(onScreen && scene.played);
 
@@ -150,270 +212,76 @@ export const setupRiceStory: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
       scene.played = true;
       sync();
     });
-    if (scene.played || !startIntro(() => intro.play())) {
+    // A scene that is already past its line (a `#hash` link, a restored scroll, a file that
+    // came late) shows its final frame at once: nothing on screen disappears.
+    if (scene.li.getBoundingClientRect().top < window.innerHeight * STORY_INTRO_LINE) {
       intro.progress(1);
       scene.played = true;
+    } else {
+      ScrollTrigger.create({
+        trigger: scene.li,
+        start: `clamp(top ${STORY_INTRO_LINE * 100}%)`,
+        once: true,
+        onEnter: () => {
+          intro.play();
+        },
+      });
     }
     if (entry) {
-      const trigger = watchLoop((self) => {
-        onScreen = self.isActive;
-        sync();
+      const trigger = ScrollTrigger.create({
+        trigger: scene.li,
+        start: "top bottom",
+        end: "bottom top",
+        onToggle: (self) => {
+          onScreen = self.isActive;
+          sync();
+        },
       });
       onScreen = trigger.isActive;
       sync();
     }
-    return () => entry?.remove();
   };
 
-  const phone = (): Branch => ({
-    attach: (scene) =>
-      connect(
-        scene,
-        (play) => {
-          if (scene.li.getBoundingClientRect().top < window.innerHeight * PHONE_INTRO_LINE) return false;
-          ScrollTrigger.create({
-            trigger: scene.li,
-            start: `clamp(top ${PHONE_INTRO_LINE * 100}%)`,
-            once: true,
-            onEnter: play,
+  // Everything, also what the late drawings add, is recorded here and reverted by the cleanup.
+  const ctx = gsap.context(() => {
+    load = ScrollTrigger.create({
+      trigger: section,
+      start: STORY_LOAD_AHEAD,
+      once: true,
+      onEnter: () => {
+        for (const scene of scenes) {
+          const img = scene.li.querySelector("img");
+          if (!img) continue;
+          void inlineSvg(img).then((svg) => {
+            if (!svg || disposed) return;
+            scene.svg = svg;
+            ctx.add(() => attach(scene));
           });
-          return true;
-        },
-        (onToggle) =>
-          ScrollTrigger.create({ trigger: scene.li, start: "top bottom", end: "bottom top", onToggle }),
-      ),
-    cleanup: () => undefined,
-  });
-
-  const desktop = (): Branch => desktopBranch(gsap, ScrollTrigger, root, {
-    section,
-    pin,
-    viewport,
-    track,
-    scenes,
-    dots,
-    connect,
-  });
-
-  /** Runs a layout branch inside its matchMedia context. */
-  const run = (context: Context, make: () => Branch) => {
-    const branch = make();
-    const undo: Array<() => void> = [];
-    // The drawings arrive after the branch started, so their motion is added to the branch's
-    // context: `matchMedia().revert()` reverts it with the rest, back to the static drawing.
-    const attach = (scene: Scene) => {
-      context.add(() => {
-        const cleanup = branch.attach(scene);
-        if (cleanup) undo.push(cleanup);
-      });
-    };
-    scenes.forEach((scene) => {
-      if (scene.svg) attach(scene);
+        }
+      },
     });
-    attachers.add(attach);
-    return () => {
-      attachers.delete(attach);
-      undo.splice(0).forEach((fn) => fn());
-      branch.cleanup();
-    };
-  };
 
-  const mm = gsap.matchMedia();
-  mm.add(STORY_DESKTOP_QUERY, (context: Context) => run(context, desktop));
-  mm.add(STORY_PHONE_QUERY, (context: Context) => run(context, phone));
+    const line = `${STORY_ROAD_LINE * 100}%`;
+    scenes.forEach(({ li }, i) => {
+      const stop = stops[i];
+      if (!stop) return;
+      ScrollTrigger.create({
+        trigger: li,
+        start: `top ${line}`,
+        end: `bottom ${line}`,
+        onToggle: (self) => stop.toggleAttribute("data-active", self.isActive),
+      });
+    });
+
+    if (grain) undoRoad = setupRoad(modules, wrap, grain, scenes);
+  });
 
   return () => {
     disposed = true;
-    load.kill();
-    mm.revert();
-    attachers.clear();
+    load?.kill();
+    entries.splice(0).forEach((entry) => entry.remove());
+    undoRoad();
+    ctx.revert();
+    stops.forEach((stop) => stop.removeAttribute("data-active"));
   };
 };
-
-type DesktopParts = {
-  section: HTMLElement;
-  pin: HTMLElement;
-  viewport: HTMLElement;
-  track: HTMLElement;
-  scenes: Scene[];
-  dots: HTMLElement[];
-  connect: (
-    scene: Scene,
-    startIntro: (play: () => void) => boolean,
-    watchLoop: (onToggle: (self: { isActive: boolean }) => void) => Trigger,
-  ) => (() => void) | void;
-};
-
-/**
- * The pinned, sideways layout. The section's own flag switches the CSS to one row before any
- * trigger measures it. The pinned block holds the title, the progress dots and the track, and
- * leaves room at its top for the sticky site header.
- */
-function desktopBranch(
-  gsap: Gsap,
-  ScrollTrigger: ScrollTriggerStatic,
-  root: Document,
-  { section, pin, viewport, track, scenes, dots, connect }: DesktopParts,
-): Branch {
-  // Measured before the layout changes: the content the visitor is looking at (a `#hash`
-  // target below the story, a restored scroll) is put back on screen after the next refresh.
-  const restore = captureView(root, section, scenes);
-
-  section.dataset.storyMode = "horizontal";
-  const header = root.querySelector("header");
-  const measureHeader = () => {
-    const height = header?.getBoundingClientRect().height ?? 0;
-    section.style.setProperty("--story-header", `${Math.round(height)}px`);
-  };
-  measureHeader();
-  ScrollTrigger.addEventListener("refreshInit", measureHeader);
-
-  /** How far the track moves: its right end stops at the viewport's right padding. */
-  const distance = () => {
-    const pad = horizontalPadding(viewport);
-    return Math.max(0, track.scrollWidth + pad.left + pad.right - viewport.clientWidth);
-  };
-  const move = gsap.to(track, {
-    x: () => -distance(),
-    ease: "none",
-    scrollTrigger: {
-      trigger: pin,
-      pin: true,
-      start: "top top",
-      end: () => `+=${STORY_PIN_SCREENS * window.innerHeight}`,
-      scrub: 1,
-      invalidateOnRefresh: true,
-    },
-  });
-  const pinned = move.scrollTrigger as Trigger;
-
-  /** A scene's left edge on screen when the track has not moved yet. */
-  const restLeft = (li: HTMLElement) =>
-    li.getBoundingClientRect().left - track.getBoundingClientRect().left + horizontalPadding(viewport).left;
-  /** The scroll position at which the scene's left edge is where the first scene starts. */
-  const scrollFor = (li: HTMLElement) => {
-    const first = scenes[0]?.li ?? li;
-    const span = distance();
-    const progress = span > 0 ? clamp01((restLeft(li) - restLeft(first)) / span) : 0;
-    return pinned.start + progress * (pinned.end - pinned.start);
-  };
-
-  scenes.forEach((scene, i) => {
-    const dot = dots[i];
-    if (!dot) return;
-    ScrollTrigger.create({
-      trigger: scene.li,
-      containerAnimation: move,
-      start: "left center",
-      end: "right center",
-      onToggle: (self) => dot.toggleAttribute("data-active", self.isActive),
-    });
-  });
-
-  // A focused link in a scene that is off to the side (the Zalo link in the last scene): the
-  // browser would scroll the clipped viewport itself. Scroll the page to that scene instead.
-  const onFocus = (event: FocusEvent) => {
-    const li = (event.target as Element | null)?.closest<HTMLElement>("li[data-story-scene]");
-    if (!li) return;
-    viewport.scrollLeft = 0;
-    window.scrollTo({ top: scrollFor(li), behavior: "instant" });
-  };
-  viewport.addEventListener("focusin", onFocus);
-
-  const afterRefresh = () => {
-    ScrollTrigger.removeEventListener("refresh", afterRefresh);
-    restore?.(scrollFor);
-  };
-  if (restore) ScrollTrigger.addEventListener("refresh", afterRefresh);
-
-  return {
-    attach: (scene) =>
-      connect(
-        scene,
-        (play) => {
-          const inFirstFrame = restLeft(scene.li) < window.innerWidth * DESKTOP_INTRO_LINE;
-          if (inFirstFrame) {
-            // On screen as soon as the section comes up: it plays with the vertical scroll.
-            if (scene.li.getBoundingClientRect().top < window.innerHeight * PHONE_INTRO_LINE) return false;
-            ScrollTrigger.create({
-              trigger: scene.li,
-              start: `clamp(top ${PHONE_INTRO_LINE * 100}%)`,
-              once: true,
-              onEnter: play,
-            });
-            return true;
-          }
-          const passed =
-            pinned.scroll() >= pinned.start &&
-            scene.li.getBoundingClientRect().left < window.innerWidth * DESKTOP_INTRO_LINE;
-          if (passed) return false;
-          ScrollTrigger.create({
-            trigger: scene.li,
-            containerAnimation: move,
-            start: `left ${DESKTOP_INTRO_LINE * 100}%`,
-            once: true,
-            onEnter: play,
-          });
-          return true;
-        },
-        (onToggle) =>
-          ScrollTrigger.create({
-            trigger: scene.li,
-            containerAnimation: move,
-            start: "left right",
-            end: "right left",
-            onToggle,
-          }),
-      ),
-    cleanup: () => {
-      ScrollTrigger.removeEventListener("refreshInit", measureHeader);
-      ScrollTrigger.removeEventListener("refresh", afterRefresh);
-      viewport.removeEventListener("focusin", onFocus);
-      dots.forEach((dot) => dot.removeAttribute("data-active"));
-      section.style.removeProperty("--story-header");
-      delete section.dataset.storyMode;
-    },
-  };
-}
-
-/**
- * What the visitor sees when the pinned layout starts, so it can be shown again after the
- * pin has changed the page height. Returns null when the story starts below the top of the
- * screen: then nothing above the visitor's view changes.
- */
-function captureView(
-  root: Document,
-  section: HTMLElement,
-  scenes: Scene[],
-): ((scrollFor: (li: HTMLElement) => number) => void) | null {
-  const box = section.getBoundingClientRect();
-  if (box.top >= 0) return null;
-
-  if (box.bottom > 0) {
-    // Inside the story: keep the scene at the top of the screen.
-    const scene = scenes.find((s) => s.li.getBoundingClientRect().bottom > 0);
-    if (!scene) return null;
-    return (scrollFor) => window.scrollTo({ top: scrollFor(scene.li), behavior: "instant" });
-  }
-
-  // Below the story: keep the `#hash` target, or the first block on screen, where it is.
-  const target = hashTarget(root);
-  const after = (el: Element) =>
-    Boolean(section.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) && !section.contains(el);
-  let anchor: Element | null = target && after(target) ? target : null;
-  if (!anchor) {
-    for (let el = section.nextElementSibling; el; el = el.nextElementSibling) {
-      if (el.getBoundingClientRect().bottom > 0) {
-        anchor = el;
-        break;
-      }
-    }
-  }
-  if (!anchor) return null;
-  const top = anchor.getBoundingClientRect().top;
-  const kept = anchor;
-  return () => {
-    const shift = kept.getBoundingClientRect().top - top;
-    if (shift !== 0) window.scrollBy({ top: shift, behavior: "instant" });
-  };
-}
