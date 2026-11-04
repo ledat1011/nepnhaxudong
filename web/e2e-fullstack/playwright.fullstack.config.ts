@@ -17,7 +17,7 @@ export default defineConfig({
   retries: 0,
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  reporter: isCi ? [["list"], ["html", { open: "never" }]] : "list",
+  reporter: isCi ? [["list"], ["html", { open: "never", outputFolder: "../playwright-report" }]] : "list",
   outputDir: "../test-results",
   use: { baseURL, trace: "retain-on-failure", locale: "vi-VN" },
   projects: [

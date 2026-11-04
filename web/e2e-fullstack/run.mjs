@@ -39,7 +39,7 @@ function freePort() {
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { stdio: "inherit", ...options });
   if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`${command} ${args.join(" ")} exited with ${result.status}`);
+  if (result.status !== 0) throw new Error(`${path.basename(command)} exited with ${result.status}`); // no arguments: they may hold a secret
 }
 
 function start(name, command, args, options) {
@@ -100,6 +100,11 @@ async function main() {
   const revalidateSecret = secret();
   const adminTempPassword = secret();
   const adminNewPassword = secret();
+  // All values are throwaway and exist for this run only, so a leaked trace holds nothing of value. Still, on GitHub
+  // Actions they are masked in the log.
+  if (process.env.GITHUB_ACTIONS) {
+    for (const value of [dbPassword, revalidateSecret, adminTempPassword, adminNewPassword]) console.log(`::add-mask::${value}`);
+  }
 
   // 1. Throwaway Postgres.
   container = `nepnha-e2e-${randomBytes(4).toString("hex")}`;
@@ -109,10 +114,10 @@ async function main() {
     [
       "run", "--rm", "-d", "--name", container,
       "-p", `${HOST}:${dbPort}:5432`,
-      "-e", "POSTGRES_DB=nepnha_e2e", "-e", "POSTGRES_USER=nepnha", "-e", `POSTGRES_PASSWORD=${dbPassword}`,
+      "-e", "POSTGRES_DB=nepnha_e2e", "-e", "POSTGRES_USER=nepnha", "-e", "POSTGRES_PASSWORD",
       "postgres:16-alpine",
     ],
-    { stdio: ["ignore", "ignore", "inherit"] },
+    { stdio: ["ignore", "ignore", "inherit"], env: { ...process.env, POSTGRES_PASSWORD: dbPassword } },
   );
   // The first server of the image listens on its socket only. A TCP connection works only on the final server.
   await waitFor(
@@ -120,8 +125,8 @@ async function main() {
     () =>
       spawnSync(
         "docker",
-        ["exec", "-e", `PGPASSWORD=${dbPassword}`, container, "psql", "-h", "127.0.0.1", "-U", "nepnha", "-d", "nepnha_e2e", "-c", "select 1"],
-        { stdio: "ignore" },
+        ["exec", "-e", "PGPASSWORD", container, "psql", "-h", "127.0.0.1", "-U", "nepnha", "-d", "nepnha_e2e", "-c", "select 1"],
+        { stdio: "ignore", env: { ...process.env, PGPASSWORD: dbPassword } },
       ).status === 0,
     90_000,
   );
@@ -139,6 +144,8 @@ async function main() {
     cwd: tempDir,
     env: {
       ...process.env,
+      // A profile from the developer's shell must not change the API (the test needs the default profile).
+      SPRING_PROFILES_ACTIVE: "",
       SERVER_PORT: String(apiPort),
       DB_URL: `jdbc:postgresql://${HOST}:${dbPort}/nepnha_e2e`,
       DB_USER: "nepnha",
@@ -171,6 +178,7 @@ async function main() {
   if (!existsSync(server)) throw new Error(`${server} is missing. Next probably inferred a tracing root above web/.`);
   // The standalone server serves static files only when they sit next to it.
   cpSync(path.join(distDir, "static"), path.join(distDir, "standalone", distDirName, "static"), { recursive: true });
+  if (existsSync(path.join(webDir, "public"))) cpSync(path.join(webDir, "public"), path.join(distDir, "standalone", "public"), { recursive: true });
   log(`starting the web app on port ${webPort}`);
   const web = start("web", process.execPath, [server], {
     cwd: webDir,
@@ -200,9 +208,13 @@ async function main() {
   return result.status ?? 1;
 }
 
+// SIGINT and `finally` must not both run the cleanup.
+let cleanupPromise = null;
+const cleanupOnce = () => (cleanupPromise ??= cleanup());
+
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => {
-    cleanup().finally(() => process.exit(130));
+    cleanupOnce().finally(() => process.exit(130));
   });
 }
 
@@ -212,7 +224,7 @@ try {
 } catch (error) {
   console.error(`[fullstack] ${error instanceof Error ? error.message : error}`);
 } finally {
-  await cleanup();
+  await cleanupOnce();
   log(`done in ${Math.round((Date.now() - startedAt) / 1000)} s, exit code ${exitCode}`);
 }
 process.exit(exitCode);

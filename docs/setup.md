@@ -227,7 +227,7 @@ Trang quản trị nằm ở `/admin` của web và gọi API qua đường dẫ
 4. Mở `http://localhost:3000/admin` và đăng nhập bằng admin đầu tiên.
 5. Lần đầu bạn phải đổi mật khẩu. Chưa đổi thì mọi màn hình khác đều không dùng được.
 
-Cổng 8080 hoặc 3000 đang bị chiếm thì đổi cổng của API (`--server.port=...`) và đổi `API_PROXY_ORIGIN` cho khớp.
+Cổng 8080 hoặc 3000 đang bị chiếm thì đổi cổng của API (đặt `SERVER_PORT=...` trước khi chạy, hoặc thêm `-Dspring-boot.run.arguments=--server.port=...`) và đổi `API_PROXY_ORIGIN` cho khớp.
 
 ## Chạy kiểm thử đầu-cuối của trang quản trị
 Bộ test này chạy với hệ thống thật: Postgres, API và web đều khởi động mới. Cần Docker, JDK 21 (`JAVA_HOME` trỏ tới JDK 21) và Node 22. Lần đầu trên máy: `npx playwright install chromium` (trong `web/`). Sau đó:
