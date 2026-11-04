@@ -2,7 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
+import { FieldError, RequiredMark, RequiredNote } from "@/components/admin/form/FieldError";
 import { MissingEnBadge } from "@/components/admin/form/MissingEnBadge";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
@@ -15,12 +17,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/admin/ui/
 import { Textarea } from "@/components/admin/ui/textarea";
 import { adminFetch } from "@/lib/admin/api";
 import { AdminApiError } from "@/lib/admin/errors";
+import { apiRest, invalidProps, mapApiDetail, langOfDetail, NOT_SAVED_NOTICE, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
+import { useAdminSession } from "@/lib/admin/session";
+import { publishChecks, type PublishCheckKey } from "@/lib/admin/publish-checks";
 import { slugify } from "@/lib/admin/slugify";
 import type { StoryAdminDto, StoryRequest } from "@/lib/admin/types";
+import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
+import { useStoryDraft } from "@/lib/admin/use-story-draft";
 import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
+import { DraftRestoreDialog } from "./DraftRestoreDialog";
+import { PublishCheckDialog } from "./PublishCheckDialog";
 import { StoryPreview } from "./StoryPreview";
 
 // The editor (Tiptap and ProseMirror) is large. It is loaded only here, in the admin, and never on a public page.
@@ -37,6 +46,14 @@ type Lang = "vi" | "en";
 const LANGS: Lang[] = ["vi", "en"];
 
 type LangFields = { title: string; slug: string; excerpt: string; bodyHtml: string };
+
+const TITLE_MISSING_MESSAGE = "Tiêu đề bài viết (tiếng Việt) không được để trống.";
+
+/** The API messages that name a field of this form (see `StoryService.validateContent`). */
+const FIELD_RULES: FieldRule[] = [{ prefix: "Tiêu đề bài viết", field: (detail) => `title.${langOfDetail(detail)}` }];
+
+/** A box the "Quay lại sửa" of the check panel moves to: its `data-fix` value, in a tab. */
+type FixTarget = { lang: Lang; box: "title" | "excerpt" | "body" };
 
 type FormState = {
   coverMediaId: number | null;
@@ -55,6 +72,20 @@ function fieldsFrom(story: StoryAdminDto | undefined, lang: Lang): LangFields {
 
 function stateFrom(story: StoryAdminDto | undefined): FormState {
   return { coverMediaId: story?.coverMediaId ?? null, vi: fieldsFrom(story, "vi"), en: fieldsFrom(story, "en") };
+}
+
+function isLangFields(value: unknown): value is LangFields {
+  if (typeof value !== "object" || value === null) return false;
+  const fields = value as Record<string, unknown>;
+  return ["title", "slug", "excerpt", "bodyHtml"].every((name) => typeof fields[name] === "string");
+}
+
+/** A form state read back from the browser storage, which anything could have written. */
+function isFormState(value: unknown): value is FormState {
+  if (typeof value !== "object" || value === null) return false;
+  const state = value as Record<string, unknown>;
+  const cover = state.coverMediaId;
+  return (cover === null || typeof cover === "number") && isLangFields(state.vi) && isLangFields(state.en);
 }
 
 function snapshot(state: FormState): string {
@@ -148,10 +179,31 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   }));
   const [conflicts, setConflicts] = useState<SlugConflicts>(NO_CONFLICTS);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [askUnpublish, setAskUnpublish] = useState(false);
+  // The box "Quay lại sửa" moves to, once its tab is shown. A ref plus a counter: the effect reads it without a state update.
+  const fix = useRef<FixTarget | null>(null);
+  const [fixRequests, setFixRequests] = useState(0);
+  const fields = useFieldErrors();
+  const coverRef = useRef<HTMLFieldSetElement>(null);
   // True after a create succeeded, until the page changes: no second tap may create the story again.
   const [leaving, setLeaving] = useState(false);
   const dirty = snapshot(state) !== snapshot(baselineState);
-  useUnsavedChanges(dirty && !leaving);
+  const { user } = useAdminSession();
+  // The saved story as the API sent it. The baseline state may hold the editor's own form of the body.
+  const rawBase = useMemo(() => stateFrom(baseline), [baseline]);
+  const draft = useStoryDraft({
+    storyId: initial?.id,
+    userId: user?.id ?? null,
+    state,
+    base: rawBase,
+    dirty,
+    // After a create the page goes to the new story: the "new" draft must not be written again.
+    enabled: !leaving,
+    isState: isFormState,
+  });
+  // While the draft is kept on this phone, the "Rời trang?" question says so instead of "will be lost".
+  useUnsavedChanges(dirty && !leaving, { keepsDraft: draft.keeping });
   const leavePage = useLeavePage();
 
   // The newest state, for the save action: after a sign-in again the action runs once more and must send what is typed now.
@@ -177,6 +229,14 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
       }
       throw error;
     }
+  }, {
+    onError: (error) => {
+      const keys = Object.keys(mapApiDetail(error.detail, FIELD_RULES).errors);
+      if (keys.length === 0) return;
+      // The box may be on the other tab: show that tab first (Vietnamese when both), then the cursor moves there.
+      setTab(keys.some((key) => key.endsWith(".vi")) ? "vi" : "en");
+      fields.showApi(error.detail, FIELD_RULES);
+    },
   });
   const publishing = useSave(() => adminFetch<StoryAdminDto>(`/admin/stories/${baseline?.id}/publish`, { method: "POST" }), {
     successMessage: "Đã đăng bài.",
@@ -189,9 +249,19 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
 
   async function save() {
     setConflicts(NO_CONFLICTS);
+    if (latestState.current.vi.title.trim() === "") {
+      saving.reset();
+      setTab("vi");
+      fields.show({ "title.vi": TITLE_MISSING_MESSAGE });
+      return;
+    }
+    fields.reset();
     const result = await saving.save();
     if (result === undefined) return;
     const { saved, sent } = result;
+    // The story is on the server now: its draft goes. Text typed during the save is still unsaved, so clear()
+    // makes the hook write it again a moment later.
+    draft.clear();
     if (baseline === undefined) {
       setLeaving(true);
       leavePage(() => router.replace(`${ADMIN_ROUTES.stories}/${saved.id}`));
@@ -222,10 +292,54 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
     setFollowTitle({ vi: baseline?.slug.vi == null, en: baseline?.slug.en == null });
     setConflicts(NO_CONFLICTS);
     saving.reset();
+    fields.reset();
+    draft.clear();
+  }
+
+  /** "Khôi phục": the kept text goes into the form, unsaved, on top of the saved story. */
+  function restoreDraft() {
+    const kept = draft.restore();
+    if (kept === null) return;
+    setState(kept);
+    setConflicts(NO_CONFLICTS);
+    fields.reset();
+    setFollowTitle({
+      vi: baseline?.slug.vi == null && kept.vi.slug === slugify(kept.vi.title),
+      en: baseline?.slug.en == null && kept.en.slug === slugify(kept.en.title),
+    });
+  }
+
+  /** "Quay lại sửa" in the check panel: go to the first part that is missing. */
+  function fixFirstGap() {
+    if (baseline === undefined) return;
+    const gap = publishChecks(baseline).find((check) => !check.ok);
+    if (gap === undefined) return;
+    if (gap.key === "cover") {
+      const button = coverRef.current?.querySelector<HTMLElement>("button");
+      button?.scrollIntoView?.({ block: "center" });
+      button?.focus({ preventScroll: true });
+      return;
+    }
+    const targets: Record<Exclude<PublishCheckKey, "cover">, FixTarget> = {
+      title: { lang: "vi", box: "title" },
+      excerpt: { lang: "vi", box: "excerpt" },
+      body: { lang: "vi", box: "body" },
+      en: {
+        lang: "en",
+        box: state.en.title.trim() === "" ? "title" : state.en.excerpt.trim() === "" ? "excerpt" : "body",
+      },
+    };
+    const target = targets[gap.key];
+    fix.current = target;
+    setTab(target.lang);
+    setFixRequests((count) => count + 1);
   }
 
   function patchLang(lang: Lang, change: Partial<LangFields>) {
     setState((current) => ({ ...current, [lang]: { ...current[lang], ...change } }));
+    if (change.title !== undefined) fields.clear(`title.${lang}`);
+    // "Tiêu đề bài viết (tiếng Anh) ... khi đã có nội dung tiếng Anh" may no longer hold once English text changes.
+    if (lang === "en" && Object.keys(change).some((key) => key !== "title")) fields.clear("title.en");
     if (change.slug !== undefined) setConflicts((current) => ({ ...current, [lang]: null }));
   }
 
@@ -261,7 +375,34 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const statusBlocked = busy || dirty;
   // While a new story is created the fields cannot change: the page goes to the new story and would lose the text.
   const locked = baseline === undefined && (saving.pending || leaving);
-  const saveError = saving.error?.status === 409 ? null : saving.error;
+  // A slug conflict is shown under the slug box; other errors that name a field under that field.
+  const saveError =
+    saving.error?.status === 409 ? null : [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
+
+  // After the tab of a "Quay lại sửa" target is shown, the cursor goes into its box.
+  useEffect(() => {
+    const wanted = fix.current;
+    if (fixRequests === 0 || wanted === null || wanted.lang !== tab) return;
+    function focusBox(): boolean {
+      if (wanted === null) return true;
+      const box = document.querySelector<HTMLElement>(`[data-fix="${wanted.lang}-${wanted.box}"]`);
+      if (box === null) return false;
+      const target = box.matches("input, textarea") ? box : (box.querySelector<HTMLElement>("[contenteditable]") ?? box);
+      target.scrollIntoView?.({ block: "center" });
+      target.focus({ preventScroll: true });
+      return true;
+    }
+    if (focusBox()) {
+      fix.current = null;
+      return;
+    }
+    // The panel of a tab that was just chosen appears one render later (Radix Presence).
+    const retry = setTimeout(() => {
+      focusBox();
+      fix.current = null;
+    }, 0);
+    return () => clearTimeout(retry);
+  }, [fixRequests, tab]);
 
   return (
     <div className="flex flex-col gap-6 p-4 pb-44">
@@ -284,11 +425,11 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
         <div className="flex flex-wrap gap-2">
           {saved ? (
             published ? (
-              <Button type="button" variant="outline" disabled={statusBlocked} onClick={() => void changeStatus(unpublishing)}>
+              <Button type="button" variant="outline" disabled={statusBlocked} onClick={() => setAskUnpublish(true)}>
                 Gỡ bài
               </Button>
             ) : (
-              <Button type="button" disabled={statusBlocked} onClick={() => void changeStatus(publishing)}>
+              <Button type="button" disabled={statusBlocked} onClick={() => setChecking(true)}>
                 Đăng bài
               </Button>
             )
@@ -302,10 +443,15 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
           <p className="text-sm text-muted-foreground">Hãy lưu thay đổi trước khi đăng hoặc gỡ bài.</p>
         ) : null}
         {!saved || dirty ? <p className="text-sm text-muted-foreground">Hãy lưu trước khi xem trước.</p> : null}
+        {draft.failed ? (
+          <p className="text-sm text-muted-foreground">Máy này không lưu tạm được bài đang viết. Hãy bấm Lưu thường xuyên.</p>
+        ) : null}
         <ProblemMessage error={publishing.error ?? unpublishing.error} />
       </section>
 
-      <fieldset disabled={locked} className="min-w-0">
+      <RequiredNote />
+
+      <fieldset ref={coverRef} disabled={locked} className="min-w-0">
         <SingleImageSection
           label="Ảnh bìa"
           mediaId={state.coverMediaId}
@@ -313,7 +459,7 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
         />
       </fieldset>
 
-      <Tabs value={tab} onValueChange={(next) => setTab(next as Lang)}>
+      <Tabs {...fields.rootProps} value={tab} onValueChange={(next) => setTab(next as Lang)}>
         <TabsList className="w-full">
           <TabsTrigger value="vi">Tiếng Việt</TabsTrigger>
           <TabsTrigger value="en">English</TabsTrigger>
@@ -324,6 +470,7 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
               lang={lang}
               fields={state[lang]}
               slugError={conflicts[lang]}
+              titleError={fields.errors[`title.${lang}`]}
               readOnly={locked}
               lostImages={lostImages[lang]}
               onNormalized={(html, from) => bodyNormalized(lang, html, from)}
@@ -336,10 +483,46 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
         ))}
       </Tabs>
 
-      <ProblemMessage error={saveError} />
+      <ProblemMessage message={saveError} />
 
-      <SaveBar dirty={dirty} pending={busy} onSave={() => void save()} onCancel={cancel} />
-      {baseline !== undefined ? <StoryPreview story={baseline} open={previewOpen} onOpenChange={setPreviewOpen} /> : null}
+      <SaveBar
+        dirty={dirty}
+        pending={busy}
+        onSave={() => void save()}
+        onDiscard={cancel}
+        notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}
+      />
+      {draft.offer !== null ? (
+        <DraftRestoreDialog
+          savedAt={draft.offer.draft.savedAt}
+          stale={draft.offer.stale}
+          onRestore={restoreDraft}
+          onDiscard={draft.discard}
+          onLater={draft.later}
+        />
+      ) : null}
+      {baseline !== undefined ? (
+        <>
+          <StoryPreview story={baseline} open={previewOpen} onOpenChange={setPreviewOpen} />
+          <PublishCheckDialog
+            open={checking}
+            onOpenChange={setChecking}
+            checks={publishChecks(baseline)}
+            onPublish={() => void changeStatus(publishing)}
+            onFix={fixFirstGap}
+          />
+          <ConfirmDialog
+            open={askUnpublish}
+            onOpenChange={setAskUnpublish}
+            title="Gỡ bài khỏi website?"
+            description="Người đọc sẽ không thấy bài này nữa. Bài vẫn được giữ ở đây và bạn có thể đăng lại."
+            confirmLabel="Gỡ bài"
+            cancelLabel="Không gỡ"
+            destructive
+            onConfirm={() => void changeStatus(unpublishing)}
+          />
+        </>
+      ) : null}
     </div>
   );
 }
@@ -348,6 +531,7 @@ type PanelProps = {
   lang: Lang;
   fields: LangFields;
   slugError: string | null;
+  titleError?: string | null;
   readOnly: boolean;
   lostImages: boolean;
   onNormalized(html: string, from: string): void;
@@ -357,13 +541,39 @@ type PanelProps = {
   onBody(html: string): void;
 };
 
-function LangPanel({ lang, fields, slugError, readOnly, lostImages, onNormalized, onTitle, onSlug, onExcerpt, onBody }: PanelProps) {
+function LangPanel({
+  lang,
+  fields,
+  slugError,
+  titleError,
+  readOnly,
+  lostImages,
+  onNormalized,
+  onTitle,
+  onSlug,
+  onExcerpt,
+  onBody,
+}: PanelProps) {
   const id = useId();
+  // Only the Vietnamese title is required. The English one is needed once English text exists; the API says so.
+  const required = lang === "vi";
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor={`${id}-title`}>Tiêu đề</Label>
-        <Input id={`${id}-title`} readOnly={readOnly} value={fields.title} onChange={(event) => onTitle(event.target.value)} />
+        <Label htmlFor={`${id}-title`}>
+          Tiêu đề
+          {required ? <RequiredMark /> : null}
+        </Label>
+        <Input
+          id={`${id}-title`}
+          readOnly={readOnly}
+          required={required}
+          data-fix={`${lang}-title`}
+          value={fields.title}
+          {...invalidProps(`${id}-title`, titleError)}
+          onChange={(event) => onTitle(event.target.value)}
+        />
+        <FieldError id={`${id}-title`} message={titleError} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${id}-slug`}>Đường dẫn</Label>
@@ -387,9 +597,9 @@ function LangPanel({ lang, fields, slugError, readOnly, lostImages, onNormalized
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${id}-excerpt`}>Tóm tắt</Label>
-        <Textarea id={`${id}-excerpt`} rows={3} readOnly={readOnly} value={fields.excerpt} onChange={(event) => onExcerpt(event.target.value)} />
+        <Textarea id={`${id}-excerpt`} data-fix={`${lang}-excerpt`} rows={3} readOnly={readOnly} value={fields.excerpt} onChange={(event) => onExcerpt(event.target.value)} />
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div data-fix={`${lang}-body`} className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Nội dung</span>
         {lostImages ? (
           <p role="status" className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">

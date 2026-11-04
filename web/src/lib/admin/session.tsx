@@ -7,6 +7,7 @@ import { adminFetch } from "./api";
 import { resetCsrfToken } from "./csrf";
 import { AdminApiError } from "./errors";
 import { ADMIN_ROUTES } from "./routes";
+import { allowDraftWrites, clearAllDrafts } from "./story-draft";
 import type { UserResponse } from "./types";
 
 /** `error`: the server could not be reached or failed, so it is not known whether the user is signed in. */
@@ -87,9 +88,16 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
       // The session may already be gone on the server. The local state is cleared in every case.
     }
     resetCsrfToken();
+    // The phone may be shared: the next person must not see, or restore, a story this user was writing.
+    clearAllDrafts();
     setState({ status: "signed-out", user: null, onPurpose: true });
     router.replace(ADMIN_ROUTES.login);
   }, [router]);
+
+  // Drafts are written again once someone is signed in (they were blocked by a sign-out).
+  useEffect(() => {
+    if (state.status === "ready") allowDraftWrites();
+  }, [state.status]);
 
   const requireReLogin = useCallback((): Promise<void> => {
     if (pending.current) return pending.current.promise;

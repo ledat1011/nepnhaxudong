@@ -51,4 +51,22 @@ describe("BilingualField", () => {
     expect(screen.getByLabelText(/Tiếng Việt/)).toBeRequired();
     expect(screen.getByLabelText(/English/)).not.toBeRequired();
   });
+
+  it("shows the error of a box right under that box and marks only that box as wrong", () => {
+    render(
+      <BilingualField
+        label="Tên"
+        value={{ vi: null, en: "Rice" }}
+        onChange={() => {}}
+        errors={{ vi: "Tên sản phẩm (tiếng Việt) không được để trống." }}
+      />,
+    );
+    const vi = screen.getByLabelText(/Tiếng Việt/);
+    expect(vi).toHaveAttribute("aria-invalid", "true");
+    expect(vi).toHaveAccessibleDescription("Tên sản phẩm (tiếng Việt) không được để trống.");
+    expect(screen.getByLabelText(/English/)).not.toHaveAttribute("aria-invalid");
+    // The text sits in the same block as the Vietnamese box, so it shows right under it.
+    expect(vi.parentElement).toHaveTextContent("Tên sản phẩm (tiếng Việt) không được để trống.");
+  });
 });
+

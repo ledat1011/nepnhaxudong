@@ -7,7 +7,8 @@ import { ADMIN_ROUTES } from "./routes";
 
 /** Forms that have unsaved changes tell the guard through `useUnsavedChanges`. */
 export type NavGuard = {
-  markDirty(id: string): void;
+  /** `keepsDraft`: the form keeps its text in the browser (the story editor), so leaving loses nothing. */
+  markDirty(id: string, keepsDraft?: boolean): void;
   markClean(id: string): void;
   /** Runs `go` at once when no form is dirty. Otherwise asks first, and runs `go` only after "Rời trang". */
   confirmLeave(go: () => void): void;
@@ -44,6 +45,10 @@ function insideEditableText(anchor: HTMLAnchorElement): boolean {
 /** The navigation that waits for the user's answer. */
 type Held = { go(): void };
 
+const LOST_TEXT = "Nếu rời trang, những thay đổi này sẽ mất.";
+const KEPT_TEXT =
+  "Bài đang viết dở vẫn được giữ trên máy này. Lần sau mở lại bài, trang sẽ hỏi bạn có muốn khôi phục không.";
+
 type TrapState = {
   /** True while the extra entry is on the history stack because a form is dirty. */
   armed: boolean;
@@ -73,7 +78,8 @@ type TrapState = {
 export function NavGuardProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const routerRef = useRef(router);
-  const dirtyIds = useRef(new Set<string>());
+  // Each dirty form, and whether it keeps a draft in the browser.
+  const dirtyIds = useRef(new Map<string, boolean>());
   const passThrough = useRef(false);
   const trapRef = useRef<TrapState>({
     armed: false,
@@ -83,6 +89,8 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
     afterPop: null,
   });
   const [held, setHeld] = useState<Held | null>(null);
+  // Read when the question opens: true only when every dirty form keeps a draft.
+  const [allKept, setAllKept] = useState(false);
 
   useEffect(() => {
     routerRef.current = router;
@@ -127,6 +135,7 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
     function ask(request: Held, back: boolean) {
       trap.leaving = false;
       trap.askingBack = back;
+      setAllKept(dirtyIds.current.size > 0 && [...dirtyIds.current.values()].every(Boolean));
       setHeld(request);
       sync();
     }
@@ -194,9 +203,9 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
     }
 
     const guard: NavGuard = {
-      markDirty(id) {
+      markDirty(id, keepsDraft = false) {
         if (dirtyIds.current.size === 0) trap.leaving = false;
-        dirtyIds.current.add(id);
+        dirtyIds.current.set(id, keepsDraft);
         sync();
       },
       markClean(id) {
@@ -282,7 +291,7 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
           if (!open) machine.close();
         }}
         title="Bạn có thay đổi chưa lưu. Rời trang?"
-        description="Nếu rời trang, những thay đổi này sẽ mất."
+        description={allKept ? KEPT_TEXT : LOST_TEXT}
         confirmLabel="Rời trang"
         cancelLabel="Ở lại"
         destructive

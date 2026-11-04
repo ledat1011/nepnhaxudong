@@ -52,7 +52,8 @@ test("first sign-in forces a password change, then the dashboard opens", async (
 
   const newPassword = env("E2E_ADMIN_NEW_PASSWORD");
   await page.getByLabel("Mật khẩu hiện tại").fill(env("E2E_ADMIN_TEMP_PASSWORD"));
-  await page.getByLabel("Mật khẩu mới", { exact: true }).fill(newPassword);
+  // The label ends with the * of a required box.
+  await page.getByLabel(/^Mật khẩu mới/).fill(newPassword);
   await page.getByLabel("Nhập lại mật khẩu mới").fill(newPassword);
   await page.getByRole("button", { name: "Đổi mật khẩu" }).click();
   await expect(page).toHaveURL(new RegExp(`${ADMIN_ROUTES.home}$`));
@@ -90,6 +91,12 @@ test("a draft story is hidden until it is published", async () => {
 
   await expect(publish).toBeEnabled();
   await publish.click();
+  // The check panel opens first. This story has no cover and no English version: both are listed, and it can still be published.
+  const panel = page.getByRole("alertdialog", { name: "Kiểm tra trước khi đăng" });
+  await expect(panel.getByText("Có tiêu đề")).toBeVisible();
+  await expect(panel.getByText("Chưa có ảnh bìa")).toBeVisible();
+  await expect(panel.getByText("Chưa có bản tiếng Anh")).toBeVisible();
+  await panel.getByRole("button", { name: "Vẫn đăng bài" }).click();
   await expect(page.getByRole("button", { name: "Gỡ bài" })).toBeVisible();
 
   await expect
@@ -100,6 +107,32 @@ test("a draft story is hidden until it is published", async () => {
     .toBe(200);
   await page.goto(`/vi/cau-chuyen/${slug}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(STORY_TITLE);
+});
+
+test("a story typed but not saved is offered back after a reload", async () => {
+  await page.goto(ADMIN_ROUTES.stories);
+  await page.getByRole("link", { name: new RegExp(escapeRegExp(STORY_TITLE)) }).first().click();
+  const title = page.getByLabel(/^Tiêu đề( \*)?$/);
+  await expect(title).toHaveValue(STORY_TITLE);
+  await title.fill(`${STORY_TITLE} viết dở`);
+  // The draft is written at most once per second; wait until the browser holds it.
+  await expect
+    .poll(() => page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith("nepnha:story-draft:")).length))
+    .toBe(1);
+
+  // The form has unsaved changes, so the browser asks before the reload; the answer is "leave".
+  page.once("dialog", (question) => void question.accept());
+  await page.reload();
+  const offer = page.getByRole("alertdialog", { name: "Có bài đang viết dở" });
+  await expect(offer).toBeVisible();
+  await offer.getByRole("button", { name: "Khôi phục" }).click();
+  await expect(title).toHaveValue(`${STORY_TITLE} viết dở`);
+
+  // "Bỏ thay đổi" asks first, then drops the text and the draft.
+  await page.getByRole("button", { name: "Bỏ thay đổi" }).click();
+  await page.getByRole("alertdialog", { name: "Bỏ thay đổi chưa lưu?" }).getByRole("button", { name: "Bỏ thay đổi" }).click();
+  await expect(title).toHaveValue(STORY_TITLE);
+  expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith("nepnha:story-draft:")))).toEqual([]);
 });
 
 /**
@@ -244,7 +277,8 @@ test("the browser back button asks before it leaves a form with unsaved changes"
   // A form that is clean again has removed its extra history entry, so one press of back leaves at once.
   await page.getByRole("link", { name: "Liên hệ & cài đặt" }).click();
   await page.getByLabel("Điện thoại").fill("0912 345 678");
-  await page.getByRole("button", { name: "Hủy", exact: true }).click();
+  await page.getByRole("button", { name: "Bỏ thay đổi", exact: true }).click();
+  await page.getByRole("alertdialog", { name: "Bỏ thay đổi chưa lưu?" }).getByRole("button", { name: "Bỏ thay đổi" }).click();
   await page.goBack();
   await expect(page).toHaveURL(homeUrl);
   await expect(question).toBeHidden();

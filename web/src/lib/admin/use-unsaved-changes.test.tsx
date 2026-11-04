@@ -23,15 +23,15 @@ afterEach(async () => {
   signOut.mockReset();
 });
 
-function Form({ dirty }: { dirty: boolean }) {
-  useUnsavedChanges(dirty);
+function Form({ dirty, keepsDraft = false }: { dirty: boolean; keepsDraft?: boolean }) {
+  useUnsavedChanges(dirty, { keepsDraft });
   return <Link href="/admin/san-pham">Sản phẩm trong trang</Link>;
 }
 
-function Page({ dirty }: { dirty: boolean }) {
+function Page({ dirty, keepsDraft = false }: { dirty: boolean; keepsDraft?: boolean }) {
   return (
     <NavGuardProvider>
-      <Form dirty={dirty} />
+      <Form dirty={dirty} keepsDraft={keepsDraft} />
       <BottomNav />
     </NavGuardProvider>
   );
@@ -96,6 +96,27 @@ describe("useUnsavedChanges", () => {
     expect(beforeUnload().defaultPrevented).toBe(true);
     rerender(<Page dirty={false} />);
     expect(beforeUnload().defaultPrevented).toBe(false);
+  });
+});
+
+describe("leave question text", () => {
+  it("says the changes will be lost for a form without a browser draft", async () => {
+    const events = userEvent.setup();
+    render(<Page dirty />);
+    await events.click(screen.getByRole("link", { name: "Câu chuyện" }));
+    const question = await screen.findByRole("alertdialog", { name: QUESTION });
+    expect(question).toHaveTextContent("Nếu rời trang, những thay đổi này sẽ mất.");
+  });
+
+  it("says the unfinished story stays on this phone when the form keeps a draft", async () => {
+    const events = userEvent.setup();
+    render(<Page dirty keepsDraft />);
+    await events.click(screen.getByRole("link", { name: "Câu chuyện" }));
+    const question = await screen.findByRole("alertdialog", { name: QUESTION });
+    expect(question).toHaveTextContent(
+      "Bài đang viết dở vẫn được giữ trên máy này. Lần sau mở lại bài, trang sẽ hỏi bạn có muốn khôi phục không.",
+    );
+    expect(question).not.toHaveTextContent("sẽ mất");
   });
 });
 
@@ -177,10 +198,27 @@ describe("nav guard scope", () => {
   });
 });
 
-/** Waits until the popstate events that jsdom delivers a moment after back() / go() have arrived. */
+/**
+ * Waits until the popstate events that jsdom delivers a moment after back() / go() have arrived: it waits for
+ * the next popstate, and stops once none has come for 100 ms. A handler that calls back() again is covered,
+ * because its popstate is queued before the next 100 ms timer starts.
+ */
 async function settle() {
   await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 30));
+    for (;;) {
+      const arrived = await new Promise<boolean>((resolve) => {
+        const timer = setTimeout(() => {
+          window.removeEventListener("popstate", onPop);
+          resolve(false);
+        }, 100);
+        function onPop() {
+          clearTimeout(timer);
+          resolve(true);
+        }
+        window.addEventListener("popstate", onPop, { once: true });
+      });
+      if (!arrived) return;
+    }
   });
 }
 
@@ -299,8 +337,7 @@ describe("back button guard", () => {
     // fireEvent is synchronous, so the popstate of the guard's back() cannot have arrived yet.
     fireEvent.click(screen.getByRole("button", { name: "Tạo" }));
     expect(statesAtNavigation).toEqual([]);
-    await settle();
-    expect(statesAtNavigation).toEqual([{ page: "new" }]);
+    await waitFor(() => expect(statesAtNavigation).toEqual([{ page: "new" }]));
   });
 
   it("asks before signing out from the More sheet while a form is dirty", async () => {

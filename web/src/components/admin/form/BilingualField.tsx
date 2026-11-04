@@ -4,8 +4,10 @@ import { useId } from "react";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { Textarea } from "@/components/admin/ui/textarea";
+import { invalidProps } from "@/lib/admin/field-errors";
 import { isMissingEn } from "@/lib/admin/localized";
 import type { LocalizedText } from "@/lib/admin/types";
+import { FieldError, RequiredMark } from "./FieldError";
 import { MissingEnBadge } from "./MissingEnBadge";
 
 type Props = {
@@ -16,6 +18,8 @@ type Props = {
   maxLength?: number;
   viRequired?: boolean;
   enRequired?: boolean;
+  /** The error of each box, shown right under it. */
+  errors?: { vi?: string | null; en?: string | null };
 };
 
 type BoxProps = {
@@ -26,15 +30,17 @@ type BoxProps = {
   multiline: boolean;
   maxLength?: number;
   required: boolean;
+  error?: string | null;
 };
 
-function Box({ id, label, value, onChange, multiline, maxLength, required }: BoxProps) {
+function Box({ id, label, value, onChange, multiline, maxLength, required, error }: BoxProps) {
   const text = value ?? "";
   const common = {
     id,
     value: text,
     maxLength,
     required,
+    ...invalidProps(id, error),
     onChange: (event: { target: { value: string } }) => onChange(event.target.value === "" ? null : event.target.value),
   };
   return (
@@ -42,7 +48,7 @@ function Box({ id, label, value, onChange, multiline, maxLength, required }: Box
       <div className="flex min-h-6 items-center justify-between gap-2">
         <Label htmlFor={id}>
           {label}
-          {required ? <span aria-hidden> *</span> : null}
+          {required ? <RequiredMark /> : null}
         </Label>
         {maxLength !== undefined ? (
           <span className="text-xs text-muted-foreground">
@@ -51,12 +57,22 @@ function Box({ id, label, value, onChange, multiline, maxLength, required }: Box
         ) : null}
       </div>
       {multiline ? <Textarea rows={4} {...common} /> : <Input {...common} />}
+      <FieldError id={id} message={error} />
     </div>
   );
 }
 
 /** Two boxes, Vietnamese and English, stacked on a phone and side by side on a wide screen. */
-export function BilingualField({ label, value, onChange, multiline = false, maxLength, viRequired = false, enRequired = false }: Props) {
+export function BilingualField({
+  label,
+  value,
+  onChange,
+  multiline = false,
+  maxLength,
+  viRequired = false,
+  enRequired = false,
+  errors,
+}: Props) {
   const id = useId();
   return (
     <fieldset className="flex min-w-0 flex-col gap-3">
@@ -73,6 +89,7 @@ export function BilingualField({ label, value, onChange, multiline = false, maxL
           multiline={multiline}
           maxLength={maxLength}
           required={viRequired}
+          error={errors?.vi}
         />
         <Box
           id={`${id}-en`}
@@ -82,6 +99,7 @@ export function BilingualField({ label, value, onChange, multiline = false, maxL
           multiline={multiline}
           maxLength={maxLength}
           required={enRequired}
+          error={errors?.en}
         />
       </div>
     </fieldset>

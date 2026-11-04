@@ -55,6 +55,23 @@ for (const [name, route] of Object.entries(ADMIN_ROUTES)) {
   });
 }
 
+test("a wrong Zalo number is shown under the Zalo box, and the screen moves there", async ({ page }) => {
+  await page.goto(ADMIN_ROUTES.settings);
+  const zalo = page.getByLabel("Zalo (chỉ số)");
+  await zalo.fill("0912 345 67a");
+  // Lưu sits at the bottom of the screen, below the address and the hours.
+  await page.getByRole("button", { name: "Lưu", exact: true }).click();
+  await expect(zalo).toHaveAttribute("aria-invalid", "true");
+  await expect(zalo).toBeFocused();
+  await expect(zalo).toBeInViewport();
+  await expect(zalo).toHaveAccessibleDescription(/^Số Zalo chỉ gồm chữ số/);
+  await expect(page.getByRole("alert").filter({ hasText: "Chưa lưu. Hãy sửa ô có viền đỏ." })).toBeVisible();
+  // Nothing was stored: dropping the change brings the saved number back.
+  await page.getByRole("button", { name: "Bỏ thay đổi", exact: true }).click();
+  await page.getByRole("alertdialog", { name: "Bỏ thay đổi chưa lưu?" }).getByRole("button", { name: "Bỏ thay đổi" }).click();
+  await expect(zalo).not.toHaveValue("0912 345 67a");
+});
+
 test("the save bar of the product form does not overlap the bottom navigation", async ({ page }) => {
   await page.goto(`${ADMIN_ROUTES.products}/moi`);
   const save = page.getByRole("button", { name: "Lưu", exact: true });

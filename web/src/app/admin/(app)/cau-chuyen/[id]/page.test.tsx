@@ -47,14 +47,14 @@ describe("Câu chuyện edit page", () => {
   it("opens an empty form for the id moi without loading a story", async () => {
     adminFetch.mockResolvedValue([]);
     await renderPage("moi");
-    expect(await screen.findByLabelText("Tiêu đề")).toHaveValue("");
+    expect(await screen.findByLabelText(/^Tiêu đề( \*)?$/)).toHaveValue("");
     expect(adminFetch).not.toHaveBeenCalledWith("/admin/stories/moi");
   });
 
   it("loads a story and fills the form", async () => {
     adminFetch.mockImplementation(async (path: string) => (path === "/admin/stories/4" ? saved : []));
     await renderPage("4");
-    expect(await screen.findByLabelText("Tiêu đề")).toHaveValue("Bài bốn");
+    expect(await screen.findByLabelText(/^Tiêu đề( \*)?$/)).toHaveValue("Bài bốn");
   });
 
   it("shows the error and loads again after Thử lại", async () => {
@@ -68,6 +68,6 @@ describe("Câu chuyện edit page", () => {
     await renderPage("4");
     expect(await screen.findByText("Máy chủ đang bận.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Thử lại" }));
-    expect(await screen.findByLabelText("Tiêu đề")).toHaveValue("Bài bốn");
+    expect(await screen.findByLabelText(/^Tiêu đề( \*)?$/)).toHaveValue("Bài bốn");
   });
 });

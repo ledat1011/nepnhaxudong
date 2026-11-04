@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { MediaAdminDto, ProductAdminDto } from "@/lib/admin/types";
 
@@ -92,7 +92,7 @@ describe("ProductForm", () => {
     const add = screen.getByRole("button", { name: "Thêm quy cách" });
     expect(add).toBeEnabled();
     await events.click(add);
-    expect(screen.getAllByLabelText("Khối lượng (gam)")).toHaveLength(20);
+    expect(screen.getAllByLabelText(/^Khối lượng \(gam\)/)).toHaveLength(20);
     expect(screen.getByRole("button", { name: "Thêm quy cách" })).toBeDisabled();
   });
 
@@ -167,14 +167,15 @@ describe("ProductForm", () => {
     const events = userEvent.setup();
     adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
       if (path.startsWith("/admin/media")) return [];
-      if (init?.method === "PUT") throw new AdminApiError(400, "Đặc điểm (tiếng Việt) cần có ít nhất một mục.");
+      if (init?.method === "PUT") throw new AdminApiError(409, "Sản phẩm đã bị người khác sửa.");
       return undefined;
     });
     render(<ProductForm initial={product()} />);
     const [nameVi] = screen.getAllByLabelText(/^Tiếng Việt/);
     await events.type(nameVi, "!");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Đặc điểm (tiếng Việt) cần có ít nhất một mục.");
+    // A message that names no field stays at the end of the form, as before.
+    expect(await screen.findByRole("alert")).toHaveTextContent("Sản phẩm đã bị người khác sửa.");
     expect(nameVi).toHaveValue("Gạo ST25!");
   });
   it("sends one create request however often Lưu is tapped, then goes to the new product", async () => {
@@ -226,12 +227,15 @@ describe("ProductForm", () => {
   it.each([
     ["weight", { weightGrams: 1e20, priceVnd: null, sortOrder: 0 }, "khối lượng quá lớn"],
     ["price", { weightGrams: 1000, priceVnd: 1e20, sortOrder: 0 }, "giá quá lớn"],
-  ])("refuses a %s above the limit without calling the API", async (_name, packaging, message) => {
+  ])("refuses a %s above the limit without calling the API", async (name, packaging, message) => {
     const events = userEvent.setup();
     render(<ProductForm initial={product({ packagings: [packaging] })} />);
     await events.type(screen.getAllByLabelText(/^Tiếng Việt/)[0], "!");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    const box = screen.getByLabelText(name === "weight" ? /^Khối lượng/ : "Giá (VND)");
+    await waitFor(() => expect(box).toHaveAccessibleDescription(new RegExp(message, "i")));
+    expect(box).toHaveAttribute("aria-invalid", "true");
+    expect(box).toHaveFocus();
     expect(writeBodies()).toHaveLength(0);
   });
 
@@ -384,5 +388,171 @@ describe("ProductForm", () => {
     await events.click(within(dialog).getByRole("button", { name: "Xong" }));
     expect(screen.queryByRole("button", { name: "Bỏ ảnh Ảnh 31" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /^Bỏ ảnh/ })).toHaveLength(30);
+  });
+});
+
+describe("ProductForm field errors", () => {
+  const scrollIntoView = vi.fn();
+  beforeEach(() => {
+    scrollIntoView.mockReset();
+    Element.prototype.scrollIntoView = scrollIntoView;
+  });
+  afterEach(() => {
+    delete (Element.prototype as Partial<Element>).scrollIntoView;
+  });
+
+  function failPut(detail: string) {
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") throw new AdminApiError(400, detail);
+      return undefined;
+    });
+  }
+
+  it("marks the required fields with * and explains the * once", () => {
+    render(<ProductForm initial={product()} />);
+    expect(screen.getByText("Ô có dấu * là ô phải điền.")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Đặc điểm" })).toHaveTextContent(/^Đặc điểm \*/);
+    expect(screen.getAllByLabelText(/^Tiếng Việt/)[0]).toBeRequired();
+    expect(screen.getByLabelText(/^Khối lượng/)).toBeRequired();
+  });
+
+  it("shows an API error under the field it names, scrolls there and puts the cursor in it", async () => {
+    const message = "Tên sản phẩm (tiếng Anh) không được để trống khi đã có nội dung tiếng Anh.";
+    failPut(message);
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    const nameEn = within(screen.getByRole("group", { name: "Tên sản phẩm" })).getByLabelText("English");
+    await events.clear(nameEn);
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+
+    await waitFor(() => expect(nameEn).toHaveFocus());
+    expect(nameEn).toHaveAttribute("aria-invalid", "true");
+    expect(nameEn).toHaveAccessibleDescription(message);
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(nameEn);
+    // The message is shown once, under the box; next to Lưu a short line says why nothing was saved.
+    expect(screen.getAllByText(message)).toHaveLength(1);
+    expect(screen.getByRole("alert")).toHaveTextContent("Chưa lưu. Hãy sửa ô có viền đỏ.");
+  });
+
+  it("removes the error of a field once the user changes that field", async () => {
+    const message = "Tên sản phẩm (tiếng Việt) không được để trống.";
+    failPut(message);
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    const nameVi = within(screen.getByRole("group", { name: "Tên sản phẩm" })).getByLabelText(/^Tiếng Việt/);
+    await events.clear(nameVi);
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(nameVi).toHaveAttribute("aria-invalid", "true"));
+    await events.type(nameVi, "G");
+    expect(nameVi).not.toHaveAttribute("aria-invalid");
+    expect(screen.queryByText(message)).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("puts the features error under Đặc điểm and moves to the add button when there is no feature", async () => {
+    const message = "Đặc điểm (tiếng Việt) cần có ít nhất một mục.";
+    failPut(message);
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    await events.click(screen.getByRole("button", { name: "Xóa đặc điểm 1" }));
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    const add = screen.getByRole("button", { name: "Thêm đặc điểm" });
+    await waitFor(() => expect(add).toHaveFocus());
+    expect(add).toHaveAccessibleDescription(message);
+    expect(within(screen.getByRole("group", { name: "Đặc điểm" })).getByText(message)).toBeInTheDocument();
+  });
+
+  it("moves to the first feature box when the features have rows but no Vietnamese text", async () => {
+    const message = "Đặc điểm (tiếng Việt) cần có ít nhất một mục.";
+    failPut(message);
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    await events.clear(screen.getByLabelText("Đặc điểm 1 (tiếng Việt)"));
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    const first = screen.getByLabelText("Đặc điểm 1 (tiếng Việt)");
+    await waitFor(() => expect(first).toHaveFocus());
+    expect(first).toHaveAttribute("aria-invalid", "true");
+    expect(first).toHaveAccessibleDescription(message);
+  });
+
+  it("checks the pack weights before it calls the API and marks only the wrong row", async () => {
+    const events = userEvent.setup();
+    render(
+      <ProductForm
+        initial={product({
+          packagings: [
+            { weightGrams: 500, priceVnd: null, sortOrder: 0 },
+            { weightGrams: 1000, priceVnd: null, sortOrder: 1 },
+          ],
+        })}
+      />,
+    );
+    const [first, second] = screen.getAllByLabelText(/^Khối lượng/);
+    await events.clear(second);
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(second).toHaveFocus());
+    expect(second).toHaveAccessibleDescription("Khối lượng phải là số nguyên lớn hơn 0.");
+    expect(first).not.toHaveAttribute("aria-invalid");
+    expect(writeBodies()).toHaveLength(0);
+  });
+
+  it("does not check a price that is hidden, so it cannot block the save", async () => {
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    const price = screen.getByLabelText("Giá (VND)");
+    await events.clear(price);
+    await events.type(price, "1.5");
+    await events.click(screen.getByRole("switch", { name: "Hiện giá" }));
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writeBodies()).toHaveLength(1));
+    expect(screen.queryByText("Chưa lưu. Hãy sửa ô có viền đỏ.")).not.toBeInTheDocument();
+  });
+
+  it("clears only the errors of the pack row that the user changed", async () => {
+    const events = userEvent.setup();
+    render(
+      <ProductForm
+        initial={product({
+          packagings: [
+            { weightGrams: 500, priceVnd: null, sortOrder: 0 },
+            { weightGrams: 1000, priceVnd: null, sortOrder: 1 },
+          ],
+        })}
+      />,
+    );
+    const [first, second] = screen.getAllByLabelText(/^Khối lượng/);
+    await events.clear(first);
+    await events.clear(second);
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(second).toHaveAttribute("aria-invalid", "true"));
+    expect(first).toHaveAttribute("aria-invalid", "true");
+    await events.type(first, "250");
+    expect(first).not.toHaveAttribute("aria-invalid");
+    expect(second).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("clears the English name error once the other English text changes", async () => {
+    const message = "Tên sản phẩm (tiếng Anh) không được để trống khi đã có nội dung tiếng Anh.";
+    failPut(message);
+    const events = userEvent.setup();
+    render(<ProductForm initial={product({ description: { vi: "Mô tả", en: "Description" } })} />);
+    const nameEn = within(screen.getByRole("group", { name: "Tên sản phẩm" })).getByLabelText("English");
+    await events.clear(nameEn);
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(nameEn).toHaveAttribute("aria-invalid", "true"));
+    await events.clear(within(screen.getByRole("group", { name: /^Mô tả/ })).getByLabelText("English"));
+    expect(nameEn).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("splits joined API messages: a known field goes under its box, the rest stays at the end", async () => {
+    failPut("Tên sản phẩm (tiếng Việt) không được để trống. Một sản phẩm có tối đa 30 ảnh.");
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    const nameVi = within(screen.getByRole("group", { name: "Tên sản phẩm" })).getByLabelText(/^Tiếng Việt/);
+    await events.clear(nameVi);
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(nameVi).toHaveAccessibleDescription("Tên sản phẩm (tiếng Việt) không được để trống."));
+    expect(screen.getAllByRole("alert").map((node) => node.textContent)).toContain("Một sản phẩm có tối đa 30 ảnh.");
   });
 });

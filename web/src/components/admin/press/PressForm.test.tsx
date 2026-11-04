@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { PressMentionAdminDto, PressPreviewDto } from "@/lib/admin/types";
 
@@ -77,10 +77,18 @@ function slowPreviews(): Array<(value: PressPreviewDto) => void> {
   return resolvers;
 }
 
+const scrollIntoView = vi.fn();
+
 beforeEach(() => {
   adminFetch.mockReset();
   requireReLogin.mockReset();
   previewAnswers(EMPTY_PREVIEW);
+  scrollIntoView.mockReset();
+  Element.prototype.scrollIntoView = scrollIntoView;
+});
+
+afterEach(() => {
+  delete (Element.prototype as Partial<Element>).scrollIntoView;
 });
 
 describe("PressForm preview", () => {
@@ -271,18 +279,45 @@ describe("PressForm original link", () => {
 });
 
 describe("PressForm saving", () => {
-  it("disables Lưu until link, source and Vietnamese title are filled", async () => {
+  it("shows under each empty required box what is missing, moves to the first one, and sends nothing", async () => {
     const user = userEvent.setup();
     render(<PressForm onClose={vi.fn()} onChanged={vi.fn()} />);
-    const save = screen.getByRole("button", { name: "Lưu" });
-    expect(save).toBeDisabled();
+    expect(screen.getByText("Ô có dấu * là ô phải điền.")).toBeInTheDocument();
+    for (const box of [urlBox(), sourceBox(), titleViBox()]) expect(box).toBeRequired();
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    expect(urlBox()).toHaveAccessibleDescription("Hãy nhập đường dẫn bài báo.");
+    expect(sourceBox()).toHaveAccessibleDescription("Hãy nhập tên báo.");
+    expect(titleViBox()).toHaveAccessibleDescription("Hãy nhập tiêu đề tiếng Việt.");
+    await waitFor(() => expect(urlBox()).toHaveFocus());
+    expect(screen.getByRole("alert")).toHaveTextContent("Chưa lưu. Hãy sửa ô có viền đỏ.");
+    expect(writes()).toHaveLength(0);
+
     await user.type(urlBox(), "https://x.example/a");
     await user.type(sourceBox(), "Báo X");
-    expect(save).toBeDisabled();
     await user.type(titleViBox(), "   ");
-    expect(save).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(titleViBox()).toHaveFocus());
+    expect(writes()).toHaveLength(0);
     await user.type(titleViBox(), "Bài X");
-    expect(save).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+  });
+
+  it("puts the API error about the link under the link box", async () => {
+    const message = "Đường dẫn bài báo phải bắt đầu bằng http:// hoặc https:// và dài tối đa 2000 ký tự.";
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") throw new AdminApiError(400, message);
+      return undefined;
+    });
+    const user = userEvent.setup();
+    render(<PressForm initial={existing()} onClose={vi.fn()} onChanged={vi.fn()} />);
+    await user.clear(urlBox());
+    await user.type(urlBox(), "baochi.example/x");
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(urlBox()).toHaveFocus());
+    expect(urlBox()).toHaveAccessibleDescription(message);
+    expect(screen.getAllByText(message)).toHaveLength(1);
   });
 
   it("creates with POST, trims text, sends null for blank boxes, and locks the form", async () => {
@@ -389,7 +424,9 @@ describe("PressForm saving", () => {
     await user.type(sourceBox(), "Báo X");
     await user.type(titleViBox(), "Bài X");
     await user.click(screen.getByRole("button", { name: "Lưu" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Đường dẫn bài báo không hợp lệ.");
+    // The message names the link, so it sits under the link box.
+    await waitFor(() => expect(urlBox()).toHaveAccessibleDescription("Đường dẫn bài báo không hợp lệ."));
+    expect(screen.getByRole("alert")).toHaveTextContent("Chưa lưu. Hãy sửa ô có viền đỏ.");
     expect(titleViBox()).toHaveValue("Bài X");
     expect(screen.getByRole("button", { name: "Lưu" })).toBeEnabled();
   });
