@@ -65,7 +65,9 @@ describe("SocialForm", () => {
       return saved;
     });
     await user.click(screen.getByRole("button", { name: "Lưu" }));
-    expect(await screen.findByText(/^Đường dẫn YouTube phải bắt đầu/)).toBeInTheDocument();
-    expect(screen.getByLabelText("YouTube")).toHaveValue("youtube");
+    const youtube = screen.getByLabelText("YouTube");
+    await waitFor(() => expect(youtube).toHaveFocus());
+    expect(youtube).toHaveAccessibleDescription(/^Đường dẫn YouTube phải bắt đầu/);
+    expect(youtube).toHaveValue("youtube");
   });
 });

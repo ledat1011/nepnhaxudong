@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { ContactSettings } from "@/lib/admin/types";
 
@@ -35,6 +35,17 @@ function serve(initial: ContactSettings) {
     return init?.method === "PUT" ? init.body : initial;
   });
 }
+
+const scrollIntoView = vi.fn();
+
+beforeEach(() => {
+  scrollIntoView.mockReset();
+  Element.prototype.scrollIntoView = scrollIntoView;
+});
+
+afterEach(() => {
+  delete (Element.prototype as Partial<Element>).scrollIntoView;
+});
 
 beforeEach(() => {
   adminFetch.mockReset();
@@ -101,10 +112,31 @@ describe("ContactForm", () => {
       return empty;
     });
     await user.click(screen.getByRole("button", { name: "Lưu" }));
-    expect(await screen.findByText(/^Số Zalo chỉ gồm chữ số/)).toBeInTheDocument();
+    const zalo = screen.getByLabelText("Zalo (chỉ số)");
+    // The message is under the Zalo box, not at the end of the page, and the screen moves there.
+    await waitFor(() => expect(zalo).toHaveFocus());
+    expect(zalo).toHaveAttribute("aria-invalid", "true");
+    expect(zalo).toHaveAccessibleDescription(/^Số Zalo chỉ gồm chữ số/);
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(zalo);
+    expect(screen.getByRole("alert")).toHaveTextContent("Chưa lưu. Hãy sửa ô có viền đỏ.");
     expect(puts()).toHaveLength(1);
     expect(puts()[0].zalo).toBe("abc");
     expect(screen.getByLabelText("Zalo (chỉ số)")).toHaveValue("abc");
+  });
+
+  it("puts a length error of the address under the box that is too long", async () => {
+    const user = userEvent.setup();
+    serve(empty);
+    render(<ContactForm />);
+    const addressEn = within(await screen.findByRole("group", { name: /Địa chỉ/ })).getByLabelText("English");
+    fireEvent.change(addressEn, { target: { value: "x".repeat(501) } });
+    adminFetch.mockImplementation(async (_path: string, init?: { method?: string }) => {
+      if (init?.method === "PUT") throw new AdminApiError(400, "Địa chỉ dài tối đa 500 ký tự.");
+      return empty;
+    });
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(addressEn).toHaveFocus());
+    expect(addressEn).toHaveAccessibleDescription("Địa chỉ dài tối đa 500 ký tự.");
   });
 
   it("keeps Lưu off until something changed, and Bỏ thay đổi brings the saved values back after a yes", async () => {

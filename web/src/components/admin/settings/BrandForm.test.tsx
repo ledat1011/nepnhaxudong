@@ -58,7 +58,9 @@ describe("BrandForm", () => {
       return { tagline: null };
     });
     await user.click(screen.getByRole("button", { name: "Lưu" }));
-    expect(await screen.findByText(/^Khẩu hiệu \(tiếng Việt\) không được để trống/)).toBeInTheDocument();
+    const vi = screen.getByLabelText(/^Tiếng Việt/);
+    await waitFor(() => expect(vi).toHaveFocus());
+    expect(vi).toHaveAccessibleDescription(/^Khẩu hiệu \(tiếng Việt\) không được để trống/);
     expect(puts()[0].body).toEqual({ tagline: { vi: null, en: "Clean rice" } });
   });
 });

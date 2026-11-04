@@ -4,7 +4,9 @@ import { useRef, useState } from "react";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
 import { adminFetch } from "@/lib/admin/api";
+import { fieldOfDetail, NOT_SAVED_NOTICE, type FieldRule } from "@/lib/admin/field-errors";
 import type { SocialSettings } from "@/lib/admin/types";
+import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 import { SettingField } from "./SettingField";
@@ -30,6 +32,13 @@ function toRequest(state: FormState): SocialSettings {
   };
 }
 
+/** The API messages that name a field of this form (see `SocialSettings` of the API). */
+const rules: FieldRule[] = [
+  { prefix: "Đường dẫn Facebook", field: "facebook" },
+  { prefix: "Đường dẫn YouTube", field: "youtube" },
+  { prefix: "Đường dẫn TikTok", field: "tiktok" },
+];
+
 /** The pages of the family on Facebook, YouTube and TikTok. */
 export function SocialForm() {
   return (
@@ -42,6 +51,7 @@ function SocialFields({ initial }: { initial: SocialSettings }) {
   const [baseline, setBaseline] = useState(() => JSON.stringify(stateFrom(initial)));
   const dirty = JSON.stringify(state) !== baseline;
   useUnsavedChanges(dirty);
+  const fields = useFieldErrors();
 
   // The request of the running save, to tell later whether the user typed something else meanwhile.
   const sent = useRef<string | null>(null);
@@ -50,9 +60,15 @@ function SocialFields({ initial }: { initial: SocialSettings }) {
     const body = toRequest(state);
     sent.current = JSON.stringify(body);
     return adminFetch<SocialSettings>("/admin/settings/social", { method: "PUT", body });
+  }, {
+    onError: (error) => {
+      const field = fieldOfDetail(error.detail, rules);
+      if (field !== null) fields.show({ [field]: error.detail });
+    },
   });
 
   async function save() {
+    fields.reset();
     const saved = await saving.save();
     if (saved === undefined) return;
     const fresh = stateFrom(saved);
@@ -64,19 +80,25 @@ function SocialFields({ initial }: { initial: SocialSettings }) {
   function cancel() {
     setState(JSON.parse(baseline) as FormState);
     saving.reset();
+    fields.reset();
   }
 
   function patch(change: Partial<FormState>) {
     setState((current) => ({ ...current, ...change }));
+    fields.clear(...Object.keys(change));
   }
 
+  // An error that names a field is shown under that field, not at the end of the form.
+  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, rules) === null ? saving.error : null;
+
   return (
-    <div className="flex flex-col gap-5">
+    <div ref={fields.root} className="flex flex-col gap-5">
       <SettingField
         label="Facebook"
         inputMode="url"
         placeholder="https://www.facebook.com/..."
         value={state.facebook}
+        error={fields.errors.facebook}
         onChange={(facebook) => patch({ facebook })}
       />
       <SettingField
@@ -84,6 +106,7 @@ function SocialFields({ initial }: { initial: SocialSettings }) {
         inputMode="url"
         placeholder="https://www.youtube.com/..."
         value={state.youtube}
+        error={fields.errors.youtube}
         onChange={(youtube) => patch({ youtube })}
       />
       <SettingField
@@ -91,10 +114,17 @@ function SocialFields({ initial }: { initial: SocialSettings }) {
         inputMode="url"
         placeholder="https://www.tiktok.com/..."
         value={state.tiktok}
+        error={fields.errors.tiktok}
         onChange={(tiktok) => patch({ tiktok })}
       />
-      <ProblemMessage error={saving.error} />
-      <SaveBar dirty={dirty} pending={saving.pending} onSave={() => void save()} onDiscard={cancel} />
+      <ProblemMessage error={saveError} />
+      <SaveBar
+        dirty={dirty}
+        pending={saving.pending}
+        onSave={() => void save()}
+        onDiscard={cancel}
+        notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}
+      />
     </div>
   );
 }
