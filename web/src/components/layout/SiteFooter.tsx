@@ -13,6 +13,9 @@ type SiteFooterProps = {
 const LINK_CLASS =
   "inline-flex min-h-11 items-center rounded underline underline-offset-4 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rice";
 
+// Every contact row is as high as a row with a link (44 px), so the rows keep an even rhythm.
+const ROW_CLASS = "flex min-h-11 flex-wrap items-center gap-x-1";
+
 // Brand names are the same in both languages.
 const SOCIAL_NETWORKS = [
   { key: "facebook", name: "Facebook" },
@@ -86,7 +89,7 @@ export function SiteFooter({
           {rows.length > 0 && (
             <ul className="space-y-1">
               {rows.map((row) => (
-                <li key={row.href ?? row.value}>
+                <li key={row.href ?? row.value} className={ROW_CLASS}>
                   {row.label && (
                     <span className="font-bold">{row.label}: </span>
                   )}
