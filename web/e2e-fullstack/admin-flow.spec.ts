@@ -102,7 +102,20 @@ test("a draft story is hidden until it is published", async () => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(STORY_TITLE);
 });
 
-test("two photos picked at once are shrunk in the browser, described once and uploaded", async ({}, testInfo) => {
+/**
+ * The JPEG with an EXIF block that says "turn 90 degrees clockwise to show" (orientation 6), as a phone held
+ * upright writes it. The pixels stay landscape; a correct reader shows the photo in portrait.
+ */
+function withOrientation6(jpeg: Buffer): Buffer {
+  // TIFF header (little endian), one IFD entry: tag 0x0112 Orientation, type SHORT, count 1, value 6.
+  const tiff = Buffer.from([0x49, 0x49, 0x2a, 0x00, 0x08, 0, 0, 0, 0x01, 0x00, 0x12, 0x01, 0x03, 0x00, 0x01, 0, 0, 0, 0x06, 0, 0, 0, 0, 0, 0, 0]);
+  const payload = Buffer.concat([Buffer.from("Exif\0\0", "latin1"), tiff]);
+  const length = Buffer.alloc(2);
+  length.writeUInt16BE(payload.length + 2);
+  return Buffer.concat([jpeg.subarray(0, 2), Buffer.from([0xff, 0xe1]), length, payload, jpeg.subarray(2)]);
+}
+
+test("two photos picked at once are shrunk and turned upright in the browser, described once and uploaded", async ({}, testInfo) => {
   // A real-size phone photo, drawn by the browser: 4000 x 3000 px, with enough detail to weigh several MB.
   const bigJpeg = await page.evaluate(async () => {
     const canvas = document.createElement("canvas");
@@ -120,7 +133,8 @@ test("two photos picked at once are shrunk in the browser, described once and up
   });
   const bigPath = testInfo.outputPath("big.jpg");
   const tinyPath = testInfo.outputPath("tiny.jpg");
-  writeFileSync(bigPath, Buffer.from(bigJpeg));
+  const bigFile = withOrientation6(Buffer.from(bigJpeg));
+  writeFileSync(bigPath, bigFile);
   writeFileSync(tinyPath, makeTinyJpeg());
 
   await page.goto(ADMIN_ROUTES.media);
@@ -157,8 +171,9 @@ test("two photos picked at once are shrunk in the browser, described once and up
     );
   });
   expect(sent).toHaveLength(2);
-  expect(sent[0]).toMatchObject({ type: "image/jpeg", width: 2560, height: 1920 });
-  expect(sent[0].size).toBeLessThan(bigJpeg.length);
+  // 4000 x 3000 pixels with orientation 6: sent upright, 1920 x 2560, with the turn done in the pixels.
+  expect(sent[0]).toMatchObject({ type: "image/jpeg", width: 1920, height: 2560 });
+  expect(sent[0].size).toBeLessThan(bigFile.length);
   // The small photo is sent as it is.
   expect(sent[1]).toEqual({ type: "image/jpeg", size: makeTinyJpeg().length, width: 64, height: 64 });
 });
