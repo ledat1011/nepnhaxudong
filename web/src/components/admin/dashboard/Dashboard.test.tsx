@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
@@ -11,9 +11,9 @@ const { adminFetch, requireReLogin } = vi.hoisted(() => ({
 vi.mock("@/lib/admin/api", () => ({ adminFetch }));
 vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin }) }));
 
-import { MissingEnSummary } from "./MissingEnSummary";
 import { RecentChanges } from "./RecentChanges";
 import { Shortcuts } from "./Shortcuts";
+import { TodoList } from "./TodoList";
 
 beforeEach(() => {
   adminFetch.mockReset();
@@ -82,39 +82,93 @@ describe("RecentChanges", () => {
   });
 });
 
-describe("MissingEnSummary", () => {
-  const lists: Record<string, { missingEn: boolean }[]> = {
-    "/admin/products": [{ missingEn: true }, { missingEn: false }, { missingEn: true }],
-    "/admin/timeline": [{ missingEn: false }],
-    "/admin/press": [{ missingEn: true }],
-    "/admin/stories": [{ missingEn: true }, { missingEn: true }, { missingEn: true }, { missingEn: false }],
+describe("TodoList", () => {
+  const product = (id: number, over: Record<string, unknown> = {}) => ({
+    id,
+    sortOrder: id,
+    showPrice: true,
+    name: { vi: `Gạo ${id}`, en: `Rice ${id}` },
+    description: { vi: null, en: null },
+    features: { vi: [], en: [] },
+    cookingTips: { vi: null, en: null },
+    packagings: [],
+    mediaIds: [1],
+    missingEn: false,
+    ...over,
+  });
+  const complete: Record<string, unknown> = {
+    "/admin/settings/contact": {
+      phone: "0912345678",
+      zalo: "0912345678",
+      messenger: null,
+      address: { vi: "Xuân Đông", en: "Xuan Dong" },
+      mapUrl: null,
+      hours: { vi: "7 giờ", en: "7 am" },
+    },
+    "/admin/settings/brand": { tagline: { vi: "Nếp nhà", en: "Family rice" } },
+    "/admin/stories": [],
+    "/admin/products": [product(1)],
+    "/admin/timeline": [],
+    "/admin/press": [],
   };
 
-  it("counts the items without English text in each of the four lists, each with a link", async () => {
-    adminFetch.mockImplementation(async (path: string) => lists[path]);
-    render(<MissingEnSummary />);
-    const product = await screen.findByRole("link", { name: /Sản phẩm/ });
-    await waitFor(() => expect(product).toHaveTextContent("2"));
-    expect(product).toHaveAttribute("href", "/admin/san-pham");
-    await waitFor(() => expect(screen.getByRole("link", { name: /Câu chuyện/ })).toHaveTextContent("3"));
-    expect(screen.getByRole("link", { name: /Câu chuyện/ })).toHaveAttribute("href", "/admin/cau-chuyen");
-    expect(screen.getByRole("link", { name: /Hành trình/ })).toHaveTextContent("0");
-    expect(screen.getByRole("link", { name: /Hành trình/ })).toHaveAttribute("href", "/admin/hanh-trinh");
-    expect(screen.getByRole("link", { name: /Báo chí/ })).toHaveTextContent("1");
-    expect(screen.getByRole("link", { name: /Báo chí/ })).toHaveAttribute("href", "/admin/bao-chi");
-  });
-
-  it("shows a small error for the one list that failed and the counts of the others", async () => {
+  function answer(lists: Record<string, unknown>, failing: string[] = []) {
     adminFetch.mockImplementation(async (path: string) => {
-      if (path === "/admin/press") throw new AdminApiError(503, "Máy chủ đang bận.");
+      if (failing.includes(path)) throw new AdminApiError(503, "Máy chủ đang bận.");
       return lists[path];
     });
-    render(<MissingEnSummary />);
-    const press = (await screen.findByText(/Báo chí/)).closest("li") as HTMLElement;
-    await waitFor(() => expect(within(press).getByRole("alert")).toHaveTextContent("Không tải được."));
-    expect(screen.getAllByRole("alert")).toHaveLength(1);
-    await waitFor(() => expect(screen.getByRole("link", { name: /Sản phẩm/ })).toHaveTextContent("2"));
-    await waitFor(() => expect(screen.getByRole("link", { name: /Câu chuyện/ })).toHaveTextContent("3"));
-    expect(within(press).getByRole("link", { name: /Báo chí/ })).toBeInTheDocument();
+  }
+
+  it("asks for all six lists at once, not one after another", () => {
+    adminFetch.mockReturnValue(new Promise(() => {}));
+    render(<TodoList />);
+    expect(adminFetch.mock.calls.map(([path]) => path).sort()).toEqual(Object.keys(complete).sort());
+    expect(screen.getByRole("status")).toHaveTextContent("Đang kiểm tra");
+  });
+
+  it("says that everything is done when nothing is missing", async () => {
+    answer(complete);
+    render(<TodoList />);
+    expect(await screen.findByText("Mọi thứ đã đủ. Không còn việc nào cần làm.")).toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("lists each gap under its screen, as a link to the field that fixes it", async () => {
+    answer({
+      ...complete,
+      "/admin/settings/contact": { ...(complete["/admin/settings/contact"] as object), zalo: null },
+      "/admin/products": [product(3, { description: { vi: "Hạt tròn", en: null }, missingEn: true })],
+    });
+    render(<TodoList />);
+    const zalo = await screen.findByRole("link", { name: "Chưa có số Zalo." });
+    expect(zalo).toHaveAttribute("href", "/admin/cai-dat?o=contact.zalo");
+    const products = screen.getByRole("region", { name: /Sản phẩm/ });
+    expect(within(products).getByRole("link", { name: "Sản phẩm “Gạo 3” thiếu tiếng Anh ở Mô tả." })).toHaveAttribute(
+      "href",
+      "/admin/san-pham/3?o=product.description.en",
+    );
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Việc cần làm (2)");
+    expect(screen.queryByText(/Mọi thứ đã đủ/)).not.toBeInTheDocument();
+  });
+
+  it("shows five rows of a screen and the rest on request", async () => {
+    answer({ ...complete, "/admin/products": [1, 2, 3, 4, 5, 6, 7].map((id) => product(id, { mediaIds: [] })) });
+    render(<TodoList />);
+    const products = await screen.findByRole("region", { name: /Sản phẩm/ });
+    expect(within(products).getAllByRole("link")).toHaveLength(5);
+    await userEvent.click(within(products).getByRole("button", { name: "Xem thêm 2 việc" }));
+    expect(within(products).getAllByRole("link")).toHaveLength(7);
+  });
+
+  it("names a list that could not be checked, never says all done then, and retries only that list", async () => {
+    answer(complete, ["/admin/press"]);
+    render(<TodoList />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Chưa kiểm tra được: Báo chí.");
+    expect(screen.queryByText(/Mọi thứ đã đủ/)).not.toBeInTheDocument();
+    answer(complete);
+    adminFetch.mockClear();
+    await userEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+    expect(await screen.findByText("Mọi thứ đã đủ. Không còn việc nào cần làm.")).toBeInTheDocument();
+    expect(adminFetch.mock.calls.map(([path]) => path)).toEqual(["/admin/press"]);
   });
 });

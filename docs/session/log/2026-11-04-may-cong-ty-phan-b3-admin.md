@@ -19,6 +19,7 @@
 - Chủ dự án hỏi vì sao trang mẫu của plugin đẹp hơn → chọn "Cho phép, giữ màu font": được dùng `draw.mjs` của taste-skill để chọn bố cục, luôn `--keep palette,type`, đưa 3 hướng cho chủ dự án chọn. Ghi vào `CLAUDE.md` và quyết định 0009.
 - `draw.mjs` đưa 3 hướng bố cục (giữ màu và font); chủ dự án chọn "Một họa tiết" (one-motif): một hình lấy từ sản phẩm dùng cho cả hệ thống giao diện. Làm lại trang chủ sau khi nhánh minh họa merge, hoặc phối hợp với nhánh đó.
 - Họa tiết của hướng one-motif: chủ dự án chọn **hạt gạo nếp** (tôi đề xuất nón lá vì riêng của mascot; chủ dự án chọn hạt nếp). Bản thiết kế: `docs/design/2026-11-04-huong-bo-cuc-one-motif.md`.
+- Hộp tải ảnh: API bắt buộc đủ mô tả vi và en, nên không tải lên ngay khi chọn được. Chủ dự án chọn "Giữ điền đủ mô tả": ảnh tải lên khi đã có đủ 2 mô tả, không sửa API. Đã sửa dòng đó trong quyết định 0008.
 - PR #11 (B3): "merge luôn nếu nó không phức tạp" → merge khi CI đạt hết và không có xung đột (repo không cho bật auto-merge của GitHub).
 - "Commit push hết đi, tôi muốn coi sản phẩm để feedback" → commit và push nhánh B3 và B4 ngay khi vòng sửa cuối commit xong; mở server local để chủ dự án xem cả trang quản trị (B3) và hiệu ứng (B4). Mở PR / merge: vẫn hỏi trước.
 - Góp ý sau khi xem web (hướng chung: mộc mạc, thôn quê nhưng hiện đại, bắt mắt, chuyển động mượt; dùng các skill giao diện mới để đề xuất):

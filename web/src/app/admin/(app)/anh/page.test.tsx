@@ -8,6 +8,9 @@ const { adminFetch, requireReLogin } = vi.hoisted(() => ({ adminFetch: vi.fn(), 
 vi.mock("@/lib/admin/api", () => ({ adminFetch, adminUpload: vi.fn() }));
 vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
+const { uploadWithProgress } = vi.hoisted(() => ({ uploadWithProgress: vi.fn() }));
+vi.mock("@/lib/admin/upload-progress", () => ({ uploadWithProgress }));
+vi.mock("@/components/admin/media/shrink-image", () => ({ shrinkImage: async (file: File) => ({ file, shrunk: false }) }));
 
 import MediaPage from "./page";
 
@@ -17,6 +20,8 @@ function media(id: number): MediaAdminDto {
 
 beforeEach(() => {
   adminFetch.mockReset();
+  uploadWithProgress.mockReset();
+  Object.assign(URL, { createObjectURL: vi.fn(() => "blob:preview"), revokeObjectURL: vi.fn() });
 });
 
 describe("Ảnh page", () => {
@@ -82,5 +87,24 @@ describe("Ảnh page", () => {
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     await act(async () => finish({ ...media(3), altEn: "Three" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("uploads many photos at once, puts them first in the grid and closes the box when all are up", async () => {
+    adminFetch.mockResolvedValue([media(3)]);
+    uploadWithProgress.mockResolvedValueOnce(media(8)).mockResolvedValueOnce(media(9));
+    const events = userEvent.setup();
+    render(<MediaPage />);
+    await screen.findByAltText("Ảnh 3");
+    await events.click(screen.getByRole("button", { name: "Tải ảnh mới" }));
+    const dialog = await screen.findByRole("dialog", { name: "Tải ảnh mới" });
+    const files = [new File(["a"], "a.jpg", { type: "image/jpeg" }), new File(["b"], "b.jpg", { type: "image/jpeg" })];
+    await events.upload(within(dialog).getByLabelText("Chụp hoặc chọn ảnh"), files);
+    const first = within(dialog).getByRole("group", { name: /^Ảnh 1\b/ });
+    await events.type(within(first).getByLabelText(/Tiếng Việt/), "Ruộng");
+    await events.type(within(first).getByLabelText(/English/), "Field");
+    await events.click(within(first).getByRole("button", { name: "Dùng mô tả này cho 1 ảnh chưa có mô tả" }));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    const images = screen.getAllByRole("img");
+    expect(images.map((i) => i.getAttribute("alt"))).toEqual(["Ảnh 9", "Ảnh 8", "Ảnh 3"]);
   });
 });

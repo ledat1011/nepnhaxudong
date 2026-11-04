@@ -10,7 +10,7 @@ Ngày 2026-11-04, chủ dự án duyệt 5 việc sau ("Duyệt top 5"). Thứ t
 3. Làm lại hộp tải ảnh (mục 5.3 và T5):
    - Một nút lớn "Chụp hoặc chọn ảnh".
    - Chọn được nhiều ảnh một lần.
-   - Tải lên ngay khi chọn.
+   - Tải lên khi ảnh đã có đủ mô tả tiếng Việt và tiếng Anh (API bắt buộc cả hai). Chủ dự án chọn cách này ngày 2026-11-04, thay cho "tải lên ngay khi chọn": không sửa API, ảnh trên web luôn có mô tả. Mỗi ảnh hiện còn thiếu mô tả nào, và có nút chép một mô tả sang các ảnh chưa có.
    - Thu nhỏ ảnh trong trình duyệt trước khi gửi.
 4. Tự lưu bài đang viết trên máy (bộ nhớ của trình duyệt), và hỏi khôi phục khi mở lại (T3).
 5. Đổi Tổng quan thành danh sách việc cần làm, mỗi dòng dẫn tới đúng ô cần sửa, có tính cả phần cài đặt (T1).

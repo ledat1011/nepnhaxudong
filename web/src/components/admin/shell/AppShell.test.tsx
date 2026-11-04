@@ -15,6 +15,7 @@ vi.mock("@/lib/admin/csrf", () => ({ resetCsrfToken: vi.fn() }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
   usePathname: () => pathname.value,
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 import { AdminSessionProvider } from "@/lib/admin/session";

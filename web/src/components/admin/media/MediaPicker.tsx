@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { Button } from "@/components/admin/ui/button";
 import {
@@ -18,6 +18,7 @@ import { rememberMedia } from "@/lib/admin/use-media-by-ids";
 import { useMediaLibrary } from "@/lib/admin/use-media-library";
 import { MediaGrid } from "./MediaGrid";
 import { MediaUploader } from "./MediaUploader";
+import { useUploadDialog } from "./use-upload-dialog";
 
 type Props = {
   mode: "single" | "multiple";
@@ -33,45 +34,76 @@ type Props = {
  * A button that opens the library to choose images by id. Use `useMediaByIds` to show the chosen images.
  * Single mode: choosing an image replaces the value with that one id and closes the box.
  * Multiple mode: choosing toggles an image, and the user closes the box with "Xong".
+ * The upload tab takes one photo in single mode and many in multiple mode. While a photo is not uploaded yet,
+ * closing the box asks first.
  */
 export function MediaPicker({ mode, value, onChange, max, triggerLabel = "Chọn ảnh" }: Props) {
-  const [open, setOpen] = useState(false);
+  const dialog = useUploadDialog();
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button type="button" variant="outline">
-          {triggerLabel}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{mode === "single" ? "Chọn một ảnh" : "Chọn ảnh"}</DialogTitle>
-          <DialogDescription>Chọn từ thư viện hoặc tải ảnh mới lên.</DialogDescription>
-        </DialogHeader>
-        <PickerBody mode={mode} value={value} onChange={onChange} max={max} close={() => setOpen(false)} />
-        <DialogFooter>
-          <Button type="button" variant={mode === "multiple" ? "default" : "outline"} onClick={() => setOpen(false)}>
-            {mode === "multiple" ? "Xong" : "Đóng"}
+    <>
+      <Dialog open={dialog.open} onOpenChange={dialog.onOpenChange}>
+        <DialogTrigger asChild>
+          <Button type="button" variant="outline">
+            {triggerLabel}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogTrigger>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{mode === "single" ? "Chọn một ảnh" : "Chọn ảnh"}</DialogTitle>
+            <DialogDescription>Chọn từ thư viện hoặc tải ảnh mới lên.</DialogDescription>
+          </DialogHeader>
+          <PickerBody
+            mode={mode}
+            value={value}
+            onChange={onChange}
+            max={max}
+            close={dialog.close}
+            onPendingChange={dialog.setPending}
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              variant={mode === "multiple" ? "default" : "outline"}
+              onClick={() => dialog.onOpenChange(false)}
+            >
+              {mode === "multiple" ? "Xong" : "Đóng"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {dialog.confirm}
+    </>
   );
 }
 
-function PickerBody({ mode, value, onChange, max, close }: Props & { close(): void }) {
+type BodyProps = Props & { close(): void; onPendingChange(pending: boolean): void };
+
+function PickerBody({ mode, value, onChange, max, close, onPendingChange }: BodyProps) {
   const library = useMediaLibrary();
-  const [tab, setTab] = useState("library");
+  // `null` until the user picks a tab: an empty library opens on the upload tab.
+  const [chosenTab, setTab] = useState<string | null>(null);
+  const emptyLibrary = !library.loading && library.error === null && library.items.length === 0;
+  const tab = chosenTab ?? (emptyLibrary ? "upload" : "library");
+  // The ids the parent will have after the last onChange: two uploads can finish before the parent renders again.
+  const chosen = useRef(value);
+  useLayoutEffect(() => {
+    chosen.current = value;
+  }, [value]);
 
   const full = mode === "multiple" && max !== undefined && value.length >= max;
 
+  function change(ids: number[]) {
+    chosen.current = ids;
+    onChange(ids);
+  }
+
   function choose(media: MediaAdminDto) {
     if (mode === "single") {
-      onChange([media.id]);
+      change([media.id]);
       close();
     } else {
       if (full && !value.includes(media.id)) return;
-      onChange(value.includes(media.id) ? value.filter((id) => id !== media.id) : [...value, media.id]);
+      change(value.includes(media.id) ? value.filter((id) => id !== media.id) : [...value, media.id]);
     }
   }
 
@@ -79,12 +111,13 @@ function PickerBody({ mode, value, onChange, max, close }: Props & { close(): vo
     library.added(media);
     rememberMedia(media);
     if (mode === "single") {
-      onChange([media.id]);
+      change([media.id]);
       close();
-    } else {
-      if (!full || value.includes(media.id)) onChange([...value.filter((id) => id !== media.id), media.id]);
-      setTab("library");
+      return;
     }
+    const current = chosen.current;
+    const room = max === undefined || current.length < max;
+    if (room && !current.includes(media.id)) change([...current, media.id]);
   }
 
   return (
@@ -119,13 +152,21 @@ function PickerBody({ mode, value, onChange, max, close }: Props & { close(): vo
           </Button>
         ) : null}
       </TabsContent>
-      <TabsContent value="upload" className="pt-3">
-        {full ? (
+      {/* Kept mounted while hidden: the photos that wait for text must survive a look at the library. */}
+      <TabsContent value="upload" forceMount hidden={tab !== "upload"} className="pt-3">
+        {full && tab === "upload" ? (
           <p role="status" className="pb-3 text-sm text-muted-foreground">
             Tối đa {max} ảnh
           </p>
         ) : null}
-        <MediaUploader onUploaded={uploaded} />
+        <MediaUploader
+          multiple={mode === "multiple"}
+          onUploaded={uploaded}
+          onPendingChange={onPendingChange}
+          onAllDone={() => {
+            if (mode === "multiple") setTab("library");
+          }}
+        />
       </TabsContent>
     </Tabs>
   );
