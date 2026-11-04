@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { TimelineEventForm } from "@/components/admin/timeline/TimelineEventForm";
 import { TimelineList } from "@/components/admin/timeline/TimelineList";
@@ -10,6 +10,12 @@ import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
 import { useAdminSession } from "@/lib/admin/session";
 import type { TimelineEventAdminDto } from "@/lib/admin/types";
 import { withReLogin } from "@/lib/admin/with-relogin";
+
+/** The id in a dashboard link (`?sua=<id>`), or `null`. */
+function linkedId(): number | null {
+  const value = Number(new URLSearchParams(window.location.search).get("sua"));
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
 
 /** What the dialog shows: nothing, a new event, or one event to edit. */
 type Editing = null | "new" | TimelineEventAdminDto;
@@ -21,6 +27,8 @@ export default function TimelinePage() {
   const [error, setError] = useState<AdminApiError | null>(null);
   const [editing, setEditing] = useState<Editing>(null);
   const [attempt, setAttempt] = useState(0);
+  // A dashboard link opens one item, on the first load only.
+  const linkHandled = useRef(false);
   // True while a GET runs: the list on screen may be out of date.
   const [reloading, setReloading] = useState(false);
 
@@ -32,6 +40,11 @@ export default function TimelinePage() {
       (value) => {
         if (cancelled) return;
         setEvents(value);
+        if (!linkHandled.current) {
+          linkHandled.current = true;
+          const linked = value.find((item) => item.id === linkedId());
+          if (linked !== undefined) setEditing(linked);
+        }
         setReloading(false);
       },
       (failure: unknown) => {

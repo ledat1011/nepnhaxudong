@@ -70,4 +70,16 @@ describe("Hành trình page", () => {
     expect(await screen.findByRole("button", { name: /^2000/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Đưa mốc Mốc 1 xuống" })).toBeEnabled();
   });
+
+  it("opens the event of a dashboard link (?sua=<id>) once, and not again after the list reloads", async () => {
+    window.history.replaceState(null, "", "/admin/hanh-trinh?sua=2&o=timeline.title.en");
+    adminFetch.mockResolvedValue([event(1, 1990), event(2, 2000)]);
+    const events = userEvent.setup();
+    render(<TimelinePage />);
+    expect(await screen.findByRole("heading", { name: "Sửa mốc" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Mốc 2")).toBeInTheDocument();
+    await events.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Sửa mốc" })).not.toBeInTheDocument());
+    window.history.replaceState(null, "", "/");
+  });
 });

@@ -87,3 +87,9 @@
     cursor: not-allowed;
   }
 }
+
+/* The field a dashboard link opened (FieldFocus). A plain ring, no motion: a tapped button shows no focus ring. */
+[data-field-target] {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}

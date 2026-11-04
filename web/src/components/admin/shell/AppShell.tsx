@@ -1,13 +1,14 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, type ReactNode } from "react";
 import { NavGuardProvider } from "@/lib/admin/nav-guard";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
 import { AdminHeader } from "./AdminHeader";
 import { SessionErrorScreen } from "./SessionErrorScreen";
 import { BottomNav } from "./BottomNav";
+import { FieldFocus } from "./FieldFocus";
 import { screenTitle } from "./nav-items";
 
 /** The gate of every private admin screen. It renders nothing private until the session is known. */
@@ -44,6 +45,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main>{children}</main>
         <BottomNav />
       </div>
+      {/* Opens a screen at one field when a link says which (?o=…). It reads the search params, hence Suspense. */}
+      <Suspense fallback={null}>
+        <FieldFocus />
+      </Suspense>
     </NavGuardProvider>
   );
 }

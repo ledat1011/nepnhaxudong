@@ -106,4 +106,22 @@ describe("Báo chí page", () => {
     const names = screen.getAllByRole("listitem").map((item) => item.textContent ?? "");
     expect(names[0]).toContain("Bài 2");
   });
+
+  it("opens the mention of a dashboard link (?sua=<id>)", async () => {
+    window.history.replaceState(null, "", "/admin/bao-chi?sua=2&o=press.title.en");
+    adminFetch.mockResolvedValue([mention(1), mention(2)]);
+    render(<PressPage />);
+    expect(await screen.findByRole("heading", { name: "Sửa bài báo" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Bài 2")).toBeInTheDocument();
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("ignores a link to a mention that is not in the list", async () => {
+    window.history.replaceState(null, "", "/admin/bao-chi?sua=99");
+    adminFetch.mockResolvedValue([mention(1)]);
+    render(<PressPage />);
+    await screen.findByRole("button", { name: /^Bài 1/ });
+    expect(screen.queryByRole("heading", { name: "Sửa bài báo" })).not.toBeInTheDocument();
+    window.history.replaceState(null, "", "/");
+  });
 });
