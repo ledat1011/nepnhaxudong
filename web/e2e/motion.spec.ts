@@ -57,27 +57,21 @@ test("elements in the first screen are never hidden", async ({ page }) => {
 test("a deep link keeps the sections above and in view visible", async ({ page }) => {
   await page.goto("/vi#bao-chi");
   await page.waitForSelector(MOTION_ON);
-  // The browser may finish the jump to the anchor after the motion starts. Blocks that the
-  // jump passes then slide in over a short time, so wait for them instead of reading at once.
-  await expect
-    .poll(
-      () =>
-        page.locator("[data-reveal]").evaluateAll((els) => {
-          const inViewOrAbove = els.filter(
-            (el) => el.getBoundingClientRect().top < window.innerHeight,
-          );
-          return {
-            count: inViewOrAbove.length,
-            allVisible: inViewOrAbove.every((el) => getComputedStyle(el).opacity === "1"),
-          };
-        }),
-      { timeout: 5000 },
-    )
-    .toMatchObject({ allVisible: true });
-  const count = await page.locator("[data-reveal]").evaluateAll(
-    (els) => els.filter((el) => el.getBoundingClientRect().top < window.innerHeight).length,
+  // Test mechanics: wait until the jump to the anchor has stopped, then read once.
+  let previous = -1;
+  for (let i = 0; i < 50; i++) {
+    const current = await page.evaluate(() => window.scrollY);
+    if (current === previous) break;
+    previous = current;
+    await page.waitForTimeout(100);
+  }
+  const opacities = await page.$$eval("[data-reveal]", (els) =>
+    els
+      .filter((el) => el.getBoundingClientRect().top < window.innerHeight)
+      .map((el) => getComputedStyle(el).opacity),
   );
-  expect(count).toBeGreaterThan(0);
+  expect(opacities.length).toBeGreaterThan(0);
+  expect(opacities.every((opacity) => opacity === "1")).toBe(true);
 });
 
 test("the contact block at the end of the page appears", async ({ page }) => {
