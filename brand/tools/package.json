@@ -6,7 +6,9 @@
     "test": "node --test \"test/*.test.mjs\"",
     "tokens": "node build-tokens.mjs",
     "concepts": "node render-concepts.mjs",
-    "logos": "node build-logos.mjs"
+    "logos": "node build-logos.mjs",
+    "png": "node export-png.mjs",
+    "preview": "node build-preview.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
