@@ -3,13 +3,15 @@
 Cập nhật: 2026-11-04 — máy công ty
 
 ## Giai đoạn hiện tại
-`main` đã có API (B1, PR #3), web công khai (B2, PR #4), logo và mascot (phần A, PR #5), và hiệu ứng GSAP (B4, PR #8). Trang quản trị (B3) làm trên nhánh `feat/phan-b3-admin`.
+`main` đã có API (B1, PR #3), web công khai (B2, PR #4), logo và mascot (phần A, PR #5), và hiệu ứng GSAP (B4, PR #8). Trang quản trị (B3) đã xong trên nhánh `feat/phan-b3-admin`, đã gộp `main`, sẵn sàng mở PR. Phần tiếp theo là phần D (hạ tầng).
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
 - Phần C (nền tảng làm việc) đã merge vào `main` (PR #1).
 - Phần B1 (API và cơ sở dữ liệu) đã merge vào `main` (PR #3): 11 task đã review, 492 test, API đã chạy thật ở local và đã thử bằng `curl` (xem "Thử API" trong `docs/setup.md`).
 - Phần B2 (web công khai) đã merge vào `main` (PR #4): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
+- Phần B3 (trang quản trị) đã xong trên nhánh `feat/phan-b3-admin`, sẵn sàng mở PR: 9 màn hình (Tổng quan, Sản phẩm, Hành trình, Báo chí, Câu chuyện, Ảnh, Liên hệ & cài đặt, Tài khoản, Lịch sử), đã review từng task và review cuối cả nhánh. Form có thay đổi chưa lưu thì hỏi trước khi rời trang, kể cả khi bấm nút quay lại của trình duyệt. Có bộ test đầu-cuối với API thật (`npm run test:fullstack`) và workflow CI `fullstack`. Cách chạy ở local và cách chạy test nằm trong `docs/setup.md`. Review lại vòng sửa cuối tìm ra 2 lỗi nút Back (bấm Back khi đang lưu; sau khi tải lại trang) và 3 lỗi nhỏ; đã sửa (`90dcb0b`), 808 unit test và 26 test đầu-cuối qua. Còn một lần thử tay trên điện thoại Android thật: Back, "Ở lại", Back lần nữa phải hỏi lại.
+- Các skill giao diện đã merge vào `main` (PR #6): anti-slop, taste-skill, gsap-skills dạng plugin trong `.claude/settings.json`, và `web-interface-guidelines` trong `.claude/skills/` (quyết định `0006`).
 - Phần A (logo, mascot, icon) đã merge vào `main` (PR #5).
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
 - Phần B4 (hiệu ứng GSAP) đã merge vào `main` (PR #8), 5 task đã review và đã sửa theo review cuối của cả nhánh: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 nằm trong `docs/setup.md`. Đã chạy Delivery Gate của antislop trên trang công khai và sửa các mục FAIL (vùng bấm 44 px, dòng chữ "đang tải", con trỏ và trạng thái khi bấm, trang 404 có header và footer, ảnh bìa câu chuyện tải trước, icon đặc điểm theo đúng thứ tự).
@@ -21,16 +23,17 @@ Cập nhật: 2026-11-04 — máy công ty
 - Review trang quản trị B3 về độ dễ dùng (nhánh `hacka/admin-ux-review-d606fa`): báo cáo `docs/reviews/2026-11-04-admin-ux.md`, ảnh chụp trong `docs/reviews/2026-11-04-admin-ux/`. Chỉ review, chưa sửa mã.
 
 ## Đang làm
-- Phần B3 (trang quản trị): nhánh `feat/phan-b3-admin`, plan `docs/superpowers/plans/2026-11-04-phan-b3-admin.md` nằm trên nhánh đó. PR #9 (review trang quản trị B3) đang mở.
-- Review admin B3: chủ dự án đã duyệt 5 việc ưu tiên (`docs/decisions/0008-uu-tien-sua-admin.md`). Việc tiếp theo là sửa trên nhánh B3.
+- Phần B3 (trang quản trị): nhánh `feat/phan-b3-admin` đã gộp `main`, chờ chủ dự án đồng ý mở PR.
+- Minh họa và hiệu ứng mới (nền đồng lúa ở hero, hình bịch gạo, câu chuyện "từ đồng tới mâm cơm"): spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md`, đang làm trên nhánh `feat/canh-minh-hoa` ở một session riêng.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
-2. B3: trước khi mở PR, merge `origin/main` vào nhánh `feat/phan-b3-admin`, rồi chạy `npm install` trong `web/` để tạo lại `web/package-lock.json` (B4 đã thêm `gsap`, nên file này có thể xung đột).
-3. Chủ dự án đọc và xác nhận các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec: mục 2.2 (lý do chọn font), 3.0 (Design Read), 3.3 (mục đích từng hiệu ứng), 4.1 (thứ tự đặc điểm sản phẩm).
-4. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới.
-5. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
-6. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
+2. Mở PR cho B3, chờ CI (có workflow `fullstack` mới), rồi merge vào `main`.
+3. Sau khi B3 merge, trên nhánh mới từ `main`: popup Zalo và thanh "đang tải" (thiết kế đã duyệt, ghi trong `docs/session/log/2026-11-04-may-cong-ty-phan-b3-admin.md`), rồi 5 việc ưu tiên của trang quản trị (`docs/decisions/0008-uu-tien-sua-admin.md`).
+4. Chủ dự án đọc và xác nhận các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec: mục 2.2 (lý do chọn font), 3.0 (Design Read), 3.3 (mục đích từng hiệu ứng), 4.1 (thứ tự đặc điểm sản phẩm).
+5. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới.
+6. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
+7. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
 
 ## Vướng mắc
 - Chưa đặt `GEMINI_API_KEY`.
@@ -53,7 +56,7 @@ Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, 
 - Sự kiện làm mới trang (revalidate) chỉ nằm trong bộ nhớ: nếu mất một sự kiện thì trang cũ còn đến lần sửa sau (web dùng `force-cache` với tag, không có thời gian dự phòng). Cách bổ sung sau này: nút "làm mới trang web" trong trang quản trị (trang chủ và các bài viết), hoặc đặt thời gian `revalidate` dài ở phía web.
 - Sửa chữ thay thế hoặc xoá ảnh chỉ làm mới trang chủ; các trang bài viết có ảnh đó chưa được làm mới.
 - Trước khi lên production, chạy thử một lệnh revalidate thật từ API sang server web (bản `node .next/standalone/server.js`).
-- Ảnh tải lên chưa hiện ở web local vì chưa ai phục vụ `/media/*`; Caddy làm việc này (có thể dùng cả cho compose local).
+- Ở local, web phục vụ ảnh tải lên từ `MEDIA_DEV_DIR` (chỉ ngoài production). Ở production, Caddy phục vụ `/media/*`.
 
 Các việc phát sinh khi làm B2 (web công khai):
 - Cloudflare không được cache HTML (chỉ cache `/_next/static/*` và `/media/*`). Caddy không được cache, và phải chuyển tiếp header `rsc` và tham số `_rsc`. Các trang gửi `Cache-Control: s-maxage=31536000`, nên nếu cache ở rìa thì khách không thấy thay đổi từ admin. Trang 404 chung (đường dẫn lạ) cũng gửi header này.

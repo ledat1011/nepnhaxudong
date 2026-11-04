@@ -9,6 +9,8 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
   (see the section "Session feedback log"), then commit and push.
 - Write big decisions in `docs/decisions/NNNN-<ten>.md`.
 - Two machines must not work on the same branch at the same time. One branch per task: `feat/<ten-ngan>`, with a PR into `main`.
+- When a branch's work is done, reviewed and its tests pass, push it and open the PR into `main` yourself. You do not need
+  to ask the owner first (owner, 2026-11-04). Still ask the owner before you merge a PR.
 
 ## Session feedback log (keep it after context compaction)
 - **File:** one file per session: `docs/session/log/YYYY-MM-DD-<may>-<chu-de>.md`, based on the template

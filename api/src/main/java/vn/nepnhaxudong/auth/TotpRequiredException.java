@@ -7,6 +7,6 @@ import vn.nepnhaxudong.common.ApiException;
 public class TotpRequiredException extends ApiException {
 
   public TotpRequiredException() {
-    super(HttpStatus.UNAUTHORIZED, "Cần mã xác thực 2 lớp.");
+    super(HttpStatus.UNAUTHORIZED, "Cần mã xác thực 2 lớp.", ProblemCodes.TOTP_REQUIRED);
   }
 }

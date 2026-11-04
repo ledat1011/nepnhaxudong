@@ -44,7 +44,8 @@ public class MustChangePasswordFilter extends OncePerRequestFilter {
     if (authentication != null && authentication.getPrincipal() instanceof SessionPrincipal principal) {
       try {
         if (loginService.requireActive(principal.userId()).isMustChangePassword()) {
-          ProblemJsonWriter.write(response, HttpStatus.FORBIDDEN, DETAIL);
+          ProblemJsonWriter.write(
+              response, HttpStatus.FORBIDDEN, DETAIL, ProblemCodes.MUST_CHANGE_PASSWORD);
           return;
         }
       } catch (SessionExpiredException e) {
@@ -54,7 +55,7 @@ public class MustChangePasswordFilter extends OncePerRequestFilter {
           session.invalidate();
         }
         SecurityContextHolder.clearContext();
-        ProblemJsonWriter.write(response, e.getStatus(), e.getMessage());
+        ProblemJsonWriter.write(response, e.getStatus(), e.getMessage(), e.getCode());
         return;
       }
     }

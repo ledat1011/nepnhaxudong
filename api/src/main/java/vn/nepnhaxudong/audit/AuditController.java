@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import vn.nepnhaxudong.common.ApiException;
 
 /** The edit history in the admin area. Paths are relative to the context path {@code /api}. */
@@ -21,10 +24,13 @@ public class AuditController {
 
   private final AuditLogRepository lines;
   private final AuditRestoreService restoreService;
+  private final JsonMapper json;
 
-  public AuditController(AuditLogRepository lines, AuditRestoreService restoreService) {
+  public AuditController(
+      AuditLogRepository lines, AuditRestoreService restoreService, JsonMapper json) {
     this.lines = lines;
     this.restoreService = restoreService;
+    this.json = json;
   }
 
   /** Newest first, 50 lines per page, pages count from 0. Both filters are optional. */
@@ -37,12 +43,71 @@ public class AuditController {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Số trang không hợp lệ.");
     }
     String type = entityType == null || entityType.isBlank() ? null : entityType;
-    return lines.search(type, entityId, PageRequest.of(page, PAGE_SIZE));
+    return lines.search(type, entityId, PageRequest.of(page, PAGE_SIZE)).stream()
+        .map(this::toEntry)
+        .toList();
+  }
+
+  /** One line with both snapshots as JSON objects. Account secrets are never part of the answer. */
+  @GetMapping("/{id}")
+  public AuditDetailDto detail(@PathVariable long id) {
+    AuditRow row =
+        lines
+            .findRow(id)
+            .orElseThrow(
+                () -> new ApiException(HttpStatus.NOT_FOUND, AuditRestoreService.NOT_FOUND));
+    JsonNode before = withoutSecrets(parse(row.beforeJson()));
+    JsonNode after = withoutSecrets(parse(row.afterJson()));
+    return new AuditDetailDto(
+        row.id(),
+        row.userDisplayName(),
+        row.entityType(),
+        row.entityId(),
+        row.action(),
+        row.createdAt(),
+        AuditLabels.label(row.entityType(), row.entityId(), before, after),
+        isRestorable(row),
+        before,
+        after);
   }
 
   @PostMapping("/{id}/restore")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void restore(@PathVariable long id) {
     restoreService.restore(id);
+  }
+
+  private AuditEntryDto toEntry(AuditRow row) {
+    String label =
+        AuditLabels.label(
+            row.entityType(), row.entityId(), parse(row.beforeJson()), parse(row.afterJson()));
+    return new AuditEntryDto(
+        row.id(),
+        row.userDisplayName(),
+        row.entityType(),
+        row.entityId(),
+        row.action(),
+        row.createdAt(),
+        label,
+        isRestorable(row));
+  }
+
+  /** A create line has nothing to go back to; the kind must also have a handler that can restore. */
+  private boolean isRestorable(AuditRow row) {
+    return row.action() != AuditAction.CREATE
+        && row.beforeJson() != null
+        && restoreService.canRestore(row.entityType());
+  }
+
+  private JsonNode parse(String text) {
+    return text == null ? null : json.readTree(text);
+  }
+
+  private static JsonNode withoutSecrets(JsonNode snapshot) {
+    if (snapshot instanceof ObjectNode object) {
+      object.remove("passwordHash");
+      object.remove("totpSecret");
+    }
+    return snapshot;
   }
 }

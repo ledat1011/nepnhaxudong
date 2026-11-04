@@ -7,6 +7,6 @@ import vn.nepnhaxudong.common.ApiException;
 public class SessionExpiredException extends ApiException {
 
   public SessionExpiredException() {
-    super(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập không còn hiệu lực. Hãy đăng nhập lại.");
+    super(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập không còn hiệu lực. Hãy đăng nhập lại.", ProblemCodes.SESSION_EXPIRED);
   }
 }

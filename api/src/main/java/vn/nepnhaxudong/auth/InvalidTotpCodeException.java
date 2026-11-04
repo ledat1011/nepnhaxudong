@@ -7,6 +7,6 @@ import vn.nepnhaxudong.common.ApiException;
 public class InvalidTotpCodeException extends ApiException {
 
   public InvalidTotpCodeException() {
-    super(HttpStatus.UNAUTHORIZED, "Mã xác thực không đúng.");
+    super(HttpStatus.UNAUTHORIZED, "Mã xác thực không đúng.", ProblemCodes.TOTP_INVALID);
   }
 }

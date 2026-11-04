@@ -36,8 +36,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(ApiException.class)
   ResponseEntity<ProblemDetail> handleApi(ApiException e) {
     LOG.info("Request refused: {} {}", e.getStatus().value(), e.getMessage());
-    return ResponseEntity.status(e.getStatus())
-        .body(ProblemDetail.forStatusAndDetail(e.getStatus(), e.getMessage()));
+    var problem = ProblemDetail.forStatusAndDetail(e.getStatus(), e.getMessage());
+    if (e.getCode() != null) {
+      problem.setProperty("code", e.getCode());
+    }
+    return ResponseEntity.status(e.getStatus()).body(problem);
   }
 
   /**

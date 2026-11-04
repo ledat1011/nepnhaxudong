@@ -21,11 +21,21 @@ public final class ProblemJsonWriter {
 
   public static void write(HttpServletResponse response, HttpStatus status, String detail)
       throws IOException {
+    write(response, status, detail, null);
+  }
+
+  /** Same, with a machine-readable {@code code} property when {@code code} is not null. */
+  public static void write(
+      HttpServletResponse response, HttpStatus status, String detail, String code)
+      throws IOException {
     Map<String, Object> body = new LinkedHashMap<>();
     body.put("type", "about:blank");
     body.put("title", status.getReasonPhrase());
     body.put("status", status.value());
     body.put("detail", detail);
+    if (code != null) {
+      body.put("code", code);
+    }
     response.setStatus(status.value());
     response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
     response.setCharacterEncoding(StandardCharsets.UTF_8.name());
