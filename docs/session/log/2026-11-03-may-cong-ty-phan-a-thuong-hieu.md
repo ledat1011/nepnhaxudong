@@ -42,6 +42,7 @@ Chạy song song với session phần C (nhánh `feat/phan-c-nen-tang`). Không 
 - Chủ dự án hỏi "không dùng bản chi tiết được hả", rồi chọn kết hợp → logo đầy đủ dựng từ bản minh họa chi tiết (dùng ở cỡ lớn: bao bì, banner, đầu trang); icon và logo một màu dựng từ bản B (cỡ nhỏ, in một màu).
 - Trên nền Nâu đất, logo đầy đủ mất chữ và logo một màu mất hẳn; chủ dự án: "làm bản sáng" → thêm `logo-full-light.svg` (chữ Trắng gạo, viền sticker Trắng gạo quanh mascot) và `logo-mono-light.svg` (một màu Trắng gạo) cho nền tối.
 - Ở `logo-mono-light`, tóc đen đảo thành mảng trắng; chủ dự án: "tóc theo nền" → ở bản một màu sáng, tóc là phần nền (trong suốt), chỉ giữ viền Trắng gạo.
+- Review toàn nhánh chỉ ra icon chỉ thấy vành nón, không thấy chóp; chủ dự án: "giữ như hiện tại" → giữ icon như hiện tại (mặt to, rõ ở 32px).
 
 ## Quyết định
 - Không dùng Nano Banana / Recraft qua API trả phí (khác quy trình ở spec 2.3) — chủ dự án quyết định.
