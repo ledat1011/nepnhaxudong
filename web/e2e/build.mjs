@@ -1,6 +1,5 @@
 // Builds the app once per e2e web server. Each build has its own dist directory,
 // so the page caches of the two servers never mix, and its own SITE_URL.
-// The app has no `public` folder, so there is nothing else to copy.
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -41,4 +40,7 @@ for (const [name, { port, distDir }] of Object.entries(TARGETS)) {
   cpSync(`${webDir}/${distDir}/static`, `${webDir}/${distDir}/standalone/${distDir}/static`, {
     recursive: true,
   });
+  // The same for `public/` (the story scene drawings): the standalone server serves it only from
+  // its own folder.
+  cpSync(`${webDir}/public`, `${webDir}/${distDir}/standalone/public`, { recursive: true });
 }

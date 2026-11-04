@@ -40,3 +40,16 @@ test.describe("story list and story pages", () => {
     });
   }
 });
+
+test.describe("rice story section", () => {
+  test("a scene drawing is served and loads in the page", async ({ page, request }) => {
+    const response = await request.get("/story/canh-1-cay-ma.svg");
+    expect(response.status()).toBe(200);
+    await page.goto("/vi");
+    const img = page.locator('li[data-story-scene="cay-ma"] img');
+    await img.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() => img.evaluate((el: HTMLImageElement) => el.naturalWidth))
+      .toBeGreaterThan(0);
+  });
+});
