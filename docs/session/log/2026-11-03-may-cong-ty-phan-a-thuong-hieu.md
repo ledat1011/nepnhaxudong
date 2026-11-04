@@ -31,10 +31,16 @@ Chạy song song với session phần C (nhánh `feat/phan-c-nen-tang`). Không 
 - Xem Gemini v3, chủ dự án: "mặt hơi già rồi; mặt bản của bạn tôi thấy OK, giống bút vẽ" → mặt phải giống hệt mặt bản vẽ SVG của Claude: nét gọn như bút vẽ, chỉ vài nét chân chim nhẹ ở khóe mắt, không nếp nhăn ở má và quanh miệng.
 - Chủ dự án: "bạn vẽ tóc vén sang một bên đúng ý tôi" → giữ kiểu tóc của bản vẽ SVG của Claude: một bên dài xuống vai, bên kia vén ra sau.
 - Chủ dự án duyệt ảnh Gemini v5 (mặt + tóc theo bản vẽ của Claude, nón chóp + áo + tay + bó lúa theo ChatGPT v2): "được, chuyển SVG" → tải ảnh gốc từ Gemini, chuyển sang SVG (vtracer), ép bảng màu, tách lớp body / rice / hands / head.
+- Chủ dự án: "bước nào tách được sang session khác thì làm" → Task 6 (xuất PNG, `preview.html`, README) chạy ở session riêng, nhánh `feat/phan-a-task6`; gộp vào nhánh phần A sau khi mascot xong.
+- Xem bản SVG đầu tiên (tóc ra màu nâu đậm vì bảng màu không có đen), chủ dự án: "tóc màu đen này nhé" (chỉ ảnh gốc) → thêm token `toc` = `#222222`, chỉ dùng cho tóc mascot; viền vẫn Nâu đất.
+- Chủ dự án: "áo mascot hơi giống miền Tây, có style nào giống miền Bắc không" → Claude đề xuất các kiểu áo miền Bắc (áo cánh nâu lộ yếm, áo tứ thân, khăn mỏ quạ). Chủ dự án quyết định: "để áo như vậy đi" → giữ áo hiện tại, không đổi.
+- Xem vòng sửa 1 (rơm thẳng cứng như thanh gỗ, dây buộc dựng đứng), chủ dự án: "sửa thêm rơm" → vẽ lại toàn bộ phần rơm theo ảnh gốc: nhiều cọng mảnh, hơi cong, xòe nhẹ hai đầu; dây thừng quấn chéo ngay dưới bàn tay trên; màu ấm trong bảng màu (Vàng rơm + nét Vàng lúa).
+- Xem vòng sửa 3 (dây thừng 2 sợi quấn ngang bó, mép tay áo trơn), chủ dự án: "Duyệt" → bản minh họa `brand/mascot/mascot-layered.svg` (commit `d63926d`) được duyệt. Bước sau: review mã, gộp nhánh Task 6, vẽ bản logo rút gọn từ bản minh họa.
 
 ## Quyết định
 - Không dùng Nano Banana / Recraft (khác quy trình ở spec 2.3) — chủ dự án quyết định; Claude vẽ SVG trực tiếp, có nhóm `<g id>` ngay từ đầu, nên không cần bước chuyển ảnh sang SVG.
 - Thêm màu `da` = `#F4CDA8`, chỉ dùng trong mascot — chủ dự án duyệt theo plan.
+- Thêm màu `toc` = `#222222` (tóc đen), chỉ dùng trong mascot — chủ dự án chọn tóc đen như ảnh gốc.
 - Được tải font Pacifico / Quicksand + OFL, gói npm `@resvg/resvg-js`, `opentype.js`, `svgo`, `svgson` — chủ dự án duyệt theo plan.
 
 ## Còn mở
