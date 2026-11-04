@@ -18,7 +18,7 @@ export function LanguageSwitch({ lang, alternateHref, labels }: LanguageSwitchPr
       href={alternateHref}
       hrefLang={target}
       lang={target}
-      className="rounded-full border border-coat px-3 py-1.5 text-sm font-medium text-earth hover:bg-straw focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
+      className="inline-flex min-h-11 items-center rounded-full border border-coat px-3 text-sm font-medium text-earth underline-offset-4 hover:bg-straw hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
     >
       {labels[target]}
     </Link>

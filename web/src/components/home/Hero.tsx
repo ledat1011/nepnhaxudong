@@ -16,7 +16,7 @@ type HeroProps = {
 };
 
 const BUTTON_CLASS =
-  "inline-flex min-h-11 items-center justify-center rounded-full px-6 py-2 font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
+  "inline-flex min-h-11 items-center justify-center rounded-full px-6 py-2 font-bold underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
 
 /** First screen. The largest element is the brand text, so the LCP is text, not an image. */
 export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {

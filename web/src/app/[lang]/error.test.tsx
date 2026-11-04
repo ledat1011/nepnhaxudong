@@ -36,4 +36,12 @@ describe("LangError", () => {
     expect(screen.getByRole("link", { name: "Về trang chủ" })).toHaveAttribute("href", "/vi");
     expect(screen.getByRole("link", { name: "Back to home" })).toHaveAttribute("href", "/en");
   });
+
+  it("has the header, main and footer landmarks of a whole page", () => {
+    render(<LangError retry={vi.fn()} />);
+    expect(screen.getByRole("banner")).toBeInTheDocument();
+    expect(screen.getByRole("main")).toBeInTheDocument();
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Nếp Nhà" })).toHaveAttribute("href", "/");
+  });
 });

@@ -81,7 +81,7 @@ export default async function StoryPage({ params }: StoryPageProps) {
           <p className="mt-12">
             <Link
               href={storiesPath(lang)}
-              className="inline-flex min-h-11 items-center rounded-full border-2 border-coat px-6 py-2 font-bold text-coat hover:bg-coat hover:text-rice focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
+              className="inline-flex min-h-11 items-center rounded-full border-2 border-coat px-6 py-2 font-bold text-coat underline-offset-4 hover:underline hover:bg-coat hover:text-rice focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
             >
               ← {dict.stories.backToList}
             </Link>

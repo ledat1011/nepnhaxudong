@@ -11,7 +11,7 @@ type SiteFooterProps = {
 };
 
 const LINK_CLASS =
-  "rounded underline underline-offset-4 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rice";
+  "inline-flex min-h-11 items-center rounded underline underline-offset-4 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rice";
 
 // Brand names are the same in both languages.
 const SOCIAL_NETWORKS = [
@@ -84,7 +84,7 @@ export function SiteFooter({
         </div>
         <div className="space-y-6">
           {rows.length > 0 && (
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {rows.map((row) => (
                 <li key={row.href ?? row.value}>
                   {row.label && (
@@ -102,7 +102,7 @@ export function SiteFooter({
             </ul>
           )}
           {networks.length > 0 && (
-            <ul className="flex flex-wrap gap-4">
+            <ul className="flex flex-wrap gap-x-6 gap-y-1">
               {networks.map(({ key, name, url }) => (
                 <li key={key}>
                   <a

@@ -22,6 +22,39 @@ body {
   font-family: var(--font-sans);
 }
 
+/*
+ * Base layer, so a utility such as `cursor-zoom-in` still wins. Tailwind's reset gives
+ * buttons the arrow cursor; every enabled control gets the pointer here, once.
+ */
+@layer base {
+  a[href],
+  button,
+  summary,
+  select,
+  label[for],
+  [role="button"],
+  [role="link"],
+  [role="tab"],
+  [role="switch"] {
+    cursor: pointer;
+  }
+
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  /*
+   * Pressed state: a 1 px shift down and a thicker underline, which inline links need because
+   * an inline box cannot be shifted. It changes at once, with no transition, so nothing
+   * animates, also under reduced motion.
+   */
+  :is(a[href], button:not(:disabled), summary):active {
+    translate: 0 1px;
+    text-decoration-thickness: 2px;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;

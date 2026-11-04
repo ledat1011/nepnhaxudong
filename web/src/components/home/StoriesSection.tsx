@@ -29,7 +29,7 @@ export function StoriesSection({ lang, dict, stories }: StoriesSectionProps) {
         <div className="mt-10 text-center">
           <Link
             href={storiesPath(lang)}
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-coat px-6 py-2 font-bold text-rice hover:bg-earth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-coat px-6 py-2 font-bold text-rice underline-offset-4 hover:underline hover:bg-earth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
           >
             {dict.stories.viewAll}
           </Link>
