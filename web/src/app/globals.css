@@ -85,9 +85,20 @@ body {
 }
 
 @media (width >= 48rem) {
+  /*
+   * The panel starts 1rem after the end of the text column. Hero.tsx: the grid is max-w-6xl
+   * (72rem) with px-4 and gap-10, so the text column starts at the container edge + 1rem, is
+   * (container - 4.5rem) / 2 wide, and its widest line is the tagline (max-w-md, 28rem).
+   * Percentages are of the section width, so the scrollbar does not count.
+   */
+  .hero-panel-reach {
+    left: calc(max(0px, (100% - 72rem) / 2) + 1rem + min(28rem, (min(100%, 72rem) - 4.5rem) / 2) + 1rem);
+  }
+
+  /* The fade starts at the panel's left edge, right after the text, and is a fixed 10rem long. */
   .hero-fade-side {
-    -webkit-mask-image: linear-gradient(to right, transparent, var(--color-earth) 24%);
-    mask-image: linear-gradient(to right, transparent, var(--color-earth) 24%);
+    -webkit-mask-image: linear-gradient(to right, transparent, var(--color-earth) 10rem);
+    mask-image: linear-gradient(to right, transparent, var(--color-earth) 10rem);
   }
 }
 

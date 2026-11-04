@@ -95,6 +95,19 @@ describe("Hero", () => {
     }
   });
 
+  it("from md, starts the panel just after the text column, not at the middle", () => {
+    const { container } = renderHero(null);
+    const panel = container.querySelector("[data-hero-panel]");
+    expect(panel).toHaveClass("hero-panel-reach");
+    expect(panel?.className).not.toContain("md:left-1/2");
+    const css = readFileSync("src/app/globals.css", "utf8");
+    const media = /@media \(width >= 48rem\)\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";
+    const rule = /\.hero-panel-reach\s*\{([^}]*)\}/.exec(media)?.[1] ?? "";
+    // The text column ends at most 28rem (the tagline's max-w-md) after the container padding.
+    expect(rule).toMatch(/left:\s*calc\(/);
+    expect(rule).toContain("28rem");
+  });
+
   it("puts the sun in the mascot box, behind the mascot", () => {
     const { container } = renderHero(null);
     const mascot = container.querySelector("svg[data-mascot]");
