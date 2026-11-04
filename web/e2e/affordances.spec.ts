@@ -238,3 +238,13 @@ test.describe("product features", () => {
     });
   }
 });
+
+test("no small label is set in wide-tracked capitals", async ({ page }) => {
+  await page.goto("/vi");
+  const upper = await page.evaluate(() =>
+    [...document.querySelectorAll("body *")]
+      .filter((el) => getComputedStyle(el).textTransform === "uppercase")
+      .map((el) => el.textContent?.trim()),
+  );
+  expect(upper).toEqual([]);
+});

@@ -86,7 +86,7 @@ function FeatureIcon({ place }: { place: number }) {
   return <span data-icon-space aria-hidden="true" className="h-10 w-10 shrink-0" />;
 }
 
-const SUBHEADING_CLASS = "mb-3 text-sm font-bold uppercase tracking-wide text-coat";
+const SUBHEADING_CLASS = "mb-3 font-bold text-coat";
 
 export function ProductSection({ lang, dict, product }: ProductSectionProps) {
   // The Gallery runs in the browser, which cannot read SITE_URL, so the sources are built here.

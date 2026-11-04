@@ -56,7 +56,7 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
             <dl className="space-y-5 rounded-2xl bg-straw p-6">
               {address !== null && (
                 <div>
-                  <dt className="text-sm font-bold uppercase tracking-wide text-coat">
+                  <dt className="font-bold text-coat">
                     {dict.contact.address}
                   </dt>
                   <dd className="mt-1 text-lg font-medium">{address}</dd>
@@ -76,7 +76,7 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
               )}
               {hours !== null && (
                 <div>
-                  <dt className="text-sm font-bold uppercase tracking-wide text-coat">
+                  <dt className="font-bold text-coat">
                     {dict.contact.hours}
                   </dt>
                   <dd className="mt-1 text-lg font-medium">{hours}</dd>
