@@ -2,6 +2,7 @@
 
 ## Phản hồi
 - Chủ dự án: "Áp dụng cả 5" → áp dụng cả 5 phát hiện có đề xuất sửa trong `docs/session/prompt-audit-2026-11-04.md` (skill `call-chain` và `visual-deck`).
+- Chủ dự án: "đổi tên file đi" (log tên `…-prompt-audit.md`) → phần chủ đề trong tên file log viết bằng tiếng Việt không dấu, như các log khác: `…-ra-soat-prompt.md`.
 
 ## Quyết định
 - Sửa 5 phát hiện 1–5 của bản rà soát — chủ dự án chọn.
