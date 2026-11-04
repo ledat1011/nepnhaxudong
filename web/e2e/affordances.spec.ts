@@ -176,3 +176,41 @@ test.describe("404 pages are whole documents with landmarks", () => {
     });
   }
 });
+
+test.describe("loading state of links to pages rendered on request", () => {
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    test(`'Xem tất cả' says the list is loading while it loads (${reducedMotion})`, async ({
+      browser,
+      baseURL,
+    }) => {
+      const context = await browser.newContext({ baseURL, reducedMotion });
+      const page = await context.newPage();
+      // Hold the in-app navigation request (RSC) to the list, as a slow API would.
+      let release = () => {};
+      const held = new Promise<void>((resolve) => (release = resolve));
+      await page.route(/\/vi\/cau-chuyen(\?|$)/, async (route) => {
+        if (route.request().headers()["rsc"] !== undefined) await held;
+        await route.continue();
+      });
+      await page.goto("/vi");
+      await page.getByRole("link", { name: vi.stories.viewAll }).click();
+
+      const status = page.getByRole("status").filter({ hasText: vi.loading.page });
+      await expect(status).toBeVisible();
+      const shown = await status.evaluate((el) => ({
+        position: getComputedStyle(el).position,
+        animations: document.getAnimations().length,
+      }));
+      // Fixed: showing it moves nothing on the page. No animation, also with motion on.
+      expect(shown.position).toBe("fixed");
+      expect(shown.animations).toBe(0);
+      await expect(page).toHaveURL(/\/vi$/);
+
+      release();
+      await expect(page).toHaveURL(/\/vi\/cau-chuyen$/);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(vi.sections.story);
+      await expect(page.getByText(vi.loading.page)).toHaveCount(0);
+      await context.close();
+    });
+  }
+});

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LinkPendingStatus } from "@/components/ui/LinkPendingStatus";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { storiesPath } from "@/lib/i18n/routes";
@@ -23,11 +24,13 @@ export function Pagination({ lang, page, hasNext, dict }: PaginationProps) {
       {hasPrevious && (
         <Link href={storiesPath(lang, page - 1)} rel="prev" className={LINK_CLASS}>
           {dict.stories.previousPage}
+          <LinkPendingStatus label={dict.loading.page} />
         </Link>
       )}
       {hasNext && (
         <Link href={storiesPath(lang, page + 1)} rel="next" className={LINK_CLASS}>
           {dict.stories.nextPage}
+          <LinkPendingStatus label={dict.loading.page} />
         </Link>
       )}
     </nav>

@@ -35,7 +35,12 @@ export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderP
         <nav aria-label={dict.nav.label} className="hidden md:block">
           <ul className="flex items-center gap-2">{items}</ul>
         </nav>
-        <LanguageSwitch lang={lang} alternateHref={alternateHref} labels={dict.language} />
+        <LanguageSwitch
+          lang={lang}
+          alternateHref={alternateHref}
+          labels={dict.language}
+          loadingLabel={dict.loading.page}
+        />
         {zalo !== null && (
           <a
             href={zaloHref(zalo)}

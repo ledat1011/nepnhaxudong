@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { StoryBody } from "@/components/story/StoryBody";
 import { ContentImage } from "@/components/ui/ContentImage";
+import { LinkPendingStatus } from "@/components/ui/LinkPendingStatus";
 import { getContentClient } from "@/lib/content/client";
 import { buildHomeNav } from "@/lib/content/home-nav";
 import { storyAlternates } from "@/lib/content/story-routing";
@@ -84,6 +85,7 @@ export default async function StoryPage({ params }: StoryPageProps) {
               className="inline-flex min-h-11 items-center rounded-full border-2 border-coat px-6 py-2 font-bold text-coat underline-offset-4 hover:underline hover:bg-coat hover:text-rice focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
             >
               ← {dict.stories.backToList}
+              <LinkPendingStatus label={dict.loading.page} />
             </Link>
           </p>
         </article>
