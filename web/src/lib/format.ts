@@ -36,3 +36,13 @@ export function zaloHref(zalo: string): string {
   if (zalo.startsWith("http")) return zalo;
   return `https://zalo.me/${zalo.replace(/\D/g, "")}`;
 }
+
+/**
+ * The Zalo number as digits only, which Zalo search accepts. Null when the setting is a full
+ * URL (an older setting): that link has no number to show or copy.
+ */
+export function zaloNumber(zalo: string): string | null {
+  if (zalo.startsWith("http")) return null;
+  const digits = zalo.replace(/\D/g, "");
+  return digits === "" ? null : digits;
+}

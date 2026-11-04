@@ -5,6 +5,7 @@ import {
   formatWeight,
   telHref,
   zaloHref,
+  zaloNumber,
 } from "./format";
 
 describe("formatWeight", () => {
@@ -50,5 +51,19 @@ describe("zaloHref", () => {
 
   it("keeps a full URL unchanged", () => {
     expect(zaloHref("https://zalo.me/abc")).toBe("https://zalo.me/abc");
+  });
+});
+
+describe("zaloNumber", () => {
+  it("keeps only the digits of a number, ready to paste into Zalo search", () => {
+    expect(zaloNumber("0912 345 678")).toBe("0912345678");
+  });
+
+  it("has no number when the setting is a full URL", () => {
+    expect(zaloNumber("https://zalo.me/abc")).toBeNull();
+  });
+
+  it("has no number when the setting has no digits", () => {
+    expect(zaloNumber("  ")).toBeNull();
   });
 });
