@@ -89,6 +89,7 @@ export function ProductBag({ dict }: { dict: Dictionary }) {
             </g>
           </g>
 
+          {/* The motion code animates this group's opacity; the strokes keep a fixed stroke-opacity. */}
           <g data-bag="wrinkles" fill="none" strokeWidth="1.5" strokeOpacity="0.45" {...OUTLINE}>
             <path d="M98 108q12-5 24-2" />
             <path d="M196 98q12 4 24-1" />

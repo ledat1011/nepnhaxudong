@@ -49,9 +49,9 @@ const vi = {
     contactPrice: "Giá liên hệ",
   },
   bag: {
-    note1: "Túi trong — nhìn rõ từng hạt gạo",
-    note2: "Hút chân không — gạo giữ khô và thơm lâu",
-    note3: "Khối vuông — dễ cất, dễ làm quà",
+    note1: "Túi trong: nhìn rõ từng hạt gạo",
+    note2: "Hút chân không: gạo giữ khô và thơm lâu",
+    note3: "Khối vuông: dễ cất, dễ làm quà",
   },
   contact: {
     phone: "Điện thoại",
@@ -145,9 +145,9 @@ const en: Dictionary = {
     contactPrice: "Contact for price",
   },
   bag: {
-    note1: "Clear bag — you can see every grain",
-    note2: "Vacuum packed — the rice stays dry and fragrant for longer",
-    note3: "A firm square block — easy to store and to give",
+    note1: "Clear bag: you can see every grain",
+    note2: "Vacuum packed: the rice stays dry and fragrant for longer",
+    note3: "A firm square block: easy to store and to give",
   },
   contact: {
     phone: "Phone",
