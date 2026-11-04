@@ -35,6 +35,13 @@ describe("withReLogin", () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
+  it("does not ask for a login on a 401 that is not session-expired", async () => {
+    const requireReLogin = vi.fn();
+    const failure = new AdminApiError(401, "Sai mật khẩu.", "invalid-credentials");
+    await expect(withReLogin(() => Promise.reject(failure), requireReLogin)).rejects.toBe(failure);
+    expect(requireReLogin).not.toHaveBeenCalled();
+  });
+
   it("passes other errors through", async () => {
     const requireReLogin = vi.fn();
     const failure = new AdminApiError(503, "Bận.");

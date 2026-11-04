@@ -1,4 +1,5 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
+import { useLayoutEffect } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "./errors";
 
@@ -123,6 +124,26 @@ describe("useSave latest action and reset", () => {
     });
     expect(value).toBe("second");
     expect(first).not.toHaveBeenCalled();
+  });
+
+  it("runs the newest action when save is called from a layout effect after a re-render", async () => {
+    // A layout effect of the same component runs before any plain useEffect, so only a layout-time update of `latest` is early enough.
+    const values: (string | undefined)[] = [];
+    const onValue = (value: string | undefined) => values.push(value);
+    const first = () => Promise.resolve("first");
+    const second = () => Promise.resolve("second");
+    function Probe({ action }: { action: () => Promise<string> }) {
+      const { save } = useSave(action);
+      useLayoutEffect(() => {
+        void save().then(onValue);
+      }, [action, save]);
+      return null;
+    }
+    const view = render(<Probe action={first} />);
+    await act(async () => {});
+    view.rerender(<Probe action={second} />);
+    await act(async () => {});
+    expect(values).toEqual(["first", "second"]);
   });
 
   it("clears the error with reset", async () => {

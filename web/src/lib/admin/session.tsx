@@ -19,7 +19,11 @@ export type AdminSession = {
   signedOutOnPurpose: boolean;
   refresh(): Promise<void>;
   signOut(): Promise<void>;
-  /** Opens the re-login dialog. Resolves after a sign-in; rejects with a 401 `AdminApiError` when the user cancels. */
+  /**
+   * Opens the re-login dialog. Resolves after a sign-in; rejects with a 401 `AdminApiError` when the user cancels.
+   * Contract: the function identity is stable for the provider's lifetime (a useCallback with [] deps).
+   * Hooks such as useMediaLibrary and useSave list it in effect/callback dependencies and rely on that.
+   */
   requireReLogin(): Promise<void>;
 };
 
