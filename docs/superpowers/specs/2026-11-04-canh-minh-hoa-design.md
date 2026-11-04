@@ -102,7 +102,7 @@ Vị trí: ngay sau khối Sản phẩm, trước "Hành trình". `id` của kh�
 
 | # | Cảnh | Người | Chuyển động chính (chạy một lần) | Vòng lặp khi đang thấy |
 |---|---|---|---|---|
-| 1 | Cấy mạ | Mẹ | Mẹ cúi cấy; cây mạ nhú lên theo hàng (`scale` từ gốc) | Mặt nước gợn vòng |
+| 1 | Cấy mạ | Mẹ và 2 người nông dân | Mẹ cùng bà con nông dân cúi cấy thành một hàng ngang; cây mạ nhú lên theo hàng (`scale` từ gốc) | Mặt nước gợn vòng |
 | 2 | Nắng, mưa, gió | — | Nắng lên → mây kéo tới → gió thổi; lúa lớn dần (`scaleY`) và đổi xanh sang vàng (hai lớp chồng, `opacity`) | Mưa rơi, lúa lắc |
 | 3 | Gặt lúa | Ba lái máy, anh 2 nhận bao thóc | Máy gặt đập liên hợp chạy vào ruộng, lúa trước máy ngả xuống, bao thóc đầy dần rồi sang tay anh 2 | Guồng phía trước quay |
 | 4 | Sấy thóc tại nhà | Ba | Mũi tên hơi nóng chạy: quạt → lò than → gầm → lên qua lưới sắt và lớp thóc (theo mục 1) | Cánh quạt quay, than lập loè |
@@ -120,7 +120,8 @@ Màu máy theo ảnh xưởng, đổi sang màu thương hiệu gần nhất: th
 - **Ba:** cao gầy, tóc bạc, đội mũ lưỡi trai, áo xanh. Tạm vẽ áo xanh lá nhạt gần Xanh mạ; chủ dự án sửa nếu là xanh dương.
 - **Anh 2:** mặt tròn giống mẹ; tạm vẽ tóc đen ngắn, áo thun Nâu áo.
 - **Khách:** nhân vật đơn giản, vẽ bằng code.
-- **Tư thế cần vẽ (5):** mẹ cúi cấy; mẹ ôm / trao túi; ba trong cabin máy gặt (chỉ thấy nửa người); ba đứng cạnh lò sấy; anh 2 bê bao thóc. Dùng lại giữa các cảnh.
+- **Nông dân cùng cấy (cảnh 1):** 2 người nông dân đội nón lá, áo Vàng rơm (khác áo nâu của mẹ), không giống ai cụ thể.
+- **Tư thế cần vẽ (6):** mẹ cúi cấy; nông dân cúi cấy (dùng cho cả 2 người, người thứ hai lật ngang); mẹ ôm / trao túi; ba trong cabin máy gặt (chỉ thấy nửa người); ba đứng cạnh lò sấy; anh 2 bê bao thóc. Dùng lại giữa các cảnh.
 
 ### 4.3 Bố cục và cách cuộn
 **Dưới 1024 px (điện thoại, máy tính bảng): xếp dọc, không ghim.**
@@ -180,7 +181,7 @@ Không thêm thư viện mới: dùng GSAP 3.15 và ScrollTrigger đã có ở B
 
 1. Màu (quyết định 0007) và nền Hero, kèm nút "Tạm dừng chuyển động" và danh sách vòng lặp chung.
 2. Hình túi gạo.
-3. 5 tư thế người (chờ chủ dự án duyệt từng tư thế).
+3. 6 tư thế người (chờ chủ dự án duyệt từng tư thế).
 4. Câu chuyện 8 cảnh: các phần hình, script ghép, component, chuyển động điện thoại và máy tính.
 
 Bước 1, 2 và phần cảnh vật của bước 4 không phụ thuộc bước 3, nên làm được trước khi có người.

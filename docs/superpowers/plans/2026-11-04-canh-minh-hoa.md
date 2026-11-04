@@ -278,19 +278,19 @@ Task này làm sau Task 9 (cần file giữ chỗ và script ghép) và độc l
 
 **Files:**
 - Create: `brand/tools/vectorize-pose.py`
-- Create/replace: `brand/story/people/me-cay.svg`, `me-trao-tui.svg`, `ba-lai-may.svg`, `ba-canh-lo.svg`, `anh2-be-bao.svg`
+- Create/replace: `brand/story/people/me-cay.svg`, `nong-dan-cay.svg`, `me-trao-tui.svg`, `ba-lai-may.svg`, `ba-canh-lo.svg`, `anh2-be-bao.svg`
 - Modify: `brand/README.md` (bảng file và lệnh chạy)
 
 **Interfaces:**
 - Produces: mỗi file tư thế là `<svg viewBox="0 0 256 256">` có đúng một nhóm gốc `<g data-part="person">`, chân người chạm đáy khung (để script ghép đặt đúng mặt đất). Màu chỉ trong `ILLUSTRATION_PALETTE`.
 - `vectorize-pose.py SOURCE.png OUT.svg`: dùng lại các bước của `vectorize-mascot.py` (phân loại màu theo CIE Lab, làm mượt 3 × 3, trace bằng vtracer 0.6.15, ép màu về bảng màu) nhưng **không** có các vùng đo tay riêng của mascot và không tách lớp; nhập các hàm bằng `importlib` (tên file có dấu gạch). Bỏ nền (pixel gần Trắng gạo nối với viền ảnh thành trong suốt).
 
-- [ ] **Step 1: Mô tả cho chủ dự án và tạo ảnh** cho từng tư thế (mẹ theo mascot đã duyệt; ba: cao gầy, tóc bạc, mũ lưỡi trai, áo xanh — hỏi lại xanh lá hay xanh dương; anh 2: mặt tròn giống mẹ, tóc đen ngắn, áo thun Nâu áo). Phong cách: hoạt hình phẳng, viền Nâu đất, giống mascot. Chủ dự án duyệt ảnh. Ảnh gốc giữ ngoài repo.
+- [ ] **Step 1: Mô tả cho chủ dự án và tạo ảnh** cho từng tư thế (mẹ theo mascot đã duyệt; ba: cao gầy, tóc bạc, mũ lưỡi trai, áo xanh — hỏi lại xanh lá hay xanh dương; anh 2: mặt tròn giống mẹ, tóc đen ngắn, áo thun Nâu áo; nông dân: nón lá, áo Vàng rơm, không giống ai cụ thể). Phong cách: hoạt hình phẳng, viền Nâu đất, giống mascot. Chủ dự án duyệt ảnh. Ảnh gốc giữ ngoài repo.
 - [ ] **Step 2: Viết `vectorize-pose.py`, chạy cho từng ảnh đã duyệt, ghi đè file giữ chỗ cùng tên, rồi** `cd web && npm run story:build`. Định dạng, bảng màu và ngân sách của tư thế do `composeScene` và test của Task 8 kiểm tra, nên không cần test mới.
 - [ ] **Step 3: Run** `cd web && npm test` — Expected: PASS (nếu một tư thế vượt 12 KB: giảm số màu hoặc tăng ngưỡng làm mượt rồi trace lại).
 - [ ] **Step 4: Chạy lại** `cd brand/tools && npm test` để chắc không hỏng công cụ cũ — PASS.
 - [ ] **Step 5: Chủ dự án duyệt từng tư thế trong cảnh** (chụp màn hình 8 cảnh ở 375 px và 1280 px).
-- [ ] **Step 6: Commit** `feat(brand): trace the five family poses for the story`
+- [ ] **Step 6: Commit** `feat(brand): trace the six poses for the story`
 
 ---
 
@@ -330,7 +330,7 @@ Task này làm sau Task 9 (cần file giữ chỗ và script ghép) và độc l
 
 **Files:**
 - Create: `brand/story/scenes/<slug>.svg` (8 file), `brand/story/parts/vacuum-machine.svg`, `brand/story/parts/bag.svg`
-- Create: `brand/story/people/<pose>.svg` (5 file giữ chỗ, vẽ bằng code: đầu tròn, nón / mũ, thân; đúng định dạng Task 7)
+- Create: `brand/story/people/<pose>.svg` (6 file giữ chỗ, vẽ bằng code: đầu tròn, nón / mũ, thân; đúng định dạng Task 7)
 - Generate: `web/public/story/*.svg` (`npm run story:build`)
 
 **Interfaces:**
@@ -339,7 +339,7 @@ Task này làm sau Task 9 (cần file giữ chỗ và script ghép) và độc l
 
 | Cảnh | `data-part` (chạy một lần) | `data-part` (vòng lặp) |
 |---|---|---|
-| `cay-ma` | `mother` (slot `me-cay`), `seedling` (nhiều, theo hàng, gốc ở đáy) | `ripple` (nhiều) |
+| `cay-ma` | `mother` (slot `me-cay`), `farmer` (2, slot `nong-dan-cay`; người thứ hai lật ngang bằng `scale(-1 1)` trong nguồn), `seedling` (nhiều, theo hàng, gốc ở đáy) | `ripple` (nhiều) |
 | `nang-mua-gio` | `sun`, `cloud`, `wind`, `rice` (gốc ở đáy), `rice-green` (trong nguồn có `opacity="0"`), `rice-gold` (hiện) | `rain` (nhiều giọt), `rice-sway` |
 | `gat` | `harvester`, `crop` (nhiều cây trước máy), `sack`, `driver` (slot `ba-lai-may`, nằm trong `harvester`), `brother` (slot `anh2-be-bao`) | `reel` |
 | `say` | `air` (nhiều mũi tên: quạt → lò → gầm → lên qua lưới và lớp thóc), `paddy`, `father` (slot `ba-canh-lo`) | `fan-blades`, `coals` |
@@ -351,7 +351,7 @@ Task này làm sau Task 9 (cần file giữ chỗ và script ghép) và độc l
   Khung tĩnh của mọi cảnh là **khung cuối** (mạ đã cấy, lúa đã vàng, túi đã đóng…), vì đó là hình hiện khi không có chuyển động.
 - Máy theo ảnh xưởng và spec mục 4.1 (tháp gầu tải Xanh mạ, máy bóc vỏ Nâu áo, máy đỏ Hồng má; máy hút chân không Vàng rơm / Trắng gạo). Máy sấy đúng phác thảo của chủ dự án (spec mục 1). Một đoạn đường đất ở mép dưới mỗi cảnh, hai đầu khớp nhau giữa các cảnh (cùng độ cao `y` 560 tại `x` 0 và 800).
 
-- [ ] **Step 1: Vẽ cảnh `cay-ma`, `nang-mua-gio`, `gat`, `say`** (bám storyboard), tạo 5 tư thế giữ chỗ, `npm run story:build`.
+- [ ] **Step 1: Vẽ cảnh `cay-ma`, `nang-mua-gio`, `gat`, `say`** (bám storyboard), tạo 6 tư thế giữ chỗ, `npm run story:build`.
 - [ ] **Step 2: Viết test `web/src/lib/story/scene-parts.test.ts`**: đọc từng file trong `web/public/story/`, parse bằng `DOMParser` (jsdom), kiểm tra mỗi `data-part` trong bảng trên có ít nhất 1 phần tử (và `dish` đúng 4). Bật test đồng bộ của Task 8.
 - [ ] **Step 3: Run** — FAIL cho 4 cảnh chưa vẽ.
 - [ ] **Step 4: Vẽ `xay-xat`, `dong-goi`, `den-tay-khach`, `mam-com`, `npm run story:build`. Run** `npm test` — PASS (gồm ngân sách và bảng màu).
@@ -386,7 +386,7 @@ Task này làm sau Task 9 (cần file giữ chỗ và script ghép) và độc l
   ```
   CSS mặc định: danh sách dọc. Chỉ khi `html[data-motion='on']` và `min-width: 1024px`: `data-story-viewport` cao `100svh`, ẩn phần tràn; `data-story-track` là hàng ngang `w-max`; mỗi `li` rộng `min(80vw, 56rem)`; `data-story-progress` hiện.
 - Dictionary `story`: `title`, `skip`, và cho mỗi slug `<slug>Title`, `<slug>Text` (vi / en). Câu chữ vi:
-  - cay-ma: "Cấy mạ" — "Mẹ cấy từng khóm mạ nếp cái hoa vàng xuống ruộng nước."
+  - cay-ma: "Cấy mạ" — "Mẹ cùng bà con trong xóm cấy từng khóm mạ nếp cái hoa vàng xuống ruộng nước."
   - nang-mua-gio: "Nắng, mưa, gió" — "Lúa lớn lên qua nắng, mưa và gió của xứ Đông, từ xanh mạ đến vàng óng."
   - gat: "Gặt lúa" — "Ba lái máy gặt, anh 2 đỡ từng bao thóc mới."
   - say: "Sấy thóc tại nhà" — "Quạt thổi hơi nóng từ lò than vào gầm, hơi nóng đi lên qua lưới sắt và làm khô lớp thóc."

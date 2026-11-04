@@ -21,6 +21,7 @@
 - Phần 4 (thứ tự làm: màu + Hero → túi gạo → 5 tư thế người → câu chuyện; kiểm thử, rủi ro) đã duyệt.
 
 - Chủ dự án duyệt spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md` và storyboard (gồm cả việc mở rộng quy tắc Hồng má / da / tóc trong quyết định 0007). Bước tiếp: viết plan.
+- Góp ý 8 cảnh, cảnh 1: có những người nông dân cùng mẹ cấy → thêm 2 nông dân (nón lá, áo Vàng rơm, cùng một tư thế, người thứ hai lật ngang); tư thế người thành 6. Đã sửa spec, plan, storyboard.
 
 ## Còn mở
 - Xác nhận khi duyệt tư thế người: áo của ba là xanh lá hay xanh dương. Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.
