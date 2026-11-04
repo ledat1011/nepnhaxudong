@@ -73,6 +73,17 @@ describe("inlineSvg", () => {
       '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><image xlink:href="//example.com/a.png"/></svg>',
     ],
     ["an external url() paint", '<svg xmlns="http://www.w3.org/2000/svg"><rect fill="url(https://example.com/#g)"/></svg>'],
+    ["a style element", '<svg xmlns="http://www.w3.org/2000/svg"><style>rect{fill:red}</style><rect/></svg>'],
+    ["an animate element", '<svg xmlns="http://www.w3.org/2000/svg"><rect><animate attributeName="x" to="9"/></rect></svg>'],
+    ["a set element", '<svg xmlns="http://www.w3.org/2000/svg"><a><set attributeName="href" to="javascript:alert(1)"/></a></svg>'],
+    [
+      "an animateTransform element",
+      '<svg xmlns="http://www.w3.org/2000/svg"><g><animateTransform attributeName="transform" type="rotate" to="90"/></g></svg>',
+    ],
+    [
+      "an animateMotion element",
+      '<svg xmlns="http://www.w3.org/2000/svg"><g><animateMotion path="M0 0H9"/></g></svg>',
+    ],
   ])("keeps the img when the file has %s", async (_what, body) => {
     const { img, fetcher } = setup(body);
     expect(await inlineSvg(img, fetcher)).toBeNull();
