@@ -33,6 +33,35 @@ function recordScripts(page: Page) {
   return { bodies, settle: () => Promise.all(pending) };
 }
 
+const JOURNEY_LEAD_PX = 600;
+const GROWN_SCALE = 0.99;
+
+/** The vertical scale (`d` of the matrix) of an element; 1 when it has no transform. */
+async function scaleYOf(page: Page, selector: string) {
+  return page.$eval(selector, (el) => {
+    const transform = getComputedStyle(el).transform;
+    if (transform === "none") return 1;
+    return new DOMMatrix(transform).d;
+  });
+}
+
+async function scrollToJourney(page: Page) {
+  await page.evaluate((lead) => {
+    document.getElementById("hanh-trinh")?.scrollIntoView({ behavior: "instant" });
+    window.scrollBy({ top: -lead, behavior: "instant" });
+  }, JOURNEY_LEAD_PX);
+  await page.waitForTimeout(500);
+}
+
+function plantScales(page: Page) {
+  return page.$$eval("[data-journey-leaf], [data-journey-ear]", (els) =>
+    els.map((el) => {
+      const transform = getComputedStyle(el).transform;
+      return transform === "none" ? 1 : new DOMMatrix(transform).a;
+    }),
+  );
+}
+
 type MascotGroup = "head" | "rice";
 
 const HEAD_PIVOT = { x: 278, y: 257 };
@@ -310,6 +339,44 @@ test("turning reduced motion off again tilts the mascot about the same pivots", 
   expect(await pivotDrift(page, "rice", RICE_PIVOT.x, RICE_PIVOT.y)).toBeLessThan(1);
 });
 
+test("the rice plant grows with the journey and every event appears", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await scrollToJourney(page);
+  expect(await scaleYOf(page, "[data-journey-line]")).toBeLessThan(0.5);
+  await scrollThroughPage(page);
+  expect(await scaleYOf(page, "[data-journey-line]")).toBeGreaterThan(GROWN_SCALE);
+  expect((await revealOpacities(page, "[data-journey-event]")).every((o) => o === "1")).toBe(true);
+  const scales = await plantScales(page);
+  expect(scales.length).toBeGreaterThan(1);
+  expect(scales.every((scale) => scale > GROWN_SCALE)).toBe(true);
+});
+
+test("turning reduced motion on makes the plant fully grown", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await scrollToJourney(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.waitForSelector("html:not([data-motion])");
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  expect(await page.$eval("[data-journey-line]", (el) => getComputedStyle(el).transform)).toBe(
+    "none",
+  );
+  expect((await revealOpacities(page, "[data-journey-event]")).every((o) => o === "1")).toBe(true);
+  expect((await plantScales(page)).every((scale) => scale > GROWN_SCALE)).toBe(true);
+});
+
+test("the plant does not widen the page at 320 px", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await scrollThroughPage(page);
+  const width = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(width).toBeLessThanOrEqual(320);
+});
+
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
@@ -339,5 +406,14 @@ test.describe("reduced motion", () => {
     await wheelDown(page);
     expect(Math.abs(await rotationOf(page, "head"))).toBe(0);
     expect(Math.abs(await rotationOf(page, "rice"))).toBe(0);
+  });
+  test("reduced motion: the plant is fully grown", async ({ page }) => {
+    await page.goto("/vi");
+    await scrollToJourney(page);
+    expect(await page.$eval("[data-journey-line]", (el) => getComputedStyle(el).transform)).toBe(
+      "none",
+    );
+    expect((await revealOpacities(page, "[data-journey-event]")).every((o) => o === "1")).toBe(true);
+    expect((await plantScales(page)).every((scale) => scale === 1)).toBe(true);
   });
 });

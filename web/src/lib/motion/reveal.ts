@@ -12,6 +12,14 @@ export function shouldHideOnSetup(rect: { top: number }, viewportHeight: number)
   return rect.top >= viewportHeight;
 }
 
+/** `shouldHideOnSetup` for an element, measured at the scroll position the page is moving to. */
+export function shouldHideElement(el: Element, pendingScroll: number): boolean {
+  return shouldHideOnSetup(
+    { top: el.getBoundingClientRect().top - pendingScroll },
+    window.innerHeight,
+  );
+}
+
 /**
  * How many pixels the page will still scroll to reach the element named by `location.hash`.
  * With `scroll-behavior: smooth` the jump to an anchor is still running when the motion starts.
@@ -38,7 +46,7 @@ export function pendingHashScroll(root: Document): number {
 export const setupReveals: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   const offset = pendingHashScroll(root);
   const hidden = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]")).filter((el) =>
-    shouldHideOnSetup({ top: el.getBoundingClientRect().top - offset }, window.innerHeight),
+    shouldHideElement(el, offset),
   );
   if (hidden.length === 0) return;
 
