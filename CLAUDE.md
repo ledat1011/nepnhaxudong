@@ -43,8 +43,9 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
 - The design and the plans (`docs/superpowers/`) are committed to the repo.
 
 ## Front-end work (UI, copy, motion)
-- Design direction is fixed: `brand/README.md` (colors, fonts, logo, mascot) and sections 2 and 3 of the spec.
-  Treat them as this project's `DESIGN.md`. Do not invent a new palette, font pair or layout style.
+- The brand is fixed: `brand/README.md` (colors, fonts, logo, mascot) and sections 2 and 3 of the spec.
+  Treat them as this project's `DESIGN.md`. Do not invent a new palette, font pair, logo or mascot.
+  Layout and composition may change, through `taste-skill` (see below).
 - The front-end skills come from plugins declared in `.claude/settings.json` (`antislop`, `taste-skill`,
   `gsap-skills`). If a skill below is missing, tell the owner to install the plugin. Do not install it yourself.
 - Then use the `antislop` skills as the filter for UI, copy and front-end code (`antislop`, `antislop-ui`,
@@ -54,7 +55,9 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
   - Dials, inferred from the spec: public site `ENERGY 2 / RHYTHM 2 / MOTION 2` (warm family brand, mascot
     and scroll motion); admin `ENERGY 1 / RHYTHM 1 / MOTION 1` (a tool for family members on a phone).
 - `taste-skill` (skill name `design-taste-frontend`): use its critique, its browser inspector (`inspect.mjs`, and `--app` for admin screens) and its
-  look-and-fix loop. Do not use `draw.mjs` to pick a new direction, because the brand is already decided.
+  look-and-fix loop. You may use `draw.mjs` to deal a layout and composition direction (owner, 2026-11-04,
+  decision `docs/decisions/0009-taste-bo-cuc.md`). Always pass `--keep palette,type`, so the brand colors and
+  fonts stay. Show the owner the dealt options (`--options 3`) and let the owner choose before you build one.
 - GSAP code (part B4 and later): follow the `gsap-*` skills.
 - Review UI code against the pinned rules with the `web-interface-guidelines` skill (in `.claude/skills/`).
 - Sources and licenses: `.claude/skills/THIRD_PARTY.md`. Why plugins: `docs/decisions/0006-skill-frontend.md`.
