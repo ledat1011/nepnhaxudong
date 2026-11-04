@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AdminApiError, isSessionExpired } from "./errors";
+import { AdminApiError, GENERIC_ERROR_MESSAGE, isSessionExpired } from "./errors";
 import { adminFetch, adminUpload } from "./api";
 import { resetCsrfToken } from "./csrf";
 
@@ -174,6 +174,24 @@ describe("adminFetch", () => {
     resetCsrfToken();
     await adminFetch("/admin/x", { method: "POST", body: {} });
     expect(headersOf(3).get("X-XSRF-TOKEN")).toBe("two");
+  });
+});
+
+describe("adminFetch with a successful response that cannot be parsed", () => {
+  it("throws AdminApiError, not SyntaxError, when the body is not JSON", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("<html>ok</html>", { status: 200 }));
+    const error = await adminFetch("/admin/products").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(AdminApiError);
+    expect(error).toMatchObject({ status: 200, detail: GENERIC_ERROR_MESSAGE });
+  });
+
+  it("throws AdminApiError when the body cannot be read", async () => {
+    const broken = new Response("{}", { status: 200 });
+    vi.spyOn(broken, "json").mockRejectedValue(new TypeError("body stream failed"));
+    fetchMock.mockResolvedValueOnce(broken);
+    const error = await adminFetch("/admin/products").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(AdminApiError);
+    expect(error).toMatchObject({ status: 200, detail: GENERIC_ERROR_MESSAGE });
   });
 });
 

@@ -4,8 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 // next/font only works inside the Next compiler.
 vi.mock("@/app/fonts", () => ({ fontClassName: "font-test" }));
 
+// The session provider uses the router, which exists only inside a running Next app.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+
 import AdminLayout, { metadata } from "./layout";
-import AdminPage from "./page";
+import AdminPage from "./(app)/page";
 
 describe("admin root layout", () => {
   it("renders its own <html lang=vi> document around the page", () => {

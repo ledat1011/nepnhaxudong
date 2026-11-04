@@ -1,4 +1,4 @@
-import { errorFromResponse, networkError } from "./errors";
+import { AdminApiError, GENERIC_ERROR_MESSAGE, errorFromResponse, networkError } from "./errors";
 
 export const CSRF_HEADER = "X-XSRF-TOKEN";
 
@@ -15,8 +15,14 @@ async function loadToken(): Promise<string> {
     throw networkError();
   }
   if (!response.ok) throw await errorFromResponse(response);
-  const body = (await response.json()) as { token: string };
-  return body.token;
+  let token: unknown;
+  try {
+    token = ((await response.json()) as { token?: unknown } | null)?.token;
+  } catch {
+    // Handled below like a body without a token.
+  }
+  if (typeof token !== "string" || token === "") throw new AdminApiError(response.status, GENERIC_ERROR_MESSAGE);
+  return token;
 }
 
 /** The CSRF token. It is fetched once and kept in memory; parallel callers share one request. */

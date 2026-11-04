@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { AdminSessionProvider } from "@/lib/admin/session";
 import { Toaster } from "@/components/admin/ui/sonner";
 import { fontClassName } from "../fonts";
 import "./admin.css";
@@ -17,7 +18,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" className={fontClassName}>
       <body>
-        {children}
+        <AdminSessionProvider>{children}</AdminSessionProvider>
         <Toaster />
       </body>
     </html>

@@ -1,0 +1,188 @@
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useEffect } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AdminApiError } from "./errors";
+import type { UserResponse } from "./types";
+
+const { adminFetch, replace, resetCsrfToken } = vi.hoisted(() => ({
+  adminFetch: vi.fn(),
+  replace: vi.fn(),
+  resetCsrfToken: vi.fn(),
+}));
+
+vi.mock("./api", () => ({ adminFetch }));
+vi.mock("./csrf", () => ({ resetCsrfToken }));
+vi.mock("@/lib/admin/api", () => ({ adminFetch }));
+vi.mock("@/lib/admin/csrf", () => ({ resetCsrfToken }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
+
+import { AdminSessionProvider, useAdminSession } from "./session";
+
+const user: UserResponse = { id: 1, email: "an@example.com", displayName: "An", mustChangePassword: false };
+
+type Session = ReturnType<typeof useAdminSession>;
+const latest = {} as { current: Session };
+
+function Probe() {
+  const current = useAdminSession();
+  useEffect(() => {
+    latest.current = current;
+  });
+  return <p data-testid="status">{current.status}</p>;
+}
+
+function renderProvider() {
+  return render(
+    <AdminSessionProvider>
+      <Probe />
+    </AdminSessionProvider>,
+  );
+}
+
+function meReturns(result: UserResponse | AdminApiError) {
+  adminFetch.mockImplementation((path: string) => {
+    if (path === "/auth/me") return result instanceof AdminApiError ? Promise.reject(result) : Promise.resolve(result);
+    return Promise.reject(new Error(`unexpected ${path}`));
+  });
+}
+
+beforeEach(() => {
+  adminFetch.mockReset();
+  replace.mockReset();
+  resetCsrfToken.mockReset();
+});
+
+describe("AdminSessionProvider status", () => {
+  it("starts as loading and becomes ready for a signed-in user", async () => {
+    meReturns(user);
+    renderProvider();
+    expect(screen.getByTestId("status")).toHaveTextContent("loading");
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    expect(latest.current.user).toEqual(user);
+    expect(adminFetch).toHaveBeenCalledWith("/auth/me");
+  });
+
+  it("is must-change-password when the user has a temporary password", async () => {
+    meReturns({ ...user, mustChangePassword: true });
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("must-change-password"));
+  });
+
+  it("is signed-out on 401", async () => {
+    meReturns(new AdminApiError(401, "Chưa đăng nhập.", "session-expired"));
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("signed-out"));
+    expect(latest.current.user).toBeNull();
+  });
+
+  it("refresh reads /auth/me again", async () => {
+    meReturns(user);
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    meReturns({ ...user, mustChangePassword: true });
+    await act(() => latest.current.refresh());
+    expect(screen.getByTestId("status")).toHaveTextContent("must-change-password");
+  });
+});
+
+describe("signOut", () => {
+  it("calls logout, forgets the CSRF token and goes to the login page", async () => {
+    meReturns(user);
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    adminFetch.mockResolvedValue(undefined);
+    await act(() => latest.current.signOut());
+    expect(adminFetch).toHaveBeenCalledWith("/auth/logout", { method: "POST" });
+    expect(resetCsrfToken).toHaveBeenCalled();
+    expect(screen.getByTestId("status")).toHaveTextContent("signed-out");
+    expect(replace).toHaveBeenCalledWith("/admin/dang-nhap");
+  });
+
+  it("still clears the local state when logout fails", async () => {
+    meReturns(user);
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    adminFetch.mockRejectedValue(new AdminApiError(401, "Hết phiên.", "session-expired"));
+    await act(() => latest.current.signOut());
+    expect(resetCsrfToken).toHaveBeenCalled();
+    expect(screen.getByTestId("status")).toHaveTextContent("signed-out");
+    expect(latest.current.user).toBeNull();
+    expect(replace).toHaveBeenCalledWith("/admin/dang-nhap");
+  });
+});
+
+describe("requireReLogin", () => {
+  async function renderReady() {
+    meReturns(user);
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    adminFetch.mockImplementation((path: string) =>
+      path === "/auth/login" ? Promise.resolve(user) : Promise.reject(new Error(`unexpected ${path}`)),
+    );
+  }
+
+  it("opens the dialog and resolves after a successful sign-in", async () => {
+    await renderReady();
+    const events = userEvent.setup();
+    let promise!: Promise<void>;
+    act(() => {
+      promise = latest.current.requireReLogin();
+    });
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await events.type(screen.getByLabelText("Mật khẩu"), "secret-password");
+    await events.click(screen.getByRole("button", { name: "Đăng nhập" }));
+    await expect(promise).resolves.toBeUndefined();
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.getByTestId("status")).toHaveTextContent("ready");
+  });
+
+  it("rejects with a 401 AdminApiError when the user cancels", async () => {
+    await renderReady();
+    const events = userEvent.setup();
+    let promise!: Promise<void>;
+    act(() => {
+      promise = latest.current.requireReLogin();
+    });
+    const settled = promise.catch((e: unknown) => e);
+    await screen.findByRole("dialog");
+    await events.click(screen.getByRole("button", { name: "Hủy" }));
+    const error = await settled;
+    expect(error).toBeInstanceOf(AdminApiError);
+    expect(error).toMatchObject({ status: 401 });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("opens one dialog for two concurrent callers and resolves both", async () => {
+    await renderReady();
+    const events = userEvent.setup();
+    let first!: Promise<void>;
+    let second!: Promise<void>;
+    act(() => {
+      first = latest.current.requireReLogin();
+      second = latest.current.requireReLogin();
+    });
+    expect(first).toBe(second);
+    expect(await screen.findAllByRole("dialog")).toHaveLength(1);
+    await events.type(screen.getByLabelText("Mật khẩu"), "secret-password");
+    await events.click(screen.getByRole("button", { name: "Đăng nhập" }));
+    await expect(Promise.all([first, second])).resolves.toEqual([undefined, undefined]);
+  });
+
+  it("can open the dialog again after it was closed", async () => {
+    await renderReady();
+    const events = userEvent.setup();
+    let promise!: Promise<void>;
+    act(() => {
+      promise = latest.current.requireReLogin();
+    });
+    const settled = promise.catch(() => undefined);
+    await events.click(await screen.findByRole("button", { name: "Hủy" }));
+    await settled;
+    act(() => {
+      promise = latest.current.requireReLogin();
+    });
+    promise.catch(() => undefined);
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+});

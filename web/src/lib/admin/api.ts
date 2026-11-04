@@ -1,5 +1,5 @@
 import { CSRF_HEADER, getCsrfToken, resetCsrfToken } from "./csrf";
-import { AdminApiError, CSRF_INVALID_CODE, errorFromResponse, networkError } from "./errors";
+import { AdminApiError, CSRF_INVALID_CODE, GENERIC_ERROR_MESSAGE, errorFromResponse, networkError } from "./errors";
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";
 
@@ -46,7 +46,13 @@ async function request<T>(
 
   if (!response.ok) throw await errorFromResponse(response);
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  try {
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    // A 2xx body that is not JSON, or one that cannot be read, is still an API failure for the caller.
+    throw new AdminApiError(response.status, GENERIC_ERROR_MESSAGE);
+  }
 }
 
 /** Calls `/api{path}` with JSON. `path` starts with "/", for example "/admin/products". */
