@@ -31,6 +31,10 @@ const vi = {
     zaloCta: "Liên hệ qua Zalo",
     journeyCta: "Xem hành trình",
   },
+  motion: {
+    pause: "Tạm dừng chuyển động",
+    resume: "Chạy lại chuyển động",
+  },
   sections: {
     product: "Sản phẩm",
     journey: "Hành trình",
@@ -117,6 +121,10 @@ const en: Dictionary = {
   hero: {
     zaloCta: "Contact us on Zalo",
     journeyCta: "See the journey",
+  },
+  motion: {
+    pause: "Pause motion",
+    resume: "Play motion",
   },
   sections: {
     product: "Product",

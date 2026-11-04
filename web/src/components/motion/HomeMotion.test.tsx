@@ -275,6 +275,16 @@ describe("HomeMotion", () => {
     }
   });
 
+  it("calls the cleanup of every setup once when the motion is reverted", async () => {
+    const cleanup = vi.fn();
+    const other = vi.fn();
+    const { unmount } = render(<HomeMotion setups={[() => cleanup, other]} />);
+    await vi.runAllTimersAsync();
+    expect(cleanup).not.toHaveBeenCalled();
+    unmount();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+  });
+
   it("renders nothing", () => {
     const { container } = render(<HomeMotion setups={[]} />);
     expect(container).toBeEmptyDOMElement();

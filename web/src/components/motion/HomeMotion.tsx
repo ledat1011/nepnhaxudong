@@ -67,11 +67,16 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
           const media = modules.gsap.matchMedia();
           mm = media;
           media.add(MOTION_OK_QUERY, () => {
-            setups.forEach((setup) => setup(modules, document));
+            const cleanups: Array<() => void> = [];
+            for (const setup of setups) {
+              const cleanup = setup(modules, document);
+              if (typeof cleanup === "function") cleanups.push(cleanup);
+            }
             // A clamped start is applied only by a refresh, and the page load refresh is over.
             modules.ScrollTrigger.refresh();
             document.documentElement.dataset.motion = "on";
             return () => {
+              cleanups.forEach((cleanup) => cleanup());
               delete document.documentElement.dataset.motion;
             };
           });
