@@ -176,4 +176,112 @@ describe("ProductForm", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Đặc điểm (tiếng Việt) cần có ít nhất một mục.");
     expect(nameVi).toHaveValue("Gạo ST25!");
   });
+  it("sends one create request however often Lưu is tapped, then goes to the new product", async () => {
+    const events = userEvent.setup();
+    let resolvePost: (value: ProductAdminDto) => void = () => {};
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "POST") return new Promise<ProductAdminDto>((resolve) => (resolvePost = resolve));
+      return undefined;
+    });
+    render(<ProductForm />);
+    await events.type(screen.getAllByLabelText(/^Tiếng Việt/)[0], "Gạo mới");
+    await events.click(screen.getByRole("button", { name: "Thêm đặc điểm" }));
+    await events.type(screen.getByLabelText("Đặc điểm 1 (tiếng Việt)"), "Dẻo");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await events.click(screen.getByRole("button", { name: /Đang lưu/ }));
+    resolvePost(product({ id: 9 }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/san-pham/9"));
+    const locked = screen.getByRole("button", { name: /Đang lưu/ });
+    await events.click(locked);
+    expect(locked).toBeDisabled();
+    expect(writeBodies()).toHaveLength(1);
+  });
+
+  it("locks Xóa sản phẩm after a successful delete", async () => {
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    await events.click(screen.getByRole("button", { name: "Xóa sản phẩm" }));
+    await events.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Xóa" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/admin/san-pham"));
+    expect(screen.getByRole("button", { name: "Xóa sản phẩm" })).toBeDisabled();
+  });
+
+  it("stays on the page and shows the API detail when the delete fails", async () => {
+    const events = userEvent.setup();
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "DELETE") throw new AdminApiError(409, "Sản phẩm đang được dùng.");
+      return undefined;
+    });
+    render(<ProductForm initial={product()} />);
+    await events.click(screen.getByRole("button", { name: "Xóa sản phẩm" }));
+    await events.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Xóa" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Sản phẩm đang được dùng.");
+    expect(push).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Xóa sản phẩm" })).toBeEnabled();
+  });
+
+  it.each([
+    ["weight", { weightGrams: 1e20, priceVnd: null, sortOrder: 0 }, "khối lượng quá lớn"],
+    ["price", { weightGrams: 1000, priceVnd: 1e20, sortOrder: 0 }, "giá quá lớn"],
+  ])("refuses a %s above the limit without calling the API", async (_name, packaging, message) => {
+    const events = userEvent.setup();
+    render(<ProductForm initial={product({ packagings: [packaging] })} />);
+    await events.type(screen.getAllByLabelText(/^Tiếng Việt/)[0], "!");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    expect(writeBodies()).toHaveLength(0);
+  });
+
+  it("sends features that have more Vietnamese than English items as they are", async () => {
+    const events = userEvent.setup();
+    render(<ProductForm initial={product({ features: { vi: ["A", "B", "C"], en: ["a"] } })} />);
+    await events.type(screen.getAllByLabelText(/^Tiếng Việt/)[0], "!");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writeBodies()).toHaveLength(1));
+    expect(writeBodies()[0]).toMatchObject({ features: { vi: ["A", "B", "C"], en: ["a"] } });
+  });
+
+  it("enables Lưu only while there are unsaved changes", async () => {
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    const save = () => screen.getByRole("button", { name: "Lưu" });
+    expect(save()).toBeDisabled();
+    await events.type(screen.getAllByLabelText(/^Tiếng Việt/)[0], "!");
+    expect(save()).toBeEnabled();
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") throw new AdminApiError(500, "Lỗi máy chủ.");
+      return undefined;
+    });
+    await events.click(save());
+    await screen.findByRole("alert");
+    expect(save()).toBeEnabled();
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) =>
+      path.startsWith("/admin/media")
+        ? []
+        : init?.method === "PUT"
+          ? product({ name: { vi: "Gạo ST25!", en: "ST25 rice" } })
+          : undefined,
+    );
+    await events.click(save());
+    await waitFor(() => expect(save()).toBeDisabled());
+  });
+
+  it("does not let a 31st image be added", async () => {
+    const events = userEvent.setup();
+    const ids = Array.from({ length: 30 }, (_, i) => i + 1);
+    adminFetch.mockImplementation(async (path: string) =>
+      path.startsWith("/admin/media") ? [media(31), media(1)] : undefined,
+    );
+    render(<ProductForm initial={product({ mediaIds: ids })} />);
+    await events.click(screen.getByRole("button", { name: "Chọn ảnh" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Tối đa 30 ảnh")).toBeInTheDocument();
+    await events.click(await within(dialog).findByAltText("Ảnh 31"));
+    await events.click(within(dialog).getByRole("button", { name: "Xong" }));
+    expect(screen.queryByRole("button", { name: "Bỏ ảnh Ảnh 31" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^Bỏ ảnh/ })).toHaveLength(30);
+  });
 });

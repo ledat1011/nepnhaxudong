@@ -79,6 +79,9 @@ export function FeatureList({ rows, onChange }: Props) {
           );
         })}
       </ul>
+      <p className="text-sm text-muted-foreground">
+        Danh sách tiếng Anh theo cùng thứ tự. Ô tiếng Anh để trống sẽ được bỏ qua.
+      </p>
       <Button type="button" variant="outline" onClick={() => onChange([...rows, newFeatureRow()])}>
         Thêm đặc điểm
       </Button>

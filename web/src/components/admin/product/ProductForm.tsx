@@ -25,6 +25,9 @@ import { moved } from "./rows";
 /** Most images one product can have (the API refuses more). */
 const MAX_IMAGES = 30;
 
+/** The largest value of the Java Integer that holds the weight. */
+const MAX_WEIGHT_GRAMS = 2147483647;
+
 type FormState = {
   name: LocalizedText;
   description: LocalizedText;
@@ -87,11 +90,17 @@ function toPackagings(rows: PackagingRow[]): PackagingDto[] {
     if (row.weight.trim() === "" || !Number.isInteger(weight) || weight <= 0) {
       throw invalid(`Quy cách ${index + 1}: khối lượng phải là số nguyên lớn hơn 0.`);
     }
+    if (weight > MAX_WEIGHT_GRAMS) {
+      throw invalid(`Quy cách ${index + 1}: khối lượng quá lớn.`);
+    }
     // A hidden price is still sent: the API hides it on the public pages while "Hiện giá" is off.
     const priceText = row.price.trim();
     const price = priceText === "" ? null : Number(priceText);
     if (price !== null && (!Number.isInteger(price) || price < 0)) {
       throw invalid(`Quy cách ${index + 1}: giá phải là số nguyên không âm.`);
+    }
+    if (price !== null && price > Number.MAX_SAFE_INTEGER) {
+      throw invalid(`Quy cách ${index + 1}: giá quá lớn.`);
     }
     return { weightGrams: weight, priceVnd: price, sortOrder: null };
   });
@@ -120,6 +129,8 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const [state, setState] = useState<FormState>(() => stateFrom(initial));
   const [baselineSnapshot, setBaselineSnapshot] = useState(() => snapshot(stateFrom(initial)));
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // True after a create or delete succeeded, until the page changes: no second tap may write again.
+  const [leaving, setLeaving] = useState(false);
   const dirty = snapshot(state) !== baselineSnapshot;
   useUnsavedChanges(dirty);
 
@@ -146,7 +157,8 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
     const saved = await saving.save();
     if (saved === undefined) return;
     if (baseline === undefined) {
-      router.push(ADMIN_ROUTES.products);
+      setLeaving(true);
+      router.replace(`${ADMIN_ROUTES.products}/${saved.id}`);
       return;
     }
     const fresh = stateFrom(saved);
@@ -156,7 +168,10 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   }
 
   async function remove() {
-    if (await deleting.save()) router.push(ADMIN_ROUTES.products);
+    if (await deleting.save()) {
+      setLeaving(true);
+      router.push(ADMIN_ROUTES.products);
+    }
   }
 
   function cancel() {
@@ -206,7 +221,12 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
       <ProblemMessage error={saving.error ?? deleting.error} />
 
       {baseline !== undefined ? (
-        <Button type="button" variant="destructive" onClick={() => setConfirmDelete(true)}>
+        <Button
+          type="button"
+          variant="destructive"
+          disabled={leaving || saving.pending}
+          onClick={() => setConfirmDelete(true)}
+        >
           Xóa sản phẩm
         </Button>
       ) : null}
@@ -220,7 +240,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
         onConfirm={() => void remove()}
       />
 
-      <SaveBar dirty={dirty} pending={saving.pending} onSave={() => void save()} onCancel={cancel} />
+      <SaveBar dirty={dirty} pending={saving.pending || leaving} onSave={() => void save()} onCancel={cancel} />
     </div>
   );
 }
@@ -282,7 +302,7 @@ function ImageSection({ ids, onChange }: { ids: number[]; onChange(ids: number[]
           );
         })}
       </ul>
-      <MediaPicker mode="multiple" value={ids} onChange={(next) => onChange(next.slice(0, MAX_IMAGES))} />
+      <MediaPicker mode="multiple" value={ids} onChange={onChange} max={MAX_IMAGES} />
       {ids.length >= MAX_IMAGES ? (
         <p className="text-sm text-muted-foreground">Một sản phẩm có tối đa {MAX_IMAGES} ảnh.</p>
       ) : null}

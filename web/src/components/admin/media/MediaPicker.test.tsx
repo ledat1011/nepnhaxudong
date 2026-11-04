@@ -12,7 +12,15 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 import { MediaPicker } from "./MediaPicker";
 
 function media(id: number): MediaAdminDto {
-  return { id, url: `/media/${id}.webp`, width: 10, height: 10, mime: "image/webp", altVi: `Ảnh ${id}`, altEn: `Image ${id}` };
+  return {
+    id,
+    url: `/media/${id}.webp`,
+    width: 10,
+    height: 10,
+    mime: "image/webp",
+    altVi: `Ảnh ${id}`,
+    altEn: `Image ${id}`,
+  };
 }
 
 const page = (from: number, count: number) => Array.from({ length: count }, (_, i) => media(from - i));
@@ -50,6 +58,19 @@ describe("MediaPicker", () => {
     await events.click(within(screen.getByRole("dialog")).getByAltText("Ảnh 1"));
     expect(onChange).toHaveBeenLastCalledWith([3]);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("refuses a new image at max, says so, and still lets a chosen image be removed", async () => {
+    adminFetch.mockResolvedValue(page(3, 3));
+    const onChange = vi.fn();
+    const events = userEvent.setup();
+    render(<MediaPicker mode="multiple" value={[1, 2]} onChange={onChange} max={2} />);
+    const dialog = await open(events);
+    expect(within(dialog).getByText("Tối đa 2 ảnh")).toBeInTheDocument();
+    await events.click(await within(dialog).findByAltText("Ảnh 3"));
+    expect(onChange).not.toHaveBeenCalled();
+    await events.click(within(dialog).getByAltText("Ảnh 1"));
+    expect(onChange).toHaveBeenCalledWith([2]);
   });
 
   it("loads 50 images a page and shows More only while a page is full", async () => {

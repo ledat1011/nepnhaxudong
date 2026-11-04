@@ -23,6 +23,8 @@ type Props = {
   mode: "single" | "multiple";
   value: number[];
   onChange(ids: number[]): void;
+  /** Multiple mode only: the most images that can be chosen. */
+  max?: number;
 };
 
 /**
@@ -30,7 +32,7 @@ type Props = {
  * Single mode: choosing an image replaces the value with that one id and closes the box.
  * Multiple mode: choosing toggles an image, and the user closes the box with "Xong".
  */
-export function MediaPicker({ mode, value, onChange }: Props) {
+export function MediaPicker({ mode, value, onChange, max }: Props) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -44,7 +46,7 @@ export function MediaPicker({ mode, value, onChange }: Props) {
           <DialogTitle>{mode === "single" ? "Chọn một ảnh" : "Chọn ảnh"}</DialogTitle>
           <DialogDescription>Chọn từ thư viện hoặc tải ảnh mới lên.</DialogDescription>
         </DialogHeader>
-        <PickerBody mode={mode} value={value} onChange={onChange} close={() => setOpen(false)} />
+        <PickerBody mode={mode} value={value} onChange={onChange} max={max} close={() => setOpen(false)} />
         <DialogFooter>
           <Button type="button" variant={mode === "multiple" ? "default" : "outline"} onClick={() => setOpen(false)}>
             {mode === "multiple" ? "Xong" : "Đóng"}
@@ -55,15 +57,18 @@ export function MediaPicker({ mode, value, onChange }: Props) {
   );
 }
 
-function PickerBody({ mode, value, onChange, close }: Props & { close(): void }) {
+function PickerBody({ mode, value, onChange, max, close }: Props & { close(): void }) {
   const library = useMediaLibrary();
   const [tab, setTab] = useState("library");
+
+  const full = mode === "multiple" && max !== undefined && value.length >= max;
 
   function choose(media: MediaAdminDto) {
     if (mode === "single") {
       onChange([media.id]);
       close();
     } else {
+      if (full && !value.includes(media.id)) return;
       onChange(value.includes(media.id) ? value.filter((id) => id !== media.id) : [...value, media.id]);
     }
   }
@@ -75,7 +80,7 @@ function PickerBody({ mode, value, onChange, close }: Props & { close(): void })
       onChange([media.id]);
       close();
     } else {
-      onChange([...value.filter((id) => id !== media.id), media.id]);
+      if (!full || value.includes(media.id)) onChange([...value.filter((id) => id !== media.id), media.id]);
       setTab("library");
     }
   }
@@ -87,11 +92,20 @@ function PickerBody({ mode, value, onChange, close }: Props & { close(): void })
         <TabsTrigger value="upload">Tải ảnh mới</TabsTrigger>
       </TabsList>
       <TabsContent value="library" className="flex flex-col gap-3 pt-3">
+        {full ? (
+          <p role="status" className="text-sm text-muted-foreground">
+            Tối đa {max} ảnh
+          </p>
+        ) : null}
         {library.items.length > 0 || !library.loading ? (
           <MediaGrid items={library.items} onSelect={choose} selectedIds={value} />
         ) : null}
         <ProblemMessage error={library.error} />
-        {library.loading ? <p role="status" className="text-center text-muted-foreground">Đang tải…</p> : null}
+        {library.loading ? (
+          <p role="status" className="text-center text-muted-foreground">
+            Đang tải…
+          </p>
+        ) : null}
         {library.error !== null && !library.loading ? (
           <Button type="button" variant="outline" onClick={() => void library.loadMore()}>
             Thử lại
@@ -104,6 +118,11 @@ function PickerBody({ mode, value, onChange, close }: Props & { close(): void })
         ) : null}
       </TabsContent>
       <TabsContent value="upload" className="pt-3">
+        {full ? (
+          <p role="status" className="pb-3 text-sm text-muted-foreground">
+            Tối đa {max} ảnh
+          </p>
+        ) : null}
         <MediaUploader onUploaded={uploaded} />
       </TabsContent>
     </Tabs>
