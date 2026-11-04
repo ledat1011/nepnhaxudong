@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ZaloLink } from "@/components/contact/ZaloLink";
+import { LinkPendingStatus } from "@/components/ui/LinkPendingStatus";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { homePath } from "@/lib/i18n/routes";
@@ -24,6 +25,7 @@ export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderP
     <li key={item.id}>
       <Link href={`${home}#${item.id}`} className={LINK_CLASS}>
         {item.label}
+        <LinkPendingStatus label={dict.loading.page} />
       </Link>
     </li>
   ));
@@ -31,7 +33,7 @@ export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderP
   return (
     <header className="sticky top-0 z-40 border-b border-straw bg-rice">
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-1 md:gap-3">
-        <LogoLink href={home} name={dict.site.name} />
+        <LogoLink href={home} name={dict.site.name} loadingLabel={dict.loading.page} />
         <nav aria-label={dict.nav.label} className="hidden md:block">
           <ul className="flex items-center gap-2">{items}</ul>
         </nav>
