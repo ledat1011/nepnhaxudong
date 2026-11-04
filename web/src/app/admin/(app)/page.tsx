@@ -1,8 +1,14 @@
-// Placeholder so the admin layout can be checked. The dashboard replaces it, and the shell moves it into the (app) group.
+import { MissingEnSummary } from "@/components/admin/dashboard/MissingEnSummary";
+import { RecentChanges } from "@/components/admin/dashboard/RecentChanges";
+import { Shortcuts } from "@/components/admin/dashboard/Shortcuts";
+
+/** The admin home: shortcuts, what still misses English, and the latest edits. */
 export default function AdminHomePage() {
   return (
-    <main className="p-4">
-      <h1 className="text-xl font-bold">Quản trị Nếp Nhà</h1>
-    </main>
+    <div className="flex flex-col gap-6 p-4">
+      <Shortcuts />
+      <MissingEnSummary />
+      <RecentChanges />
+    </div>
   );
 }
