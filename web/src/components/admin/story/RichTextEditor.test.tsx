@@ -92,8 +92,7 @@ describe("RichTextEditor", () => {
     const dialog = await screen.findByRole("dialog");
     await events.click(await within(dialog).findByAltText("Ảnh 2"));
     await waitFor(() => expect(onHtml).toHaveBeenCalled());
-    // Tiptap keeps an empty paragraph after a last image, so the writer can go on typing.
-    expect(onHtml.mock.calls.at(-1)?.[0]).toBe('<img src="/media/2.webp" alt="Image 2"><p></p>');
+    expect(onHtml.mock.calls.at(-1)?.[0]).toBe('<img src="/media/2.webp" alt="Image 2">');
   });
 
   it("inserts a library image with the Vietnamese alt text on the Vietnamese tab", async () => {
@@ -105,7 +104,7 @@ describe("RichTextEditor", () => {
     const dialog = await screen.findByRole("dialog");
     await events.click(await within(dialog).findByAltText("Ảnh 1"));
     await waitFor(() => expect(onHtml).toHaveBeenCalled());
-    expect(onHtml.mock.calls.at(-1)?.[0]).toBe('<img src="/media/1.webp" alt="Ảnh 1"><p></p>');
+    expect(onHtml.mock.calls.at(-1)?.[0]).toBe('<img src="/media/1.webp" alt="Ảnh 1">');
   });
 
   it("does not insert an image pasted from another site", async () => {
@@ -115,6 +114,37 @@ describe("RichTextEditor", () => {
     paste(box, '<p>x</p><img src="https://evil.example/a.png" alt="e">');
     await waitFor(() => expect(onHtml).toHaveBeenCalled());
     expect(onHtml.mock.calls.at(-1)?.[0]).not.toContain("<img");
+  });
+
+  it("does not report a change when the writer only focuses a body that ends with a heading", async () => {
+    const onHtml = vi.fn();
+    render(<Harness lang="vi" initial="<p>a</p><h2>B</h2>" onHtml={onHtml} />);
+    const box = await screen.findByRole("textbox", { name: "Nội dung" });
+    await userEvent.click(box);
+    box.focus();
+    expect(onHtml).not.toHaveBeenCalled();
+  });
+
+  it("reports the normalized html once when it differs from the value it was given", async () => {
+    const onNormalized = vi.fn();
+    render(<RichTextEditor lang="vi" value="<ul><li>x</li></ul>" onChange={vi.fn()} onNormalized={onNormalized} />);
+    await screen.findByRole("textbox", { name: "Nội dung" });
+    await waitFor(() => expect(onNormalized).toHaveBeenCalledTimes(1));
+    expect(onNormalized).toHaveBeenCalledWith("<ul><li><p>x</p></li></ul>", "<ul><li>x</li></ul>");
+  });
+
+  it("does not report anything when the value is already normalized", async () => {
+    const onNormalized = vi.fn();
+    render(<RichTextEditor lang="vi" value="<p>a</p><h2>B</h2>" onChange={vi.fn()} onNormalized={onNormalized} />);
+    await screen.findByRole("textbox", { name: "Nội dung" });
+    expect(onNormalized).not.toHaveBeenCalled();
+  });
+
+  it("cannot be edited while readOnly", async () => {
+    render(<RichTextEditor lang="vi" value="<p>a</p>" onChange={vi.fn()} readOnly />);
+    const box = await screen.findByRole("textbox", { name: "Nội dung" });
+    expect(box).toHaveAttribute("contenteditable", "false");
+    expect(screen.queryByRole("toolbar")).not.toBeInTheDocument();
   });
 
   it("shows a new value that arrives from outside (for example after Hủy)", async () => {

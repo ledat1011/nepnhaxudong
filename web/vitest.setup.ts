@@ -6,3 +6,8 @@ import { afterEach } from "vitest";
 afterEach(() => {
   cleanup();
 });
+
+// jsdom has no layout. ProseMirror asks for the element under a point when the writer clicks in the editor.
+if (typeof document.elementFromPoint !== "function") {
+  document.elementFromPoint = () => null;
+}

@@ -88,7 +88,8 @@ beforeEach(() => {
 });
 
 async function ready() {
-  await screen.findByRole("textbox", { name: "Nội dung" });
+  // The first test of a run also loads the editor chunk, which can be slow on a busy machine.
+  await screen.findByRole("textbox", { name: "Nội dung" }, { timeout: 10_000 });
 }
 
 describe("StoryForm slug", () => {
@@ -302,6 +303,91 @@ describe("StoryForm slug conflict", () => {
     await screen.findByRole("alert");
     await events.type(screen.getByLabelText("Đường dẫn"), "x");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+const IMAGE_WARNING = "Có ảnh không hiển thị được trong trình soạn thảo và sẽ bị xóa nếu bạn lưu.";
+
+describe("StoryForm untouched story", () => {
+  it("stays clean after the editor is focused when the body ends with a heading", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story({ bodyHtml: { vi: "<p>a</p><h2>B</h2>", en: null } })} />);
+    await ready();
+    await events.click(screen.getByRole("textbox", { name: "Nội dung" }));
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Đăng bài" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Xem trước" })).toBeEnabled();
+  });
+
+  it("stays clean when the editor writes the body in another form", async () => {
+    render(<StoryForm initial={story({ bodyHtml: { vi: "<ul><li>x</li></ul>", en: null } })} />);
+    await ready();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Đăng bài" })).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
+  });
+
+  it("saves the editor form of the body after a real edit", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story({ bodyHtml: { vi: "<ul><li>x</li></ul>", en: null } })} />);
+    await ready();
+    await events.type(screen.getByLabelText("Tiêu đề"), "!");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    expect(writes()[0].body.bodyHtml?.vi).toBe("<ul><li><p>x</p></li></ul>");
+  });
+
+  it("warns when the API body has an image the editor cannot show, and stays clean", async () => {
+    render(
+      <StoryForm initial={story({ bodyHtml: { vi: '<p>x</p><img src="https://e.example/a.png" alt="e">', en: null } })} />,
+    );
+    await ready();
+    expect(await screen.findByText(IMAGE_WARNING)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
+  });
+
+  it("shows no warning for a body whose images are all from the library", async () => {
+    render(<StoryForm initial={story({ bodyHtml: { vi: '<img src="/media/1.webp" alt="a">', en: null } })} />);
+    await ready();
+    expect(screen.queryByText(IMAGE_WARNING)).not.toBeInTheDocument();
+  });
+
+  it("makes the fields read-only while a new story is being created", async () => {
+    const events = userEvent.setup();
+    let finish: (value: StoryAdminDto) => void = () => undefined;
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "POST") return new Promise<StoryAdminDto>((resolve) => (finish = resolve));
+      return undefined;
+    });
+    render(<StoryForm />);
+    await ready();
+    await events.type(screen.getByLabelText("Tiêu đề"), "Mùa gặt");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    expect(screen.getByLabelText("Tiêu đề")).toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Đường dẫn")).toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Tóm tắt")).toHaveAttribute("readonly");
+    expect(screen.getByRole("textbox", { name: "Nội dung" })).toHaveAttribute("contenteditable", "false");
+    expect(within(screen.getByRole("group", { name: "Ảnh bìa" })).getByRole("button", { name: "Chọn ảnh" })).toBeDisabled();
+    await events.type(screen.getByLabelText("Tiêu đề"), "xyz");
+    expect(screen.getByLabelText("Tiêu đề")).toHaveValue("Mùa gặt");
+    await act(async () => finish(answer(9, writes()[0].body)));
+    expect(replace).toHaveBeenCalledWith("/admin/cau-chuyen/9");
+  });
+
+  it("can be edited again after a failed create", async () => {
+    const events = userEvent.setup();
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "POST") throw new AdminApiError(503, "Máy chủ đang bận.");
+      return undefined;
+    });
+    render(<StoryForm />);
+    await ready();
+    await events.type(screen.getByLabelText("Tiêu đề"), "Mùa gặt");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await screen.findByText("Máy chủ đang bận.");
+    expect(screen.getByLabelText("Tiêu đề")).not.toHaveAttribute("readonly");
   });
 });
 

@@ -53,6 +53,26 @@ describe("storyEditorExtensions", () => {
   });
 });
 
+describe("storyEditorExtensions (fix round)", () => {
+  it("adds no trailing paragraph after a heading, a list, a quote or an image", () => {
+    expect(htmlAfterLoading("<p>a</p><h2>B</h2>")).toBe("<p>a</p><h2>B</h2>");
+    expect(htmlAfterLoading("<blockquote><p>q</p></blockquote>")).toBe("<blockquote><p>q</p></blockquote>");
+    expect(htmlAfterLoading('<img src="/media/a.webp" alt="x">')).toBe('<img src="/media/a.webp" alt="x">');
+  });
+
+  it.each(["/media/../api/admin/users", "/media/%2e%2E/x", "/media/%2E./x", "/media/a\\b.webp", "/media/a&#9;b.webp"])(
+    "drops an image whose address could leave /media/: %j",
+    (src) => {
+      const html = htmlAfterLoading('<p>x</p><img src="' + src + '" alt="e">');
+      expect(html).not.toContain("<img");
+    },
+  );
+
+  it("keeps no start or type on an ordered list", () => {
+    expect(htmlAfterLoading('<ol start="3" type="a"><li>x</li></ol>')).toBe("<ol><li><p>x</p></li></ol>");
+  });
+});
+
 describe("isAllowedStoryLink", () => {
   it.each(["https://a.vn", "http://a.vn", "mailto:a@b.vn", "tel:+84123", "/gioi-thieu", "#top", "HTTPS://a.vn"])(
     "allows %s",

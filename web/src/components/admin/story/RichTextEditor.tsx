@@ -10,6 +10,14 @@ type Props = {
   onChange(html: string): void;
   /** The language of the tab: it decides which alt text an inserted image gets. */
   lang: "vi" | "en";
+  /**
+   * Called once, when the box is made, if its own form of the html differs from `value` (for example it
+   * adds a paragraph inside a list item). Gets the new html and the value it was made from.
+   * It is not a change by the writer, so `onChange` is not called for it.
+   */
+  onNormalized?(html: string, from: string): void;
+  /** No editing and no tools, for example while a save runs. */
+  readOnly?: boolean;
 };
 
 // The look of the text inside the editor: the same elements the public page styles in StoryBody.
@@ -25,13 +33,15 @@ const CONTENT_CLASS = [
 ].join(" ");
 
 /** A rich text box for a story body. It only offers what the API keeps (see `story-editor.ts`). */
-export function RichTextEditor({ value, onChange, lang }: Props) {
+export function RichTextEditor({ value, onChange, lang, onNormalized, readOnly = false }: Props) {
   const extensions = useMemo(() => storyEditorExtensions(), []);
   // The last html this box reported or was given. A different `value` is a change from outside (Hủy, a saved answer).
   const lastSeen = useRef(value);
   const onChangeRef = useRef(onChange);
+  const onNormalizedRef = useRef(onNormalized);
   useLayoutEffect(() => {
     onChangeRef.current = onChange;
+    onNormalizedRef.current = onNormalized;
   });
 
   const editor = useEditor({
@@ -45,6 +55,14 @@ export function RichTextEditor({ value, onChange, lang }: Props) {
         "aria-multiline": "true",
         class: CONTENT_CLASS,
       },
+    },
+    editable: !readOnly,
+    onCreate: ({ editor: created }) => {
+      const html = editorHtml(created);
+      if (html === value) return;
+      // The parent is told, and lastSeen follows, so the effect below does not write the old value back.
+      lastSeen.current = html;
+      onNormalizedRef.current?.(html, value);
     },
     onUpdate: ({ editor: current }) => {
       const html = editorHtml(current);
@@ -60,10 +78,14 @@ export function RichTextEditor({ value, onChange, lang }: Props) {
     editor.commands.setContent(value, { emitUpdate: false });
   }, [editor, value]);
 
+  useEffect(() => {
+    if (editor !== null && editor.isEditable === readOnly) editor.setEditable(!readOnly);
+  }, [editor, readOnly]);
+
   if (editor === null) return null;
   return (
     <div className="min-w-0 overflow-hidden rounded-md border bg-background focus-within:ring-[3px] focus-within:ring-ring/50">
-      <EditorToolbar editor={editor} lang={lang} />
+      {readOnly ? null : <EditorToolbar editor={editor} lang={lang} />}
       <EditorContent editor={editor} />
     </div>
   );

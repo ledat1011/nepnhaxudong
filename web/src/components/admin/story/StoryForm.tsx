@@ -118,6 +118,10 @@ async function conflictingLangs(sent: FormState, baseline: StoryAdminDto | undef
   return [changed[0] ?? "vi"];
 }
 
+function countImages(html: string): number {
+  return (html.match(/<img\b/gi) ?? []).length;
+}
+
 function formatDate(iso: string | null): string {
   if (iso === null) return "";
   const date = new Date(iso);
@@ -132,7 +136,9 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const router = useRouter();
   const [baseline, setBaseline] = useState<StoryAdminDto | undefined>(initial);
   const [state, setState] = useState<FormState>(() => stateFrom(initial));
-  const [baselineSnapshot, setBaselineSnapshot] = useState(() => snapshot(stateFrom(initial)));
+  const [baselineState, setBaselineState] = useState(() => stateFrom(initial));
+  // Per language: the API body had an image that the editor cannot show.
+  const [lostImages, setLostImages] = useState<Record<Lang, boolean>>({ vi: false, en: false });
   const [tab, setTab] = useState<Lang>("vi");
   // A slug follows its title while it is empty and the story has no saved slug in that language.
   // Editing the slug by hand to something else turns this off.
@@ -144,7 +150,7 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   // True after a create succeeded, until the page changes: no second tap may create the story again.
   const [leaving, setLeaving] = useState(false);
-  const dirty = snapshot(state) !== baselineSnapshot;
+  const dirty = snapshot(state) !== snapshot(baselineState);
   useUnsavedChanges(dirty && !leaving);
 
   // The newest state, for the save action: after a sign-in again the action runs once more and must send what is typed now.
@@ -193,7 +199,8 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
     const fresh = stateFrom(saved);
     setBaseline(saved);
     setState((current) => mergeSaved(current, sent, fresh));
-    setBaselineSnapshot(snapshot(fresh));
+    setBaselineState(fresh);
+    setLostImages({ vi: false, en: false });
     // A slug the story has now is an existing slug: it no longer follows the title.
     setFollowTitle((current) => ({ vi: current.vi && saved.slug.vi == null, en: current.en && saved.slug.en == null }));
   }
@@ -210,7 +217,7 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   function cancel() {
     const original = stateFrom(baseline);
     setState(original);
-    setBaselineSnapshot(snapshot(original));
+    setBaselineState(original);
     setFollowTitle({ vi: baseline?.slug.vi == null, en: baseline?.slug.en == null });
     setConflicts(NO_CONFLICTS);
     saving.reset();
@@ -219,6 +226,19 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   function patchLang(lang: Lang, change: Partial<LangFields>) {
     setState((current) => ({ ...current, [lang]: { ...current[lang], ...change } }));
     if (change.slug !== undefined) setConflicts((current) => ({ ...current, [lang]: null }));
+  }
+
+  /**
+   * The editor wrote the body in its own form when it opened. If the box still holds the API value, both the box
+   * and the saved baseline take the new form, so an untouched story is not "changed". An image that the editor
+   * dropped is reported, because saving would remove it.
+   */
+  function bodyNormalized(lang: Lang, html: string, from: string) {
+    const take = (current: FormState): FormState =>
+      current[lang].bodyHtml === from ? { ...current, [lang]: { ...current[lang], bodyHtml: html } } : current;
+    setState(take);
+    setBaselineState(take);
+    if (countImages(html) < countImages(from)) setLostImages((current) => ({ ...current, [lang]: true }));
   }
 
   function changeTitle(lang: Lang, title: string) {
@@ -234,6 +254,8 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const saved = baseline !== undefined;
   const published = baseline?.status === "PUBLISHED";
   const statusBlocked = busy || dirty;
+  // While a new story is created the fields cannot change: the page goes to the new story and would lose the text.
+  const locked = baseline === undefined && (saving.pending || leaving);
   const saveError = saving.error?.status === 409 ? null : saving.error;
 
   return (
@@ -278,11 +300,13 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
         <ProblemMessage error={publishing.error ?? unpublishing.error} />
       </section>
 
-      <SingleImageSection
-        label="Ảnh bìa"
-        mediaId={state.coverMediaId}
-        onChange={(coverMediaId) => setState((current) => ({ ...current, coverMediaId }))}
-      />
+      <fieldset disabled={locked} className="min-w-0">
+        <SingleImageSection
+          label="Ảnh bìa"
+          mediaId={state.coverMediaId}
+          onChange={(coverMediaId) => setState((current) => ({ ...current, coverMediaId }))}
+        />
+      </fieldset>
 
       <Tabs value={tab} onValueChange={(next) => setTab(next as Lang)}>
         <TabsList className="w-full">
@@ -295,6 +319,9 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
               lang={lang}
               fields={state[lang]}
               slugError={conflicts[lang]}
+              readOnly={locked}
+              lostImages={lostImages[lang]}
+              onNormalized={(html, from) => bodyNormalized(lang, html, from)}
               onTitle={(title) => changeTitle(lang, title)}
               onSlug={(slug) => changeSlug(lang, slug)}
               onExcerpt={(excerpt) => patchLang(lang, { excerpt })}
@@ -316,25 +343,29 @@ type PanelProps = {
   lang: Lang;
   fields: LangFields;
   slugError: string | null;
+  readOnly: boolean;
+  lostImages: boolean;
+  onNormalized(html: string, from: string): void;
   onTitle(title: string): void;
   onSlug(slug: string): void;
   onExcerpt(excerpt: string): void;
   onBody(html: string): void;
 };
 
-function LangPanel({ lang, fields, slugError, onTitle, onSlug, onExcerpt, onBody }: PanelProps) {
+function LangPanel({ lang, fields, slugError, readOnly, lostImages, onNormalized, onTitle, onSlug, onExcerpt, onBody }: PanelProps) {
   const id = useId();
   return (
     <>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${id}-title`}>Tiêu đề</Label>
-        <Input id={`${id}-title`} value={fields.title} onChange={(event) => onTitle(event.target.value)} />
+        <Input id={`${id}-title`} readOnly={readOnly} value={fields.title} onChange={(event) => onTitle(event.target.value)} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${id}-slug`}>Đường dẫn</Label>
         <Input
           id={`${id}-slug`}
           value={fields.slug}
+          readOnly={readOnly}
           autoComplete="off"
           autoCapitalize="none"
           spellCheck={false}
@@ -351,11 +382,22 @@ function LangPanel({ lang, fields, slugError, onTitle, onSlug, onExcerpt, onBody
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${id}-excerpt`}>Tóm tắt</Label>
-        <Textarea id={`${id}-excerpt`} rows={3} value={fields.excerpt} onChange={(event) => onExcerpt(event.target.value)} />
+        <Textarea id={`${id}-excerpt`} rows={3} readOnly={readOnly} value={fields.excerpt} onChange={(event) => onExcerpt(event.target.value)} />
       </div>
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Nội dung</span>
-        <RichTextEditor lang={lang} value={fields.bodyHtml} onChange={onBody} />
+        {lostImages ? (
+          <p role="status" className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            Có ảnh không hiển thị được trong trình soạn thảo và sẽ bị xóa nếu bạn lưu.
+          </p>
+        ) : null}
+        <RichTextEditor
+          lang={lang}
+          value={fields.bodyHtml}
+          onChange={onBody}
+          onNormalized={onNormalized}
+          readOnly={readOnly}
+        />
       </div>
     </>
   );

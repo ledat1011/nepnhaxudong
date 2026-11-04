@@ -1,6 +1,7 @@
 import type { Editor, Extensions } from "@tiptap/core";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
+import OrderedList from "@tiptap/extension-ordered-list";
 import StarterKit from "@tiptap/starter-kit";
 
 /**
@@ -26,6 +27,21 @@ export function isAllowedStoryLink(address: string): boolean {
 /** Only the library images (`/media/...`) are accepted: no image from another site, no inline data. */
 const LIBRARY_IMAGE_SELECTOR = 'img[src^="/media/"]';
 
+/**
+ * Like `StorySafelist.isSafeImageSource` of the API for a library image: nothing that could leave `/media/`
+ * (`..`, an encoded dot, a backslash) and no control character.
+ */
+export function isSafeLibraryImageSource(src: string): boolean {
+  const lower = src.toLowerCase();
+  return (
+    src.startsWith("/media/") &&
+    !CONTROL_CHARACTER.test(src) &&
+    !lower.includes("..") &&
+    !lower.includes("%2e") &&
+    !src.includes("\\")
+  );
+}
+
 export function storyEditorExtensions(): Extensions {
   return [
     StarterKit.configure({
@@ -37,6 +53,10 @@ export function storyEditorExtensions(): Extensions {
       underline: false,
       hardBreak: false,
       heading: { levels: [2, 3] },
+      // Its extra paragraph after a heading, list, quote or image would turn an untouched story into a changed one.
+      trailingNode: false,
+      // Added below without the start and type attributes, which the API drops.
+      orderedList: false,
       // Link is configured below, because its attributes cannot be limited through the StarterKit option.
       link: false,
     }),
@@ -51,13 +71,23 @@ export function storyEditorExtensions(): Extensions {
       HTMLAttributes: { target: null, rel: null, class: null },
       isAllowedUri: (address) => isAllowedStoryLink(address),
     }),
+    OrderedList.extend({
+      addAttributes() {
+        return {};
+      },
+    }),
     Image.extend({
       // Only src and alt exist, so a pasted title, width or height is dropped.
       addAttributes() {
         return { src: { default: null }, alt: { default: null } };
       },
       parseHTML() {
-        return [{ tag: LIBRARY_IMAGE_SELECTOR }];
+        return [
+          {
+            tag: LIBRARY_IMAGE_SELECTOR,
+            getAttrs: (element) => (isSafeLibraryImageSource(element.getAttribute("src") ?? "") ? null : false),
+          },
+        ];
       },
     }),
   ];
