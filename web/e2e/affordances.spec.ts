@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { getDictionary } from "../src/lib/i18n/dictionaries";
 
 const vi = getDictionary("vi");
+const en = getDictionary("en");
 const PHONE = { width: 375, height: 812 };
 const NARROW = { width: 320, height: 640 };
 const MIN_TAP_PX = 44;
@@ -211,6 +212,29 @@ test.describe("loading state of links to pages rendered on request", () => {
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(vi.sections.story);
       await expect(page.getByText(vi.loading.page)).toHaveCount(0);
       await context.close();
+    });
+  }
+});
+
+test.describe("product features", () => {
+  const cases = [
+    ["/vi", ["tròn mẩy", "dẻo", "thơm"]],
+    ["/en", ["plump", "soft", "fragrant"]],
+  ] as const;
+
+  for (const [path, words] of cases) {
+    test(`${path}: each feature shows its own icon`, async ({ page }) => {
+      await page.goto(path);
+      const heading = path === "/vi" ? vi.product.features : en.product.features;
+      const list = page.getByRole("heading", { name: heading }).locator("xpath=following-sibling::ul");
+      const rows = await list.locator("li").evaluateAll((items) =>
+        items.map((li) => ({
+          text: li.textContent?.toLowerCase() ?? "",
+          icon: li.querySelector("svg")?.getAttribute("data-icon"),
+        })),
+      );
+      expect(rows.map((row) => row.icon)).toEqual(["round", "soft", "fragrant"]);
+      rows.forEach((row, i) => expect(row.text).toContain(words[i]));
     });
   }
 });
