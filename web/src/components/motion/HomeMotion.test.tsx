@@ -9,18 +9,7 @@ vi.mock("@/lib/motion/load-gsap", () => ({ loadGsap: vi.fn() }));
 type Listener = (event: { matches: boolean }) => void;
 
 const revert = vi.fn();
-let refreshListeners: (() => void)[] = [];
-/** Runs what ScrollTrigger runs at the end of a refresh: every "refresh" listener. */
-function finishRefresh() {
-  [...refreshListeners].forEach((listener) => listener());
-}
 const refresh = vi.fn();
-const addEventListener = vi.fn((_type: string, listener: () => void) => {
-  refreshListeners.push(listener);
-});
-const removeEventListener = vi.fn((_type: string, listener: () => void) => {
-  refreshListeners = refreshListeners.filter((item) => item !== listener);
-});
 const modules = {
   gsap: {
     matchMedia: () => ({
@@ -31,7 +20,7 @@ const modules = {
       revert,
     }),
   },
-  ScrollTrigger: { refresh, addEventListener, removeEventListener },
+  ScrollTrigger: { refresh },
 };
 
 let reducedMatches = false;
@@ -54,8 +43,6 @@ beforeEach(() => {
   vi.mocked(loadGsap).mockResolvedValue(modules as never);
   revert.mockReset();
   refresh.mockReset();
-  refresh.mockImplementation(finishRefresh);
-  refreshListeners = [];
   listeners = [];
   reducedMatches = false;
   delete document.documentElement.dataset.motion;
@@ -89,39 +76,30 @@ describe("HomeMotion", () => {
     expect(document.documentElement.dataset.motion).toBe("on");
   });
 
-  it("asks once for the safe refresh, after every setup", async () => {
+  it("refreshes ScrollTrigger once, after every setup", async () => {
     const first = vi.fn();
     const second = vi.fn();
     render(<HomeMotion setups={[first, second]} />);
     await vi.runAllTimersAsync();
     expect(refresh).toHaveBeenCalledTimes(1);
-    // `refresh(true)` waits until the page stops scrolling, so it cannot stop a scroll.
-    expect(refresh).toHaveBeenCalledWith(true);
     expect(refresh.mock.invocationCallOrder[0]).toBeGreaterThan(
       second.mock.invocationCallOrder[0],
     );
   });
 
-  it("marks the motion as on only when the refresh has run", async () => {
-    refresh.mockImplementation(() => {});
+  it("waits for a running scroll to end before it runs the setups", async () => {
     const setup = vi.fn();
     render(<HomeMotion setups={[setup]} />);
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(250);
+    expect(loadGsap).toHaveBeenCalled();
+    window.dispatchEvent(new Event("scroll"));
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(setup).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
+    window.dispatchEvent(new Event("scrollend"));
     expect(setup).toHaveBeenCalledTimes(1);
-    expect(document.documentElement.dataset.motion).toBeUndefined();
-    finishRefresh();
+    expect(refresh).toHaveBeenCalledTimes(1);
     expect(document.documentElement.dataset.motion).toBe("on");
-  });
-
-  it("stops listening for the refresh when reverted before it ran", async () => {
-    refresh.mockImplementation(() => {});
-    const { unmount } = render(<HomeMotion setups={[vi.fn()]} />);
-    await vi.runAllTimersAsync();
-    expect(refreshListeners).toHaveLength(1);
-    unmount();
-    expect(refreshListeners).toHaveLength(0);
-    finishRefresh();
-    expect(document.documentElement.dataset.motion).toBeUndefined();
   });
 
   it("leaves the page as it is when GSAP fails to load", async () => {
@@ -218,15 +196,11 @@ describe("HomeMotion with a pending hash scroll", () => {
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 
-  it("runs the setups once the scroll events stop", async () => {
+  it("runs the setups when a hash scroll that never moves has been quiet", async () => {
     pendHashScroll();
     const setup = vi.fn();
     render(<HomeMotion setups={[setup]} />);
     await vi.advanceTimersByTimeAsync(300);
-    window.dispatchEvent(new Event("scroll"));
-    await vi.advanceTimersByTimeAsync(100);
-    window.dispatchEvent(new Event("scroll"));
-    await vi.advanceTimersByTimeAsync(100);
     expect(setup).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(100);
     expect(setup).toHaveBeenCalledTimes(1);

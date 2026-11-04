@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { loadGsap, type GsapModules, type MotionSetup } from "@/lib/motion/load-gsap";
-import { whenHashScrollDone } from "@/lib/motion/hash-scroll";
+import { whenScrollingStops } from "@/lib/motion/scroll-wait";
 import { setupJourney } from "@/lib/motion/journey";
 import { setupMascot } from "@/lib/motion/mascot";
 import {
@@ -54,25 +54,19 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
           return;
         }
         if (disposed || mm !== null) return;
-        // Start only after a smooth scroll to a `#hash` target has ended.
-        cancelWait = whenHashScrollDone(document, () => {
+        // `ScrollTrigger.refresh()` writes the scroll position back, which would stop a running
+        // `#hash` jump, smooth scroll or touch fling. GSAP's own `refresh(true)` guesses the end
+        // of a scroll from a 200 ms gap, and the setups below are a long task that makes one.
+        cancelWait = whenScrollingStops(() => {
           if (disposed || mm !== null) return;
           const media = modules.gsap.matchMedia();
           mm = media;
           media.add(MOTION_OK_QUERY, () => {
             setups.forEach((setup) => setup(modules, document));
-            const { ScrollTrigger } = modules;
-            const onRefresh = () => {
-              ScrollTrigger.removeEventListener("refresh", onRefresh);
-              document.documentElement.dataset.motion = "on";
-            };
-            ScrollTrigger.addEventListener("refresh", onRefresh);
             // A clamped start is applied only by a refresh, and the page load refresh is over.
-            // A refresh writes the scroll position back, which stops a running smooth scroll
-            // or touch fling. `refresh(true)` waits until the page stops scrolling.
-            ScrollTrigger.refresh(true);
+            modules.ScrollTrigger.refresh();
+            document.documentElement.dataset.motion = "on";
             return () => {
-              ScrollTrigger.removeEventListener("refresh", onRefresh);
               delete document.documentElement.dataset.motion;
             };
           });

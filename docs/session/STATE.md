@@ -60,7 +60,7 @@ Các việc phát sinh khi làm B2 (web công khai):
 
 Các việc phát sinh khi làm B4 (hiệu ứng):
 - Khi khách mở thẳng một đường dẫn có `#neo` (ví dụ `/vi#bao-chi`), chuyển động chỉ bắt đầu sau khi trang cuộn xong tới đó, có thể chậm tới 2,5 giây.
-- Khi khách đang cuộn lúc chuyển động khởi động, bước đo lại vị trí (refresh) đợi trang dừng cuộn rồi mới chạy, để không cắt ngang lần cuộn đó.
+- Khi khách đang cuộn lúc chuyển động khởi động, chuyển động đợi trang dừng cuộn rồi mới bắt đầu (tối đa 2,5 giây), để không cắt ngang lần cuộn đó.
 - Khi phần Hành trình đã nằm trong màn hình lúc trang mở, thân cây lúa giữ nguyên dạng đã mọc đủ (không co lại rồi mọc theo cuộn).
 - Một lần đo `/vi` có Performance 86 do TBT cao (560 ms); các lần khác từ 91 trở lên. Nếu cần, xem lại chi phí tải GSAP khi đo lần sau.
 - Mascot của hero là SVG chi tiết nhúng thẳng vào HTML. Trang `/vi` dựng sẵn nặng 297.757 byte (73.988 byte sau gzip). Phần mascot có mặt hai lần, mỗi lần khoảng 89,7 KB: một lần trong HTML và một lần trong dữ liệu RSC gửi kèm, vì `Mascot` là server component dùng `dangerouslySetInnerHTML`.
