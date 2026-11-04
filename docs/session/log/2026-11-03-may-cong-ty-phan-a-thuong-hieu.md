@@ -36,6 +36,10 @@ Chạy song song với session phần C (nhánh `feat/phan-c-nen-tang`). Không 
 - Chủ dự án: "áo mascot hơi giống miền Tây, có style nào giống miền Bắc không" → Claude đề xuất các kiểu áo miền Bắc (áo cánh nâu lộ yếm, áo tứ thân, khăn mỏ quạ). Chủ dự án quyết định: "để áo như vậy đi" → giữ áo hiện tại, không đổi.
 - Xem vòng sửa 1 (rơm thẳng cứng như thanh gỗ, dây buộc dựng đứng), chủ dự án: "sửa thêm rơm" → vẽ lại toàn bộ phần rơm theo ảnh gốc: nhiều cọng mảnh, hơi cong, xòe nhẹ hai đầu; dây thừng quấn chéo ngay dưới bàn tay trên; màu ấm trong bảng màu (Vàng rơm + nét Vàng lúa).
 - Xem vòng sửa 3 (dây thừng 2 sợi quấn ngang bó, mép tay áo trơn), chủ dự án: "Duyệt" → bản minh họa `brand/mascot/mascot-layered.svg` (commit `d63926d`) được duyệt. Bước sau: review mã, gộp nhánh Task 6, vẽ bản logo rút gọn từ bản minh họa.
+- Chủ dự án: "gộp đi" → gộp nhánh `feat/phan-a-task6` vào nhánh phần A (chỉ trên máy, không push), xuất lại PNG và preview.
+- Chủ dự án chọn nơi lưu ảnh gốc mascot: thư mục logo riêng, ngoài repo.
+- Xem 3 bản nháp logo rút gọn (A vẽ tay, B mặt lấy từ bản minh họa + thân vẽ tay, C nét đậm), chủ dự án: "chọn B" → bản B (`brand/logo/mascot-logo.svg`), làm dày nét mặt cho khớp với thân.
+- Chủ dự án hỏi "không dùng bản chi tiết được hả", rồi chọn kết hợp → logo đầy đủ dựng từ bản minh họa chi tiết (dùng ở cỡ lớn: bao bì, banner, đầu trang); icon và logo một màu dựng từ bản B (cỡ nhỏ, in một màu).
 
 ## Quyết định
 - Không dùng Nano Banana / Recraft (khác quy trình ở spec 2.3) — chủ dự án quyết định; Claude vẽ SVG trực tiếp, có nhóm `<g id>` ngay từ đầu, nên không cần bước chuyển ảnh sang SVG.
