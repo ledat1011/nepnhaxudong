@@ -123,3 +123,82 @@ describe("HomeMotion", () => {
   });
 });
 
+describe("HomeMotion with a pending hash scroll", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+    window.history.replaceState(null, "", "/");
+  });
+
+  function pendHashScroll() {
+    const target = document.createElement("h2");
+    target.id = "bao-chi";
+    target.getBoundingClientRect = () => ({ top: 500 }) as DOMRect;
+    document.body.appendChild(target);
+    Object.defineProperty(document.documentElement, "scrollHeight", {
+      value: 5000,
+      configurable: true,
+    });
+    window.history.replaceState(null, "", "/#bao-chi");
+  }
+
+  it("waits for the scroll to end before it runs the setups", async () => {
+    pendHashScroll();
+    const setup = vi.fn();
+    render(<HomeMotion setups={[setup]} />);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(loadGsap).toHaveBeenCalled();
+    expect(setup).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
+    window.dispatchEvent(new Event("scrollend"));
+    expect(setup).toHaveBeenCalledTimes(1);
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs the setups once the scroll events stop", async () => {
+    pendHashScroll();
+    const setup = vi.fn();
+    render(<HomeMotion setups={[setup]} />);
+    await vi.advanceTimersByTimeAsync(300);
+    window.dispatchEvent(new Event("scroll"));
+    await vi.advanceTimersByTimeAsync(100);
+    window.dispatchEvent(new Event("scroll"));
+    await vi.advanceTimersByTimeAsync(100);
+    expect(setup).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(setup).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops waiting after the longest wait", async () => {
+    pendHashScroll();
+    const setup = vi.fn();
+    render(<HomeMotion setups={[setup]} />);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(setup).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(setup).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs nothing when unmounted during the wait", async () => {
+    pendHashScroll();
+    const setup = vi.fn();
+    const { unmount } = render(<HomeMotion setups={[setup]} />);
+    await vi.advanceTimersByTimeAsync(300);
+    unmount();
+    window.dispatchEvent(new Event("scrollend"));
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(setup).not.toHaveBeenCalled();
+    expect(document.documentElement.dataset.motion).toBeUndefined();
+  });
+
+  it("runs nothing when reduced motion is turned on during the wait", async () => {
+    pendHashScroll();
+    const setup = vi.fn();
+    render(<HomeMotion setups={[setup]} />);
+    await vi.advanceTimersByTimeAsync(300);
+    reducedMatches = true;
+    listeners.forEach((listener) => listener({ matches: true }));
+    window.dispatchEvent(new Event("scrollend"));
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(setup).not.toHaveBeenCalled();
+  });
+});

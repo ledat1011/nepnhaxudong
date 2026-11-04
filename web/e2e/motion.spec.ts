@@ -165,24 +165,65 @@ test("elements in the first screen are never hidden", async ({ page }) => {
   expect(opacities.every((opacity) => opacity === "1")).toBe(true);
 });
 
-test("a deep link keeps the sections above and in view visible", async ({ page }) => {
-  await page.goto("/vi#bao-chi");
-  await page.waitForSelector(MOTION_ON);
-  // Test mechanics: wait until the jump to the anchor has stopped, then read once.
+const TARGET_TOP_MAX_PX = 150;
+
+/** Waits until the jump to the anchor has stopped, then returns the target's top edge. */
+async function settledTargetTop(page: Page, id: string) {
   let previous = -1;
   for (let i = 0; i < 50; i++) {
     const current = await page.evaluate(() => window.scrollY);
-    if (current === previous) break;
+    if (current === previous && current > 0) break;
     previous = current;
     await page.waitForTimeout(100);
   }
-  const opacities = await page.$$eval("[data-reveal]", (els) =>
+  return page.evaluate((targetId) => {
+    const top = document.getElementById(targetId)?.getBoundingClientRect().top;
+    return { top, scrollY: window.scrollY };
+  }, id);
+}
+
+function visibleOpacities(page: Page, selector: string) {
+  return page.$$eval(selector, (els) =>
     els
       .filter((el) => el.getBoundingClientRect().top < window.innerHeight)
       .map((el) => getComputedStyle(el).opacity),
   );
+}
+
+test("a deep link keeps the sections above and in view visible", async ({ page }) => {
+  await page.goto("/vi#bao-chi");
+  await page.waitForSelector(MOTION_ON);
+  const { top, scrollY } = await settledTargetTop(page, "bao-chi");
+  expect(scrollY).toBeGreaterThan(0);
+  expect(top).toBeGreaterThanOrEqual(0);
+  expect(top).toBeLessThan(TARGET_TOP_MAX_PX);
+  const opacities = await visibleOpacities(page, "[data-reveal]");
   expect(opacities.length).toBeGreaterThan(0);
   expect(opacities.every((opacity) => opacity === "1")).toBe(true);
+});
+
+test("a deep link into the journey lands on it and keeps what is in view visible", async ({
+  page,
+}) => {
+  await page.goto("/vi#hanh-trinh");
+  await page.waitForSelector(MOTION_ON);
+  const { top, scrollY } = await settledTargetTop(page, "hanh-trinh");
+  expect(scrollY).toBeGreaterThan(0);
+  expect(top).toBeGreaterThanOrEqual(0);
+  expect(top).toBeLessThan(TARGET_TOP_MAX_PX);
+  const events = await visibleOpacities(page, "[data-journey-event]");
+  expect(events.length).toBeGreaterThan(0);
+  expect(events.every((opacity) => opacity === "1")).toBe(true);
+  const leafScales = await page.$$eval("[data-journey-leaf]", (els) =>
+    els
+      .filter((el) => el.closest("[data-journey-event]")!.getBoundingClientRect().top < window.innerHeight)
+      .map((el) => {
+        const transform = getComputedStyle(el).transform;
+        return transform === "none" ? 1 : new DOMMatrix(transform).a;
+      }),
+  );
+  expect(leafScales.length).toBeGreaterThan(0);
+  expect(leafScales.every((scale) => scale > GROWN_SCALE)).toBe(true);
 });
 
 test("the contact block at the end of the page appears", async ({ page }) => {

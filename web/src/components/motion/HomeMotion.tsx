@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { loadGsap, type MotionSetup } from "@/lib/motion/load-gsap";
+import { whenHashScrollDone } from "@/lib/motion/hash-scroll";
 import { setupJourney } from "@/lib/motion/journey";
 import { setupMascot } from "@/lib/motion/mascot";
 import {
@@ -46,16 +47,21 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
       cancelWait = whenIdle(async () => {
         const modules = await loadGsap();
         if (disposed || mm !== null) return;
-        const media = modules.gsap.matchMedia();
-        mm = media;
-        media.add(MOTION_OK_QUERY, () => {
-          setups.forEach((setup) => setup(modules, document));
-          // A clamped start is applied only by a refresh, and the page load refresh is over.
-          modules.ScrollTrigger.refresh();
-          document.documentElement.dataset.motion = "on";
-          return () => {
-            delete document.documentElement.dataset.motion;
-          };
+        // `ScrollTrigger.refresh()` writes the scroll position back, which would cancel
+        // a smooth scroll to a `#hash` target that is still running.
+        cancelWait = whenHashScrollDone(document, () => {
+          if (disposed || mm !== null) return;
+          const media = modules.gsap.matchMedia();
+          mm = media;
+          media.add(MOTION_OK_QUERY, () => {
+            setups.forEach((setup) => setup(modules, document));
+            // A clamped start is applied only by a refresh, and the page load refresh is over.
+            modules.ScrollTrigger.refresh();
+            document.documentElement.dataset.motion = "on";
+            return () => {
+              delete document.documentElement.dataset.motion;
+            };
+          });
         });
       });
     };
