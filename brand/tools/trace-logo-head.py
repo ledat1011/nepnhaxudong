@@ -33,8 +33,8 @@ spec = importlib.util.spec_from_file_location('vectorize_mascot', Path(__file__)
 vm = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(vm)
 
-HEAD, DARK, GOLD, STRAW, SKIN, HAIR = (
-    vm.HEAD, *(vm.BRAND.index(c) for c in (vm.DARK, vm.GOLD, vm.STRAW, vm.SKIN, vm.HAIR)))
+HEAD, DARK, GOLD, STRAW, SKIN, CHEEK, HAIR = (
+    vm.HEAD, *(vm.BRAND.index(c) for c in (vm.DARK, vm.GOLD, vm.STRAW, vm.SKIN, vm.CHEEK, vm.HAIR)))
 
 # Crow's feet beside the eyes (x0, y0, x1, y1), in source pixels.
 CROWS_FEET = [(385, 310, 425, 350), (635, 295, 680, 340)]
@@ -49,13 +49,25 @@ TRACE_SETTINGS = {**vm.TRACE, 'filter_speckle': 24, 'corner_threshold': 135, 'le
 
 # The whole head for logo-icon: the head part closed with this radius (it takes in the brim and
 # hair the rice hides, and the loose brim bits between the leaves), cut at WHOLE_CUT (below the
-# chin, so the long hair does not make the icon tall), outlined WHOLE_OUTLINE wide where guessed.
+# chin, so the long hair does not make the icon tall), outlined WHOLE_OUTLINE wide where guessed
+# (as wide as the head's own lines after OUTLINE_GROW).
 WHOLE_CLOSE = 64
 WHOLE_CUT = 515
-WHOLE_OUTLINE = 7
+WHOLE_OUTLINE = 12
 # The closed head is smoothed with a box filter this wide, so leaf outline bits that stick out go
 # and the guessed brim edge is an even curve.
 WHOLE_BLUR = 21
+# The brim's lower-left edge, which the rice hides: a smooth curve on from the visible left edge
+# (source x 176-190, y 300-372) to where the brim goes behind the hair and ear. Above it is hat,
+# below it nothing; without it the closing leaves a flat, notched "foot" there.
+BRIM_EDGE = [(176, 300), (178, 340), (190, 372), (212, 394), (246, 410), (290, 420), (330, 426), (360, 428)]
+# On from there, just outside the face's lower-left outline down to the chin: below it the rice hid
+# only leaf and outline bits, which the closing would fill as a dark wedge.
+CHIN_EDGE = [(398, 458), (450, 484), (490, 500), (560, 510)]
+BRIM_SAMPLES = 16
+# Head pixels this close to skin, cheek or hair stay as they are in the brim zone (ear, face, hair
+# and their outlines); other head pixels there are leaf and brim bits between the leaves.
+BRIM_KEEP_NEAR = 10
 
 
 def simplify(part, color):
@@ -89,12 +101,23 @@ def whole_head(part, color):
     full = vm.fill_holes(vm.erode(vm.dilate(head, WHOLE_CLOSE), WHOLE_CLOSE) | head)
     # Box filter, then keep the pixels more than half inside: a smoothed silhouette.
     full = (vm.box_mean(full.astype(float), WHOLE_BLUR) >= 0.5) & (rows < WHOLE_CUT)
+    # The lower-left brim follows BRIM_EDGE: hat above the curve, nothing below it.
+    edge = [tuple(p) for p in vm.catmull_rom(BRIM_EDGE, BRIM_SAMPLES)]
+    y0, x1 = BRIM_EDGE[0][1], BRIM_EDGE[-1][0]
+    brim = vm.polygon_mask(edge + [(x1, y0)])
+    chin = CHIN_EDGE[-1][0]
+    below = vm.polygon_mask(edge + CHIN_EDGE + [(chin, vm.SOURCE_SIZE), (0, vm.SOURCE_SIZE), (0, y0)])
+    keep = head & vm.dilate(head & np.isin(color, [SKIN, CHEEK, HAIR]), BRIM_KEEP_NEAR)
+    head = head & ~((brim | below) & ~keep)
+    full = (full | brim) & ~(below & ~brim)
     full = vm.fill_holes(largest_region(full))
     fills = head & (color != DARK)
     guessed = full & ~head
     # Through the head's outlines too, so a guessed area that they close off still gets a color.
     painted = vm.spread(np.where(fills, color, -1), fills, guessed | (head & ~fills))
     colors = np.where(head, color, painted)
+    # The guessed brim is hat, also where the nearest known color is the ear or face next to it.
+    colors[guessed & brim] = STRAW
     # Outlines along the whole smoothed silhouette and the cut, and where two fill colors meet in
     # the guessed areas (hat brim against hair or face).
     border = full & vm.dilate(~full, WHOLE_OUTLINE)
