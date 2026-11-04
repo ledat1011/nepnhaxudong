@@ -1,4 +1,5 @@
 import { LogoMark } from "@/components/brand/LogoMark";
+import { ZaloLink } from "@/components/contact/ZaloLink";
 import type { Contact, Social } from "@/lib/content/types";
 import { telHref, zaloHref } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -23,7 +24,13 @@ const SOCIAL_NETWORKS = [
   { key: "tiktok", name: "TikTok" },
 ] as const;
 
-type ContactRow = { label: string | null; value: string; href: string | null };
+type ContactRow = {
+  label: string | null;
+  value: string;
+  href: string | null;
+  /** The Zalo setting, for the row that opens the Zalo contact panel. */
+  zalo?: string;
+};
 
 function contactRows(contact: Contact, dict: Dictionary): ContactRow[] {
   const labels = dict.contact;
@@ -40,6 +47,7 @@ function contactRows(contact: Contact, dict: Dictionary): ContactRow[] {
           label: labels.zalo,
           value: contact.zalo,
           href: zaloHref(contact.zalo),
+          zalo: contact.zalo,
         }
       : null,
     contact.messenger
@@ -93,7 +101,11 @@ export function SiteFooter({
                   {row.label && (
                     <span className="font-bold">{row.label}: </span>
                   )}
-                  {row.href ? (
+                  {row.zalo !== undefined ? (
+                    <ZaloLink zalo={row.zalo} labels={dict.zalo} className={LINK_CLASS}>
+                      {row.value}
+                    </ZaloLink>
+                  ) : row.href ? (
                     <a href={row.href} className={LINK_CLASS}>
                       {row.value}
                     </a>

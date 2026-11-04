@@ -32,7 +32,27 @@ export function telHref(phone: string): string {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
 
+// A link, not a number: with http(s), or a zalo.me link typed without it ("zalo.me/g/abc").
+const ZALO_LINK = /^(https?:\/\/|zalo\.me)/i;
+// The country code of Vietnam, written as +84 or 0084.
+const COUNTRY_CODE = /^(\+|00)84/;
+
+/**
+ * Digits of a Zalo number in the local form with a leading 0 ("+84 912 345 678" gives
+ * "0912345678"), which Zalo search and zalo.me links use. Null for a link or no digits.
+ */
+export function zaloNumber(zalo: string): string | null {
+  const value = zalo.trim();
+  if (ZALO_LINK.test(value)) return null;
+  const local = COUNTRY_CODE.test(value) ? `0${value.replace(COUNTRY_CODE, "")}` : value;
+  const digits = local.replace(/\D/g, "");
+  return digits === "" ? null : digits;
+}
+
+/** The zalo.me link of the chat: the setting itself when it is a link, else built from the number. */
 export function zaloHref(zalo: string): string {
-  if (zalo.startsWith("http")) return zalo;
-  return `https://zalo.me/${zalo.replace(/\D/g, "")}`;
+  const value = zalo.trim();
+  if (/^https?:\/\//i.test(value)) return value;
+  if (ZALO_LINK.test(value)) return `https://${value}`;
+  return `https://zalo.me/${zaloNumber(value) ?? ""}`;
 }

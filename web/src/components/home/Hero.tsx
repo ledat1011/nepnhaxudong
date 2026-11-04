@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FieldBackdrop } from "@/components/brand/FieldBackdrop";
 import { Mascot } from "@/components/brand/Mascot";
-import { zaloHref } from "@/lib/format";
+import { ZaloLink } from "@/components/contact/ZaloLink";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { homePath } from "@/lib/i18n/routes";
@@ -29,12 +29,13 @@ export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {
           {(zalo !== null || hasJourney) && (
             <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
               {zalo !== null && (
-                <a
-                  href={zaloHref(zalo)}
+                <ZaloLink
+                  zalo={zalo}
+                  labels={dict.zalo}
                   className={`${BUTTON_CLASS} bg-coat text-rice hover:bg-earth`}
                 >
                   {dict.hero.zaloCta}
-                </a>
+                </ZaloLink>
               )}
               {hasJourney && (
                 <Link
