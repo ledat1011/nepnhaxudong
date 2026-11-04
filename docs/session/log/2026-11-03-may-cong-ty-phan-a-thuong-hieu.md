@@ -40,6 +40,7 @@ Chạy song song với session phần C (nhánh `feat/phan-c-nen-tang`). Không 
 - Chủ dự án chọn nơi lưu ảnh gốc mascot: thư mục logo riêng, ngoài repo.
 - Xem 3 bản nháp logo rút gọn (A vẽ tay, B mặt lấy từ bản minh họa + thân vẽ tay, C nét đậm), chủ dự án: "chọn B" → bản B (`brand/logo/mascot-logo.svg`), làm dày nét mặt cho khớp với thân.
 - Chủ dự án hỏi "không dùng bản chi tiết được hả", rồi chọn kết hợp → logo đầy đủ dựng từ bản minh họa chi tiết (dùng ở cỡ lớn: bao bì, banner, đầu trang); icon và logo một màu dựng từ bản B (cỡ nhỏ, in một màu).
+- Trên nền Nâu đất, logo đầy đủ mất chữ và logo một màu mất hẳn; chủ dự án: "làm bản sáng" → thêm `logo-full-light.svg` (chữ Trắng gạo, viền sticker Trắng gạo quanh mascot) và `logo-mono-light.svg` (một màu Trắng gạo) cho nền tối.
 
 ## Quyết định
 - Không dùng Nano Banana / Recraft (khác quy trình ở spec 2.3) — chủ dự án quyết định; Claude vẽ SVG trực tiếp, có nhóm `<g id>` ngay từ đầu, nên không cần bước chuyển ảnh sang SVG.
