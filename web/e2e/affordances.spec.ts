@@ -126,6 +126,24 @@ test.describe("controls show that they can be used", () => {
     expect(new Set(cursors)).toEqual(new Set(["pointer"]));
   });
 
+  test("disabled controls show the not-allowed cursor, whatever their element", async ({ page }) => {
+    await page.goto("/vi");
+    // The site has no disabled control yet, so the test adds one of each kind to the page.
+    const cursors = await page.evaluate(() => {
+      const box = document.createElement("div");
+      box.innerHTML = [
+        '<button disabled>b</button>',
+        '<select disabled><option>s</option></select>',
+        '<a href="/vi" aria-disabled="true">a</a>',
+        '<button aria-disabled="true">c</button>',
+        '<span role="button" aria-disabled="true">r</span>',
+      ].join("");
+      document.body.append(box);
+      return [...box.children].map((el) => getComputedStyle(el).cursor);
+    });
+    expect(cursors).toEqual(Array(5).fill("not-allowed"));
+  });
+
   for (const reducedMotion of ["no-preference", "reduce"] as const) {
     test(`a pressed control shifts 1 px at once, with no animation (${reducedMotion})`, async ({
       browser,
