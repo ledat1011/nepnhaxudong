@@ -745,60 +745,125 @@ describe("StoryForm draft in the browser", () => {
     render(<StoryForm initial={story()} />);
     await ready();
     await events.type(screen.getByLabelText(TITLE_LABEL), "!");
-    await waitFor(() => expect(stored(draftKey(5))?.state.vi.title).toBe("Mùa gặt!"), { timeout: 3000 });
-    expect(stored(draftKey(5)).userId).toBe(1);
+    await waitFor(() => expect(stored(draftKey(1, 5))?.state.vi.title).toBe("Mùa gặt!"), { timeout: 3000 });
+    expect(stored(draftKey(1, 5)).userId).toBe(1);
   });
 
-  it("asks when the editor opens with an unsaved draft, and Khôi phục puts the text back as unsaved", async () => {
-    putDraft(draftKey(5), edited());
+  it("asks when the editor opens with an unsaved draft, and Khôi phục puts every part back as unsaved", async () => {
+    const body = '<p>Có <a href="https://lua.example/mua-gat">một liên kết</a> ở đây.</p><img src="/media/2.webp" alt="Ảnh 2">';
+    const kept = edited();
+    kept.coverMediaId = 1;
+    kept.vi.excerpt = "Tóm tắt viết dở";
+    kept.vi.bodyHtml = body;
+    kept.en.excerpt = "Unfinished summary";
+    putDraft(draftKey(1, 5), kept);
     const events = userEvent.setup();
     render(<StoryForm initial={story()} />);
     await readyBehindQuestion();
     const question = await screen.findByRole("alertdialog", { name: "Có bài đang viết dở" });
     expect(question).toHaveTextContent("lúc 18:20 ngày 4/11");
+    expect(question).not.toHaveTextContent("Bài đã được lưu lại sau lúc đó");
     await events.click(within(question).getByRole("button", { name: "Khôi phục" }));
+
     expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Mùa gặt (viết dở)");
+    expect(screen.getByLabelText("Tóm tắt")).toHaveValue("Tóm tắt viết dở");
+    const editor = screen.getByRole("textbox", { name: "Nội dung" });
+    await waitFor(() => expect(editor.querySelector('a[href="https://lua.example/mua-gat"]')).not.toBeNull());
+    expect(editor).toHaveTextContent("Có một liên kết ở đây.");
+    expect(editor.querySelector('img[src="/media/2.webp"]')).not.toBeNull();
     expect(screen.getByRole("button", { name: "Lưu" })).toBeEnabled();
+
+    // What is saved is the restored story: cover, both languages, the link and the image.
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    const sent = writes()[0].body;
+    expect(sent.coverMediaId).toBe(1);
+    expect(sent.title.vi).toBe("Mùa gặt (viết dở)");
+    expect(sent.excerpt).toEqual({ vi: "Tóm tắt viết dở", en: "Unfinished summary" });
+    expect(sent.bodyHtml?.vi).toContain('<a href="https://lua.example/mua-gat">một liên kết</a>');
+    expect(sent.bodyHtml?.vi).toContain('<img src="/media/2.webp" alt="Ảnh 2">');
+  });
+
+  it("does not say the story was saved again when only the editor rewrote the body", async () => {
+    // The editor writes this list in its own form when it opens; the draft holds the API form as its base.
+    const listStory = story({ bodyHtml: { vi: "<ul><li>x</li></ul>", en: null } });
+    const kept = formState(listStory);
+    kept.vi.title = "Mùa gặt (viết dở)";
+    putDraft(draftKey(1, 5), kept, { base: formState(listStory) });
+    render(<StoryForm initial={listStory} />);
+    await readyBehindQuestion();
+    const question = await screen.findByRole("alertdialog", { name: "Có bài đang viết dở" });
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(question).not.toHaveTextContent("Bài đã được lưu lại sau lúc đó");
+  });
+
+  it("never removes or offers the draft of another family member on the same phone", async () => {
+    putDraft(draftKey(2, 5), edited(), { userId: 2 });
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
+    await waitFor(() => expect(stored(draftKey(1, 5))).not.toBeNull(), { timeout: 3000 });
+    await events.clear(screen.getByLabelText(TITLE_LABEL));
+    await events.type(screen.getByLabelText(TITLE_LABEL), "Mùa gặt");
+    await waitFor(() => expect(stored(draftKey(1, 5))).toBeNull());
+    expect(stored(draftKey(2, 5)).state.vi.title).toBe("Mùa gặt (viết dở)");
+  });
+
+  it("writes text typed during a save once the save is done, without another key press", async () => {
+    let finish: (value: StoryAdminDto) => void = () => undefined;
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string; body?: StoryRequest }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") {
+        const answerOf = answer(5, init.body as StoryRequest);
+        return new Promise<StoryAdminDto>((resolve) => (finish = () => resolve(answerOf)));
+      }
+      return undefined;
+    });
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await events.type(screen.getByLabelText("Tóm tắt"), " thêm");
+    await act(async () => finish(story()));
+    await waitFor(() => expect(stored(draftKey(1, 5))?.state.vi.excerpt).toBe("Tóm tắt thêm"), { timeout: 3000 });
   });
 
   it("removes the draft on Bỏ bản đó and keeps the saved story", async () => {
-    putDraft(draftKey(5), edited());
+    putDraft(draftKey(1, 5), edited());
     const events = userEvent.setup();
     render(<StoryForm initial={story()} />);
     await readyBehindQuestion();
     const question = await screen.findByRole("alertdialog", { name: "Có bài đang viết dở" });
     await events.click(within(question).getByRole("button", { name: "Bỏ bản đó" }));
-    expect(stored(draftKey(5))).toBeNull();
+    expect(stored(draftKey(1, 5))).toBeNull();
     expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Mùa gặt");
   });
 
-  it("keeps the draft untouched when the question is closed with Escape, even after more typing", async () => {
-    putDraft(draftKey(5), edited());
+  it("keeps the old draft after Escape until the user types, then keeps the new text", async () => {
+    putDraft(draftKey(1, 5), edited());
     const events = userEvent.setup();
     render(<StoryForm initial={story()} />);
     await readyBehindQuestion();
     await screen.findByRole("alertdialog", { name: "Có bài đang viết dở" });
     await events.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
-    await events.type(screen.getByLabelText(TITLE_LABEL), "?");
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    expect(stored(draftKey(5)).state.vi.title).toBe("Mùa gặt (viết dở)");
+    expect(stored(draftKey(1, 5)).state.vi.title).toBe("Mùa gặt (viết dở)");
+
+    await events.type(screen.getByLabelText(TITLE_LABEL), "?");
+    await waitFor(() => expect(stored(draftKey(1, 5)).state.vi.title).toBe("Mùa gặt?"), { timeout: 3000 });
   });
 
   it("warns when the story was saved again after the draft was written", async () => {
     const older = formState(story({ title: { vi: "Tên cũ hơn", en: "Harvest" } }));
-    putDraft(draftKey(5), edited(), { base: older });
+    putDraft(draftKey(1, 5), edited(), { base: older });
     render(<StoryForm initial={story()} />);
     await readyBehindQuestion();
     const question = await screen.findByRole("alertdialog", { name: "Có bài đang viết dở" });
     expect(question).toHaveTextContent("Bài đã được lưu lại sau lúc đó");
-  });
-
-  it("does not offer the draft of another family member", async () => {
-    putDraft(draftKey(5), edited(), { userId: 2 });
-    render(<StoryForm initial={story()} />);
-    await ready();
-    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 
   it("removes the draft after a successful save", async () => {
@@ -806,10 +871,10 @@ describe("StoryForm draft in the browser", () => {
     render(<StoryForm initial={story()} />);
     await ready();
     await events.type(screen.getByLabelText(TITLE_LABEL), "!");
-    await waitFor(() => expect(stored(draftKey(5))).not.toBeNull(), { timeout: 3000 });
+    await waitFor(() => expect(stored(draftKey(1, 5))).not.toBeNull(), { timeout: 3000 });
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(writes()).toHaveLength(1));
-    await waitFor(() => expect(stored(draftKey(5))).toBeNull());
+    await waitFor(() => expect(stored(draftKey(1, 5))).toBeNull());
   });
 
   it("removes the draft after Bỏ thay đổi", async () => {
@@ -817,10 +882,10 @@ describe("StoryForm draft in the browser", () => {
     render(<StoryForm initial={story()} />);
     await ready();
     await events.type(screen.getByLabelText(TITLE_LABEL), "!");
-    await waitFor(() => expect(stored(draftKey(5))).not.toBeNull(), { timeout: 3000 });
+    await waitFor(() => expect(stored(draftKey(1, 5))).not.toBeNull(), { timeout: 3000 });
     await events.click(screen.getByRole("button", { name: "Bỏ thay đổi" }));
     await events.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Bỏ thay đổi" }));
-    expect(stored(draftKey(5))).toBeNull();
+    expect(stored(draftKey(1, 5))).toBeNull();
   });
 
   it("offers the draft of a new story on the new story page, and removes it once the story is created", async () => {
@@ -829,7 +894,7 @@ describe("StoryForm draft in the browser", () => {
     draftOfNew.en = { title: "", slug: "", excerpt: "", bodyHtml: "" };
     draftOfNew.coverMediaId = null;
     const empty = { coverMediaId: null, vi: draftOfNew.en, en: draftOfNew.en };
-    putDraft(draftKey(undefined), draftOfNew, { base: empty });
+    putDraft(draftKey(1, undefined), draftOfNew, { base: empty });
     const events = userEvent.setup();
     render(<StoryForm />);
     await readyBehindQuestion();
@@ -837,7 +902,7 @@ describe("StoryForm draft in the browser", () => {
     expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Bài mới viết dở");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/cau-chuyen/9"));
-    expect(stored(draftKey(undefined))).toBeNull();
+    expect(stored(draftKey(1, undefined))).toBeNull();
   });
 
   it("keeps working, with a short note, when the browser cannot store the draft", async () => {

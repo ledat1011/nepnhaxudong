@@ -1,18 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { clearDraft, readDraft, writeDraft, type StoryDraft } from "./story-draft";
+import { clearDraft, draftKey, readDraft, writeDraft, type StoryDraft } from "./story-draft";
 
 /** At most one write per second while the user types. */
 export const DRAFT_THROTTLE_MS = 1000;
 
 type Options<T> = {
-  key: string;
+  /** The story id, or undefined for a new story. */
+  storyId: number | undefined;
   /** The signed-in user. Without one nothing is read or written. */
   userId: number | null;
   /** The form now. */
   state: T;
-  /** The saved version the form started from. */
+  /**
+   * The saved story as the API sent it, before the editor rewrote the body in its own form. Both the stored
+   * draft and the check on opening use this raw form, so "saved again since" is not set by the editor alone.
+   */
   base: T;
   dirty: boolean;
   /** False while the page is leaving (for example after a create). */
@@ -30,22 +34,30 @@ export type DraftOffer<T> = {
  * - "reading": the browser storage is read once after the first render (it does not exist on the server).
  * - "asking": a draft that differs from the form waits for the user's answer; nothing is written meanwhile.
  * - "active": a changed form is written at most once per second; a clean form removes the draft.
- * - "paused": the user put the question aside, or nobody is signed in. Nothing is written or removed.
+ * - "later": the question was closed with Escape. The old draft stays until the user changes the form; the
+ *   first change replaces it, and from then on it works like "active".
+ * - "off": nobody is signed in.
  */
-type Phase = "reading" | "asking" | "active" | "paused";
+type Phase = "reading" | "asking" | "active" | "later" | "off";
 
 /** Keeps the story being written in the browser and offers it back when the editor opens again. */
-export function useStoryDraft<T>({ key, userId, state, base, dirty, enabled, isState }: Options<T>) {
+export function useStoryDraft<T>({ storyId, userId, state, base, dirty, enabled, isState }: Options<T>) {
+  const key = userId === null ? null : draftKey(userId, storyId);
   const [phase, setPhase] = useState<Phase>("reading");
   const [offer, setOffer] = useState<DraftOffer<T> | null>(null);
   // The storage refused a write (full, or blocked by the browser). Autosave stops for this editor.
   const [failed, setFailed] = useState(false);
+  // Bumped by clear(), so the write effect runs again: text typed during a save is then written at once.
+  const [clears, setClears] = useState(0);
   const latest = useRef({ key, userId, state, base });
   useLayoutEffect(() => {
     latest.current = { key, userId, state, base };
   });
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isStateRef = useRef(isState);
+  // For "later": the form when the question was closed, and whether the user has changed it since.
+  const laterFrom = useRef<string | null>(null);
+  const laterEdited = useRef(false);
 
   const cancel = useCallback(() => {
     if (timer.current !== null) clearTimeout(timer.current);
@@ -55,15 +67,16 @@ export function useStoryDraft<T>({ key, userId, state, base, dirty, enabled, isS
   const flush = useCallback(() => {
     cancel();
     const { key: target, userId: owner, state: now, base: from } = latest.current;
-    if (owner === null) return;
+    if (target === null || owner === null) return;
     const draft: StoryDraft<T> = { version: 1, userId: owner, savedAt: Date.now(), base: from, state: now };
-    if (!writeDraft(target, draft)) setFailed(true);
+    // "blocked" is a sign-out (here or in another tab): not an error of this phone.
+    if (writeDraft(target, draft) === "failed") setFailed(true);
   }, [cancel]);
 
   useEffect(() => {
-    if (userId === null) {
+    if (key === null || userId === null) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- no user: the draft stays off
-      setPhase("paused");
+      setPhase("off");
       return;
     }
     const draft = readDraft(key, userId, isStateRef.current);
@@ -78,9 +91,14 @@ export function useStoryDraft<T>({ key, userId, state, base, dirty, enabled, isS
   }, [key, userId]);
 
   useEffect(() => {
-    if (phase !== "active" || !enabled || failed) {
+    if (key === null || !enabled || failed || (phase !== "active" && phase !== "later")) {
       cancel();
       return;
+    }
+    if (phase === "later" && !laterEdited.current) {
+      // The old draft is kept until the user really changes the form (the editor may rewrite the body alone).
+      if (!dirty || JSON.stringify(state) === laterFrom.current) return;
+      laterEdited.current = true;
     }
     if (!dirty) {
       cancel();
@@ -88,7 +106,7 @@ export function useStoryDraft<T>({ key, userId, state, base, dirty, enabled, isS
       return;
     }
     if (timer.current === null) timer.current = setTimeout(flush, DRAFT_THROTTLE_MS);
-  }, [state, dirty, phase, enabled, failed, key, cancel, flush]);
+  }, [state, dirty, phase, enabled, failed, key, clears, cancel, flush]);
 
   // A phone may close the tab or lock the screen at any time: write what is waiting at once.
   useEffect(() => {
@@ -106,12 +124,20 @@ export function useStoryDraft<T>({ key, userId, state, base, dirty, enabled, isS
     };
   }, [flush]);
 
-  // No write after the editor closed: a sign-out may have just removed every draft.
-  useEffect(() => cancel, [cancel]);
+  // Leaving the editor ("Rời trang", a link) writes the last second of typing too. After a sign-out the write is
+  // refused by writeDraft, so a closing editor cannot bring a removed draft back.
+  useEffect(
+    () => () => {
+      if (timer.current !== null) flush();
+    },
+    [flush],
+  );
 
   return {
     offer: phase === "asking" ? offer : null,
     failed,
+    /** True while what is typed is kept on this phone, so leaving the page loses nothing. */
+    keeping: key !== null && !failed && (phase === "active" || phase === "later"),
     /** "Khôi phục": the caller puts the returned text into the form. The draft is written again from there. */
     restore(): T | null {
       setPhase("active");
@@ -119,17 +145,20 @@ export function useStoryDraft<T>({ key, userId, state, base, dirty, enabled, isS
     },
     /** "Bỏ bản đó". */
     discard() {
-      clearDraft(key);
+      if (key !== null) clearDraft(key);
       setPhase("active");
     },
-    /** The question was closed without an answer (Escape). The draft stays for the next time. */
+    /** The question was closed without an answer (Escape). The draft stays until the user changes the form. */
     later() {
-      setPhase("paused");
+      laterFrom.current = JSON.stringify(latest.current.state);
+      laterEdited.current = false;
+      setPhase("later");
     },
-    /** After a successful save or "Bỏ thay đổi". */
+    /** After a successful save or "Bỏ thay đổi". Text that is still unsaved is written again a moment later. */
     clear() {
       cancel();
-      clearDraft(key);
+      if (key !== null) clearDraft(key);
+      setClears((count) => count + 1);
     },
   };
 }

@@ -1,10 +1,15 @@
 /**
  * The story being written is kept in the browser (localStorage), so it survives a reload, a flat battery or a
- * sign-in again. One draft per story ("new" for a story that is not saved yet), and only for the user who wrote it.
+ * sign-in again. One draft per user and per story ("new" for a story that is not saved yet). The user id is in the
+ * key, so on a shared phone one family member can never read, replace or remove another one's draft.
  * Every access is in try/catch: a full or blocked storage means "no draft", never an error on the page.
  */
 
 const PREFIX = "nepnha:story-draft:";
+/** Set by a sign-out in any tab of this browser; removed by the next sign-in. Not under PREFIX. */
+const SIGNED_OUT_MARK = "nepnha:drafts-signed-out";
+
+export type WriteResult = "written" | "blocked" | "failed";
 
 export type StoryDraft<T> = {
   version: 1;
@@ -18,11 +23,11 @@ export type StoryDraft<T> = {
   state: T;
 };
 
-// Set by a sign-out, until the next sign-in. An editor that is still closing must not write the text back.
+// Set by a sign-out in this tab, until the next sign-in. An editor that is still closing must not write the text back.
 let blocked = false;
 
-export function draftKey(storyId: number | undefined): string {
-  return `${PREFIX}${storyId ?? "new"}`;
+export function draftKey(userId: number, storyId: number | undefined): string {
+  return `${PREFIX}${userId}:${storyId ?? "new"}`;
 }
 
 function storage(): Storage | null {
@@ -64,16 +69,20 @@ export function readDraft<T>(key: string, userId: number, isState: (value: unkno
   }
 }
 
-/** True when the draft was written. False when writes are blocked or the storage is full or not available. */
-export function writeDraft<T>(key: string, draft: StoryDraft<T>): boolean {
-  if (blocked) return false;
+/**
+ * "blocked": somebody signed out, in this tab or in another tab of this browser (the mark is read before each write).
+ * "failed": the storage is full or not available.
+ */
+export function writeDraft<T>(key: string, draft: StoryDraft<T>): WriteResult {
+  if (blocked) return "blocked";
   try {
     const store = storage();
-    if (store === null) return false;
+    if (store === null) return "failed";
+    if (store.getItem(SIGNED_OUT_MARK) !== null) return "blocked";
     store.setItem(key, JSON.stringify(draft));
-    return true;
+    return "written";
   } catch {
-    return false;
+    return "failed";
   }
 }
 
@@ -91,6 +100,7 @@ export function clearAllDrafts(): void {
   try {
     const store = storage();
     if (store === null) return;
+    store.setItem(SIGNED_OUT_MARK, String(Date.now()));
     const keys: string[] = [];
     for (let i = 0; i < store.length; i += 1) {
       const key = store.key(i);
@@ -105,4 +115,9 @@ export function clearAllDrafts(): void {
 /** On sign-in: drafts may be written again. */
 export function allowDraftWrites(): void {
   blocked = false;
+  try {
+    storage()?.removeItem(SIGNED_OUT_MARK);
+  } catch {
+    // See clearDraft.
+  }
 }

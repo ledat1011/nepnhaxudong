@@ -138,19 +138,19 @@ describe("signOut", () => {
     meReturns(user);
     renderProvider();
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
-    localStorage.setItem(draftKey(5), "{}");
-    localStorage.setItem(draftKey(undefined), "{}");
+    localStorage.setItem(draftKey(1, 5), "{}");
+    localStorage.setItem(draftKey(1, undefined), "{}");
     adminFetch.mockRejectedValue(new AdminApiError(503, "Bận."));
     await act(() => latest.current.signOut());
-    expect(localStorage.getItem(draftKey(5))).toBeNull();
-    expect(localStorage.getItem(draftKey(undefined))).toBeNull();
+    expect(localStorage.getItem(draftKey(1, 5))).toBeNull();
+    expect(localStorage.getItem(draftKey(1, undefined))).toBeNull();
     const draft = { version: 1 as const, userId: user.id, savedAt: 1, base: {}, state: {} };
-    expect(writeDraft(draftKey(5), draft)).toBe(false);
+    expect(writeDraft(draftKey(1, 5), draft)).toBe("blocked");
 
     meReturns(user);
     await act(() => latest.current.refresh());
     expect(screen.getByTestId("status")).toHaveTextContent("ready");
-    expect(writeDraft(draftKey(5), draft)).toBe(true);
+    expect(writeDraft(draftKey(1, 5), draft)).toBe("written");
     localStorage.clear();
   });
 

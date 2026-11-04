@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { FieldError, RequiredMark, RequiredNote } from "@/components/admin/form/FieldError";
 import { MissingEnBadge } from "@/components/admin/form/MissingEnBadge";
@@ -21,7 +21,6 @@ import { fieldOfDetail, invalidProps, langOfDetail, NOT_SAVED_NOTICE, type Field
 import { toRequestText } from "@/lib/admin/localized";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
-import { draftKey } from "@/lib/admin/story-draft";
 import { publishChecks, type PublishCheckKey } from "@/lib/admin/publish-checks";
 import { slugify } from "@/lib/admin/slugify";
 import type { StoryAdminDto, StoryRequest } from "@/lib/admin/types";
@@ -190,18 +189,21 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   // True after a create succeeded, until the page changes: no second tap may create the story again.
   const [leaving, setLeaving] = useState(false);
   const dirty = snapshot(state) !== snapshot(baselineState);
-  useUnsavedChanges(dirty && !leaving);
   const { user } = useAdminSession();
+  // The saved story as the API sent it. The baseline state may hold the editor's own form of the body.
+  const rawBase = useMemo(() => stateFrom(baseline), [baseline]);
   const draft = useStoryDraft({
-    key: draftKey(initial?.id),
+    storyId: initial?.id,
     userId: user?.id ?? null,
     state,
-    base: baselineState,
+    base: rawBase,
     dirty,
     // After a create the page goes to the new story: the "new" draft must not be written again.
     enabled: !leaving,
     isState: isFormState,
   });
+  // While the draft is kept on this phone, the "Rời trang?" question says so instead of "will be lost".
+  useUnsavedChanges(dirty && !leaving, { keepsDraft: draft.keeping });
   const leavePage = useLeavePage();
 
   // The newest state, for the save action: after a sign-in again the action runs once more and must send what is typed now.
@@ -257,7 +259,8 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
     const result = await saving.save();
     if (result === undefined) return;
     const { saved, sent } = result;
-    // The story is on the server now. If more was typed meanwhile, the next write keeps that.
+    // The story is on the server now: its draft goes. Text typed during the save is still unsaved, so clear()
+    // makes the hook write it again a moment later.
     draft.clear();
     if (baseline === undefined) {
       setLeaving(true);
