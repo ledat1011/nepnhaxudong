@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Response } from "@playwright/test";
+import { BRAND } from "../src/lib/brand/colors";
 
 const MOTION_ON = "html[data-motion='on']";
 const SCROLL_STEP_PX = 400;
@@ -949,6 +950,19 @@ test.describe("the rice story road", () => {
       (el) => getComputedStyle(el).transform,
     );
     expect(IDENTITY).toContain(passed);
+    // The darker road is Vàng lúa, inside the Vàng rơm road.
+    const passedStroke = await page.$eval(
+      "li[data-story-scene]:nth-child(2) [data-story-road-passed] path",
+      (el) => el.getAttribute("stroke"),
+    );
+    expect(passedStroke?.toUpperCase()).toBe(BRAND.grain.toUpperCase());
+
+    // Back up the page, the grain goes back up the road.
+    const down = await grainY();
+    await scrollToScene(page, 1);
+    await page.waitForTimeout(1500);
+    expect(await grainY()).toBeLessThan(down - 500);
+    expect(await activeStop()).toBe(1);
   });
 
   test("resizing from desktop to phone keeps the road timeline", async ({ page }) => {
