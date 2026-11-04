@@ -40,6 +40,17 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
 - Do not put content, names, URLs, or code from the owner's workplace into the repo.
 - The design and the plans (`docs/superpowers/`) are committed to the repo.
 
+## Front-end work (UI, copy, motion)
+- Design direction is fixed: `brand/README.md` (colors, fonts, logo, mascot) and sections 2 and 3 of the spec.
+  Treat them as this project's `DESIGN.md`. Do not invent a new palette, font pair or layout style.
+- Then use the `antislop` skills as the filter for UI, copy and front-end code (`antislop`, `antislop-ui`,
+  `antislop-layoutmobile`, `antislop-human`, `antislop-copywriting`, `antislop-code`).
+- `taste-skill`: use its critique, its browser inspector (`inspect.mjs`, and `--app` for admin screens) and its
+  look-and-fix loop. Do not use `draw.mjs` to pick a new direction, because the brand is already decided.
+- GSAP code (part B4 and later): follow the `gsap-*` skills.
+- Review UI code against the pinned rules with the `web-interface-guidelines` skill.
+- Sources, commits and licenses of these skills: `.claude/skills/THIRD_PARTY.md`.
+
 ## Tools
 - Test the tools: `npm run test:tools`.
 - Scan a skill before you copy it into `.claude/skills/`: `node scripts/scan-skill.mjs <thu-muc-skill>`.
