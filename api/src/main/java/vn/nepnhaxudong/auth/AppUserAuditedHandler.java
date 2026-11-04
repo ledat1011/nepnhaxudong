@@ -30,6 +30,11 @@ public class AppUserAuditedHandler implements AuditedHandler {
   }
 
   @Override
+  public boolean canRestore() {
+    return false;
+  }
+
+  @Override
   public Optional<Object> currentSnapshot(long entityId) {
     return users.findById(entityId).map(UserSummary::of);
   }

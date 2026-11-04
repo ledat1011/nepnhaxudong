@@ -44,6 +44,12 @@ public class AuditRestoreService {
     }
   }
 
+  /** True when the kind has a handler that can really restore (not a refuse-only handler). */
+  public boolean canRestore(String entityType) {
+    AuditedHandler handler = handlers.get(entityType);
+    return handler != null && handler.canRestore();
+  }
+
   @Transactional
   public void restore(long auditId) {
     AuditLog line =

@@ -31,6 +31,11 @@ public class MediaAuditedHandler implements AuditedHandler {
   }
 
   @Override
+  public boolean canRestore() {
+    return false;
+  }
+
+  @Override
   public Optional<Object> currentSnapshot(long entityId) {
     return media.findById(entityId).map(MediaAdminDto::from);
   }
