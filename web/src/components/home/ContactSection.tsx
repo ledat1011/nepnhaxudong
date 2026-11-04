@@ -9,7 +9,7 @@ type ContactSectionProps = {
 };
 
 const BUTTON_CLASS =
-  "inline-flex min-h-11 items-center justify-center rounded-full bg-coat px-6 py-2 font-bold text-rice hover:bg-earth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
+  "inline-flex min-h-11 items-center justify-center rounded-full bg-coat px-6 py-2 font-bold text-rice underline-offset-4 hover:underline hover:bg-earth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
 
 /** Contact by phone, Zalo and Messenger only: no form, no embedded map. */
 export function ContactSection({ dict, contact }: ContactSectionProps) {
@@ -21,7 +21,7 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
     <section aria-labelledby="lien-he">
       <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
         <SectionHeading id="lien-he" title={dict.sections.contact} />
-        <div className="grid gap-8 md:grid-cols-2 md:items-start">
+        <div data-reveal className="grid gap-8 md:grid-cols-2 md:items-start">
           {hasButtons && (
             <ul className="flex flex-wrap gap-3">
               {phone !== null && (
@@ -56,17 +56,17 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
             <dl className="space-y-5 rounded-2xl bg-straw p-6">
               {address !== null && (
                 <div>
-                  <dt className="text-sm font-bold uppercase tracking-wide text-coat">
+                  <dt className="font-bold text-coat">
                     {dict.contact.address}
                   </dt>
                   <dd className="mt-1 text-lg font-medium">{address}</dd>
                   {mapUrl !== null && (
-                    <dd className="mt-2">
+                    <dd className="mt-1">
                       <a
                         href={mapUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded font-bold underline underline-offset-4 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
+                        className="inline-flex min-h-11 items-center rounded font-bold underline underline-offset-4 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
                       >
                         {dict.contact.viewMap}
                       </a>
@@ -76,7 +76,7 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
               )}
               {hours !== null && (
                 <div>
-                  <dt className="text-sm font-bold uppercase tracking-wide text-coat">
+                  <dt className="font-bold text-coat">
                     {dict.contact.hours}
                   </dt>
                   <dd className="mt-1 text-lg font-medium">{hours}</dd>

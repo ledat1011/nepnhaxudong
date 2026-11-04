@@ -27,7 +27,7 @@ export default async function LangLayout({ children, params }: LangLayoutProps) 
       <body>
         <a
           href="#noi-dung"
-          className="sr-only rounded bg-earth px-4 py-2 font-bold text-rice focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50"
+          className="sr-only rounded bg-earth px-4 py-2 font-bold text-rice focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-11 focus:items-center"
         >
           {dict.nav.skipToContent}
         </a>

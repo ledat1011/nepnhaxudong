@@ -15,8 +15,20 @@
 - Chủ dự án hỏi có nên chép hết skill vào repo không → chọn "Đổi sang plugin": anti-slop, taste-skill, gsap-skills khai báo trong `.claude/settings.json`; chỉ giữ `web-interface-guidelines` trong repo. AI không tự cài plugin, thiếu thì báo chủ dự án. Đã ghi vào `CLAUDE.md` và quyết định 0006.
 - Chủ dự án bảo merge PR #6 → đã merge vào `main` (abc538d).
 - "Commit push hết đi, tôi muốn coi sản phẩm để feedback" → commit và push nhánh B3 và B4 ngay khi vòng sửa cuối commit xong; mở server local để chủ dự án xem cả trang quản trị (B3) và hiệu ứng (B4). Mở PR / merge: vẫn hỏi trước.
+- Góp ý sau khi xem web (hướng chung: mộc mạc, thôn quê nhưng hiện đại, bắt mắt, chuyển động mượt; dùng các skill giao diện mới để đề xuất):
+  1. Nền sau mascot trống → thêm đồng lúa nếp sau lưng mascot, trời xanh, mây trắng, mặt trời chuyển động nhẹ liên tục, lúa lắc theo gió.
+  2. Bấm Zalo → hiện popup mã QR, không chuyển sang trang khác.
+  3. Khi trang đang tải lại → hiện trạng thái đang tải để khách biết.
+  4. Một hình minh họa (kiểu hoạt hình) giống ảnh sản phẩm thật để khách biết sản phẩm trông thế nào.
+  5. Rà trang quản trị để dễ dùng, thông minh hơn.
+  6. Câu chuyện có hình động từ cánh đồng đến bữa ăn: gieo mạ → nắng gió mưa → thu hoạch → sấy thóc bằng dàn sấy than (lò than, quạt công suất lớn thổi hơi nóng quanh dàn, thóc đặt trên dàn) → máy xát tách vỏ (ảnh máy xát nhà đã gửi) → máy hút chân không đóng bịch vuông (ảnh sản phẩm đã gửi) → tới tay khách (làm quà, nấu ăn, trên kệ siêu thị) → các món nấu từ gạo nếp. Chủ dự án gợi ý vẽ trước bằng Figma hoặc Canva.
+  - Tạo session song song cho các phần làm song song được.
 
 ## Quyết định
+- Chủ dự án duyệt thiết kế popup Zalo và trạng thái đang tải (làm trên nhánh mới sau khi B4 merge, vì B4 đang sửa header và cơ chế chuyển trang):
+  - Zalo, máy tính: popup có mã QR (tạo ở trình duyệt từ số Zalo trong trang quản trị, thư viện `qrcode`), số điện thoại, nút "Sao chép số", nút "Mở Zalo"; đóng bằng Esc hoặc bấm ra ngoài.
+  - Zalo, điện thoại: tấm trượt từ dưới lên, nút lớn "Mở Zalo" (mở app) và "Sao chép số"; không hiện QR.
+  - Đang tải: thanh mảnh màu rơm ở mép trên khi chuyển trang (chỉ hiện nếu chờ lâu hơn khoảng 250 ms, như dòng chữ đang tải của B4); khung xương cho danh sách câu chuyện khi chờ dữ liệu.
 - Phạm vi B4: bỏ chớp mắt, cả bó lúa lắc chung, gộp logo và favicon thật vào B4, GSAP 3.15.0 — mascot thật không có lớp mắt, bó lúa là một nhóm.
 - Không hiện "Đặt lại mật khẩu" ở dòng của chính mình — thao tác này đăng xuất và tắt xác thực 2 lớp của chính mình; đổi mật khẩu của mình dùng "Đổi mật khẩu".
 - Đăng / gỡ bài bị khóa khi bài còn thay đổi chưa lưu — tránh đăng nội dung chưa xem lại.

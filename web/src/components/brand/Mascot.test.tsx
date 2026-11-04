@@ -1,38 +1,34 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { BRAND } from "@/lib/brand/colors";
+import { BRAND, MASCOT_ONLY_COLORS } from "@/lib/brand/colors";
 import { Mascot } from "./Mascot";
 
 describe("Mascot", () => {
-  it("renders the four named groups once each", () => {
+  it("renders the four named groups once each and no eyes group", () => {
     const { container } = render(<Mascot title="Nếp Nhà" />);
-    for (const id of ["head", "rice", "body", "eyes"]) {
+    for (const id of ["head", "rice", "hands", "body"]) {
       expect(container.querySelectorAll(`g#${id}`)).toHaveLength(1);
     }
-  });
-
-  it("sets a transform origin on head and rice", () => {
-    const { container } = render(<Mascot title="Nếp Nhà" />);
-    for (const id of ["head", "rice"]) {
-      const group = container.querySelector<SVGGElement>(`g#${id}`);
-      expect(group?.style.transformOrigin).not.toBe("");
-    }
+    expect(container.querySelector("g#eyes")).toBeNull();
   });
 
   it("is exposed as an image with the given title", () => {
-    render(<Mascot title="Nếp Nhà" />);
+    const { container } = render(<Mascot title="Nếp Nhà" />);
     expect(screen.getByRole("img", { name: "Nếp Nhà" })).toBeInTheDocument();
+    expect(container.querySelector("svg")).toHaveAttribute("data-mascot");
   });
 
-  it("uses only brand colors for fill and stroke", () => {
+  it("uses only brand and mascot colors for fill and stroke", () => {
     const { container } = render(<Mascot title="Nếp Nhà" />);
-    const allowed = new Set<string>([...Object.values(BRAND), "none"]);
+    const allowed = new Set<string>(
+      [...Object.values(BRAND), ...Object.values(MASCOT_ONLY_COLORS), "none"].map((c) => c.toLowerCase()),
+    );
     const painted = container.querySelectorAll("[fill], [stroke]");
     expect(painted.length).toBeGreaterThan(0);
     for (const el of painted) {
       for (const attr of ["fill", "stroke"]) {
         const value = el.getAttribute(attr);
-        if (value !== null) expect(allowed.has(value)).toBe(true);
+        if (value !== null) expect(allowed.has(value.toLowerCase())).toBe(true);
       }
     }
   });

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { HomeData, StoryDetail } from "@/lib/content/types";
 import StoryPage from "./page";
 
@@ -19,7 +19,9 @@ const home: HomeData = {
   social: { facebook: null, youtube: null, tiktok: null },
 };
 
-const story: StoryDetail = {
+let story: StoryDetail;
+
+const STORY: StoryDetail = {
   slug: "bai-1",
   title: "[MẪU] Tiêu đề <b>x</b>",
   excerpt: "e",
@@ -38,6 +40,10 @@ vi.mock("@/lib/content/client", () => ({
 }));
 
 describe("StoryPage", () => {
+  beforeEach(() => {
+    story = STORY;
+  });
+
   it("renders the title as literal text in the only h1, in the body font", async () => {
     const page = await StoryPage({
       params: Promise.resolve({ lang: "vi", section: "cau-chuyen", slug: "bai-1" }),
@@ -49,5 +55,19 @@ describe("StoryPage", () => {
     expect(container.querySelector("article b")).toBeNull();
     expect(h1).toHaveClass("font-sans", "font-bold");
     expect(h1).not.toHaveClass("font-display");
+  });
+
+  it("loads the cover, the top image of the page, at once and with high fetch priority", async () => {
+    story = {
+      ...STORY,
+      cover: { url: "https://cdn.example.com/bia.webp", width: 1600, height: 900, alt: "Ảnh bìa" },
+    };
+    const page = await StoryPage({
+      params: Promise.resolve({ lang: "vi", section: "cau-chuyen", slug: "bai-1" }),
+    });
+    render(page);
+    const cover = screen.getByRole("img", { name: "Ảnh bìa" });
+    expect(cover).toHaveAttribute("fetchpriority", "high");
+    expect(cover).toHaveAttribute("loading", "eager");
   });
 });

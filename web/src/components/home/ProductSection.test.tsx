@@ -45,6 +45,22 @@ describe("ProductSection", () => {
     expect(container.querySelectorAll("li svg[aria-hidden='true']")).toHaveLength(3);
   });
 
+  it("shows the icon of each of the spec's three features: round, soft, fragrant", () => {
+    renderProduct();
+    const icons = PRODUCT.features.map(
+      (feature) => screen.getByText(feature).closest("li")?.querySelector("svg")?.dataset.icon,
+    );
+    expect(icons).toEqual(["round", "soft", "fragrant"]);
+  });
+
+  it("gives a feature after the third no icon, not a repeated one, and keeps it aligned", () => {
+    const extra = "[MẪU] Đặc điểm thứ tư";
+    renderProduct({ ...PRODUCT, features: [...PRODUCT.features, extra] });
+    const item = screen.getByText(extra).closest("li");
+    expect(item?.querySelector("svg")).toBeNull();
+    expect(item?.querySelector("[data-icon-space]")).not.toBeNull();
+  });
+
   it("shows 'contact for price' and no currency when prices are hidden", () => {
     const { container } = renderProduct({ ...PRODUCT, showPrice: false });
     expect(screen.getAllByText(dict.product.contactPrice)).toHaveLength(2);

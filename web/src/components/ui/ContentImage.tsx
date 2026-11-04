@@ -7,7 +7,11 @@ type ContentImageProps = {
   image: ImageRef | null;
   sizes: string;
   placeholderLabel: string;
-  priority?: boolean;
+  /**
+   * "high" for the top image of a page (its LCP): it loads at once and first. Next 16's
+   * `priority` is deprecated and does not write fetchpriority="high" on the <img>.
+   */
+  fetchPriority?: "high";
   className?: string;
 };
 
@@ -15,7 +19,7 @@ export function ContentImage({
   image,
   sizes,
   placeholderLabel,
-  priority,
+  fetchPriority,
   className,
 }: ContentImageProps) {
   if (image === null) {
@@ -28,7 +32,8 @@ export function ContentImage({
       width={image.width}
       height={image.height}
       sizes={sizes}
-      priority={priority}
+      fetchPriority={fetchPriority}
+      loading={fetchPriority === "high" ? "eager" : undefined}
       className={className}
     />
   );

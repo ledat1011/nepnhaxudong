@@ -35,13 +35,18 @@ describe("ContentImage", () => {
     expect(img).toHaveAttribute("sizes", "100vw");
   });
 
-  it("passes priority through to next/image", () => {
-    render(
-      <ContentImage image={IMAGE} sizes="100vw" placeholderLabel="x" priority />,
-    );
-    expect(screen.getByRole("img", { name: "Cánh đồng lúa" })).toHaveAttribute(
-      "data-priority",
-      "true",
-    );
+  it("loads the top image of a page at once and first, without the deprecated priority", () => {
+    render(<ContentImage image={IMAGE} sizes="100vw" placeholderLabel="x" fetchPriority="high" />);
+    const img = screen.getByRole("img", { name: "Cánh đồng lúa" });
+    expect(img).toHaveAttribute("fetchpriority", "high");
+    expect(img).toHaveAttribute("loading", "eager");
+    expect(img).not.toHaveAttribute("data-priority");
+  });
+
+  it("leaves other images to next/image's lazy default", () => {
+    render(<ContentImage image={IMAGE} sizes="100vw" placeholderLabel="x" />);
+    const img = screen.getByRole("img", { name: "Cánh đồng lúa" });
+    expect(img).not.toHaveAttribute("fetchpriority");
+    expect(img).not.toHaveAttribute("loading");
   });
 });
