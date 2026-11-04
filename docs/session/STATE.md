@@ -3,7 +3,7 @@
 Cập nhật: 2026-11-04 — máy công ty
 
 ## Giai đoạn hiện tại
-`main` đã có API (B1, PR #3), web công khai (B2, PR #4) và logo, mascot (phần A, PR #5). Hiệu ứng GSAP (B4) đã xong trên nhánh `feat/phan-b4-gsap`, đã push, đang chờ PR. Trang quản trị (B3) làm song song trên nhánh `feat/phan-b3-admin`.
+`main` đã có API (B1, PR #3), web công khai (B2, PR #4), logo và mascot (phần A, PR #5), và hiệu ứng GSAP (B4, PR #8). Trang quản trị (B3) làm trên nhánh `feat/phan-b3-admin`.
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
@@ -12,7 +12,7 @@ Cập nhật: 2026-11-04 — máy công ty
 - Phần B2 (web công khai) đã merge vào `main` (PR #4): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
 - Phần A (logo, mascot, icon) đã merge vào `main` (PR #5).
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
-- Phần B4 (hiệu ứng GSAP) xong trên nhánh `feat/phan-b4-gsap`, 5 task đã review và đã sửa theo review cuối của cả nhánh: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 nằm trong `docs/setup.md`. Đã chạy Delivery Gate của antislop trên trang công khai và sửa các mục FAIL (vùng bấm 44 px, dòng chữ "đang tải", con trỏ và trạng thái khi bấm, trang 404 có header và footer, ảnh bìa câu chuyện tải trước, icon đặc điểm theo đúng thứ tự).
+- Phần B4 (hiệu ứng GSAP) đã merge vào `main` (PR #8), 5 task đã review và đã sửa theo review cuối của cả nhánh: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 nằm trong `docs/setup.md`. Đã chạy Delivery Gate của antislop trên trang công khai và sửa các mục FAIL (vùng bấm 44 px, dòng chữ "đang tải", con trỏ và trạng thái khi bấm, trang 404 có header và footer, ảnh bìa câu chuyện tải trước, icon đặc điểm theo đúng thứ tự).
 - Kết quả xem bằng mắt sau B4. Chromium có cửa sổ không mở được trên máy, nên đã xem bằng Chromium không cửa sổ (headless), cùng bộ máy vẽ:
   - Đầu và bó lúa xoay đúng tâm, không có mảnh nào bị tách ra. Góc lớn nhất đo được khi cuộn nhanh: đầu 2,7°, bó lúa 4,2°.
   - Mascot nằm gọn trong hero. Logo ở header rõ ở cỡ 36 px.
@@ -20,12 +20,12 @@ Cập nhật: 2026-11-04 — máy công ty
 - Rà soát prompt các file hướng dẫn Claude (nhánh `hacka/workspace-prompt-audit-1ff3bc`): báo cáo `docs/session/prompt-audit-2026-11-04.md`. Đã sửa 5 lỗi trong skill `call-chain` và `visual-deck`; 4 mục chỉ ghi nhận (6–9 trong báo cáo) chờ chủ dự án quyết định.
 
 ## Đang làm
-- Phần B4: nhánh `feat/phan-b4-gsap` đã push. Chủ dự án đồng ý mở PR; chủ dự án quyết định merge. Các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec (mục 2.2, 3.0, 3.3) chờ chủ dự án đọc và xác nhận.
+- Phần B3 (trang quản trị): nhánh `feat/phan-b3-admin`, plan `docs/superpowers/plans/2026-11-04-phan-b3-admin.md` nằm trên nhánh đó. PR #9 (review trang quản trị B3) đang mở.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
-2. Viết plan B3 (trang quản trị).
-3. B4: chủ dự án xem nhánh `feat/phan-b4-gsap`, rồi quyết định push, PR và merge. Ghi chú cho người merge sau cùng giữa B3 và B4: trước khi mở PR, merge `origin/main` vào nhánh của mình, rồi chạy `npm install` trong `web/` để tạo lại `web/package-lock.json` (cả B3 và B4 đều thêm thư viện, nên file này sẽ xung đột).
+2. B3: trước khi mở PR, merge `origin/main` vào nhánh `feat/phan-b3-admin`, rồi chạy `npm install` trong `web/` để tạo lại `web/package-lock.json` (B4 đã thêm `gsap`, nên file này có thể xung đột).
+3. Chủ dự án đọc và xác nhận các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec: mục 2.2 (lý do chọn font), 3.0 (Design Read), 3.3 (mục đích từng hiệu ứng), 4.1 (thứ tự đặc điểm sản phẩm).
 4. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới.
 5. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
 6. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
