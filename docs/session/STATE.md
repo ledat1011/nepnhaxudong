@@ -14,6 +14,7 @@ Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã x
 - Rà soát prompt các file hướng dẫn Claude (nhánh `hacka/workspace-prompt-audit-1ff3bc`): báo cáo `docs/session/prompt-audit-2026-11-04.md`. Đã sửa 5 lỗi trong skill `call-chain` và `visual-deck`; 4 mục chỉ ghi nhận (6–9 trong báo cáo) chờ chủ dự án quyết định.
 
 ## Đang làm
+- Thiết kế cảnh minh hoạ (nền Hero, hình túi gạo, khối "Từ hạt lúa tới người dùng" 8 cảnh), nhánh `hacka/story-scenes-design-41d143`: spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md` chờ chủ dự án duyệt. Làm sau khi B4 merge.
 - Phần B2: mở PR, chờ CI, merge vào `main` (chủ dự án đã đồng ý).
 - Phần A (logo) chờ chủ dự án duyệt linh vật, nhánh `feat/phan-a-thuong-hieu`.
 
