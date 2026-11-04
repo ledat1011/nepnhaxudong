@@ -10,7 +10,7 @@ import { BRAND, ILLUSTRATION_ONLY_COLORS } from "@/lib/brand/colors";
  * Every moving part (each cloud, each gust of near stalks, the sun body, the sun rays) is its own
  * outermost svg with `will-change: transform`. The motion code moves it with a CSS transform, so
  * the browser moves its layer and repaints nothing. The village and the far and mid rows are one
- * static image (`data-hero-field`) that nothing moves.
+ * inline svg (`data-hero-field`) on its own layer that nothing moves.
  */
 
 /** Left edge of each cloud, as a fraction of the panel width. The motion code starts from here. */
@@ -352,124 +352,26 @@ function StalkUse({ s, hook }: { s: Stalk; hook?: boolean }) {
 
 /** The field box: 4.73 x the mascot width, centered, on the bottom of the panel. */
 const FIELD_BOX =
-  "pointer-events-none absolute bottom-0 left-1/2 w-[calc(var(--hero-m)*4.73)] max-w-none -translate-x-1/2";
-
-// ---------------------------------------------------------------------------------------------
-// Static field image
-// ---------------------------------------------------------------------------------------------
-
-/** One SVG element as text. The values never contain a quote, `<` or `&`. */
-function tag(name: string, attrs: Record<string, string | number>, inner = ""): string {
-  const list = Object.entries(attrs)
-    .map(([key, value]) => ` ${key}='${value}'`)
-    .join("");
-  return inner === "" ? `<${name}${list}/>` : `<${name}${list}>${inner}</${name}>`;
-}
-
-/** The three stalk shapes, as `<g id>` elements for a `<defs>`. */
-const STALK_DEFS = STALK_SHAPES.map((s) =>
-  tag(
-    "g",
-    { id: s.id },
-    tag(
-      "g",
-      { fill: sprout, stroke: earth, "stroke-width": 1.5, "stroke-linejoin": "round" },
-      s.leaves.map((d) => tag("path", { d })).join(""),
-    ) +
-      tag("path", {
-        d: `${s.stem}Q${s.ear[1].join(" ")} ${s.ear[2].join(" ")}`,
-        fill: "none",
-        stroke: coat,
-        "stroke-width": 3.5,
-        "stroke-linecap": "round",
-      }) +
-      tag(
-        "g",
-        { fill: grain, stroke: earth, "stroke-width": 1.6 },
-        grains(...s.ear)
-          .map(({ cx, cy, angle }) => tag("path", { "data-grain": "", d: grainPath(cx, cy, angle) }))
-          .join(""),
-      ),
-  ),
-).join("");
-
-const useStalk = (s: Stalk) =>
-  tag("use", { href: `#${s.shape}`, transform: `translate(${s.x} ${s.y}) scale(${s.scale})` });
-
-/** The village, the ground and the far and mid rows: the part of the field that never moves. */
-const STATIC_FIELD_SVG = tag(
-  "svg",
-  { xmlns: "http://www.w3.org/2000/svg", viewBox: `0 0 ${FIELD_W} ${FIELD_H}` },
-  tag("defs", {}, STALK_DEFS) +
-    tag("path", { d: VILLAGE_PATH, fill: coat, opacity: 0.35 }) +
-    tag("path", { d: `M0 ${HORIZON}${FAR_EDGE}V260H0Z`, fill: straw }) +
-    tag("path", {
-      d: `M0 ${HORIZON}${FAR_EDGE}`,
-      fill: "none",
-      stroke: earth,
-      "stroke-width": 1.5,
-      "stroke-linejoin": "round",
-    }) +
-    tag("g", {}, FAR_ROW.map(useStalk).join("")) +
-    tag("path", { d: "M0 218Q360 210 720 218T1440 216V260H0Z", fill: grain, opacity: 0.55 }) +
-    tag("g", {}, MID_ROW.map(useStalk).join("")) +
-    tag("path", { d: "M0 244Q360 236 720 244T1440 242V260H0Z", fill: grain }),
-);
-
-/** A `data:` URL of an SVG text: only the characters a URL cannot hold are escaped. */
-export function svgDataUrl(svg: string): string {
-  const escaped = svg
-    .replace(/%/g, "%25")
-    .replace(/#/g, "%23")
-    .replace(/</g, "%3C")
-    .replace(/>/g, "%3E");
-  return `data:image/svg+xml,${escaped}`;
-}
-
-/** The static part of the field as an image (see HeroField). Exported for the tests. */
-export const STATIC_FIELD_IMAGE = svgDataUrl(STATIC_FIELD_SVG);
+  "pointer-events-none absolute bottom-0 left-1/2 aspect-[1440/260] w-[calc(var(--hero-m)*4.73)] max-w-none -translate-x-1/2";
 
 /**
  * The far village and the rice field at the bottom of the scene panel. It is 4.73 x the mascot
  * width, centered, so the horizon is at the mascot's waist.
  *
  * Two layers on the same box. Below: the static part (village, ground, far and mid rows, about
- * 110 stalks) as one image. The browser draws an image as one item, so the hero loop does not
- * walk 110 stalks on every frame, as it would for an inline svg. Above: one svg per gust of near
- * stalks, placed in percents of the box from its viewBox, so it draws on the same scale. The gust
- * stalks `<use>` the shapes of a hidden defs svg.
+ * 110 stalks), an inline svg in a wrapper with `will-change: transform` and `contain: paint`, so
+ * it is its own layer that the loop never repaints. It stays inline (not an image), so it is not
+ * a candidate for the Largest Contentful Paint, which stays the brand name. Above: one svg per
+ * gust of near stalks, placed in percents of the box from its viewBox, so it draws on the same
+ * scale. The gust stalks `<use>` the shapes defined in the static svg.
  */
 export function HeroField() {
   return (
     <>
-      {/*
-       * A plain img: next/image adds nothing for a data: URL. It is not lazy and has a size, so
-       * it is drawn in the first paint and takes no layout shift.
-       */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        data-hero-field=""
-        src={STATIC_FIELD_IMAGE}
-        alt=""
-        aria-hidden="true"
-        width={FIELD_W}
-        height={FIELD_H}
-        draggable={false}
-        decoding="sync"
-        fetchPriority="high"
-        className={`${FIELD_BOX} h-auto select-none`}
-      />
-      <div className={`${FIELD_BOX} aspect-[1440/260]`} aria-hidden="true">
-        <svg
-          data-hero-defs=""
-          aria-hidden="true"
-          focusable="false"
-          width="0"
-          height="0"
-          className="absolute"
-          xmlns="http://www.w3.org/2000/svg"
-          dangerouslySetInnerHTML={{ __html: `<defs>${STALK_DEFS}</defs>` }}
-        />
+      <div data-hero-field-layer="" className={`${FIELD_BOX} will-change-transform contain-paint`}>
+        <StaticField />
+      </div>
+      <div className={FIELD_BOX} aria-hidden="true">
         {GUSTS.map((stalks) => {
           const box = gustBox(stalks);
           return (
@@ -501,3 +403,59 @@ export function HeroField() {
   );
 }
 
+/** The village, the ground and the far and mid rows: nothing in this svg ever moves. */
+function StaticField() {
+  return (
+    <svg
+      data-hero-field=""
+      viewBox={`0 0 ${FIELD_W} ${FIELD_H}`}
+      aria-hidden="true"
+      focusable="false"
+      className="absolute inset-0 size-full"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        {STALK_SHAPES.map((s) => (
+          <g key={s.id} id={s.id}>
+            <g fill={sprout} stroke={earth} strokeWidth="1.5" strokeLinejoin="round">
+              {s.leaves.map((d) => (
+                <path key={d} d={d} />
+              ))}
+            </g>
+            <path
+              d={`${s.stem}Q${s.ear[1].join(" ")} ${s.ear[2].join(" ")}`}
+              fill="none"
+              stroke={coat}
+              strokeWidth="3.5"
+              strokeLinecap="round"
+            />
+            <g fill={grain} stroke={earth} strokeWidth="1.6">
+              {grains(...s.ear).map(({ cx, cy, angle }) => (
+                <path key={`${cx} ${cy}`} data-grain="" d={grainPath(cx, cy, angle)} />
+              ))}
+            </g>
+          </g>
+        ))}
+      </defs>
+
+      <path d={VILLAGE_PATH} fill={coat} opacity="0.35" />
+
+      <path d={`M0 ${HORIZON}${FAR_EDGE}V260H0Z`} fill={straw} />
+      <path d={`M0 ${HORIZON}${FAR_EDGE}`} fill="none" stroke={earth} strokeWidth="1.5" strokeLinejoin="round" />
+      <g>
+        {FAR_ROW.map((s) => (
+          <StalkUse key={s.x} s={s} />
+        ))}
+      </g>
+
+      <path d="M0 218Q360 210 720 218T1440 216V260H0Z" fill={grain} opacity="0.55" />
+      <g>
+        {MID_ROW.map((s) => (
+          <StalkUse key={s.x} s={s} />
+        ))}
+      </g>
+
+      <path d="M0 244Q360 236 720 244T1440 242V260H0Z" fill={grain} />
+    </svg>
+  );
+}

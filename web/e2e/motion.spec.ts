@@ -381,6 +381,35 @@ test("a fixed overlay inside the revealed gallery block covers the whole screen"
   });
 });
 
+// The spec asks that the LCP stays the brand name. The hero scene must not take it: inline svg
+// is not an LCP candidate, an <img> or a CSS background image would be.
+for (const viewport of [
+  { width: 375, height: 812 },
+  { width: 1280, height: 800 },
+]) {
+  test(`the largest contentful paint is the brand name at ${viewport.width} px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/vi");
+    await page.waitForSelector(MOTION_ON);
+    const lcp = await page.evaluate(
+      () =>
+        new Promise<{ tag: string; inH1: boolean; text: string }>((resolve) => {
+          new PerformanceObserver((list) => {
+            const entries = list.getEntries() as (PerformanceEntry & { element: Element | null })[];
+            const last = entries.at(-1);
+            const el = last?.element ?? null;
+            resolve({
+              tag: el?.tagName.toLowerCase() ?? "none",
+              inH1: el?.closest("h1") !== null && el !== null,
+              text: el?.textContent?.trim().slice(0, 20) ?? "",
+            });
+          }).observe({ type: "largest-contentful-paint", buffered: true });
+        }),
+    );
+    expect(lcp.inH1, JSON.stringify(lcp)).toBe(true);
+  });
+}
+
 test("no layout shift while scrolling", async ({ page }) => {
   await page.addInitScript(() => {
     const w = window as unknown as { __cls: number };

@@ -1,25 +1,25 @@
 import { render } from "@testing-library/react";
+import { Fragment, isValidElement } from "react";
 import { gzipSync } from "node:zlib";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ILLUSTRATION_PALETTE } from "@/lib/brand/colors";
-import {
-  HERO_CLOUD_STARTS,
-  HERO_GUST_COUNT,
-  HeroField,
-  HeroSky,
-  HeroSun,
-  STATIC_FIELD_IMAGE,
-} from "./HeroScene";
+import { HERO_CLOUD_STARTS, HERO_GUST_COUNT, HeroField, HeroSky, HeroSun } from "./HeroScene";
 
-/** The svg inside the static field image, parsed. */
-function staticField(): Element {
-  const prefix = "data:image/svg+xml,";
-  expect(STATIC_FIELD_IMAGE.startsWith(prefix)).toBe(true);
-  const text = decodeURIComponent(STATIC_FIELD_IMAGE.slice(prefix.length));
-  const doc = new DOMParser().parseFromString(text, "image/svg+xml");
-  expect(doc.querySelector("parsererror")).toBeNull();
-  return doc.documentElement;
+/**
+ * A copy of the element tree close to what React writes into the RSC payload: function
+ * components are called, every host element becomes ["$", type, key, props].
+ */
+function flight(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(flight);
+  if (!isValidElement(node)) return node;
+  const { key } = node;
+  const type: unknown = node.type;
+  const props = node.props as Record<string, unknown>;
+  if (typeof type === "function") return flight((type as (p: unknown) => unknown)(props));
+  if (type === Fragment) return flight(props.children);
+  const { children, ...rest } = props;
+  return ["$", type, key, { ...rest, children: flight(children) }];
 }
 
 function Scene() {
@@ -58,38 +58,32 @@ describe("HeroScene", () => {
       expect(el.parentElement?.closest("svg")).toBeNull();
       expect(el).toHaveClass("will-change-transform");
     }
-    // The far and mid rows, the village and the ground are one image that nothing moves.
-    const field = container.querySelector("img[data-hero-field]");
-    expect(field).toHaveAttribute("src", STATIC_FIELD_IMAGE);
-    expect(field).toHaveAttribute("alt", "");
-    expect(field).toHaveAttribute("width", "1440");
-    expect(field).toHaveAttribute("height", "260");
-    expect(field).not.toHaveAttribute("loading", "lazy");
-    expect(field).not.toHaveClass("will-change-transform");
-    const image = staticField();
-    expect(image.querySelectorAll("use").length).toBeGreaterThan(100);
-    expect(image.querySelector("[data-hero-gust]")).toBeNull();
+    // The far and mid rows, the village and the ground are one inline svg that nothing moves.
+    // Inline svg is not a candidate for the Largest Contentful Paint (an image would be).
+    expect(container.querySelector("img")).toBeNull();
+    const field = container.querySelector("svg[data-hero-field]");
+    expect(field?.querySelectorAll("use").length).toBeGreaterThan(100);
+    expect(field?.querySelector("[data-hero-gust]")).toBeNull();
+    expect(field?.querySelector("[style*='transform']")).toBeNull();
+    // Its own layer: a wrapper that never moves and keeps the field's paint inside.
+    const layer = field?.parentElement;
+    expect(layer).toHaveAttribute("data-hero-field-layer");
+    expect(layer).toHaveClass("will-change-transform", "contain-paint");
+    expect(layer?.querySelector("[data-hero-gust]")).toBeNull();
   });
 
   it("draws the stalk shapes without any transform, so each stalk is one node to walk", () => {
     const { container } = render(<HeroField />);
-    for (const defs of [container.querySelector("svg[data-hero-defs] defs"), staticField().querySelector("defs")]) {
-      expect(defs?.querySelectorAll("[data-grain]").length).toBe(30);
-      expect(defs?.querySelectorAll("[transform]")).toHaveLength(0);
-      expect(defs?.querySelectorAll("ellipse")).toHaveLength(0);
-    }
+    const defs = container.querySelector("svg[data-hero-field] defs");
+    expect(defs?.querySelectorAll("[data-grain]").length).toBe(30);
+    expect(defs?.querySelectorAll("[transform]")).toHaveLength(0);
+    expect(defs?.querySelectorAll("ellipse")).toHaveLength(0);
   });
 
-  it("uses only palette colors in the static field image", () => {
-    const colors = new Set<string>();
-    for (const el of staticField().querySelectorAll("*")) {
-      for (const name of ["fill", "stroke"]) {
-        const value = el.getAttribute(name);
-        if (value !== null && value !== "none") colors.add(value.toLowerCase());
-      }
-    }
-    expect(colors.size).toBeGreaterThan(0);
-    for (const color of colors) expect(ILLUSTRATION_PALETTE.has(color), color).toBe(true);
+  it("writes the field once in the markup, with no inner HTML string", () => {
+    const html = renderToStaticMarkup(<Scene />);
+    expect(html).not.toContain("data:image");
+    expect(html.match(/id="nn-hero-stalk-a"/g)).toHaveLength(1);
   });
 
   it("keeps each gust svg on the field's scale, with its bottom on the field's bottom edge", () => {
@@ -155,8 +149,10 @@ describe("HeroScene", () => {
     for (const color of used) expect(ILLUSTRATION_PALETTE.has(color), color).toBe(true);
   });
 
-  it("fits the 12 KB gzip budget", () => {
-    const size = gzipSync(renderToStaticMarkup(<Scene />)).length;
-    expect(size).toBeLessThanOrEqual(12 * 1024);
+  it("fits the 12 KB gzip budget, counting the HTML and the RSC payload", () => {
+    // The page delivers a server component twice: as HTML and as the RSC payload (a JSON-like
+    // copy of the element tree in a script). Both go through one gzip stream.
+    const delivered = renderToStaticMarkup(<Scene />) + JSON.stringify(flight(<Scene />));
+    expect(gzipSync(delivered).length).toBeLessThanOrEqual(12 * 1024);
   });
 });
