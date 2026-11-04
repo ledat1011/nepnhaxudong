@@ -89,7 +89,77 @@ describe("composeScene", () => {
   });
 });
 
-const hasScenes = existsSync("../brand/story/scenes");
+describe("composeScene references and slots", () => {
+  const use = '<use data-person="me-cay" data-slot="a" x="0" y="0" width="256" height="256"/>';
+  it.each([
+    ["url(#skin)", "url(#cay-ma-skin)"],
+    ["url('#skin')", "url('#cay-ma-skin')"],
+    ['url("#skin")', 'url("#cay-ma-skin")'],
+    ["href='#skin'", "href='#cay-ma-skin'"],
+    ["xlink:href='#skin'", "xlink:href='#cay-ma-skin'"],
+    ['xlink:href="#skin"', 'xlink:href="#cay-ma-skin"'],
+  ])("prefixes %s", (from, to) => {
+    const extra = from.includes("(") ? `<style>.a{fill:${from}}</style>` : `<use ${from}/>`;
+    const expected = to;
+    expect(run(use + extra)).toContain(expected);
+  });
+
+  it("prefixes single-quoted ids and leaves data-href alone", () => {
+    const out = run(`<path id='p' data-href="#keep"/>`);
+    expect(out).toContain("id='cay-ma-p'");
+    expect(out).toContain('data-href="#keep"');
+  });
+
+  it("expands non-self-closing use elements", () => {
+    const out = run(
+      '<use data-person="me-cay" x="0" y="0" width="256" height="256"></use><use data-include="machine" x="1" y="2"></use>',
+    );
+    expect(out).not.toMatch(/data-person|data-include/);
+    expect(out).toContain("<rect");
+  });
+
+  it("throws when a slot is left after expansion", () => {
+    const nested = `<svg viewBox="0 0 100 100"><use data-person="me-cay" x="0" y="0" width="1" height="1"/></svg>`;
+    expect(() => run('<use data-include="machine" x="0" y="0"/>', people, { machine: nested })).toThrow(/data-person/);
+  });
+});
+
+const COLOR_ATTRS = /\s(?:fill|stroke|stop-color|color)=["']([^"']*)["']/g;
+
+/** Lists every color in a finished scene that is not allowed. */
+function colorProblems(svg: string): string[] {
+  const text = svg.replace(/url\(\s*["']?#[^)]*\)/g, "").replace(/\shref=["'][^"']*["']/g, "");
+  const problems: string[] = [];
+  for (const m of text.matchAll(/#[0-9a-fA-F]+\b/g)) {
+    if (![3, 6].includes(m[0].length - 1) || !ILLUSTRATION_PALETTE.has(m[0].toLowerCase())) problems.push(m[0]);
+  }
+  for (const m of text.matchAll(/\b(?:rgba?|hsla?)\(/g)) problems.push(m[0]);
+  for (const m of svg.matchAll(COLOR_ATTRS)) {
+    const v = m[1].trim();
+    if (!/^(#[0-9a-fA-F]+|none|currentColor|transparent|url\(.*\))$/i.test(v)) problems.push(v);
+  }
+  return problems;
+}
+
+describe("colorProblems", () => {
+  it("accepts palette colors, none and url references", () => {
+    const ok = '<path fill="#FBF7EE" stroke="none"/><rect fill="url(#a)"/><use href="#abc123"/>';
+    expect(colorProblems(ok)).toEqual([]);
+  });
+  it.each([
+    '<path fill="#fff"/>',
+    '<path fill="white"/>',
+    '<path stroke="black"/>',
+    '<path fill="rgb(1,2,3)"/>',
+    '<path fill="hsl(1,2%,3%)"/>',
+    '<path fill="#FBF7EEFF"/>',
+    '<path fill="#123456"/>',
+  ])("flags %s", (svg) => {
+    expect(colorProblems(svg).length).toBeGreaterThan(0);
+  });
+});
+
+const hasScenes =existsSync("../brand/story/scenes");
 const read = (path: string) => readFileSync(path, "utf8");
 const readDir = (dir: string): Record<string, string> =>
   Object.fromEntries(
@@ -144,7 +214,6 @@ describe.skipIf(!hasScenes)("story scene files", () => {
   });
 
   it.each(built)("$slug uses only palette colors", ({ actual }) => {
-    const colors = actual().match(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}/g) ?? [];
-    for (const c of colors) expect(ILLUSTRATION_PALETTE.has(c.toLowerCase())).toBe(true);
+    expect(colorProblems(actual())).toEqual([]);
   });
 });

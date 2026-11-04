@@ -14,8 +14,8 @@ export const SCENE_BUDGET_BYTES = 18 * 1024;
 export const STORY_BUDGET_BYTES = 140 * 1024;
 
 function attr(tag, name) {
-  const match = tag.match(new RegExp(String.raw`\s${name}="([^"]*)"`));
-  return match === null ? null : match[1];
+  const match = tag.match(new RegExp(String.raw`\s${name}=(["'])(.*?)\1`));
+  return match === null ? null : match[2];
 }
 
 function requireAttr(tag, name, what) {
@@ -47,7 +47,7 @@ function number(value, what) {
 }
 
 function placePeople(body, people) {
-  return body.replace(/<use\b[^>]*\sdata-person="[^"]*"[^>]*\/>/g, (tag) => {
+  return body.replace(/<use\b[^>]*\sdata-person=["'][^"']*["'][^>]*?(?:\/>|><\/use>)/g, (tag) => {
     const pose = attr(tag, "data-person");
     if (!Object.hasOwn(people, pose)) throw new Error(`pose ${pose} is missing`);
     const slot = attr(tag, "data-slot") ?? pose;
@@ -60,7 +60,7 @@ function placePeople(body, people) {
 }
 
 function includeParts(body, parts) {
-  return body.replace(/<use\b[^>]*\sdata-include="[^"]*"[^>]*\/>/g, (tag) => {
+  return body.replace(/<use\b[^>]*\sdata-include=["'][^"']*["'][^>]*?(?:\/>|><\/use>)/g, (tag) => {
     const name = attr(tag, "data-include");
     if (!Object.hasOwn(parts, name)) throw new Error(`part ${name} is missing`);
     const x = number(requireAttr(tag, "x", tag), "x");
@@ -72,9 +72,22 @@ function includeParts(body, parts) {
 
 function prefixIds(body, slug) {
   return body
-    .replace(/(\sid=")([^"]*")/g, `$1${slug}-$2`)
-    .replace(/url\(\s*#([^)\s]+)\s*\)/g, `url(#${slug}-$1)`)
-    .replace(/((?:xlink:)?href=")#/g, `$1#${slug}-`);
+    .replace(/(\sid=["'])/g, `$1${slug}-`)
+    .replace(/url\(\s*(["']?)#([^)"'\s]+)\1\s*\)/g, `url($1#${slug}-$2$1)`)
+    .replace(/(\s(?:xlink:)?href=["'])#/g, `$1#${slug}-`);
+}
+
+/** Throws when the finished scene still has a slot or a reference that is not prefixed. */
+function assertComposed(body, slug) {
+  const leftover = body.match(/data-(?:person|include)=/);
+  if (leftover !== null) throw new Error(`scene ${slug} still has ${leftover[0]} after expansion`);
+  const refs = [
+    ...body.matchAll(/url\(\s*["']?#([^)"'\s]+)/g),
+    ...body.matchAll(/\s(?:xlink:)?href=["']#([^"']*)/g),
+  ];
+  for (const [, id] of refs) {
+    if (!id.startsWith(`${slug}-`)) throw new Error(`scene ${slug} has an unprefixed reference to #${id}`);
+  }
 }
 
 /** Builds the finished scene svg from the scene source, the pose files and the shared parts. */
@@ -87,6 +100,7 @@ export function composeScene({ slug, sceneSvg, people, parts }) {
   let body = includeParts(placePeople(inner, people), parts);
   assertSafe(body, `scene ${slug} (composed)`);
   body = prefixIds(body, slug).replace(/>\s+</g, "><").trim();
+  assertComposed(body, slug);
 
   const xmlns = attr(openTag, "xmlns") ?? "http://www.w3.org/2000/svg";
   const root =
