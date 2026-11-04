@@ -118,7 +118,7 @@ Vị trí: ngay sau khối Sản phẩm, trước "Hành trình". `id` của kh�
 | 4 | Sấy thóc tại nhà | Ba | Mũi tên hơi nóng chạy: quạt → lò than → gầm → lên qua lưới sắt và lớp thóc (theo mục 1) | Cánh quạt quay, than lập loè |
 | 5 | Xay xát | Anh 2 | Anh 2 đổ bao thóc vào phễu; trấu bay ra ống; gạo trắng chảy xuống bao | Hạt chạy lên tháp gầu tải |
 | 6 | Đóng gói | Mẹ | Đặt túi vào máy hút chân không inox, nắp đóng, túi co thành khối vuông (dùng lại chuyển động mục 3), chồng túi cao dần | — |
-| 7 | Đến tay khách | Mẹ, khách | Xe tải nhỏ của nhà phân phối chạy tới kệ siêu thị, kệ đầy dần túi gạo; khách tới nhà, mẹ trao túi; hộp quà buộc nơ hiện ra | Bánh xe quay khi xe chạy |
+| 7 | Đến tay khách | Mẹ, khách | Xe tải nhỏ của nhà phân phối chạy tới kệ siêu thị, kệ đầy dần túi gạo; khách tới nhà, mẹ trao túi; hộp quà buộc nơ hiện ra (bánh xe quay khi xe chạy vào) | — |
 | 8 | Mâm cơm | — | Món lần lượt hiện trên mâm: xôi, bánh chưng, chè, bình rượu nếp | Hơi nóng bốc lên |
 
 Mỗi cảnh có tiêu đề ngắn và 1–2 câu (vi / en). Cuối cảnh 8 có nút thật "Liên hệ qua Zalo" (dùng `zaloHref` như Hero; không hiện nếu chưa có số Zalo).
