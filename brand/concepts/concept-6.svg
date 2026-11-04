@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" stroke="#4A2C1A" stroke-linejoin="round" stroke-linecap="round">
+<defs>
+<path id="gr" d="M0 -17.6C8.1 -8.1 10.8 4.1 6.8 10.8C4.1 16.2 -4.1 16.2 -6.8 10.8C-10.8 4.1 -8.1 -8.1 0 -17.6Z"/>
+</defs>
+<g id="body" stroke-width="8">
+<path d="M230 280V352H282V280Z" fill="#F4CDA8"/>
+<path d="M104 512C104 420 132 358 214 338H298C380 358 408 420 408 512Z" fill="#8B5A2B"/>
+<path d="M222 338Q256 386 290 338Z" fill="#F4CDA8"/>
+<path d="M372 486L252 460" fill="none" stroke-width="58"/>
+<path d="M372 486L252 460" fill="none" stroke="#8B5A2B" stroke-width="42"/>
+<circle cx="232" cy="456" r="26" fill="#F4CDA8"/>
+</g>
+<g id="rice" stroke-width="6">
+<path d="M218 458C192 330 92 194 38 324M228 458C204 334 138 200 100 368M208 458C182 338 70 238 34 392" fill="none" stroke="#4A2C1A" stroke-width="14"/>
+<path d="M218 458C192 330 92 194 38 324M228 458C204 334 138 200 100 368M208 458C182 338 70 238 34 392" fill="none" stroke="#D9A13B" stroke-width="6"/>
+<g fill="#D9A13B" stroke-width="5">
+<use href="#gr" transform="translate(126.3 299.4)rotate(-80.6)"/>
+<use href="#gr" transform="translate(118.9 265.5)rotate(-32.7)"/>
+<use href="#gr" transform="translate(93.2 283.3)rotate(-121.6)"/>
+<use href="#gr" transform="translate(67.4 266.1)rotate(272.6)"/>
+<use href="#gr" transform="translate(64.3 300.9)rotate(185.2)"/>
+<use href="#gr" transform="translate(35.7 329.5)rotate(202.6)"/>
+<use href="#gr" transform="translate(157.7 308.7)rotate(-76.3)"/>
+<use href="#gr" transform="translate(156.3 279.1)rotate(-38)"/>
+<use href="#gr" transform="translate(142.7 301.6)rotate(215.6)"/>
+<use href="#gr" transform="translate(114.8 295.4)rotate(248)"/>
+<use href="#gr" transform="translate(122.9 331.9)rotate(168.7)"/>
+<use href="#gr" transform="translate(98.7 373.9)rotate(192.7)"/>
+<use href="#gr" transform="translate(115.1 330.7)rotate(-95.4)"/>
+<use href="#gr" transform="translate(101 301.8)rotate(-52.7)"/>
+<use href="#gr" transform="translate(84.7 327.7)rotate(215.8)"/>
+<use href="#gr" transform="translate(53.1 321.7)rotate(254.3)"/>
+<use href="#gr" transform="translate(57.2 359.5)rotate(172.6)"/>
+<use href="#gr" transform="translate(32.6 397.8)rotate(193.2)"/>
+</g>
+<path d="M214 424Q265.5 392.7 286 336Q242.3 373.7 214 424Z" fill="#6E8B3D" stroke-width="7"/>
+<rect x="-24" y="-9" width="48" height="18" rx="8" transform="translate(214 430)rotate(-20)" fill="#8B5A2B" stroke-width="7"/>
+</g>
+<g id="head" stroke-width="8">
+<ellipse cx="256" cy="226" rx="94" ry="84" fill="#4A2C1A"/>
+<ellipse cx="256" cy="238" rx="84" ry="80" fill="#F4CDA8"/>
+<path d="M174 240C170 180 210 150 256 150C302 150 342 180 338 240C320 206 290 196 256 198C222 196 192 206 174 240Z" fill="#4A2C1A"/>
+<ellipse cx="222" cy="256" rx="10" ry="12" fill="#4A2C1A" stroke="none"/>
+<ellipse cx="290" cy="256" rx="10" ry="12" fill="#4A2C1A" stroke="none"/>
+<ellipse cx="200" cy="282" rx="20" ry="12" fill="#E59A84" stroke="none"/>
+<ellipse cx="312" cy="282" rx="20" ry="12" fill="#E59A84" stroke="none"/>
+<path d="M232 290Q256 312 280 290" fill="none"/>
+<path d="M88 174Q256 210 424 174L270 42Q256 32 242 42Z" fill="#F2E2B6"/>
+</g>
+</svg>

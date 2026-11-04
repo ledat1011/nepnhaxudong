@@ -1,0 +1,22 @@
+{
+  "name": "nepnha-brand-tools",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "tokens": "node build-tokens.mjs",
+    "concepts": "node render-concepts.mjs",
+    "logo-mascot": "node build-logo-mascot.mjs",
+    "logos": "node build-logos.mjs",
+    "png": "node export-png.mjs",
+    "preview": "node build-preview.mjs"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "opentype.js": "^2.0.0",
+    "svgson": "^5.3.1"
+  }
+}
