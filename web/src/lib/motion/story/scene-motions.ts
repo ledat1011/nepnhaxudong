@@ -198,8 +198,8 @@ function dongGoi(gsap: Gsap, p: Parts, svg: SVGSVGElement): SceneMotion | null {
 
 /**
  * Scene 7: the distributor's truck drives in to the shop, the shelf fills, mother hands a bag to
- * a customer at home, the gift box appears. The loop is the parked truck's running engine: a
- * 1 px shake.
+ * a customer at home, the gift box appears. The wheels turn only while the truck drives in, so
+ * the parked truck has no loop: a shake too small to see would still repaint the scene.
  */
 function denTayKhach(gsap: Gsap, p: Parts): SceneMotion {
   const [truck] = p.truck;
@@ -215,10 +215,7 @@ function denTayKhach(gsap: Gsap, p: Parts): SceneMotion {
   tl.from(p["shelf-bag"], { y: "-=10", opacity: 0, duration: 0.3, stagger: 0.035 }, 0.6);
   tl.from(p["handover-bag"], { x: "-=36", opacity: 0, duration: 0.5 }, 1.2);
   tl.from(p.gift, { scale: 0, transformOrigin: "50% 100%", duration: 0.45, ease: "back.out(2)" }, 1.7);
-
-  const lp = loop(gsap);
-  lp.to(vehicle, { y: "-=1", duration: 0.25, ease: "sine.inOut", yoyo: true, repeat: 7 }, 0);
-  return { intro: tl, loop: lp };
+  return { intro: tl, loop: null };
 }
 
 /** Scene 8: xôi, bánh chưng, chè and rượu nếp come to the table one by one; steam rises. */

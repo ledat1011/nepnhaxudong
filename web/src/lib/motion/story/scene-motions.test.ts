@@ -15,9 +15,11 @@ const PARTS: Record<SceneSlug, { once: string[]; loop: string[] }> = {
   say: { once: ["air", "paddy", "father"], loop: ["fan-blades", "coals"] },
   "xay-xat": { once: ["brother", "pour-sack", "husk", "rice-flow"], loop: ["elevator-grain"] },
   "dong-goi": { once: ["mother", "lid", "stack-bag"], loop: [] },
+  // The wheels turn while the truck drives in; parked, it has no loop (a loop that cannot be
+  // seen would still repaint the scene).
   "den-tay-khach": {
-    once: ["truck", "shelf-bag", "mother", "customer", "handover-bag", "gift"],
-    loop: ["wheel"],
+    once: ["truck", "shelf-bag", "mother", "customer", "handover-bag", "gift", "wheel"],
+    loop: [],
   },
   "mam-com": { once: ["dish"], loop: ["steam"] },
 };
