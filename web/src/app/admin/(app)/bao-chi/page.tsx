@@ -31,6 +31,7 @@ export default function PressPage() {
   const [attempt, setAttempt] = useState(0);
   // A dashboard link opens one item, on the first load only.
   const linkHandled = useRef(false);
+  const [linkGone, setLinkGone] = useState(false);
   // True while a GET runs: the list on screen may be out of date.
   const [reloading, setReloading] = useState(false);
 
@@ -44,8 +45,10 @@ export default function PressPage() {
         setItems(value);
         if (!linkHandled.current) {
           linkHandled.current = true;
-          const linked = value.find((item) => item.id === linkedId());
+          const id = linkedId();
+          const linked = value.find((item) => item.id === id);
           if (linked !== undefined) setEditing(linked);
+          else if (id !== null) setLinkGone(true);
         }
         setReloading(false);
       },
@@ -70,6 +73,11 @@ export default function PressPage() {
       <Button type="button" onClick={() => setEditing("new")}>
         Thêm bài báo
       </Button>
+      {linkGone ? (
+        <p role="status" className="rounded-md border bg-card p-3 text-sm">
+          Không tìm thấy mục cần sửa. Có thể mục đó đã bị xóa.
+        </p>
+      ) : null}
       <ProblemMessage error={error} />
       {error !== null ? (
         <Button

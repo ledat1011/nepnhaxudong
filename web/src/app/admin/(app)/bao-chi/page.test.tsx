@@ -124,4 +124,12 @@ describe("Báo chí page", () => {
     expect(screen.queryByRole("heading", { name: "Sửa bài báo" })).not.toBeInTheDocument();
     window.history.replaceState(null, "", "/");
   });
+
+  it("says so when the bài báo of a dashboard link is no longer there", async () => {
+    window.history.replaceState(null, "", "/admin/bao-chi?sua=99");
+    adminFetch.mockResolvedValue([mention(1)]);
+    render(<PressPage />);
+    expect(await screen.findByText("Không tìm thấy mục cần sửa. Có thể mục đó đã bị xóa.")).toBeInTheDocument();
+    window.history.replaceState(null, "", "/");
+  });
 });

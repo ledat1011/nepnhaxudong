@@ -82,4 +82,12 @@ describe("Hành trình page", () => {
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Sửa mốc" })).not.toBeInTheDocument());
     window.history.replaceState(null, "", "/");
   });
+
+  it("says so when the mốc of a dashboard link is no longer there", async () => {
+    window.history.replaceState(null, "", "/admin/hanh-trinh?sua=99");
+    adminFetch.mockResolvedValue([event(1, 1990)]);
+    render(<TimelinePage />);
+    expect(await screen.findByText("Không tìm thấy mục cần sửa. Có thể mục đó đã bị xóa.")).toBeInTheDocument();
+    window.history.replaceState(null, "", "/");
+  });
 });

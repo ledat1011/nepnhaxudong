@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useEffect, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BilingualField } from "@/components/admin/form/BilingualField";
@@ -106,6 +106,22 @@ describe("FieldFocus", () => {
     // In steps: React shows the loaded form when act ends, and the field is focused a moment later.
     await act(async () => vi.advanceTimersByTimeAsync(400));
     await act(async () => vi.advanceTimersByTimeAsync(400));
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it("stops looking once the user does something else, so a dialog opened later keeps its own focus", async () => {
+    search.value = "o=product.description.en";
+    render(
+      <>
+        <FieldFocus />
+        <LateForm delay={2000} />
+      </>,
+    );
+    await act(async () => vi.advanceTimersByTimeAsync(300));
+    fireEvent.pointerDown(document.body);
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    await act(async () => vi.advanceTimersByTimeAsync(500));
+    expect(screen.getByRole("group", { name: /^Mô tả/ })).toBeInTheDocument();
     expect(document.activeElement).toBe(document.body);
   });
 });

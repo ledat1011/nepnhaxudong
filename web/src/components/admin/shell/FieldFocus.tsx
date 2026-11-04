@@ -13,16 +13,23 @@ const MARK_MS = 4_000;
 
 /**
  * Watches `root` until the field of `target` is on screen, then scrolls to it, focuses it and marks it.
- * Opens the target's tab first when needed (a Radix tab opens when it gets focus). Returns a stop function.
+ * Opens the target's tab first when needed (a Radix tab opens when it gets focus). It stops when the user taps or
+ * presses a key first, so a dialog the user opens later (a new item) keeps its own focus. Returns a stop function.
  */
 export function focusWhenReady(root: HTMLElement, target: FieldTarget): () => void {
   const timers: ReturnType<typeof setTimeout>[] = [];
   let done = false;
   const observer = new MutationObserver(() => attempt());
 
+  // The user started something else (a tap, a key): the field is no longer what they want.
+  const userActed = () => finish();
+  const doc = root.ownerDocument;
+
   function finish() {
     done = true;
     observer.disconnect();
+    doc.removeEventListener("pointerdown", userActed, true);
+    doc.removeEventListener("keydown", userActed, true);
   }
 
   function attempt() {
@@ -54,6 +61,8 @@ export function focusWhenReady(root: HTMLElement, target: FieldTarget): () => vo
     attributes: true,
     attributeFilter: ["hidden", "aria-selected", "data-state"],
   });
+  doc.addEventListener("pointerdown", userActed, true);
+  doc.addEventListener("keydown", userActed, true);
   timers.push(setTimeout(finish, GIVE_UP_MS));
   attempt();
   return () => {
