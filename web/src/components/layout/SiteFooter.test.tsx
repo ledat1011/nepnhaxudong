@@ -49,6 +49,13 @@ describe("SiteFooter", () => {
     );
   });
 
+  it("shows the Zalo number as a link that opens the Zalo contact dialog", () => {
+    renderFooter();
+    const link = screen.getByRole("link", { name: "0000 000 001" });
+    expect(link).toHaveAttribute("href", "https://zalo.me/0000000001");
+    expect(link).toHaveAttribute("aria-haspopup", "dialog");
+  });
+
   it("leaves out contact fields that are null", () => {
     renderFooter({ ...CONTACT, phone: null, address: null });
     expect(screen.queryByRole("link", { name: "0000 000 000" })).not.toBeInTheDocument();

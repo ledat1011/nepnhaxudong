@@ -53,6 +53,14 @@ describe("ContactSection", () => {
     );
   });
 
+  it("opens the Zalo contact dialog from the Zalo button", () => {
+    renderContact();
+    expect(screen.getByRole("link", { name: dict.contact.zalo })).toHaveAttribute(
+      "aria-haspopup",
+      "dialog",
+    );
+  });
+
   it("shows the address, hours and a map link that opens in a new tab", () => {
     renderContact();
     expect(screen.getByText("[MẪU] Xứ Đông")).toBeInTheDocument();

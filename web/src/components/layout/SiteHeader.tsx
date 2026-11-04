@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { zaloHref } from "@/lib/format";
+import { ZaloLink } from "@/components/contact/ZaloLink";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { homePath } from "@/lib/i18n/routes";
@@ -42,12 +42,13 @@ export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderP
           loadingLabel={dict.loading.page}
         />
         {zalo !== null && (
-          <a
-            href={zaloHref(zalo)}
+          <ZaloLink
+            zalo={zalo}
+            labels={dict.zalo}
             className="inline-flex min-h-11 items-center rounded-full bg-coat px-3 text-sm font-bold text-rice underline-offset-4 hover:bg-earth hover:underline md:px-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
           >
             {dict.contact.zalo}
-          </a>
+          </ZaloLink>
         )}
         <MobileMenu label={dict.nav.openMenu} closeLabel={dict.nav.closeMenu}>
           <nav aria-label={dict.nav.label}>

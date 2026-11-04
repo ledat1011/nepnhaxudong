@@ -1,6 +1,7 @@
+import { ZaloLink } from "@/components/contact/ZaloLink";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { Contact } from "@/lib/content/types";
-import { telHref, zaloHref } from "@/lib/format";
+import { telHref } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type ContactSectionProps = {
@@ -33,9 +34,9 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
               )}
               {zalo !== null && (
                 <li>
-                  <a href={zaloHref(zalo)} className={BUTTON_CLASS}>
+                  <ZaloLink zalo={zalo} labels={dict.zalo} className={BUTTON_CLASS}>
                     {dict.contact.zalo}
-                  </a>
+                  </ZaloLink>
                 </li>
               )}
               {messenger !== null && (
