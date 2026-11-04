@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import type { MediaAdminDto } from "@/lib/admin/types";
 import { cn } from "@/lib/admin/utils";
 
@@ -38,6 +39,16 @@ export function MediaGrid({ items, onSelect, selectedIds }: Props) {
                 loading="lazy"
                 className="size-full object-cover"
               />
+              {selected ? (
+                // A tick as well as the ring: the choice must not rest on a colour alone.
+                <span
+                  data-tick
+                  aria-hidden="true"
+                  className="absolute top-1 right-1 flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                >
+                  <Check className="size-5" />
+                </span>
+              ) : null}
             </button>
           </li>
         );

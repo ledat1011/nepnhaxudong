@@ -33,6 +33,13 @@ describe("MediaGrid", () => {
     expect(buttons[1]).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("puts a tick on a chosen image, so the choice does not rest on a colour alone", () => {
+    render(<MediaGrid items={items} onSelect={() => {}} selectedIds={[2]} />);
+    const [chosen, other] = screen.getAllByRole("button");
+    expect(chosen.querySelector("[data-tick]")).not.toBeNull();
+    expect(other.querySelector("[data-tick]")).toBeNull();
+  });
+
   it("shows an empty text when there are no images", () => {
     render(<MediaGrid items={[]} onSelect={() => {}} />);
     expect(screen.getByText("Chưa có ảnh nào.")).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkImageFile } from "./upload-check";
+import { IMAGE_ACCEPT, checkPickedFile, checkUploadFile, isHeic } from "./upload-check";
 
 const MB = 1024 * 1024;
 
@@ -9,32 +9,40 @@ function file(name: string, type: string, size: number): File {
   return f;
 }
 
-describe("checkImageFile", () => {
-  const heic = "Ảnh HEIC chưa được hỗ trợ. Hãy chọn ảnh JPEG hoặc PNG.";
+describe("IMAGE_ACCEPT", () => {
+  it("is every image type, with no capture, so a phone offers both the camera and the gallery", () => {
+    expect(IMAGE_ACCEPT).toBe("image/*");
+  });
+});
 
-  it("rejects HEIC by extension when the type is empty", () => {
-    expect(checkImageFile(file("a.heic", "", 1000))).toBe(heic);
+describe("checkPickedFile", () => {
+  it("accepts any image, also HEIC with an empty type: the browser converts it or the API answers", () => {
+    expect(checkPickedFile(file("a.jpg", "image/jpeg", 20 * MB))).toBeNull();
+    expect(checkPickedFile(file("a.heic", "", 1000))).toBeNull();
+    expect(checkPickedFile(file("a.jpg", "image/heif", 1000))).toBeNull();
+    expect(checkPickedFile(file("a.gif", "image/gif", 1000))).toBeNull();
   });
 
-  it("rejects HEIF by type", () => {
-    expect(checkImageFile(file("a.jpg", "image/heif", 1000))).toBe(heic);
+  it("rejects a file that is not an image", () => {
+    expect(checkPickedFile(file("ghi-chu.pdf", "application/pdf", 1000))).toBe("Tệp này không phải là ảnh.");
+    expect(checkPickedFile(file("ghi-chu", "", 1000))).toBe("Tệp này không phải là ảnh.");
   });
+});
 
-  it("rejects a file over 15 MB", () => {
-    expect(checkImageFile(file("a.jpg", "image/jpeg", 15 * MB + 1))).toBe("Ảnh quá lớn. Tối đa 15 MB.");
+describe("checkUploadFile", () => {
+  it("rejects a file over 15 MB, even after shrinking", () => {
+    expect(checkUploadFile(file("a.jpg", "image/jpeg", 15 * MB + 1))).toBe("Ảnh quá lớn. Tối đa 15 MB.");
   });
 
   it("accepts a file of exactly 15 MB", () => {
-    expect(checkImageFile(file("a.jpg", "image/jpeg", 15 * MB))).toBeNull();
+    expect(checkUploadFile(file("a.jpg", "image/jpeg", 15 * MB))).toBeNull();
   });
+});
 
-  it("rejects other types", () => {
-    expect(checkImageFile(file("a.gif", "image/gif", 1000))).toBe("Chỉ nhận ảnh JPEG, PNG hoặc WebP.");
-  });
-
-  it("accepts a 2 MB JPEG, PNG and WebP", () => {
-    expect(checkImageFile(file("a.jpg", "image/jpeg", 2 * MB))).toBeNull();
-    expect(checkImageFile(file("a.png", "image/png", 2 * MB))).toBeNull();
-    expect(checkImageFile(file("a.webp", "image/webp", 2 * MB))).toBeNull();
+describe("isHeic", () => {
+  it("finds HEIC and HEIF by type or by name", () => {
+    expect(isHeic(file("a.HEIC", "", 1))).toBe(true);
+    expect(isHeic(file("a.jpg", "image/heif", 1))).toBe(true);
+    expect(isHeic(file("a.jpg", "image/jpeg", 1))).toBe(false);
   });
 });
