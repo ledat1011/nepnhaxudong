@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { pendingHashScroll, shouldHideOnSetup } from "./reveal";
+import { pendingHashScroll, shouldHideElement, shouldHideOnSetup } from "./reveal";
 
 describe("shouldHideOnSetup", () => {
   it("hides an element below the viewport", () => {
@@ -16,6 +16,29 @@ describe("shouldHideOnSetup", () => {
 
   it("keeps an element above the viewport visible", () => {
     expect(shouldHideOnSetup({ top: -300 }, 800)).toBe(false);
+  });
+});
+
+describe("shouldHideElement", () => {
+  function at(top: number) {
+    Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
+    const el = document.createElement("div");
+    el.getBoundingClientRect = () => ({ top }) as DOMRect;
+    return el;
+  }
+
+  it("uses the bottom of the screen by default", () => {
+    expect(shouldHideElement(at(799), 0)).toBe(false);
+    expect(shouldHideElement(at(800), 0)).toBe(true);
+  });
+
+  it("can use a line higher up in the screen", () => {
+    expect(shouldHideElement(at(599), 0, 0.75)).toBe(false);
+    expect(shouldHideElement(at(600), 0, 0.75)).toBe(true);
+  });
+
+  it("subtracts the pending scroll", () => {
+    expect(shouldHideElement(at(900), 400, 0.75)).toBe(false);
   });
 });
 

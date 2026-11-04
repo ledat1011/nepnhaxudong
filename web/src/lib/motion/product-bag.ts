@@ -3,6 +3,11 @@ import { pendingHashScroll, shouldHideElement } from "./reveal";
 
 /** The whole bag motion, in seconds, when the notes are present. */
 export const BAG_DURATION_S = 2.5;
+/**
+ * The motion starts when the bag's top reaches this part of the screen height. The same line
+ * decides at setup whether the bag may start in its first frame.
+ */
+export const BAG_START_LINE = 0.75;
 
 const GRAIN_FALL_PX = 120;
 const GRAIN_STAGGER_S = 0.06;
@@ -115,8 +120,10 @@ export function buildBagTimeline(
 }
 
 /**
- * Plays the bag motion once, when the product block scrolls into view. A bag that is already in
- * view or above the screen (a deep link, a restored scroll) is left in its final frame.
+ * Plays the bag motion once, when the bag's top reaches the start line (75 % of the screen).
+ * A bag whose top is still below that line starts in its first frame, also when the top of the
+ * gallery box already shows at the bottom of the first screen. A bag whose top is already above
+ * the line (a deep link, a restored scroll, a short screen) is left in its final frame.
  */
 export const setupProductBag: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   const figures = Array.from(root.querySelectorAll<HTMLElement>("[data-product-bag]"));
@@ -125,12 +132,12 @@ export const setupProductBag: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
 
   const undo: Array<() => void> = [];
   for (const figure of figures) {
-    if (!shouldHideElement(figure, offset)) continue;
+    if (!shouldHideElement(figure, offset, BAG_START_LINE)) continue;
     const tl = buildBagTimeline(gsap, figure);
     if (!tl) continue;
     const trigger = ScrollTrigger.create({
       trigger: figure,
-      start: "clamp(top 75%)",
+      start: `clamp(top ${BAG_START_LINE * 100}%)`,
       once: true,
       onEnter: () => {
         tl.play();

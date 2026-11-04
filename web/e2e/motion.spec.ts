@@ -588,16 +588,79 @@ test("reduced motion hides the pause button and leaves the clouds still", async 
   expect(await cloudTransform(page)).toBe("none");
 });
 
+const IDENTITY = ["none", "matrix(1, 0, 0, 1, 0, 0)"];
+
+function bagState(page: Page) {
+  return page.evaluate(() => {
+    const style = (name: string) => {
+      const el = document.querySelector(`[data-product-bag] [data-bag='${name}']`);
+      if (!el) throw new Error(`bag part ${name} not found`);
+      return getComputedStyle(el);
+    };
+    const figure = document.querySelector("[data-product-bag]") as HTMLElement;
+    return {
+      top: figure.getBoundingClientRect().top,
+      line: window.innerHeight * 0.75,
+      puffy: style("puffy").opacity,
+      label: style("label").transform,
+      notes: Array.from(document.querySelectorAll("[data-bag-note]")).map(
+        (el) => getComputedStyle(el).opacity,
+      ),
+    };
+  });
+}
+
+async function expectBagFinalFrame(page: Page) {
+  const state = await bagState(page);
+  expect(state.puffy).toBe("0");
+  expect(IDENTITY).toContain(state.label);
+  expect(state.notes).toHaveLength(3);
+  expect(state.notes.every((o) => o === "1")).toBe(true);
+}
+
+// At these sizes the top of the gallery box already shows at the bottom of the first screen,
+// but it has not reached the trigger line (75 % of the screen) yet.
+for (const viewport of [
+  { width: 1280, height: 720 },
+  { width: 375, height: 812 },
+]) {
+  test(`the bag plays from its first frame at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/vi");
+    await page.waitForSelector(MOTION_ON);
+    const before = await bagState(page);
+    expect(before.top).toBeGreaterThanOrEqual(before.line);
+    // The first frame: the bag is still puffy, the label is not stuck on yet, no notes.
+    expect(before.puffy).toBe("1");
+    expect(IDENTITY).not.toContain(before.label);
+    expect(before.notes.every((o) => o === "0")).toBe(true);
+
+    await page.evaluate(() => {
+      const figure = document.querySelector("[data-product-bag]") as HTMLElement;
+      window.scrollBy({ top: figure.getBoundingClientRect().top - window.innerHeight * 0.5, behavior: "instant" });
+    });
+    await page.waitForTimeout(3000);
+    await expectBagFinalFrame(page);
+  });
+}
+
+test("a bag that is above the trigger line at setup stays in its final frame", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1200 });
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  const state = await bagState(page);
+  expect(state.top).toBeLessThan(state.line);
+  await expectBagFinalFrame(page);
+});
+
 test("the bag animation ends in the static final frame", async ({ page }) => {
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);
+  // Desktop Chrome is 1280x720: the bag starts below the trigger line, so the motion must run.
+  expect((await bagState(page)).puffy).toBe("1");
   await page.locator("[data-product-bag]").first().scrollIntoViewIfNeeded();
   await page.waitForTimeout(3000);
-  const label = await page.$eval("[data-bag='label']", (el) => getComputedStyle(el).transform);
-  expect(["none", "matrix(1, 0, 0, 1, 0, 0)"]).toContain(label);
-  const notes = await revealOpacities(page, "[data-bag-note]");
-  expect(notes).toHaveLength(3);
-  expect(notes.every((o) => o === "1")).toBe(true);
+  await expectBagFinalFrame(page);
   // The falling grains keep their own rotation: grain 0 is turned -20 degrees.
   const grain = await page.$eval(
     "[data-bag='grains'] ellipse",

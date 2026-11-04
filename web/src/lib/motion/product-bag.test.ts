@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GsapModules } from "./load-gsap";
-import { BAG_DURATION_S, buildBagTimeline, setupProductBag } from "./product-bag";
+import { BAG_DURATION_S, BAG_START_LINE, buildBagTimeline, setupProductBag } from "./product-bag";
 
 const PARTS = ["puffy", "brick", "grains", "wrinkles", "air", "seal", "label", "tray"];
 const GRAINS = Array.from(
@@ -149,6 +149,52 @@ describe("setupProductBag", () => {
     const puffy = document.querySelector("[data-bag='puffy']") as SVGElement;
     expect(puffy.style.opacity).toBe("");
     expect((document.querySelector("[data-bag-note]") as HTMLElement).style.opacity).toBe("");
+  });
+
+  it("starts at the trigger line of the viewport", () => {
+    expect(BAG_START_LINE).toBe(0.75);
+  });
+
+  it("hides the bag that is in the screen but below the trigger line", () => {
+    // 700 is inside the 800 px screen, but below the 75 % line (600 px).
+    const el = place(700);
+    const fake = fakeModules();
+    setupProductBag(fake.modules, document);
+    expect((document.querySelector("[data-bag='puffy']") as SVGElement).style.opacity).toBe("1");
+    expect((document.querySelector("[data-bag-note]") as HTMLElement).style.opacity).toBe("0");
+    expect(fake.ScrollTrigger.create).toHaveBeenCalledWith(
+      expect.objectContaining({ trigger: el, start: "clamp(top 75%)", once: true }),
+    );
+  });
+
+  it("hides the bag whose top is exactly on the trigger line", () => {
+    place(600);
+    const fake = fakeModules();
+    setupProductBag(fake.modules, document);
+    expect(fake.ScrollTrigger.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the final frame when the top is already above the trigger line", () => {
+    place(599);
+    const fake = fakeModules();
+    setupProductBag(fake.modules, document);
+    expect(fake.ScrollTrigger.create).not.toHaveBeenCalled();
+    expect((document.querySelector("[data-bag='puffy']") as SVGElement).style.opacity).toBe("");
+  });
+
+  it("measures the line at the scroll position a pending #hash jump moves to", () => {
+    // The page will still scroll 500 px, so the bag at 1000 ends at 500: above the line.
+    document.body.innerHTML = `${figure()}<h2 id="lien-he"></h2>`;
+    const el = document.querySelector("[data-product-bag]") as HTMLElement;
+    el.getBoundingClientRect = () => ({ top: 1000 }) as DOMRect;
+    const target = document.getElementById("lien-he") as HTMLElement;
+    target.getBoundingClientRect = () => ({ top: 500 }) as DOMRect;
+    Object.defineProperty(document.documentElement, "scrollHeight", { value: 5000, configurable: true });
+    window.history.replaceState(null, "", "/#lien-he");
+    const fake = fakeModules();
+    setupProductBag(fake.modules, document);
+    expect(fake.ScrollTrigger.create).not.toHaveBeenCalled();
+    window.history.replaceState(null, "", "/");
   });
 
   it("hides the bag below the screen and plays the timeline once when it arrives", () => {
