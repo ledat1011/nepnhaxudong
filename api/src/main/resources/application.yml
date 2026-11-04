@@ -1,0 +1,71 @@
+server:
+  tomcat:
+    # When an upload is refused with 413 before it is read (more than max-request-size), Tomcat reads
+    # and drops the rest of the body up to this size, so the client receives the 413 and not a reset
+    # connection. A bigger body still gets a reset; the web server in front should limit it too.
+    max-swallow-size: 20MB
+  servlet:
+    context-path: /api
+    session:
+      cookie:
+        name: NEPNHA_SESSION
+        http-only: true
+        # Secure by default; profile "dev" turns it off for plain HTTP on localhost.
+        secure: true
+        same-site: lax
+        max-age: 30d
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/nepnha}
+    username: ${DB_USER:nepnha}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  session:
+    timeout: 30d
+    jdbc:
+      # Flyway (V2__spring_session.sql) owns the session tables.
+      initialize-schema: never
+  servlet:
+    multipart:
+      # One image is at most 15 MB. The request limit is a little higher for the text fields.
+      max-file-size: 15MB
+      max-request-size: 16MB
+  autoconfigure:
+    # Users live in app_user and log in through AuthController; Spring Boot must not create
+    # its default in-memory user with a generated password.
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+
+app:
+  media:
+    # Folder of the uploaded images. Caddy serves it as /media/ in production.
+    dir: ${MEDIA_DIR:./data/media}
+    # At most 2 images are processed at the same time; a third request waits this long, then gets 503.
+    processing-wait: 30s
+  web:
+    # The website (Next.js). After a content change the API calls POST {base-url}/api/revalidate
+    # with the secret. Leave base-url empty when the website is not running: the calls are skipped.
+    # In production this is the internal address of the web container, for example http://web:3000.
+    base-url: ${WEB_BASE_URL:}
+    # The same value as REVALIDATE_SECRET of the website.
+    revalidate-secret: ${REVALIDATE_SECRET:}
+    # Wait before the first retry; it doubles each time (1 s, 2 s, 4 s). Connect and read timeout.
+    retry-wait: 1s
+    timeout: 5s
+
+# First admin, created at startup only when the app_user table is empty.
+bootstrap:
+  admin:
+    email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

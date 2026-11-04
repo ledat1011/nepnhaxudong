@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      # Only this computer can connect (the default password is for local use only).
+      - "127.0.0.1:5433:5432"
+    environment:
+      POSTGRES_DB: nepnha
+      POSTGRES_USER: nepnha
+      # Default is for local use only.
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nepnha-local}
+    volumes:
+      - nepnha-pg:/var/lib/postgresql/data
+
+volumes:
+  nepnha-pg:
