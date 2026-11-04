@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StoryCard } from "@/components/story/StoryCard";
+import { LinkPendingStatus } from "@/components/ui/LinkPendingStatus";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { StorySummary } from "@/lib/content/types";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -21,7 +22,7 @@ export function StoriesSection({ lang, dict, stories }: StoriesSectionProps) {
         <SectionHeading id="cau-chuyen" title={dict.sections.story} />
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {stories.slice(0, MAX_STORIES).map((story) => (
-            <li key={story.slug}>
+            <li key={story.slug} data-reveal>
               <StoryCard lang={lang} story={story} dict={dict} />
             </li>
           ))}
@@ -29,9 +30,10 @@ export function StoriesSection({ lang, dict, stories }: StoriesSectionProps) {
         <div className="mt-10 text-center">
           <Link
             href={storiesPath(lang)}
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-coat px-6 py-2 font-bold text-rice hover:bg-earth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-coat px-6 py-2 font-bold text-rice underline-offset-4 hover:underline hover:bg-earth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
           >
             {dict.stories.viewAll}
+            <LinkPendingStatus label={dict.loading.page} />
           </Link>
         </div>
       </div>

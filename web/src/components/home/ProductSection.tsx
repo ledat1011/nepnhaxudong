@@ -15,9 +15,12 @@ type ProductSectionProps = {
 
 const { earth, coat, grain, sprout } = BRAND;
 
-function Icon({ children }: { children: ReactNode }) {
+type FeatureIconName = "round" | "soft" | "fragrant";
+
+function Icon({ name, children }: { name: FeatureIconName; children: ReactNode }) {
   return (
     <svg
+      data-icon={name}
       viewBox="0 0 40 40"
       width="40"
       height="40"
@@ -37,7 +40,7 @@ function Icon({ children }: { children: ReactNode }) {
 /** Round, plump grain. */
 function RoundGrainIcon() {
   return (
-    <Icon>
+    <Icon name="round">
       <ellipse cx="20" cy="20" rx="10" ry="13" fill={grain} stroke={coat} strokeWidth="2.5" />
       <path d="M16 14q2-3 5-3" stroke={earth} strokeWidth="2" />
     </Icon>
@@ -47,7 +50,7 @@ function RoundGrainIcon() {
 /** Two grains held together by a stretching strand: sticky and soft. */
 function SoftIcon() {
   return (
-    <Icon>
+    <Icon name="soft">
       <ellipse cx="13" cy="13" rx="6" ry="8" fill={grain} stroke={coat} strokeWidth="2.5" transform="rotate(-20 13 13)" />
       <ellipse cx="27" cy="29" rx="6" ry="8" fill={grain} stroke={coat} strokeWidth="2.5" transform="rotate(-20 27 29)" />
       <path d="M16 19Q20 22 24 23" stroke={coat} strokeWidth="2.5" />
@@ -58,7 +61,7 @@ function SoftIcon() {
 /** Steam rising from a grain: fragrant. */
 function FragrantIcon() {
   return (
-    <Icon>
+    <Icon name="fragrant">
       <ellipse cx="20" cy="31" rx="7" ry="6" fill={grain} stroke={coat} strokeWidth="2.5" />
       <g stroke={sprout} strokeWidth="2.5">
         <path d="M13 21q-3-4 0-7t0-7" />
@@ -69,10 +72,21 @@ function FragrantIcon() {
   );
 }
 
-// Features are shown in the order the API returns them: round, soft, fragrant.
-const FEATURE_ICONS = [RoundGrainIcon, SoftIcon, FragrantIcon];
+/**
+ * The API sends features as plain text, without a kind. The rule (spec 3.2, and the `features`
+ * field in lib/content/types.ts): the first three features are, in this order, round and plump,
+ * soft, fragrant. Each icon belongs to one of those three places. A feature after the third has
+ * no icon of its own, so it gets an empty space of the same size instead of a repeated icon.
+ */
+const FEATURE_ICON_BY_PLACE = [RoundGrainIcon, SoftIcon, FragrantIcon] as const;
 
-const SUBHEADING_CLASS = "mb-3 text-sm font-bold uppercase tracking-wide text-coat";
+function FeatureIcon({ place }: { place: number }) {
+  const Shape = FEATURE_ICON_BY_PLACE[place];
+  if (Shape) return <Shape />;
+  return <span data-icon-space aria-hidden="true" className="h-10 w-10 shrink-0" />;
+}
+
+const SUBHEADING_CLASS = "mb-3 font-bold text-coat";
 
 export function ProductSection({ lang, dict, product }: ProductSectionProps) {
   // The Gallery runs in the browser, which cannot read SITE_URL, so the sources are built here.
@@ -80,30 +94,29 @@ export function ProductSection({ lang, dict, product }: ProductSectionProps) {
 
   return (
     <article className="grid gap-8 md:grid-cols-2 md:gap-12 [&+&]:mt-16">
-      <Gallery images={images} dict={dict} />
+      <div data-reveal>
+        <Gallery images={images} dict={dict} />
+      </div>
       <div>
         <h3 className="text-2xl font-bold md:text-3xl">{product.name}</h3>
         <p className="mt-3 text-lg leading-relaxed">{product.description}</p>
 
         {product.features.length > 0 && (
-          <div className="mt-8">
+          <div data-reveal className="mt-8">
             <h4 className={SUBHEADING_CLASS}>{dict.product.features}</h4>
             <ul className="space-y-3">
-              {product.features.map((feature, i) => {
-                const FeatureIcon = FEATURE_ICONS[i % FEATURE_ICONS.length];
-                return (
-                  <li key={feature} className="flex items-center gap-3">
-                    <FeatureIcon />
-                    <span className="font-medium">{feature}</span>
-                  </li>
-                );
-              })}
+              {product.features.map((feature, place) => (
+                <li key={feature} className="flex items-center gap-3">
+                  <FeatureIcon place={place} />
+                  <span className="font-medium">{feature}</span>
+                </li>
+              ))}
             </ul>
           </div>
         )}
 
         {product.packagings.length > 0 && (
-          <div className="mt-8">
+          <div data-reveal className="mt-8">
             <h4 className={SUBHEADING_CLASS}>{dict.product.packaging}</h4>
             <ul className="flex flex-wrap gap-3">
               {product.packagings.map(({ weightGrams, priceVnd }) => (
@@ -124,7 +137,7 @@ export function ProductSection({ lang, dict, product }: ProductSectionProps) {
         )}
 
         {product.cookingTips && (
-          <div className="mt-8 rounded-2xl bg-straw p-5">
+          <div data-reveal className="mt-8 rounded-2xl bg-straw p-5">
             <h4 className={SUBHEADING_CLASS}>{dict.product.dishes}</h4>
             <p className="leading-relaxed">{product.cookingTips}</p>
           </div>

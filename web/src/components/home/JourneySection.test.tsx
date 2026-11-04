@@ -54,4 +54,22 @@ describe("JourneySection", () => {
     expect(line).toHaveAttribute("aria-hidden", "true");
     expect(container.querySelectorAll("[data-journey-event]")).toHaveLength(3);
   });
+  it("renders one leaf per event and one ear", () => {
+    const { container } = render(<JourneySection dict={dict} events={EVENTS} />);
+    const leaves = Array.from(container.querySelectorAll("[data-journey-leaf]"));
+    expect(leaves).toHaveLength(3);
+    const owners = leaves.map((leaf) => leaf.closest("[data-journey-event]"));
+    expect(owners.every((owner) => owner !== null)).toBe(true);
+    expect(new Set(owners).size).toBe(3);
+    expect(container.querySelectorAll("[data-journey-ear]")).toHaveLength(1);
+  });
+
+  it("shows the whole plant without JavaScript", () => {
+    const { container } = render(<JourneySection dict={dict} events={EVENTS} />);
+    const styled = Array.from(container.querySelectorAll("[style]")).filter((el) => {
+      const style = el.getAttribute("style") ?? "";
+      return style.includes("opacity") || style.includes("scale");
+    });
+    expect(styled).toHaveLength(0);
+  });
 });

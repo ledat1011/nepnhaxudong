@@ -84,12 +84,15 @@ describe("home fixtures", () => {
   it.each([
     ["vi", homeVi],
     ["en", homeEn],
-  ])("has the agreed shape in %s", (_lang, home) => {
+  ])("has the agreed shape in %s", (lang, home) => {
     expect(home.contact.phone).toBe("0000 000 000");
     expect(home.social.tiktok).toBeNull();
     expect(home.products).toHaveLength(1);
     const product = home.products[0];
     expect(product.features).toHaveLength(3);
+    // The spec's three features (3.2), in the order the icons expect: round, soft, fragrant.
+    const keywords = lang === "vi" ? ["tròn mẩy", "dẻo", "thơm"] : ["plump", "soft", "fragrant"];
+    product.features.forEach((feature, i) => expect(feature.toLowerCase()).toContain(keywords[i]));
     expect(product.showPrice).toBe(false);
     expect(product.packagings.map((p) => p.weightGrams)).toEqual([1000, 2000]);
     expect(product.packagings.every((p) => p.priceVnd === null)).toBe(true);

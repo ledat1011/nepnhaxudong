@@ -96,6 +96,15 @@ Kết quả đo ngày 2026-11-04, máy công ty, Lighthouse 13.6.0, mobile, dữ
 
 Cả hai trang đạt mục tiêu. Điểm Performance bị trừ chủ yếu do Total Blocking Time (80 đến 270 ms). Khi API thật có ảnh sản phẩm, cần đo lại.
 
+Kết quả đo sau B4 (hiệu ứng GSAP, mascot thật), ngày 2026-11-04, máy công ty, Lighthouse 13.6.0, mobile, dữ liệu mẫu, bản build production. Mỗi trang đo 2 lần (lần 1 / lần 2).
+
+| Trang | Performance | Accessibility | SEO | LCP | CLS | TBT |
+|---|---|---|---|---|---|---|
+| `/vi` | 98 / 86 | 100 / 100 | 100 / 100 | 1,1 s / 1,1 s | 0 / 0 | 180 ms / 560 ms |
+| `/en` | 91 / 95 | 100 / 100 | 100 / 100 | 1,1 s / 1,1 s | 0 / 0 | 370 ms / 260 ms |
+
+LCP và CLS đạt mục tiêu ở cả 4 lần đo. Một lần đo của `/vi` (lần 2) có Performance 86, dưới mục tiêu 90, vì TBT lên 560 ms; lần 1 của cùng trang đạt 98. TBT dao động nhiều giữa các lần đo trên máy này. Nên đo lại khi có ảnh thật.
+
 ## Cloud session
 Sẽ điền sau khi kiểm tra trên claude.ai/code.
 
