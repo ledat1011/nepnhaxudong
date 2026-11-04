@@ -141,10 +141,12 @@ function svgFor(slug: string) {
   return svg;
 }
 
-/** Runs the load trigger and waits for the (mocked) inline swaps. */
+const loadTriggers = (fake: ReturnType<typeof fakeModules>) =>
+  fake.triggers.filter((t) => t.vars.start === STORY_LOAD_AHEAD);
+
+/** Runs every scene's load trigger and waits for the (mocked) inline swaps. */
 async function load(fake: ReturnType<typeof fakeModules>) {
-  const trigger = fake.triggers.find((t) => t.vars.start === STORY_LOAD_AHEAD);
-  trigger?.vars.onEnter?.();
+  loadTriggers(fake).forEach((t) => t.vars.onEnter?.());
   await flush();
 }
 
@@ -186,18 +188,38 @@ describe("setupRiceStory", () => {
     expect(fake.gsap.to).not.toHaveBeenCalled();
   });
 
-  it("loads the eight drawings once, one screen before the section", async () => {
+  it("loads each drawing once, one screen before its own scene", async () => {
     const fake = fakeModules();
     setupRiceStory(fake.modules, document);
     expect(STORY_LOAD_AHEAD).toBe("top bottom+=100%");
-    const trigger = fake.triggers.find((t) => t.vars.start === STORY_LOAD_AHEAD);
-    expect(trigger?.vars).toMatchObject({
-      trigger: document.querySelector("[data-rice-story]"),
-      once: true,
-    });
+    const triggers = loadTriggers(fake);
+    expect(triggers).toHaveLength(8);
+    triggers.forEach((t, i) => expect(t.vars).toMatchObject({ trigger: items()[i], once: true }));
     expect(mocks.inlineSvg).not.toHaveBeenCalled();
-    await load(fake);
+    // Only the scene that comes near loads; the others wait for their own trigger.
+    triggers[0].vars.onEnter?.();
+    await flush();
+    expect(mocks.inlineSvg).toHaveBeenCalledTimes(1);
+    expect(mocks.inlineSvg).toHaveBeenCalledWith(items()[0].querySelector("img"));
+    expect(mocks.build).toHaveBeenCalledTimes(1);
+    triggers.slice(1).forEach((t) => t.vars.onEnter?.());
+    await flush();
     expect(mocks.inlineSvg).toHaveBeenCalledTimes(8);
+  });
+
+  it("moves the drawings that are already inline (the motion started again)", () => {
+    items().forEach((li) => {
+      li.querySelector("img")?.replaceWith(svgFor(li.getAttribute("data-story-scene") ?? ""));
+    });
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    expect(loadTriggers(fake)).toHaveLength(0);
+    expect(mocks.inlineSvg).not.toHaveBeenCalled();
+    expect(mocks.build).toHaveBeenCalledTimes(8);
+    expect(mocks.build.mock.calls.map((call) => call[1])).toEqual(
+      items().map((li) => li.querySelector("svg[data-scene]")),
+    );
+    expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(8);
   });
 
   it("never pins and never uses a sideways container animation", async () => {
@@ -320,6 +342,8 @@ describe("setupRiceStory", () => {
       const { fake, grain, passed } = road();
       const shownGrain = fake.sets.some((s) => s.target === grain && s.vars.opacity === 1);
       expect(shownGrain).toBe(true);
+      // The layer hint comes with the motion, not with the static markup.
+      expect(fake.sets.some((s) => s.target === grain && s.vars.willChange === "transform")).toBe(true);
       const shownPassed = fake.sets.some(
         (s) =>
           Array.isArray(s.target) &&
@@ -381,7 +405,7 @@ describe("setupRiceStory", () => {
     expect(entries).toHaveLength(8);
     (cleanup as () => void)();
     entries.forEach((e) => expect(e.remove).toHaveBeenCalled());
-    expect(fake.triggers.find((t) => t.vars.start === STORY_LOAD_AHEAD)?.kill).toHaveBeenCalled();
+    loadTriggers(fake).forEach((t) => expect(t.kill).toHaveBeenCalled());
     expect(fake.contextRevert).toHaveBeenCalled();
     expect(stop.hasAttribute("data-active")).toBe(false);
     expect(fake.ScrollTrigger.removeEventListener).toHaveBeenCalledWith("refresh", expect.any(Function));
@@ -414,7 +438,7 @@ describe("setupRiceStory", () => {
   it("does not move the drawings that arrive after cleanup", async () => {
     const fake = fakeModules();
     const cleanup = setupRiceStory(fake.modules, document);
-    fake.triggers.find((t) => t.vars.start === STORY_LOAD_AHEAD)?.vars.onEnter?.();
+    loadTriggers(fake).forEach((t) => t.vars.onEnter?.());
     (cleanup as () => void)();
     await flush();
     expect(mocks.build).not.toHaveBeenCalled();

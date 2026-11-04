@@ -7,7 +7,7 @@ import { SCENE_MOTIONS } from "./scene-motions";
 
 type Gsap = GsapModules["gsap"];
 
-/** The drawings start to load when the section is one screen below the bottom of the screen. */
+/** A drawing starts to load when its scene is one screen below the bottom of the screen. */
 export const STORY_LOAD_AHEAD = "top bottom+=100%";
 /** A scene's intro plays when its top reaches this part of the screen height. */
 export const STORY_INTRO_LINE = 0.75;
@@ -107,7 +107,8 @@ function setupRoad(
   const passedLayers = stretches.flatMap(
     (s) => s.el.querySelector<HTMLElement>("[data-story-road-passed]") ?? [],
   );
-  gsap.set(grain, { opacity: 1, xPercent: -50, yPercent: -50 });
+  // The layer hint only while the grain moves; the context revert removes it with the rest.
+  gsap.set(grain, { opacity: 1, xPercent: -50, yPercent: -50, willChange: "transform" });
   if (passedLayers.length > 0) gsap.set(passedLayers, { opacity: 1 });
   const grainX = gsap.quickSetter(grain, "x", "px") as Setter;
   const grainY = gsap.quickSetter(grain, "y", "px") as Setter;
@@ -175,7 +176,7 @@ function setupRoad(
  * The scroll story "Từ hạt lúa tới người dùng": a vertical timeline along a dirt road, the same
  * at every screen size, never pinned. A rice grain moves down the road with the scroll, the
  * road it has passed turns darker and the stop of the scene in the middle of the screen is
- * filled. Each scene's drawing is swapped for its inline svg one screen before the section,
+ * filled. Each scene's drawing is swapped for its inline svg one screen before that scene,
  * then gets its own intro (once) and loop (while on screen, after the intro, and not paused by
  * the visitor). A scene whose file fails, or whose drawing lacks a part, keeps its static image
  * (the final frame).
@@ -196,7 +197,7 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
   const entries: LoopEntry[] = [];
   let disposed = false;
   let undoRoad: () => void = () => undefined;
-  let load: ScrollTrigger | null = null;
+  const loads: ScrollTrigger[] = [];
 
   /** Builds the scene's motion and connects its intro and loop to the scroll. */
   const attach = (scene: Scene) => {
@@ -244,22 +245,33 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
 
   // Everything, also what the late drawings add, is recorded here and reverted by the cleanup.
   const ctx = gsap.context(() => {
-    load = ScrollTrigger.create({
-      trigger: section,
-      start: STORY_LOAD_AHEAD,
-      once: true,
-      onEnter: () => {
-        for (const scene of scenes) {
-          const img = scene.li.querySelector("img");
-          if (!img) continue;
-          void inlineSvg(img).then((svg) => {
-            if (!svg || disposed) return;
-            scene.svg = svg;
-            ctx.add(() => attach(scene));
-          });
-        }
-      },
-    });
+    for (const scene of scenes) {
+      // Swapped by an earlier run of this setup (reduced motion was on for a while): the svg is
+      // already in place and shows its final frame.
+      const inline = scene.li.querySelector<SVGSVGElement>("svg[data-scene]");
+      if (inline) {
+        scene.svg = inline;
+        attach(scene);
+        continue;
+      }
+      const img = scene.li.querySelector("img");
+      if (!img) continue;
+      // Each drawing loads about one screen before its own scene, not with the whole section.
+      loads.push(
+        ScrollTrigger.create({
+          trigger: scene.li,
+          start: STORY_LOAD_AHEAD,
+          once: true,
+          onEnter: () => {
+            void inlineSvg(img).then((svg) => {
+              if (!svg || disposed) return;
+              scene.svg = svg;
+              ctx.add(() => attach(scene));
+            });
+          },
+        }),
+      );
+    }
 
     const line = `${STORY_ROAD_LINE * 100}%`;
     scenes.forEach(({ li }, i) => {
@@ -278,7 +290,7 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
 
   return () => {
     disposed = true;
-    load?.kill();
+    loads.splice(0).forEach((trigger) => trigger.kill());
     entries.splice(0).forEach((entry) => entry.remove());
     undoRoad();
     ctx.revert();

@@ -58,6 +58,8 @@ describe("RiceStory", () => {
     const grain = container.querySelector("[data-story-road-wrap] > [data-story-grain]") as HTMLElement;
     expect(grain).toHaveAttribute("aria-hidden", "true");
     expect(grain.getAttribute("class")).toContain("opacity-0");
+    // No layer for a grain that does not move: the motion code adds the hint.
+    expect(grain.getAttribute("class")).not.toContain("will-change");
   });
 
   it("puts the scenes left and right of the road from 768 px, the first one on the left", () => {

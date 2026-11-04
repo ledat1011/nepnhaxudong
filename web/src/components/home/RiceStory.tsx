@@ -82,7 +82,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
           <span
             data-story-grain
             aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-0 z-20 opacity-0 will-change-transform"
+            className="pointer-events-none absolute left-0 top-0 z-20 opacity-0"
           >
             <RiceGrain className="block" />
           </span>
