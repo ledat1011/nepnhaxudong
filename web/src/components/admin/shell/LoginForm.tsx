@@ -18,11 +18,13 @@ type Props = {
   onSuccess(user: UserResponse): void;
   /** Pre-fills the email, for example when the session expired and the same user signs in again. */
   defaultEmail?: string;
+  /** Makes the email field read only. */
+  lockEmail?: boolean;
   /** When given, a "Hủy" button is shown next to the submit button. */
   onCancel?(): void;
 };
 
-export function LoginForm({ onSuccess, defaultEmail = "", onCancel }: Props) {
+export function LoginForm({ onSuccess, defaultEmail = "", lockEmail = false, onCancel }: Props) {
   const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
@@ -90,6 +92,7 @@ export function LoginForm({ onSuccess, defaultEmail = "", onCancel }: Props) {
           autoCapitalize="none"
           spellCheck={false}
           value={email}
+          readOnly={lockEmail}
           onChange={(event) => setEmail(event.target.value)}
         />
       </div>

@@ -86,7 +86,41 @@ describe("AdminSessionProvider status", () => {
   });
 });
 
+describe("failures of /auth/me that are not a 401", () => {
+  it.each([
+    ["a network error", new AdminApiError(0, "Không kết nối được máy chủ.")],
+    ["a 5xx", new AdminApiError(503, "Máy chủ bận.")],
+  ])("is error, not signed-out, on %s at load", async (_name, failure) => {
+    meReturns(failure);
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("error"));
+    expect(latest.current.user).toBeNull();
+  });
+
+  it("is error when a refresh fails right after a login, and recovers on the next refresh", async () => {
+    meReturns(new AdminApiError(401, "Chưa đăng nhập.", "session-expired"));
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("signed-out"));
+    meReturns(new AdminApiError(0, "Không kết nối được máy chủ."));
+    await act(() => latest.current.refresh());
+    expect(screen.getByTestId("status")).toHaveTextContent("error");
+    meReturns(user);
+    await act(() => latest.current.refresh());
+    expect(screen.getByTestId("status")).toHaveTextContent("ready");
+  });
+});
+
 describe("signOut", () => {
+  it("marks the sign-out as deliberate", async () => {
+    meReturns(user);
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("ready"));
+    expect(latest.current.signedOutOnPurpose).toBe(false);
+    adminFetch.mockResolvedValue(undefined);
+    await act(() => latest.current.signOut());
+    expect(latest.current.signedOutOnPurpose).toBe(true);
+  });
+
   it("calls logout, forgets the CSRF token and goes to the login page", async () => {
     meReturns(user);
     renderProvider();
@@ -184,5 +218,60 @@ describe("requireReLogin", () => {
     });
     promise.catch(() => undefined);
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("rejects when another account signs in, keeps the old user and ends the foreign session", async () => {
+    await renderReady();
+    adminFetch.mockImplementation((path: string) =>
+      path === "/auth/login"
+        ? Promise.resolve({ ...user, id: 2, email: "binh@example.com" })
+        : Promise.resolve(undefined),
+    );
+    const events = userEvent.setup();
+    let promise!: Promise<void>;
+    act(() => {
+      promise = latest.current.requireReLogin();
+    });
+    const settled = promise.catch((e: unknown) => e);
+    await events.type(await screen.findByLabelText("Mật khẩu"), "secret-password");
+    await events.click(screen.getByRole("button", { name: "Đăng nhập" }));
+    const error = await settled;
+    expect(error).toBeInstanceOf(AdminApiError);
+    expect(error).toMatchObject({ status: 401, detail: "Hãy đăng nhập bằng đúng tài khoản đang dùng." });
+    expect(latest.current.user?.id).toBe(1);
+    expect(adminFetch).toHaveBeenCalledWith("/auth/logout", { method: "POST" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("locks the email field to the current user", async () => {
+    await renderReady();
+    act(() => {
+      latest.current.requireReLogin().catch(() => undefined);
+    });
+    const email = await screen.findByLabelText("Email");
+    expect(email).toHaveValue("an@example.com");
+    expect(email).toHaveAttribute("readonly");
+  });
+
+  it("rejects, without changing the session or the page, when the user must change the password", async () => {
+    await renderReady();
+    adminFetch.mockImplementation((path: string) =>
+      path === "/auth/login" ? Promise.resolve({ ...user, mustChangePassword: true }) : Promise.resolve(undefined),
+    );
+    const events = userEvent.setup();
+    let promise!: Promise<void>;
+    act(() => {
+      promise = latest.current.requireReLogin();
+    });
+    const settled = promise.catch((e: unknown) => e);
+    await events.type(await screen.findByLabelText("Mật khẩu"), "secret-password");
+    await events.click(screen.getByRole("button", { name: "Đăng nhập" }));
+    const error = await settled;
+    expect(error).toMatchObject({
+      status: 401,
+      detail: "Bạn cần đổi mật khẩu trước. Hãy lưu nội dung ra chỗ khác rồi tải lại trang.",
+    });
+    expect(screen.getByTestId("status")).toHaveTextContent("ready");
+    expect(replace).not.toHaveBeenCalled();
   });
 });

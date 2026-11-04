@@ -8,6 +8,7 @@ import { resetCsrfToken } from "@/lib/admin/csrf";
 import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
+import { SessionErrorScreen } from "./SessionErrorScreen";
 import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
@@ -22,7 +23,7 @@ const MISMATCH_MESSAGE = "Hai mật khẩu mới không khớp.";
  */
 export function ChangePasswordForm() {
   const router = useRouter();
-  const { status, refresh } = useAdminSession();
+  const { status, refresh, signOut } = useAdminSession();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [repeat, setRepeat] = useState("");
@@ -34,6 +35,8 @@ export function ChangePasswordForm() {
   useEffect(() => {
     if (status === "signed-out") router.replace(ADMIN_ROUTES.login);
   }, [status, router]);
+
+  if (status === "error") return <SessionErrorScreen onRetry={refresh} />;
 
   if (status === "loading" || status === "signed-out") {
     return (
@@ -133,6 +136,11 @@ export function ChangePasswordForm() {
         <Button type="submit" disabled={pending}>
           {pending ? "Đang lưu…" : "Đổi mật khẩu"}
         </Button>
+        {forced && (
+          <Button type="button" variant="outline" onClick={() => void signOut()}>
+            Đăng xuất
+          </Button>
+        )}
         {!forced && (
           <Button asChild variant="outline">
             <Link href={ADMIN_ROUTES.home}>Quay lại</Link>

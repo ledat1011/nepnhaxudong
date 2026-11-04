@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { UserResponse } from "@/lib/admin/types";
@@ -69,5 +70,28 @@ describe("AppShell", () => {
     expect(screen.getByRole("banner")).toHaveTextContent("Nguyễn An");
     expect(screen.getByRole("navigation", { name: "Menu chính" })).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("shows a retry screen, not the login page, when the server cannot be reached", async () => {
+    adminFetch.mockRejectedValueOnce(new AdminApiError(0, "Không kết nối được máy chủ."));
+    renderShell();
+    expect(await screen.findByText("Không kết nối được máy chủ.")).toBeInTheDocument();
+    expect(screen.queryByText("Nội dung riêng tư")).not.toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+
+    adminFetch.mockResolvedValueOnce(user);
+    await userEvent.setup().click(screen.getByRole("button", { name: "Thử lại" }));
+    expect(await screen.findByText("Nội dung riêng tư")).toBeInTheDocument();
+  });
+
+  it("goes to the plain login URL, without next, after a deliberate sign-out", async () => {
+    adminFetch.mockResolvedValue(user);
+    renderShell();
+    const events = userEvent.setup();
+    await events.click(await screen.findByRole("button", { name: "Thêm" }));
+    await events.click(await screen.findByRole("button", { name: "Đăng xuất" }));
+    await waitFor(() => expect(screen.queryByText("Nội dung riêng tư")).not.toBeInTheDocument());
+    expect(replace).toHaveBeenCalledWith("/admin/dang-nhap");
+    expect(replace.mock.calls.filter(([url]) => String(url).includes("next="))).toEqual([]);
   });
 });

@@ -3,18 +3,19 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 
-const { adminFetch, replace, refresh, resetCsrfToken, session } = vi.hoisted(() => ({
+const { adminFetch, replace, refresh, resetCsrfToken, signOut, session } = vi.hoisted(() => ({
   adminFetch: vi.fn(),
   replace: vi.fn(),
   refresh: vi.fn(),
   resetCsrfToken: vi.fn(),
+  signOut: vi.fn(),
   session: { status: "must-change-password" as string },
 }));
 
 vi.mock("@/lib/admin/api", () => ({ adminFetch }));
 vi.mock("@/lib/admin/csrf", () => ({ resetCsrfToken }));
 vi.mock("@/lib/admin/session", () => ({
-  useAdminSession: () => ({ status: session.status, refresh }),
+  useAdminSession: () => ({ status: session.status, refresh, signOut }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 
@@ -33,6 +34,7 @@ beforeEach(() => {
   refresh.mockReset();
   refresh.mockResolvedValue(undefined);
   resetCsrfToken.mockReset();
+  signOut.mockReset();
   session.status = "must-change-password";
 });
 
@@ -96,10 +98,17 @@ describe("ChangePasswordForm", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
+  it("offers a sign-out button in the forced case so the user is never stuck", async () => {
+    render(<ChangePasswordForm />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "Đăng xuất" }));
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
   it("works for a voluntary change of a signed-in user", () => {
     session.status = "ready";
     render(<ChangePasswordForm />);
     expect(screen.getByLabelText("Mật khẩu mới")).toBeInTheDocument();
     expect(screen.queryByText(/mật khẩu tạm/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Đăng xuất" })).not.toBeInTheDocument();
   });
 });

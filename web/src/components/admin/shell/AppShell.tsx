@@ -5,22 +5,28 @@ import { useEffect, type ReactNode } from "react";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
 import { AdminHeader } from "./AdminHeader";
+import { SessionErrorScreen } from "./SessionErrorScreen";
 import { BottomNav } from "./BottomNav";
 import { screenTitle } from "./nav-items";
 
 /** The gate of every private admin screen. It renders nothing private until the session is known. */
 export function AppShell({ children }: { children: ReactNode }) {
-  const { status, user } = useAdminSession();
+  const { status, user, signedOutOnPurpose, refresh } = useAdminSession();
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
     if (status === "signed-out") {
-      router.replace(`${ADMIN_ROUTES.login}?next=${encodeURIComponent(pathname)}`);
+      // After a deliberate sign-out the user starts fresh; otherwise the login page returns to this screen.
+      router.replace(
+        signedOutOnPurpose ? ADMIN_ROUTES.login : `${ADMIN_ROUTES.login}?next=${encodeURIComponent(pathname)}`,
+      );
     } else if (status === "must-change-password") {
       router.replace(ADMIN_ROUTES.changePassword);
     }
-  }, [status, pathname, router]);
+  }, [status, pathname, router, signedOutOnPurpose]);
+
+  if (status === "error") return <SessionErrorScreen onRetry={refresh} />;
 
   if (status !== "ready" || user === null) {
     return (
