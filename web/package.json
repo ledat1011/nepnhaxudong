@@ -10,6 +10,7 @@
     "dev:api": "cross-env CONTENT_SOURCE=api next dev",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "brand:sync": "node scripts/sync-brand.mjs",
     "test:e2e": "node e2e/build.mjs && playwright test"
   },
   "dependencies": {
