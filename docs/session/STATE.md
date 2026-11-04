@@ -12,14 +12,17 @@ Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã x
 - Phần B2 (web công khai): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
 
+- Phần B4 (hiệu ứng GSAP) xong trên nhánh `feat/phan-b4-gsap`, 5 task đã review: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 và kết quả xem bằng mắt nằm trong `docs/setup.md` và báo cáo task 5.
+
 ## Đang làm
 - Phần B2: mở PR, chờ CI, merge vào `main` (chủ dự án đã đồng ý).
+- Phần B4: nhánh `feat/phan-b4-gsap` CHƯA push. Chủ dự án quyết định push, mở PR và merge.
 - Phần A (logo) chờ chủ dự án duyệt linh vật, nhánh `feat/phan-a-thuong-hieu`.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
 2. Viết plan B3 (trang quản trị).
-3. B4 (hiệu ứng GSAP) sau khi có linh vật cuối cùng.
+3. B4: chủ dự án xem nhánh `feat/phan-b4-gsap`, rồi quyết định push, PR và merge. Ghi chú cho người merge sau cùng giữa B3 và B4: trước khi mở PR, merge `origin/main` vào nhánh của mình, rồi chạy `npm install` trong `web/` để tạo lại `web/package-lock.json` (cả B3 và B4 đều thêm thư viện, nên file này sẽ xung đột).
 4. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới.
 5. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
 6. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
@@ -52,6 +55,12 @@ Các việc phát sinh khi làm B2 (web công khai):
 - `SITE_URL` phải đặt cả lúc build (cấu hình ảnh) và lúc chạy (canonical, sitemap). Server web chạy bằng `node .next/standalone/server.js`, không phải `next start`. Server này nghe theo biến `HOSTNAME`: trong Docker phải đặt `HOSTNAME=0.0.0.0`, vì trong container biến này mặc định là ID của container.
 - `POST /api/revalidate` của web chỉ gọi được trong mạng nội bộ (`WEB_BASE_URL=http://web:3000`), vì Caddy chuyển `/api/*` sang Spring. Route này nhận từ 1 đến 50 tag (`home`, `stories`, `story:<slug>`); một tag sai thì cả lần gọi bị trả 400.
 - Các điểm web giả định về hợp đồng API nằm ở bảng "Khoảng trống của hợp đồng API" đầu `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`.
+
+Các việc phát sinh khi làm B4 (hiệu ứng):
+- Khi khách mở thẳng một đường dẫn có `#neo` (ví dụ `/vi#bao-chi`), chuyển động chỉ bắt đầu sau khi trang cuộn xong tới đó, có thể chậm tới 2,5 giây.
+- Khi phần Hành trình đã nằm trong màn hình lúc trang mở, thân cây lúa giữ nguyên dạng đã mọc đủ (không co lại rồi mọc theo cuộn).
+- Một lần đo `/vi` có Performance 86 do TBT cao (560 ms); các lần khác từ 91 trở lên. Nếu cần, xem lại chi phí tải GSAP khi đo lần sau.
+- Mascot của hero là SVG chi tiết nhúng thẳng vào HTML (khoảng 90 KB); nếu LCP hoặc TBT xấu đi, cân nhắc dùng `brand/logo/mascot-logo.svg`.
 
 ## Quyết định gần nhất
 - `docs/decisions/0005-spring-boot-4.md`

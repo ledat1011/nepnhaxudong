@@ -77,10 +77,12 @@ Mọi cặp chữ / nền dùng trên web phải đạt WCAG AA (4,5:1 cho chữ
 
   | Nhóm | Điểm xoay | Hiệu ứng |
   |---|---|---|
-  | `head` (đầu + nón) | cổ | nghiêng ±3° theo tốc độ cuộn |
-  | `rice` (bó lúa) | bàn tay | lắc ±6°, các bông lệch nhịp |
+  | `head` (đầu + nón) | cổ, điểm `278 257` | nghiêng ±3° theo tốc độ cuộn |
+  | `rice` (bó lúa) | bàn tay, điểm `302 356` | cả bó lắc ±6° theo tốc độ cuộn |
+  | `hands` | — | đứng yên |
   | `body` | — | đứng yên |
-  | `eyes` (tùy chọn) | — | chớp mắt định kỳ |
+
+  Chủ dự án quyết định ngày 2026-11-04: bỏ chớp mắt, lắc cả bó lúa.
 
 - **Quy trình:** Nano Banana (Gemini, qua `nanobanana-mcp-server`) vẽ 4–6 ý tưởng → chủ dự án chọn → Recraft (remote MCP) chuyển sang SVG → Claude dọn SVG và gom lớp → kiểm tra bản biểu tượng ở 32px. Ngân sách < 10 USD.
 
