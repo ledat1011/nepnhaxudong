@@ -4,17 +4,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { MediaAdminDto, StoryAdminDto, StoryRequest } from "@/lib/admin/types";
 
-const { adminFetch, requireReLogin, push, replace } = vi.hoisted(() => ({
+const { adminFetch, requireReLogin, push, replace, session } = vi.hoisted(() => ({
   adminFetch: vi.fn(),
   requireReLogin: vi.fn(),
   push: vi.fn(),
   replace: vi.fn(),
+  // No user by default: the browser draft is off, so the other tests do not depend on it.
+  session: { user: null as { id: number } | null },
 }));
 vi.mock("@/lib/admin/api", () => ({ adminFetch, adminUpload: vi.fn() }));
-vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin }) }));
+vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin, user: session.user }) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
+import { allowDraftWrites, draftKey } from "@/lib/admin/story-draft";
 import { StoryForm } from "./StoryForm";
 
 function media(id: number): MediaAdminDto {
@@ -685,6 +688,171 @@ describe("StoryForm field errors", () => {
     const titleEn = screen.getByLabelText(TITLE_LABEL);
     await waitFor(() => expect(titleEn).toHaveFocus());
     expect(titleEn).toHaveAccessibleDescription(message);
+  });
+});
+
+describe("StoryForm draft in the browser", () => {
+  // 18:20 on 4 November 2026 in Viet Nam.
+  const SAVED_AT = Date.UTC(2026, 10, 4, 11, 20);
+
+  function formState(source: StoryAdminDto) {
+    const lang = (code: "vi" | "en") => ({
+      title: source.title[code] ?? "",
+      slug: source.slug[code] ?? "",
+      excerpt: source.excerpt[code] ?? "",
+      bodyHtml: source.bodyHtml[code] ?? "",
+    });
+    return { coverMediaId: source.coverMediaId, vi: lang("vi"), en: lang("en") };
+  }
+
+  function putDraft(key: string, state: ReturnType<typeof formState>, extra: { userId?: number; base?: ReturnType<typeof formState> } = {}) {
+    localStorage.setItem(
+      key,
+      JSON.stringify({ version: 1, userId: extra.userId ?? 1, savedAt: SAVED_AT, base: extra.base ?? formState(story()), state }),
+    );
+  }
+
+  function stored(key: string) {
+    const raw = localStorage.getItem(key);
+    return raw === null ? null : JSON.parse(raw);
+  }
+
+  const edited = () => {
+    const state = formState(story());
+    state.vi.title = "Mùa gặt (viết dở)";
+    return state;
+  };
+
+  /** While the question is open, the page behind it is hidden from the accessibility tree. */
+  async function readyBehindQuestion() {
+    await screen.findByRole("textbox", { name: "Nội dung", hidden: true }, { timeout: 10_000 });
+  }
+
+  beforeEach(() => {
+    localStorage.clear();
+    allowDraftWrites();
+    session.user = { id: 1 };
+  });
+
+  afterEach(() => {
+    session.user = null;
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it("keeps the typed text in the browser a moment after typing", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
+    await waitFor(() => expect(stored(draftKey(5))?.state.vi.title).toBe("Mùa gặt!"), { timeout: 3000 });
+    expect(stored(draftKey(5)).userId).toBe(1);
+  });
+
+  it("asks when the editor opens with an unsaved draft, and Khôi phục puts the text back as unsaved", async () => {
+    putDraft(draftKey(5), edited());
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await readyBehindQuestion();
+    const question = await screen.findByRole("alertdialog", { name: "Có bài đang viết dở" });
+    expect(question).toHaveTextContent("lúc 18:20 ngày 4/11");
+    await events.click(within(question).getByRole("button", { name: "Khôi phục" }));
+    expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Mùa gặt (viết dở)");
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeEnabled();
+  });
+
+  it("removes the draft on Bỏ bản đó and keeps the saved story", async () => {
+    putDraft(draftKey(5), edited());
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await readyBehindQuestion();
+    const question = await screen.findByRole("alertdialog", { name: "Có bài đang viết dở" });
+    await events.click(within(question).getByRole("button", { name: "Bỏ bản đó" }));
+    expect(stored(draftKey(5))).toBeNull();
+    expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Mùa gặt");
+  });
+
+  it("keeps the draft untouched when the question is closed with Escape, even after more typing", async () => {
+    putDraft(draftKey(5), edited());
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await readyBehindQuestion();
+    await screen.findByRole("alertdialog", { name: "Có bài đang viết dở" });
+    await events.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    await events.type(screen.getByLabelText(TITLE_LABEL), "?");
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    expect(stored(draftKey(5)).state.vi.title).toBe("Mùa gặt (viết dở)");
+  });
+
+  it("warns when the story was saved again after the draft was written", async () => {
+    const older = formState(story({ title: { vi: "Tên cũ hơn", en: "Harvest" } }));
+    putDraft(draftKey(5), edited(), { base: older });
+    render(<StoryForm initial={story()} />);
+    await readyBehindQuestion();
+    const question = await screen.findByRole("alertdialog", { name: "Có bài đang viết dở" });
+    expect(question).toHaveTextContent("Bài đã được lưu lại sau lúc đó");
+  });
+
+  it("does not offer the draft of another family member", async () => {
+    putDraft(draftKey(5), edited(), { userId: 2 });
+    render(<StoryForm initial={story()} />);
+    await ready();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+
+  it("removes the draft after a successful save", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
+    await waitFor(() => expect(stored(draftKey(5))).not.toBeNull(), { timeout: 3000 });
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    await waitFor(() => expect(stored(draftKey(5))).toBeNull());
+  });
+
+  it("removes the draft after Bỏ thay đổi", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
+    await waitFor(() => expect(stored(draftKey(5))).not.toBeNull(), { timeout: 3000 });
+    await events.click(screen.getByRole("button", { name: "Bỏ thay đổi" }));
+    await events.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Bỏ thay đổi" }));
+    expect(stored(draftKey(5))).toBeNull();
+  });
+
+  it("offers the draft of a new story on the new story page, and removes it once the story is created", async () => {
+    const draftOfNew = formState(story());
+    draftOfNew.vi = { title: "Bài mới viết dở", slug: "", excerpt: "", bodyHtml: "" };
+    draftOfNew.en = { title: "", slug: "", excerpt: "", bodyHtml: "" };
+    draftOfNew.coverMediaId = null;
+    const empty = { coverMediaId: null, vi: draftOfNew.en, en: draftOfNew.en };
+    putDraft(draftKey(undefined), draftOfNew, { base: empty });
+    const events = userEvent.setup();
+    render(<StoryForm />);
+    await readyBehindQuestion();
+    await events.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Khôi phục" }));
+    expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Bài mới viết dở");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/cau-chuyen/9"));
+    expect(stored(draftKey(undefined))).toBeNull();
+  });
+
+  it("keeps working, with a short note, when the browser cannot store the draft", async () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("full", "QuotaExceededError");
+    });
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
+    expect(
+      await screen.findByText("Máy này không lưu tạm được bài đang viết. Hãy bấm Lưu thường xuyên.", {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
   });
 });
 

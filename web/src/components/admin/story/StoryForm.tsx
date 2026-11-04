@@ -20,12 +20,16 @@ import { AdminApiError } from "@/lib/admin/errors";
 import { fieldOfDetail, invalidProps, langOfDetail, NOT_SAVED_NOTICE, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
+import { useAdminSession } from "@/lib/admin/session";
+import { draftKey } from "@/lib/admin/story-draft";
 import { publishChecks, type PublishCheckKey } from "@/lib/admin/publish-checks";
 import { slugify } from "@/lib/admin/slugify";
 import type { StoryAdminDto, StoryRequest } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
+import { useStoryDraft } from "@/lib/admin/use-story-draft";
 import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
+import { DraftRestoreDialog } from "./DraftRestoreDialog";
 import { PublishCheckDialog } from "./PublishCheckDialog";
 import { StoryPreview } from "./StoryPreview";
 
@@ -69,6 +73,20 @@ function fieldsFrom(story: StoryAdminDto | undefined, lang: Lang): LangFields {
 
 function stateFrom(story: StoryAdminDto | undefined): FormState {
   return { coverMediaId: story?.coverMediaId ?? null, vi: fieldsFrom(story, "vi"), en: fieldsFrom(story, "en") };
+}
+
+function isLangFields(value: unknown): value is LangFields {
+  if (typeof value !== "object" || value === null) return false;
+  const fields = value as Record<string, unknown>;
+  return ["title", "slug", "excerpt", "bodyHtml"].every((name) => typeof fields[name] === "string");
+}
+
+/** A form state read back from the browser storage, which anything could have written. */
+function isFormState(value: unknown): value is FormState {
+  if (typeof value !== "object" || value === null) return false;
+  const state = value as Record<string, unknown>;
+  const cover = state.coverMediaId;
+  return (cover === null || typeof cover === "number") && isLangFields(state.vi) && isLangFields(state.en);
 }
 
 function snapshot(state: FormState): string {
@@ -171,6 +189,17 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const [leaving, setLeaving] = useState(false);
   const dirty = snapshot(state) !== snapshot(baselineState);
   useUnsavedChanges(dirty && !leaving);
+  const { user } = useAdminSession();
+  const draft = useStoryDraft({
+    key: draftKey(initial?.id),
+    userId: user?.id ?? null,
+    state,
+    base: baselineState,
+    dirty,
+    // After a create the page goes to the new story: the "new" draft must not be written again.
+    enabled: !leaving,
+    isState: isFormState,
+  });
   const leavePage = useLeavePage();
 
   // The newest state, for the save action: after a sign-in again the action runs once more and must send what is typed now.
@@ -226,6 +255,8 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
     const result = await saving.save();
     if (result === undefined) return;
     const { saved, sent } = result;
+    // The story is on the server now. If more was typed meanwhile, the next write keeps that.
+    draft.clear();
     if (baseline === undefined) {
       setLeaving(true);
       leavePage(() => router.replace(`${ADMIN_ROUTES.stories}/${saved.id}`));
@@ -257,6 +288,20 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
     setConflicts(NO_CONFLICTS);
     saving.reset();
     fields.reset();
+    draft.clear();
+  }
+
+  /** "Khôi phục": the kept text goes into the form, unsaved, on top of the saved story. */
+  function restoreDraft() {
+    const kept = draft.restore();
+    if (kept === null) return;
+    setState(kept);
+    setConflicts(NO_CONFLICTS);
+    fields.reset();
+    setFollowTitle({
+      vi: baseline?.slug.vi == null && kept.vi.slug === slugify(kept.vi.title),
+      en: baseline?.slug.en == null && kept.en.slug === slugify(kept.en.title),
+    });
   }
 
   /** "Quay lại sửa" in the check panel: go to the first part that is missing. */
@@ -390,6 +435,9 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
           <p className="text-sm text-muted-foreground">Hãy lưu thay đổi trước khi đăng hoặc gỡ bài.</p>
         ) : null}
         {!saved || dirty ? <p className="text-sm text-muted-foreground">Hãy lưu trước khi xem trước.</p> : null}
+        {draft.failed ? (
+          <p className="text-sm text-muted-foreground">Máy này không lưu tạm được bài đang viết. Hãy bấm Lưu thường xuyên.</p>
+        ) : null}
         <ProblemMessage error={publishing.error ?? unpublishing.error} />
       </section>
 
@@ -436,6 +484,15 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
         onDiscard={cancel}
         notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}
       />
+      {draft.offer !== null ? (
+        <DraftRestoreDialog
+          savedAt={draft.offer.draft.savedAt}
+          stale={draft.offer.stale}
+          onRestore={restoreDraft}
+          onDiscard={draft.discard}
+          onLater={draft.later}
+        />
+      ) : null}
       {baseline !== undefined ? (
         <>
           <StoryPreview story={baseline} open={previewOpen} onOpenChange={setPreviewOpen} />
