@@ -732,48 +732,61 @@ async function expectBagFinalFrame(page: Page) {
   expect(state.notes.every((o) => o === "1")).toBe(true);
 }
 
-// At these sizes the top of the gallery box already shows at the bottom of the first screen,
-// but it has not reached the trigger line (75 % of the screen) yet.
-for (const viewport of [
-  { width: 1280, height: 720 },
-  { width: 375, height: 812 },
-]) {
-  test(`the bag plays from its first frame at ${viewport.width}x${viewport.height}`, async ({ page }) => {
-    await page.setViewportSize(viewport);
-    await page.goto("/vi");
-    await page.waitForSelector(MOTION_ON);
-    const before = await bagState(page);
-    expect(before.top).toBeGreaterThanOrEqual(before.line);
-    // The first frame: the bag is still puffy, the label is not stuck on yet, no notes.
-    expect(before.puffy).toBe("1");
-    expect(IDENTITY).not.toContain(before.label);
-    expect(before.notes.every((o) => o === "0")).toBe(true);
-
-    await page.evaluate(() => {
-      const figure = document.querySelector("[data-product-bag]") as HTMLElement;
-      window.scrollBy({ top: figure.getBoundingClientRect().top - window.innerHeight * 0.5, behavior: "instant" });
-    });
-    await page.waitForTimeout(3000);
-    await expectBagFinalFrame(page);
+/** Records the bag's `puffy` opacity on every frame from the first paint on. */
+async function recordPuffy(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __puffy: number[] };
+    w.__puffy = [];
+    const tick = () => {
+      const el = document.querySelector("[data-product-bag] [data-bag='puffy']");
+      if (el) w.__puffy.push(Number(getComputedStyle(el).opacity));
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   });
+  return () => page.evaluate(() => (window as unknown as { __puffy: number[] }).__puffy);
 }
 
-test("a bag that is above the trigger line at setup stays in its final frame", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 1200 });
-  await page.goto("/vi");
-  await page.waitForSelector(MOTION_ON);
-  const state = await bagState(page);
-  expect(state.top).toBeLessThan(state.line);
-  await expectBagFinalFrame(page);
-});
+// The bag shows its final frame from the first paint; the motion unpacks it and packs it back,
+// so the first and the last frame are the same and no frame jumps. At 1440x900 the bag is
+// already past the trigger line when the motion starts, so it plays at once.
+for (const viewport of [
+  { width: 1280, height: 720 },
+  { width: 1280, height: 800 },
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+  { width: 375, height: 812 },
+]) {
+  test(`the bag plays from and back to its final frame at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    const puffy = await recordPuffy(page);
+    await page.goto("/vi");
+    await page.waitForSelector(MOTION_ON);
+    await page.evaluate(() => {
+      const figure = document.querySelector("[data-product-bag]") as HTMLElement;
+      const down = figure.getBoundingClientRect().top - window.innerHeight * 0.5;
+      if (down > 0) window.scrollBy({ top: down, behavior: "instant" });
+    });
+    await page.waitForTimeout(4000);
+    await expectBagFinalFrame(page);
+    const samples = await puffy();
+    expect(samples.length).toBeGreaterThan(30);
+    // The first painted frame is the final frame: the loose bag is hidden.
+    expect(samples[0]).toBe(0);
+    // The motion ran: the loose bag showed in the middle of it.
+    expect(Math.max(...samples)).toBeGreaterThan(0.9);
+    // No jump: a 0.35 s fade moves less than half of its range between two frames.
+    for (let i = 1; i < samples.length; i++) {
+      expect(Math.abs(samples[i] - samples[i - 1]), `frame ${i}`).toBeLessThan(0.5);
+    }
+  });
+}
 
 test("the bag animation ends in the static final frame", async ({ page }) => {
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);
-  // Desktop Chrome is 1280x720: the bag starts below the trigger line, so the motion must run.
-  expect((await bagState(page)).puffy).toBe("1");
   await page.locator("[data-product-bag]").first().scrollIntoViewIfNeeded();
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(4000);
   await expectBagFinalFrame(page);
   // The falling grains keep their own rotation: grain 0 is turned -20 degrees.
   const grain = await page.$eval(

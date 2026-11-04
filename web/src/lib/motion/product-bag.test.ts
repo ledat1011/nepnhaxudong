@@ -1,7 +1,13 @@
 import { gsap } from "gsap";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GsapModules } from "./load-gsap";
-import { BAG_DURATION_S, BAG_START_LINE, buildBagTimeline, setupProductBag } from "./product-bag";
+import {
+  BAG_DURATION_S,
+  BAG_START_LINE,
+  BAG_UNPACK_S,
+  buildBagTimeline,
+  setupProductBag,
+} from "./product-bag";
 
 const PARTS = ["puffy", "brick", "grains", "wrinkles", "air", "seal", "label", "tray"];
 const GRAINS = Array.from(
@@ -9,9 +15,12 @@ const GRAINS = Array.from(
   (_, i) => `<ellipse data-grain="${i}" transform="rotate(-20 10 10)"></ellipse>`,
 ).join("");
 
+/** The parts the final frame (the static drawing) hides, as in ProductBag.tsx. */
+const HIDDEN_IN_FINAL = new Set(["puffy", "grains", "air"]);
+
 function bagSvg(without: string[] = []) {
   const groups = PARTS.filter((p) => !without.includes(p))
-    .map((p) => `<g data-bag="${p}">${p === "grains" ? GRAINS : ""}</g>`)
+    .map((p) => `<g data-bag="${p}"${HIDDEN_IN_FINAL.has(p) ? ' opacity="0"' : ""}>${p === "grains" ? GRAINS : ""}</g>`)
     .join("");
   return `<svg>${groups}</svg>`;
 }
@@ -56,7 +65,7 @@ describe("buildBagTimeline", () => {
     document.body.innerHTML = bagSvg();
     const svg = document.querySelector("svg") as Element;
     const tl = buildBagTimeline(gsap, svg);
-    expect(tl?.duration()).toBeCloseTo(2.0, 2);
+    expect(tl?.duration()).toBeCloseTo(BAG_DURATION_S - 0.5, 2);
   });
 
   it("sets only transform and opacity properties", () => {
@@ -85,13 +94,27 @@ describe("buildBagTimeline", () => {
     }
   });
 
-  it("starts hidden, ends in the static frame, and keeps the grain rotation", () => {
+  it("changes nothing when it is built: the start frame is the final frame", () => {
+    document.body.innerHTML = figure();
+    const before = document.body.innerHTML;
+    buildBagTimeline(gsap, document.querySelector("figure") as Element);
+    expect(document.body.innerHTML).toBe(before);
+  });
+
+  it("unpacks the bag first, then packs it back to the final frame", () => {
     document.body.innerHTML = figure();
     const q = (name: string) => document.querySelector(`[data-bag='${name}']`) as SVGElement;
-    const tl = buildBagTimeline(gsap, document.querySelector("figure") as Element);
-    expect(q("puffy").style.opacity).toBe("1");
-    expect(q("seal").style.transform).toContain("scale(0");
     const note = document.querySelector("[data-bag-note]") as HTMLElement;
+    const tl = buildBagTimeline(gsap, document.querySelector("figure") as Element);
+    expect(BAG_UNPACK_S).toBeCloseTo(0.5, 2);
+
+    // End of the unpack: the loose bag, the seal open, the label off, the grains up, no notes.
+    tl?.time(BAG_UNPACK_S);
+    expect(q("puffy").style.opacity).toBe("1");
+    expect(q("wrinkles").style.opacity).toBe("0");
+    expect(q("grains").style.opacity).toBe("1");
+    expect(q("label").style.opacity).toBe("0");
+    expect(q("seal").getAttribute("transform") ?? q("seal").style.transform).toMatch(/scale\(0|matrix\(0/);
     expect(note.style.opacity).toBe("0");
 
     tl?.progress(1);
@@ -99,8 +122,30 @@ describe("buildBagTimeline", () => {
     expect(q("grains").style.opacity).toBe("0");
     expect(q("air").style.opacity).toBe("0");
     expect(q("wrinkles").style.opacity).toBe("1");
+    expect(q("label").style.opacity).toBe("1");
     expect(note.style.opacity).toBe("1");
     expect(note.style.transform).toBe("");
+  });
+
+  it("moves every part smoothly: no part jumps between two near times", () => {
+    document.body.innerHTML = figure();
+    const tl = buildBagTimeline(gsap, document.querySelector("figure") as Element);
+    const parts = ["puffy", "grains", "wrinkles", "air", "label"].map(
+      (name) => document.querySelector(`[data-bag='${name}']`) as SVGElement,
+    );
+    // The inline style when GSAP has written one, else the static attribute, else 1.
+    const opacity = (el: SVGElement) =>
+      Number(el.style.opacity !== "" ? el.style.opacity : (el.getAttribute("opacity") ?? 1));
+    let previous = parts.map(opacity);
+    const duration = tl?.duration() ?? 0;
+    for (let k = 1; k <= 300; k++) {
+      tl?.time((duration * k) / 300);
+      const current = parts.map(opacity);
+      current.forEach((value, i) =>
+        expect(Math.abs(value - previous[i]), `part ${i} at ${k}: ${previous[i]} -> ${value}`).toBeLessThan(0.25),
+      );
+      previous = current;
+    }
   });
 });
 
@@ -141,75 +186,30 @@ describe("setupProductBag", () => {
     expect(fake.ScrollTrigger.create).not.toHaveBeenCalled();
   });
 
-  it("hides nothing and creates no trigger when the bag is in view", () => {
-    place(300);
-    const fake = fakeModules();
-    setupProductBag(fake.modules, document);
-    expect(fake.ScrollTrigger.create).not.toHaveBeenCalled();
-    const puffy = document.querySelector("[data-bag='puffy']") as SVGElement;
-    expect(puffy.style.opacity).toBe("");
-    expect((document.querySelector("[data-bag-note]") as HTMLElement).style.opacity).toBe("");
-  });
-
   it("starts at the trigger line of the viewport", () => {
     expect(BAG_START_LINE).toBe(0.75);
   });
 
-  it("hides the bag that is in the screen but below the trigger line", () => {
-    // 700 is inside the 800 px screen, but below the 75 % line (600 px).
-    const el = place(700);
-    const fake = fakeModules();
-    setupProductBag(fake.modules, document);
-    expect((document.querySelector("[data-bag='puffy']") as SVGElement).style.opacity).toBe("1");
-    expect((document.querySelector("[data-bag-note]") as HTMLElement).style.opacity).toBe("0");
-    expect(fake.ScrollTrigger.create).toHaveBeenCalledWith(
-      expect.objectContaining({ trigger: el, start: "clamp(top 75%)", once: true }),
-    );
-  });
+  for (const top of [300, 600, 700, 1500]) {
+    it(`hides nothing and plays once from the trigger line when the top is at ${top} px`, () => {
+      const el = place(top);
+      const before = document.body.innerHTML;
+      const fake = fakeModules();
+      setupProductBag(fake.modules, document);
+      // Nothing changes at setup: the bag stays in its final frame until the motion plays.
+      expect(document.body.innerHTML).toBe(before);
+      // A bag already past the line starts at once: a clamped start fires on the first refresh.
+      expect(fake.ScrollTrigger.create).toHaveBeenCalledWith(
+        expect.objectContaining({ trigger: el, start: "clamp(top 75%)", once: true }),
+      );
+    });
+  }
 
-  it("hides the bag whose top is exactly on the trigger line", () => {
-    place(600);
-    const fake = fakeModules();
-    setupProductBag(fake.modules, document);
-    expect(fake.ScrollTrigger.create).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps the final frame when the top is already above the trigger line", () => {
-    place(599);
-    const fake = fakeModules();
-    setupProductBag(fake.modules, document);
-    expect(fake.ScrollTrigger.create).not.toHaveBeenCalled();
-    expect((document.querySelector("[data-bag='puffy']") as SVGElement).style.opacity).toBe("");
-  });
-
-  it("measures the line at the scroll position a pending #hash jump moves to", () => {
-    // The page will still scroll 500 px, so the bag at 1000 ends at 500: above the line.
-    document.body.innerHTML = `${figure()}<h2 id="lien-he"></h2>`;
-    const el = document.querySelector("[data-product-bag]") as HTMLElement;
-    el.getBoundingClientRect = () => ({ top: 1000 }) as DOMRect;
-    const target = document.getElementById("lien-he") as HTMLElement;
-    target.getBoundingClientRect = () => ({ top: 500 }) as DOMRect;
-    Object.defineProperty(document.documentElement, "scrollHeight", { value: 5000, configurable: true });
-    window.history.replaceState(null, "", "/#lien-he");
-    const fake = fakeModules();
-    setupProductBag(fake.modules, document);
-    expect(fake.ScrollTrigger.create).not.toHaveBeenCalled();
-    window.history.replaceState(null, "", "/");
-  });
-
-  it("hides the bag below the screen and plays the timeline once when it arrives", () => {
-    const el = place(1500);
+  it("plays the timeline once when the trigger fires and reverts it on cleanup", () => {
+    place(1500);
     const fake = fakeModules();
     const play = vi.spyOn(gsap.core.Timeline.prototype, "play");
     const cleanup = setupProductBag(fake.modules, document);
-    expect((document.querySelector("[data-bag='puffy']") as SVGElement).style.opacity).toBe("1");
-    expect(fake.ScrollTrigger.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        trigger: el,
-        start: "clamp(top 75%)",
-        once: true,
-      }),
-    );
     const vars = (
       fake.ScrollTrigger.create.mock.calls[0] as unknown as [{ onEnter: () => void }]
     )[0];
