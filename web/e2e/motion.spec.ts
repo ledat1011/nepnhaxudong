@@ -564,6 +564,8 @@ test("turning reduced motion on makes the plant fully grown", async ({ page }) =
 });
 
 test("the plant does not widen the page at 320 px", async ({ page }) => {
+  // The page is long at 320 px (the story scenes stack), so the slow scroll needs more time.
+  test.setTimeout(90_000);
   await page.setViewportSize({ width: 320, height: 640 });
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);

@@ -84,4 +84,15 @@ describe("RiceStory", () => {
     rerender(<RiceStory dict={dict} zalo={null} />);
     expect(screen.queryByRole("link", { name: dict.hero.zaloCta })).toBeNull();
   });
+
+  it("is a vertical list until the story motion sets its own flag", () => {
+    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
+    const section = container.querySelector("section[data-rice-story]") as HTMLElement;
+    expect(section).not.toHaveAttribute("data-story-mode");
+    // The horizontal layout is keyed to the section's own flag, never to the page-wide motion flag.
+    expect(section.innerHTML).not.toContain("data-motion");
+    const progress = container.querySelector("ol[data-story-progress]") as HTMLElement;
+    expect(progress.className).toContain("hidden");
+    expect(progress.className).toContain("[section[data-story-mode=horizontal]_&]:flex");
+  });
 });

@@ -44,6 +44,11 @@ describe("classifyPath", () => {
     expect(classifyPath("/story")).toBe("not-found");
     expect(classifyPath("/story/a/b.svg")).toBe("not-found");
     expect(classifyPath("/story/a.php")).toBe("not-found");
+    // Pinned as they are today: the guard looks at the plain segments only. Next serves a file
+    // from `public/` only when its name matches exactly, so these still end in a 404.
+    expect(classifyPath("/story/.svg")).toBe("pass");
+    expect(classifyPath("/story/a.svg/")).toBe("pass");
+    expect(classifyPath("/story/a%2Fb.svg")).toBe("pass");
   });
 
   it("answers 404 for a first segment that is not a language", () => {

@@ -7,9 +7,9 @@ export type PathDecision = "redirect-root" | "pass" | "not-found";
 const INTERNAL_PREFIXES = ["_next", "_not-found", "api"];
 // Files the app serves itself.
 const OWN_FILES = new Set(["robots.txt", "sitemap.xml", "icon.svg"]);
-// Folder of the generated image routes, under a language and under its story section.
 // Folder of the story scene drawings in `public/`: one level of `.svg` files.
 const STORY_ASSET_DIR = "story";
+// Folder of the generated image routes, under a language and under its story section.
 const IMAGE_ROUTE = "opengraph-image";
 
 /**

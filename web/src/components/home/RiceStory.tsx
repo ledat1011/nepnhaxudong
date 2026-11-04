@@ -31,8 +31,9 @@ function sceneText(dict: Dictionary, slug: SceneSlug): { title: string; text: st
 
 /**
  * The eight scenes from the seedling to the table. The static markup is a vertical list. Only
- * with `html[data-motion=on]` and a screen of 1024 px or more does it become one pinned
- * horizontal track; the scroll code finds its parts through the `data-story-*` hooks.
+ * with `data-story-mode="horizontal"` on this section (set by the story motion code) and a
+ * screen of 1024 px or more does it become one pinned horizontal track; the scroll code finds
+ * its parts through the `data-story-*` hooks.
  */
 export function RiceStory({ dict, zalo }: RiceStoryProps) {
   return (
@@ -49,7 +50,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
         <ol
           data-story-progress
           aria-hidden="true"
-          className="mb-6 hidden gap-2 lg:[html[data-motion=on]_&]:flex"
+          className="mb-6 hidden gap-2 lg:[section[data-story-mode=horizontal]_&]:flex"
         >
           {STORY_SCENES.map((scene) => (
             <li key={scene.slug} className="size-3 rounded-full border-2 border-coat" />
@@ -58,11 +59,11 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
       </div>
       <div
         data-story-viewport
-        className="mx-auto max-w-6xl px-4 pb-16 md:pb-24 lg:[html[data-motion=on]_&]:flex lg:[html[data-motion=on]_&]:h-svh lg:[html[data-motion=on]_&]:max-w-none lg:[html[data-motion=on]_&]:items-center lg:[html[data-motion=on]_&]:overflow-hidden lg:[html[data-motion=on]_&]:py-0"
+        className="mx-auto max-w-6xl px-4 pb-16 md:pb-24 lg:[section[data-story-mode=horizontal]_&]:flex lg:[section[data-story-mode=horizontal]_&]:h-svh lg:[section[data-story-mode=horizontal]_&]:max-w-none lg:[section[data-story-mode=horizontal]_&]:items-center lg:[section[data-story-mode=horizontal]_&]:overflow-hidden lg:[section[data-story-mode=horizontal]_&]:py-0"
       >
         <ol
           data-story-track
-          className="grid gap-12 md:grid-cols-2 lg:[html[data-motion=on]_&]:flex lg:[html[data-motion=on]_&]:w-max lg:[html[data-motion=on]_&]:gap-8"
+          className="grid gap-12 md:grid-cols-2 lg:[section[data-story-mode=horizontal]_&]:flex lg:[section[data-story-mode=horizontal]_&]:w-max lg:[section[data-story-mode=horizontal]_&]:gap-8"
         >
           {STORY_SCENES.map((scene, i) => {
             const { title, text } = sceneText(dict, scene.slug);
@@ -71,7 +72,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
               <li
                 key={scene.slug}
                 data-story-scene={scene.slug}
-                className="lg:[html[data-motion=on]_&]:w-[min(80vw,56rem)] lg:[html[data-motion=on]_&]:shrink-0"
+                className="lg:[section[data-story-mode=horizontal]_&]:w-[min(80vw,56rem)] lg:[section[data-story-mode=horizontal]_&]:shrink-0"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- the scenes are SVG files served as they are */}
                 <img
