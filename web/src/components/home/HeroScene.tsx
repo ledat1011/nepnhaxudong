@@ -354,6 +354,10 @@ function StalkUse({ s, hook }: { s: Stalk; hook?: boolean }) {
 const FIELD_BOX =
   "pointer-events-none absolute bottom-0 left-1/2 aspect-[1440/260] w-[calc(var(--hero-m)*4.73)] max-w-none -translate-x-1/2";
 
+/** The static field's box: three tiles wide, with the same center and bottom as FIELD_BOX. */
+const FIELD_BOX_WIDE =
+  "pointer-events-none absolute bottom-0 left-1/2 aspect-[4320/260] w-[calc(var(--hero-m)*14.19)] max-w-none -translate-x-1/2";
+
 /**
  * The far village and the rice field at the bottom of the scene panel. It is 4.73 x the mascot
  * width, centered, so the horizon is at the mascot's waist.
@@ -368,7 +372,7 @@ const FIELD_BOX =
 export function HeroField() {
   return (
     <>
-      <div data-hero-field-layer="" className={`${FIELD_BOX} will-change-transform contain-paint`}>
+      <div data-hero-field-layer="" className={`${FIELD_BOX_WIDE} will-change-transform contain-paint`}>
         <StaticField />
       </div>
       <div className={FIELD_BOX} aria-hidden="true">
@@ -403,12 +407,17 @@ export function HeroField() {
   );
 }
 
-/** The village, the ground and the far and mid rows: nothing in this svg ever moves. */
+/**
+ * The village, the ground and the far and mid rows: nothing in this svg ever moves. The drawing is
+ * one 1440 wide tile, repeated once on each side (its edges meet: the ground lines start and end at
+ * the same height), so the field covers the whole width of a wide hero. The middle tile is the one
+ * on the gust layer's scale.
+ */
 function StaticField() {
   return (
     <svg
       data-hero-field=""
-      viewBox={`0 0 ${FIELD_W} ${FIELD_H}`}
+      viewBox={`${-FIELD_W} 0 ${3 * FIELD_W} ${FIELD_H}`}
       aria-hidden="true"
       focusable="false"
       className="absolute inset-0 size-full"
@@ -438,24 +447,28 @@ function StaticField() {
         ))}
       </defs>
 
-      <path d={VILLAGE_PATH} fill={coat} opacity="0.35" />
+      <g id="nn-hero-field-tile">
+        <path d={VILLAGE_PATH} fill={coat} opacity="0.35" />
 
-      <path d={`M0 ${HORIZON}${FAR_EDGE}V260H0Z`} fill={straw} />
-      <path d={`M0 ${HORIZON}${FAR_EDGE}`} fill="none" stroke={earth} strokeWidth="1.5" strokeLinejoin="round" />
-      <g>
-        {FAR_ROW.map((s) => (
-          <StalkUse key={s.x} s={s} />
-        ))}
+        <path d={`M0 ${HORIZON}${FAR_EDGE}V260H0Z`} fill={straw} />
+        <path d={`M0 ${HORIZON}${FAR_EDGE}`} fill="none" stroke={earth} strokeWidth="1.5" strokeLinejoin="round" />
+        <g>
+          {FAR_ROW.map((s) => (
+            <StalkUse key={s.x} s={s} />
+          ))}
+        </g>
+
+        <path d="M0 218Q360 210 720 218T1440 218V260H0Z" fill={grain} opacity="0.55" />
+        <g>
+          {MID_ROW.map((s) => (
+            <StalkUse key={s.x} s={s} />
+          ))}
+        </g>
+
+        <path d="M0 244Q360 236 720 244T1440 244V260H0Z" fill={grain} />
       </g>
-
-      <path d="M0 218Q360 210 720 218T1440 216V260H0Z" fill={grain} opacity="0.55" />
-      <g>
-        {MID_ROW.map((s) => (
-          <StalkUse key={s.x} s={s} />
-        ))}
-      </g>
-
-      <path d="M0 244Q360 236 720 244T1440 242V260H0Z" fill={grain} />
+      <use href="#nn-hero-field-tile" x={-FIELD_W} />
+      <use href="#nn-hero-field-tile" x={FIELD_W} />
     </svg>
   );
 }

@@ -63,7 +63,7 @@ describe("Hero", () => {
     expect(section?.className).not.toMatch(/from-sky|bg-linear/);
   });
 
-  it("puts the sky, the clouds and the field in a faded panel behind the mascot only", () => {
+  it("puts the sky, the clouds and the field in a faded panel behind the text and the mascot", () => {
     const { container } = renderHero("0000 000 000");
     const panel = container.querySelector("[data-hero-panel]");
     expect(panel).not.toBeNull();
@@ -95,17 +95,20 @@ describe("Hero", () => {
     }
   });
 
-  it("from md, starts the panel just after the text column, not at the middle", () => {
+  it("spans the full hero width, behind the text, and fades lightly over the text column", () => {
     const { container } = renderHero(null);
     const panel = container.querySelector("[data-hero-panel]");
-    expect(panel).toHaveClass("hero-panel-reach");
-    expect(panel?.className).not.toContain("md:left-1/2");
+    expect(panel).toHaveClass("inset-x-0");
+    expect(panel?.className).not.toMatch(/hero-panel-reach|md:left-/);
     const css = readFileSync("src/app/globals.css", "utf8");
+    expect(css).not.toContain("hero-panel-reach");
     const media = /@media \(width >= 48rem\)\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";
-    const rule = /\.hero-panel-reach\s*\{([^}]*)\}/.exec(media)?.[1] ?? "";
-    // The text column ends at most 28rem (the tagline's max-w-md) after the container padding.
-    expect(rule).toMatch(/left:\s*calc\(/);
+    const rule = /\.hero-fade-side\s*\{([^}]*)\}/.exec(media)?.[1] ?? "";
+    // The end of the text column: at most 28rem (the tagline's max-w-md) after the padding.
+    expect(rule).toMatch(/--hero-text-end:\s*calc\(/);
     expect(rule).toContain("28rem");
+    // Over the text the scene shows at most 30 %, so even its darkest line keeps 6.6 : 1 with Nâu đất.
+    expect(rule).toMatch(/var\(--color-earth\) 30%, transparent\) var\(--hero-text-end\)/);
   });
 
   it("puts the sun in the mascot box, behind the mascot", () => {

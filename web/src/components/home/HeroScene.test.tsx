@@ -72,6 +72,20 @@ describe("HeroScene", () => {
     expect(layer?.querySelector("[data-hero-gust]")).toBeNull();
   });
 
+  it("repeats the static field left and right, so it covers the full width of a wide hero", () => {
+    const { container } = render(<HeroField />);
+    const field = container.querySelector("svg[data-hero-field]");
+    // Three 1440 wide tiles: the middle one is on the gust layer's scale.
+    expect(field).toHaveAttribute("viewBox", "-1440 0 4320 260");
+    const tile = field?.querySelector("g#nn-hero-field-tile");
+    expect(tile?.querySelectorAll("use").length).toBeGreaterThan(100);
+    const copies = [...(field?.querySelectorAll("use[href='#nn-hero-field-tile']") ?? [])];
+    expect(copies.map((u) => u.getAttribute("x"))).toEqual(["-1440", "1440"]);
+    const layer = field?.parentElement;
+    expect(layer?.className).toContain("aspect-[4320/260]");
+    expect(layer?.className).toContain("w-[calc(var(--hero-m)*14.19)]");
+  });
+
   it("draws the stalk shapes without any transform, so each stalk is one node to walk", () => {
     const { container } = render(<HeroField />);
     const defs = container.querySelector("svg[data-hero-field] defs");

@@ -71,7 +71,7 @@ body {
 
 /*
  * Hero scene panel (Hero.tsx): the sky and the rice fade to transparent toward the next section
- * and, from md, toward the text side, so no cut line shows. A mask uses only the alpha of the
+ * and, from md, toward the left edge, so no cut line shows. A mask uses only the alpha of the
  * gradient, so the color in it is never drawn. The mascot fades a little at its bottom edge too.
  */
 .hero-fade-bottom {
@@ -86,19 +86,28 @@ body {
 
 @media (width >= 48rem) {
   /*
-   * The panel starts 1rem after the end of the text column. Hero.tsx: the grid is max-w-6xl
-   * (72rem) with px-4 and gap-10, so the text column starts at the container edge + 1rem, is
-   * (container - 4.5rem) / 2 wide, and its widest line is the tagline (max-w-md, 28rem).
-   * Percentages are of the section width, so the scrollbar does not count.
+   * The panel spans the full hero width, behind the text too. From the left edge to the end of
+   * the text column the scene shows at most 30 % (so every line of it, even a Nâu đất outline,
+   * keeps at least 6.6 : 1 with Nâu đất text), then it reaches full strength 10rem later, behind
+   * the mascot.
+   * The end of the text column (Hero.tsx): the grid is max-w-6xl (72rem) with px-4 and gap-10, so
+   * the column starts at the container edge + 1rem, is (container - 4.5rem) / 2 wide, and its
+   * widest line is the tagline (max-w-md, 28rem). Percentages are of the panel, the section width.
    */
-  .hero-panel-reach {
-    left: calc(max(0px, (100% - 72rem) / 2) + 1rem + min(28rem, (min(100%, 72rem) - 4.5rem) / 2) + 1rem);
-  }
-
-  /* The fade starts at the panel's left edge, right after the text, and is a fixed 10rem long. */
   .hero-fade-side {
-    -webkit-mask-image: linear-gradient(to right, transparent, var(--color-earth) 10rem);
-    mask-image: linear-gradient(to right, transparent, var(--color-earth) 10rem);
+    --hero-text-end: calc(max(0px, (100% - 72rem) / 2) + 1rem + min(28rem, (min(100%, 72rem) - 4.5rem) / 2));
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in srgb, var(--color-earth) 30%, transparent) var(--hero-text-end),
+      var(--color-earth) calc(var(--hero-text-end) + 10rem)
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in srgb, var(--color-earth) 30%, transparent) var(--hero-text-end),
+      var(--color-earth) calc(var(--hero-text-end) + 10rem)
+    );
   }
 }
 

@@ -22,10 +22,10 @@ const BUTTON_CLASS =
 /**
  * First screen. The largest element is the brand text, so the LCP is text, not an image.
  *
- * The illustrated scene (sky, clouds, village, field) is a panel behind the mascot: on a phone the
- * top band of the hero; from `md` it starts just after the text column (`hero-panel-reach`) and
- * runs to the right edge. It is never behind the text, which stays on plain Trắng gạo.
- * The panel fades out toward the text side and toward the bottom (`hero-fade-*` in globals.css).
+ * The illustrated scene (sky, clouds, village, field) is a panel: on a phone the top band of the
+ * hero, behind the mascot; from `md` the full hero width, behind the text and the mascot. It is
+ * clearest behind the mascot and fades toward the left edge (at most 30 % over the text column,
+ * so the text keeps its contrast) and toward the bottom (`hero-fade-*` in globals.css).
  * `--hero-m` is the mascot width; the mascot stands on the bottom of the panel, and the field is
  * sized from `--hero-m` so that its horizon is at the mascot's waist (HeroScene.tsx).
  *
@@ -46,7 +46,7 @@ export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {
       <div
         data-hero-panel=""
         aria-hidden="true"
-        className="hero-panel-reach hero-fade-side pointer-events-none absolute inset-x-0 top-0 z-0 h-[calc(2.5rem+var(--hero-m))] md:inset-y-0 md:h-auto"
+        className="hero-fade-side pointer-events-none absolute inset-x-0 top-0 z-0 h-[calc(2.5rem+var(--hero-m))] md:inset-y-0 md:h-auto"
       >
         <div className="hero-fade-bottom absolute inset-0 bg-linear-to-b from-sky from-0% via-sky-light via-50% to-rice to-95%">
           <HeroSky />
