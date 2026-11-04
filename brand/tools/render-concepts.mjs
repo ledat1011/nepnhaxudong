@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Resvg } from '@resvg/resvg-js';
 import opentype from 'opentype.js';
+import { isDirectRun } from './lib/run.mjs';
 
 const conceptsDir = fileURLToPath(new URL('../concepts/', import.meta.url));
 const fontPath = fileURLToPath(new URL('../fonts/Quicksand-700.ttf', import.meta.url));
@@ -41,20 +42,27 @@ function label(n, x, y) {
 
 const width = CELL * COLUMNS;
 const height = CELL * ROWS;
-let cells = '';
-for (let i = 0; i < COLUMNS * ROWS; i++) {
-  const x = (i % COLUMNS) * CELL;
-  const y = Math.floor(i / COLUMNS) * CELL;
-  cells += inlineConcept(i + 1, x, y) + label(i + 1, x, y);
-}
-const grid = `M${CELL} 0V${height}M${2 * CELL} 0V${height}M0 ${CELL}H${width}`;
-const sheet =
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
-  `<rect width="${width}" height="${height}" fill="${color('trang-gao')}"/>` +
-  `<path d="${grid}" stroke="${color('vang-rom')}" stroke-width="2"/>` +
-  cells +
-  `</svg>`;
+export const conceptsPngPath = `${conceptsDir}concepts.png`;
 
-const png = new Resvg(sheet).render().asPng();
-writeFileSync(`${conceptsDir}concepts.png`, png);
-console.log(`concepts.png ${width}x${height}, ${png.length} bytes`);
+export function renderConceptsPng() {
+  let cells = '';
+  for (let i = 0; i < COLUMNS * ROWS; i++) {
+    const x = (i % COLUMNS) * CELL;
+    const y = Math.floor(i / COLUMNS) * CELL;
+    cells += inlineConcept(i + 1, x, y) + label(i + 1, x, y);
+  }
+  const grid = `M${CELL} 0V${height}M${2 * CELL} 0V${height}M0 ${CELL}H${width}`;
+  const sheet =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
+    `<rect width="${width}" height="${height}" fill="${color('trang-gao')}"/>` +
+    `<path d="${grid}" stroke="${color('vang-rom')}" stroke-width="2"/>` +
+    cells +
+    `</svg>`;
+  return new Resvg(sheet).render().asPng();
+}
+
+if (isDirectRun(import.meta.url)) {
+  const png = renderConceptsPng();
+  writeFileSync(conceptsPngPath, png);
+  console.log(`concepts.png ${width}x${height}, ${png.length} bytes`);
+}

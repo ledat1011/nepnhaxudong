@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { isDirectRun } from './lib/run.mjs';
 
 const tokensDir = fileURLToPath(new URL('../tokens/', import.meta.url));
 
@@ -15,7 +16,7 @@ export function buildCss(tokens) {
   return lines.join('\n');
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isDirectRun(import.meta.url)) {
   const tokens = JSON.parse(readFileSync(tokensDir + 'tokens.json', 'utf8'));
   writeFileSync(tokensDir + 'tokens.css', buildCss(tokens));
   console.log('wrote brand/tokens/tokens.css');

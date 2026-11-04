@@ -55,7 +55,15 @@ test('tokens.css co bien mau va font', () => {
 
 test('moi cap chu/nen dat AA', () => {
   const { color, textPairs } = readTokens();
-  assert.ok(textPairs.length >= 7);
+  assert.deepEqual(textPairs, [
+    ['nau-dat', 'trang-gao'],
+    ['nau-dat', 'vang-rom'],
+    ['nau-ao', 'trang-gao'],
+    ['nau-ao', 'vang-rom'],
+    ['trang-gao', 'nau-ao'],
+    ['trang-gao', 'nau-dat'],
+    ['vang-lua', 'nau-dat'],
+  ]);
   for (const [fg, bg] of textPairs) {
     assert.ok(color[fg] && color[bg], `ten mau la: ${fg}/${bg}`);
     const ratio = contrast(color[fg].value, color[bg].value);
@@ -141,8 +149,10 @@ test('concept hop le', () => {
   }
 });
 
-test('concepts.png ton tai', () => {
+test('concepts.png ton tai va moi (chay npm run concepts sau khi sua concept)', async () => {
   assert.ok(existsSync(conceptsDir + 'concepts.png'));
+  const { conceptsPngPath, renderConceptsPng } = await import('../render-concepts.mjs');
+  assert.ok(readFileSync(conceptsPngPath).equals(renderConceptsPng()), 'concepts.png cu, chay npm run concepts');
 });
 
 const withTempSvg = (source, check) => {
@@ -442,6 +452,22 @@ test('logo mascot sinh tu build-logo-mascot.mjs (chay npm run logo-mascot sau kh
   }
 });
 
+test('committedHead doc duoc file CRLF (checkout tren Windows)', async () => {
+  const { committedHead } = await import('../build-logo-mascot.mjs');
+  const dir = mkdtempSync(join(tmpdir(), 'crlf-'));
+  try {
+    for (const file of [logoMascotPath, logoMascotHeadPath]) {
+      const lf = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+      writeFileSync(join(dir, file.split(/[\\/]/).pop()), lf.replace(/\n/g, '\r\n'));
+    }
+    const head = committedHead(dir);
+    assert.ok(head.head.length > 0 && head.icon.length > 0, 'khong doc duoc path cua dau');
+    assert.deepEqual(head, committedHead());
+  } finally {
+    rmSync(dir, { recursive: true });
+  }
+});
+
 const traceHeadPath = fileURLToPath(new URL('../trace-logo-head.py', import.meta.url));
 const logoMascotBuilderPath = fileURLToPath(new URL('../build-logo-mascot.mjs', import.meta.url));
 
@@ -618,7 +644,10 @@ const maskOf = (svg) => {
 // its Nâu đất outline, which stays ink).
 test('logo-mono-light: nhu logo-mono, chi doi mau muc va toc thanh nen', () => {
   const { color } = readTokens();
-  const [mono, light] = ['logo-mono.svg', 'logo-mono-light.svg'].map((file) => readFileSync(logoDir + file, 'utf8'));
+  // Each logo has its own id prefix; compare without it.
+  const [mono, light] = ['logo-mono.svg', 'logo-mono-light.svg'].map((file) =>
+    readFileSync(logoDir + file, 'utf8').replace(/\r\n/g, '\n').replace(/nn-logo-mono(-light)?-/g, 'nn-'),
+  );
   const outside = (svg) => svg.replace(/<mask[\s\S]*<\/mask>/, '');
   assert.equal(outside(light), outside(mono).replaceAll(color['nau-dat'].value, color['trang-gao'].value));
   const mascot = flatFills(parseSync(readFileSync(logoMascotPath, 'utf8')));
@@ -664,7 +693,7 @@ test('logo-full-light: vien nhan dan la mot hinh tron tru, khong lo, sau mascot'
   const root = parseSync(readFileSync(logoDir + 'logo-full-light.svg', 'utf8'));
   const [first, second] = root.children.filter((c) => c.type === 'element');
   assert.equal(first.name, 'path', 'vien phai ve truoc mascot');
-  assert.equal(second.attributes.id, 'mascot');
+  assert.equal(second.attributes.id, 'nn-logo-full-light-mascot');
   assert.equal(first.attributes.fill, readTokens().color['trang-gao'].value);
   assert.equal(first.attributes.d.match(/[Mm]/g).length, 1, 'vien phai la mot duong kin');
   const [vx, vy, vw, vh] = viewBoxOf(svgFacts(logoDir + 'logo-full-light.svg'));
@@ -791,18 +820,37 @@ test('logo-icon: viewBox vuong, chi co dau', () => {
   }
 });
 
-test('logo-full: giu nhom mascot va pivot de lam dong', () => {
+test('logo-full: giu nhom mascot (id co tien to) va pivot de lam dong', () => {
   const facts = svgFacts(logoDir + 'logo-full.svg');
   const mascot = svgFacts(mascotPath);
+  const own = (id) => `nn-logo-full-${id}`;
   for (const id of ['body', 'rice', 'hands', 'head']) {
-    const element = facts.elements[id];
-    assert.equal(element?.tag, 'g', `thieu g#${id}`);
+    const element = facts.elements[own(id)];
+    assert.equal(element?.tag, 'g', `thieu g#${own(id)}`);
     const viewport = element.ancestors.map((a) => facts.elements[a]).find((e) => e.tag === 'svg');
-    assert.equal(viewport?.attributes.viewBox, mascot.viewBox, `g#${id} phai nam trong <svg> cua mascot`);
+    assert.equal(viewport?.attributes.viewBox, mascot.viewBox, `g#${own(id)} phai nam trong <svg> cua mascot`);
   }
   for (const id of Object.keys(ANIMATED)) {
-    assert.equal(facts.elements[id].attributes['data-pivot'], mascot.elements[id].attributes['data-pivot'], `${id} pivot`);
+    assert.equal(facts.elements[own(id)].attributes['data-pivot'], mascot.elements[id].attributes['data-pivot'], `${id} pivot`);
   }
+});
+
+test('logo: moi id co tien to cua logo, khong trung id giua cac logo va voi 2 mascot', () => {
+  const idsOf = (file) => svgFacts(file).ids.map((x) => x.id);
+  // The mascot files share #body, #rice, #hands, #head on purpose (same animation); a page inlines
+  // one of them, so only the logos must not share an id with them or with each other.
+  const mascotIds = new Set([mascotPath, logoMascotPath, logoMascotHeadPath].flatMap(idsOf));
+  const seen = new Map();
+  for (const file of LOGOS) {
+    const prefix = `nn-${file.replace(/\.svg$/, '')}-`;
+    for (const id of idsOf(logoDir + file)) {
+      assert.ok(id.startsWith(prefix), `${file}: id "${id}" khong co tien to ${prefix}`);
+      assert.ok(!mascotIds.has(id), `${file}: id "${id}" trung voi mascot`);
+      assert.ok(!seen.has(id), `${file}: id "${id}" trung voi ${seen.get(id)}`);
+      seen.set(id, file);
+    }
+  }
+  assert.ok(seen.size > 0, 'logo khong co id nao');
 });
 
 test('logo sinh tu mascot hien tai (chay npm run logos sau khi sua mascot)', async () => {

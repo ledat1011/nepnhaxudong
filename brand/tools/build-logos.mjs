@@ -12,7 +12,8 @@ import { fileURLToPath } from 'node:url';
 import opentype from 'opentype.js';
 import { parseSync, stringify } from 'svgson';
 import { stickerPath } from './lib/silhouette.mjs';
-import { contentBBox, visibleBBox } from './lib/svg-check.mjs';
+import { isDirectRun } from './lib/run.mjs';
+import { contentBBox, findById, visibleBBox } from './lib/svg-check.mjs';
 
 const brandDir = new URL('../', import.meta.url);
 const mascotPath = fileURLToPath(new URL('mascot/mascot-layered.svg', brandDir));
@@ -36,11 +37,6 @@ const TAGLINE_WIDTH = 0.86 * MASCOT_SIZE;
 const TAGLINE_GAP = 22;
 const TAGLINE_LETTER_SPACING = 0.16;
 
-// These three only act on stroked lines and eye ellipses in the icon's head. The head of
-// mascot-logo-head.svg is traced (filled paths only), so for it they do nothing today.
-const ICON_STROKE_SCALE = 1.3;
-const ICON_EYE_SCALE = 1.35;
-const ICON_DETAIL_STROKE = 4;
 const ICON_DISC_SCALE = 1.04;
 const ICON_DISC = color('vang-rom');
 // The hat is Vàng rơm like the disc; in the icon it is lifted to Trắng gạo so it stands off the disc.
@@ -111,18 +107,19 @@ function frameViewBox(content, square = false) {
   return [x, y, width, height].map(num).join(' ');
 }
 
+// Every id in a logo, and every reference to it, gets the logo's own prefix (nn-logo-full-head,
+// nn-logo-mono-mono-ink, ...), so a page can inline several logos and the mascot files together
+// without two elements sharing an id.
+const prefixIds = (svg, name) =>
+  svg
+    .replace(/ id="([^"]+)"/g, ` id="nn-${name}-$1"`)
+    .replace(/href="#([^"]+)"/g, `href="#nn-${name}-$1"`)
+    .replace(/url\(#([^)]+)\)/g, `url(#nn-${name}-$1)`);
+
 const wrap = (viewBox, content) => `<svg xmlns="${XMLNS}" viewBox="${viewBox}">\n${content}</svg>\n`;
 const frame = (content, square = false) => wrap(frameViewBox(content, square), content);
 
 const elements = (node) => node.children.filter((child) => child.type === 'element');
-const byId = (node, id) => {
-  if (node.attributes.id === id) return node;
-  for (const child of elements(node)) {
-    const found = byId(child, id);
-    if (found) return found;
-  }
-  return null;
-};
 
 // Root-level drawing attributes of the mascot (stroke color, joins, caps) that its groups inherit.
 const inheritedRoot = (mascot) => {
@@ -146,54 +143,21 @@ function fullMascot(mascot) {
   );
 }
 
-// Effective paint of an element: own attribute, else inherited.
-function paint(node, inherited) {
-  const own = node.attributes;
-  return {
-    fill: own.fill ?? inherited.fill,
-    stroke: own.stroke ?? inherited.stroke ?? 'none',
-    strokeWidth: Number(own['stroke-width'] ?? inherited['stroke-width'] ?? 1),
-  };
-}
-
-const inherit = (node, inherited) => ({
-  ...inherited,
-  ...Object.fromEntries(
-    ['fill', 'stroke', 'stroke-width'].filter((key) => key in node.attributes).map((key) => [key, node.attributes[key]]),
-  ),
-});
-
 const same = (a, b) => a !== undefined && b !== undefined && a.toLowerCase() === b.toLowerCase();
 
-// Head only, for the icon. On the traced head (filled paths) it lifts the Vàng rơm hat to Trắng gạo
-// and drops id, data-pivot and style. On a stroked, hand-drawn head it also drops Nâu áo lines and
-// thin Nâu đất lines, thickens the other lines and enlarges the eye ellipses.
-function simplifyHead(node, inherited) {
-  const own = paint(node, inherited);
-  const copy = { ...node, attributes: { ...node.attributes }, children: [] };
+// Head only, for the icon: the Vàng rơm hat lifted to Trắng gạo, without id, data-pivot and style.
+function simplifyHead(node) {
+  const copy = { ...node, attributes: { ...node.attributes }, children: elements(node).map(simplifyHead) };
   delete copy.attributes['data-pivot'];
   delete copy.attributes.style;
   delete copy.attributes.id;
-  if ('stroke-width' in copy.attributes) copy.attributes['stroke-width'] = num(own.strokeWidth * ICON_STROKE_SCALE);
   if (same(node.attributes.fill, ICON_DISC)) copy.attributes.fill = ICON_DISC_LIFT;
-  if (node.name === 'ellipse' && same(own.fill, color('nau-dat')) && own.stroke === 'none') {
-    copy.attributes.rx = num(Number(node.attributes.rx) * ICON_EYE_SCALE);
-    copy.attributes.ry = num(Number(node.attributes.ry) * ICON_EYE_SCALE);
-  }
-  const next = inherit(node, inherited);
-  for (const child of elements(node)) {
-    const p = paint(child, next);
-    const line = p.fill === 'none';
-    if (line && same(p.stroke, color('nau-ao'))) continue;
-    if (line && same(p.stroke, color('nau-dat')) && p.strokeWidth < ICON_DETAIL_STROKE) continue;
-    copy.children.push(simplifyHead(child, next));
-  }
   return copy;
 }
 
 function iconLogo(headFull) {
   const rootPaint = inheritedRoot(headFull);
-  const head = simplifyHead(byId(headFull, 'head'), rootPaint);
+  const head = simplifyHead(findById(headFull, 'head'));
   const drawing = `<g${attrs(rootPaint)}>\n${stringify(head)}\n</g>\n`;
   const box = paintedBox(drawing);
   const cx = box.x + box.width / 2;
@@ -300,16 +264,17 @@ export function buildLogos() {
   const viewBox = logoFrame(words);
   const logoMascot = readFileSync(logoMascotPath, 'utf8');
   const fullLight = sticker(mascot) + mascot + wordmark(LIGHT_TITLE, LIGHT_TAGLINE);
-  return {
+  const logos = {
     'logo-full.svg': wrap(viewBox, mascot + words),
     'logo-full-light.svg': frame(fullLight),
     'logo-icon.svg': iconLogo(parseSync(readFileSync(logoMascotHeadPath, 'utf8'))),
     'logo-mono.svg': wrap(viewBox, monoMascot(logoMascot) + wordmark('nau-dat', 'nau-dat')),
     'logo-mono-light.svg': wrap(viewBox, monoMascot(logoMascot, LIGHT_INK, LIGHT_INK_TOKENS) + wordmark(LIGHT_INK, LIGHT_INK)),
   };
+  return Object.fromEntries(Object.entries(logos).map(([file, svg]) => [file, prefixIds(svg, file.replace(/\.svg$/, ''))]));
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isDirectRun(import.meta.url)) {
   mkdirSync(logoDir, { recursive: true });
   for (const [file, svg] of Object.entries(buildLogos())) {
     writeFileSync(logoDir + file, svg);

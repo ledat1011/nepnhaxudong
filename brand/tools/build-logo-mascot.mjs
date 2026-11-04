@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Resvg } from '@resvg/resvg-js';
 import { d, fmt, grain, spline, walker } from './lib/bezier.mjs';
+import { isDirectRun } from './lib/run.mjs';
 
 const brandDir = new URL('../', import.meta.url);
 const file = (path) => fileURLToPath(new URL(path, brandDir));
@@ -199,10 +200,11 @@ export function buildLogoMascot({ head, icon }) {
   return { [LOGO_MASCOT]: mascot, [LOGO_MASCOT_HEAD]: whole };
 }
 
-// The traced head as it is in the committed files.
-export function committedHead() {
+// The traced head as it is in the committed files (in brand/logo, or in another folder). The files
+// may have CRLF line ends (a Windows checkout), so the text is read with LF.
+export function committedHead(dir = file('logo/')) {
   const pathsOf = (name) => {
-    const svg = readFileSync(file(`logo/${name}`), 'utf8');
+    const svg = readFileSync(join(dir, name), 'utf8').replace(/\r\n/g, '\n');
     const group = svg.match(/<g id="head"[^>]*>\n([\s\S]*?)\n<\/g>/);
     if (!group) throw new Error(`${name}: no g#head`);
     return [...group[1].matchAll(/<path d="([^"]+)" fill="([^"]+)"\/>/g)].map((m) => [m[1], m[2]]);
@@ -232,7 +234,7 @@ function traceHead(source, anySource) {
   }
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isDirectRun(import.meta.url)) {
   const args = process.argv.slice(2);
   const at = args.indexOf('--source');
   const head = at >= 0 ? traceHead(args[at + 1], args.includes('--any-source')) : committedHead();

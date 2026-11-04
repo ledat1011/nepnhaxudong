@@ -90,7 +90,8 @@ export function svgFacts(path) {
 
 const elementChildren = (node) => node.children.filter((child) => child.type === 'element');
 
-function findPath(node, id) {
+// The elements from node down to the element with this id (svgson tree), or null.
+export function findPath(node, id) {
   if (node.attributes?.id === id) return [node];
   for (const child of elementChildren(node)) {
     const path = findPath(child, id);
@@ -98,6 +99,9 @@ function findPath(node, id) {
   }
   return null;
 }
+
+// The element with this id under node (svgson tree), or null.
+export const findById = (node, id) => findPath(node, id)?.at(-1) ?? null;
 
 // Bounding box of the drawn content (strokes included) in viewBox units, measured by resvg.
 // With an id, every element that is not on the way to that element (or inside it) is hidden;

@@ -2,9 +2,10 @@
 // Logos are linked with <img> so they always show the current file; the mascot is copied inline
 // so that CSS can animate its #head and #rice groups. Rerun after the mascot or tokens change.
 import { readFileSync, writeFileSync } from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { parseSync, stringify } from 'svgson';
-import { contrast } from './lib/svg-check.mjs';
+import { isDirectRun } from './lib/run.mjs';
+import { contrast, findById } from './lib/svg-check.mjs';
 
 const brandDir = fileURLToPath(new URL('../', import.meta.url));
 const previewPath = `${brandDir}preview.html`;
@@ -24,15 +25,6 @@ const SAMPLE_TEXT = 'Gạo nếp cái hoa vàng Xứ Đông';
 
 const escapeHtml = (text) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-function findById(node, id) {
-  if (node.attributes?.id === id) return node;
-  for (const child of node.children ?? []) {
-    const found = findById(child, id);
-    if (found) return found;
-  }
-  return null;
-}
 
 // The mascot SVG with the transform origin of each animated group taken from its data-pivot.
 function inlineMascot(svgString) {
@@ -178,7 +170,7 @@ ${icons}
 `;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isDirectRun(import.meta.url)) {
   writeFileSync(previewPath, buildPreview());
   console.log(`preview.html written`);
 }

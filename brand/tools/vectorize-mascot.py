@@ -35,6 +35,7 @@ source picture (for example with PIL ImageDraw) and look at it.
 import argparse
 import hashlib
 import importlib.metadata
+import json
 import re
 import sys
 from collections import deque
@@ -50,14 +51,10 @@ VTRACER_VERSION = '0.6.15'
 OUT_SIZE = 512
 SCALE = OUT_SIZE / SOURCE_SIZE
 
-DARK = '#4A2C1A'
-BLOUSE = '#8B5A2B'
-GOLD = '#D9A13B'
-STRAW = '#F2E2B6'
-CHEEK = '#E59A84'
-LEAF = '#6E8B3D'
-SKIN = '#F4CDA8'
-HAIR = '#222222'
+# Brand colors, read from brand/tokens/tokens.json (the one palette source).
+TOKENS = json.loads((Path(__file__).resolve().parent.parent / 'tokens' / 'tokens.json').read_text(encoding='utf-8'))
+DARK, BLOUSE, GOLD, STRAW, CHEEK, LEAF, SKIN, HAIR = (
+    TOKENS['color'][name]['value'] for name in ('nau-dat', 'nau-ao', 'vang-lua', 'vang-rom', 'hong-ma', 'xanh-ma', 'da', 'toc'))
 BRAND = [DARK, BLOUSE, GOLD, STRAW, CHEEK, LEAF, SKIN, HAIR]
 PACK = 16
 assert len(BRAND) < PACK, 'assign_parts() packs part and color index + 1 into one number below PACK'

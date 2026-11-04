@@ -2,6 +2,7 @@
 // Chay: node fetch-fonts.mjs
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { isDirectRun } from './lib/run.mjs';
 
 const outDir = fileURLToPath(new URL('../fonts/', import.meta.url));
 
@@ -62,7 +63,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('Loi:', err.message);
-  process.exit(1);
-});
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Loi:', err.message);
+    process.exit(1);
+  });
+}
