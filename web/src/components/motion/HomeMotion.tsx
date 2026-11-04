@@ -15,7 +15,7 @@ import { setupProductBag } from "@/lib/motion/product-bag";
 import { setupReveals } from "@/lib/motion/reveal";
 import { setupRiceStory } from "@/lib/motion/story/rice-story";
 
-/** In page order where it matters: the pinned story comes before the sections below it. */
+/** In page order: the story comes before the journey below it. */
 export const HOME_SETUPS: MotionSetup[] = [
   setupReveals,
   setupProductBag,
@@ -85,8 +85,8 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
               const cleanup = setup(modules, document);
               if (typeof cleanup === "function") cleanups.push(cleanup);
             }
-            // The setups do not create their triggers in page order. Sorted, the refresh measures
-            // them top to bottom, so a trigger below the pinned story sees the pin's spacing.
+            // The setups do not create their triggers in page order (and the story adds some
+            // later). Sorted, the refresh measures them top to bottom, as ScrollTrigger expects.
             modules.ScrollTrigger.sort();
             // A clamped start is applied only by a refresh, and the page load refresh is over.
             modules.ScrollTrigger.refresh();

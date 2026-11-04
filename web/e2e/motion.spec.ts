@@ -852,3 +852,209 @@ test.describe("reduced motion", () => {
     expect(notes.every((o) => o === "1")).toBe(true);
   });
 });
+
+test.describe("the rice story road", () => {
+  const PHONE = { width: 390, height: 844 };
+  const DESKTOP = { width: 1280, height: 800 };
+  const SCENES = "li[data-story-scene]";
+
+  async function openStory(page: Page, viewport: { width: number; height: number }) {
+    await page.setViewportSize(viewport);
+    await page.goto("/vi");
+    await page.waitForSelector(MOTION_ON, { state: "attached" });
+  }
+
+  /** Scrolls through the story in steps, so every scene passes its trigger line. */
+  async function scrollThroughStory(page: Page) {
+    const { top, height } = await page.$eval("[data-rice-story]", (el) => {
+      const box = el.getBoundingClientRect();
+      return { top: box.top + window.scrollY, height: box.height };
+    });
+    for (let y = top - 1000; y <= top + height; y += 300) {
+      await page.evaluate((to) => window.scrollTo({ top: to, behavior: "instant" }), y);
+      await page.waitForTimeout(120);
+    }
+  }
+
+  /** Scrolls until scene `index` has its top at 40 % of the screen. */
+  async function scrollToScene(page: Page, index: number) {
+    await page.evaluate((i) => {
+      const li = document.querySelectorAll("li[data-story-scene]")[i];
+      window.scrollBy({ top: li.getBoundingClientRect().top - window.innerHeight * 0.4, behavior: "instant" });
+    }, index);
+  }
+
+  const boxes = (page: Page, selector: string) =>
+    page.$$eval(selector, (els) =>
+      els.map((el) => {
+        const r = el.getBoundingClientRect();
+        return { left: r.left, right: r.right, top: r.top, center: r.left + r.width / 2 };
+      }),
+    );
+
+  test("phone: the road runs on the left and the scenes stack to its right", async ({ page }) => {
+    await openStory(page, PHONE);
+    await scrollThroughStory(page);
+    expect(await page.locator(".pin-spacer").count()).toBe(0);
+    const labels = await boxes(page, `${SCENES} > [data-story-step]`);
+    const stops = await boxes(page, `${SCENES} > [data-story-stop]`);
+    expect(labels).toHaveLength(8);
+    for (let i = 0; i < 8; i++) {
+      expect(stops[i].right).toBeLessThan(labels[i].left);
+      expect(labels[i].left).toBeCloseTo(labels[0].left, 0);
+      if (i > 0) expect(labels[i].top).toBeGreaterThan(labels[i - 1].top);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(PHONE.width);
+    await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(8);
+    // The fourth dish is the last one to come to the table.
+    await page.locator("[data-dish='ruou-nep']").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(3000);
+    expect(await page.$eval("[data-dish='ruou-nep']", (el) => getComputedStyle(el).opacity)).toBe("1");
+  });
+
+  test("desktop: the scenes take turns left and right of the road, nothing is pinned", async ({
+    page,
+  }) => {
+    await openStory(page, DESKTOP);
+    await scrollThroughStory(page);
+    expect(await page.locator(".pin-spacer").count()).toBe(0);
+    const scenes = await boxes(page, SCENES);
+    scenes.forEach((scene, i) => {
+      if (i % 2 === 0) expect(scene.center).toBeLessThan(DESKTOP.width / 2);
+      else expect(scene.center).toBeGreaterThan(DESKTOP.width / 2);
+    });
+  });
+
+  test("desktop: the grain moves down the road and the stop in view fills", async ({ page }) => {
+    await openStory(page, DESKTOP);
+    const grainY = () =>
+      page.$eval("[data-story-grain]", (el) => {
+        const wrap = el.parentElement?.getBoundingClientRect().top ?? 0;
+        return el.getBoundingClientRect().top - wrap;
+      });
+    const activeStop = () =>
+      page.$$eval("[data-story-stop]", (els) => els.findIndex((el) => el.hasAttribute("data-active")));
+    await scrollToScene(page, 1);
+    await page.waitForTimeout(1500);
+    expect(await page.$eval("[data-story-grain]", (el) => getComputedStyle(el).opacity)).toBe("1");
+    const first = await grainY();
+    expect(await activeStop()).toBe(1);
+    await scrollToScene(page, 4);
+    await page.waitForTimeout(1500);
+    expect(await grainY()).toBeGreaterThan(first + 500);
+    expect(await activeStop()).toBe(4);
+    // The road above the grain is darker: the passed layer of an earlier stretch is shown whole.
+    const passed = await page.$eval(
+      "li[data-story-scene]:nth-child(2) [data-story-road-passed]",
+      (el) => getComputedStyle(el).transform,
+    );
+    expect(IDENTITY).toContain(passed);
+  });
+
+  test("resizing from desktop to phone keeps the road timeline", async ({ page }) => {
+    await openStory(page, DESKTOP);
+    await scrollToScene(page, 3);
+    await page.waitForTimeout(500);
+    await page.setViewportSize(PHONE);
+    await page.waitForTimeout(800);
+    expect(await page.locator(".pin-spacer").count()).toBe(0);
+    const labels = await boxes(page, `${SCENES} > [data-story-step]`);
+    labels.forEach((label) => expect(label.left).toBeCloseTo(labels[0].left, 0));
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(PHONE.width);
+    await page.evaluate(() =>
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }),
+    );
+    await expect(page.locator("footer")).toBeInViewport();
+  });
+
+  test("a broken scene file keeps the static image", async ({ page }) => {
+    let calls = 0;
+    // The first request is the <img>; the second one is the fetch of the inline swap.
+    await page.route("**/story/canh-4-say.svg", async (route) => {
+      calls += 1;
+      if (calls === 1) await route.continue();
+      else await route.fulfill({ status: 500, body: "" });
+    });
+    await openStory(page, PHONE);
+    await scrollThroughStory(page);
+    await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(7);
+    await expect(page.locator("li[data-story-scene='say'] img")).toHaveCount(1);
+    await expect(page.locator("li[data-story-scene='say'] svg[data-scene]")).toHaveCount(0);
+  });
+
+  test("the skip link jumps past the story", async ({ page }) => {
+    await openStory(page, DESKTOP);
+    const skip = page.locator("[data-story-skip]");
+    await page.locator("#tu-hat-lua").scrollIntoViewIfNeeded();
+    await skip.focus();
+    await expect(skip).toBeVisible();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#sau-cau-chuyen")).toBeFocused();
+    await expect(page.locator("#sau-cau-chuyen")).toBeInViewport();
+  });
+
+  test("opening #hanh-trinh lands on the journey", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await page.goto("/vi#hanh-trinh");
+    await page.waitForSelector(MOTION_ON, { state: "attached" });
+    await page.waitForTimeout(2000);
+    await expect(page.locator("#hanh-trinh")).toBeInViewport();
+  });
+
+  test("sections after the story still reveal", async ({ page }) => {
+    await openStory(page, DESKTOP);
+    await scrollThroughStory(page);
+    await page.locator("#bao-chi").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1500);
+    const press = await page.$$eval("section[aria-labelledby='bao-chi'] [data-reveal]", (els) =>
+      els.map((el) => getComputedStyle(el).opacity),
+    );
+    expect(press.length).toBeGreaterThan(0);
+    expect(press.every((o) => o === "1")).toBe(true);
+  });
+
+  test("the pause button also stops the story loops", async ({ page }) => {
+    await openStory(page, PHONE);
+    await page.evaluate(() => {
+      const li = document.querySelector("li[data-story-scene='say']") as HTMLElement;
+      window.scrollBy({ top: li.getBoundingClientRect().top - 120, behavior: "instant" });
+    });
+    // The intro plays first (about 2.3 s); the loop runs after it.
+    await page.waitForTimeout(3500);
+    const fan = () =>
+      page.$eval(
+        "[data-part='fan-blades']",
+        (el) => el.getAttribute("transform") ?? getComputedStyle(el).transform,
+      );
+    const turning = await fan();
+    await page.waitForTimeout(400);
+    expect(await fan()).not.toBe(turning);
+    // A click without scrolling, so the scene stays on screen.
+    await page
+      .getByRole("button", { name: "Tạm dừng chuyển động" })
+      .first()
+      .evaluate((button: HTMLButtonElement) => button.click());
+    const stopped = await fan();
+    await page.waitForTimeout(1000);
+    expect(await fan()).toBe(stopped);
+  });
+
+  test.describe("with reduced motion", () => {
+    test.use({ reducedMotion: "reduce" });
+
+    test("shows the whole road and eight static images", async ({ page }) => {
+      await page.setViewportSize(DESKTOP);
+      await page.goto("/vi");
+      await page.waitForTimeout(2000);
+      await scrollThroughStory(page);
+      await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(0);
+      await expect(page.locator(`${SCENES} img`)).toHaveCount(8);
+      await expect(page.locator("[data-story-road]")).toHaveCount(8);
+      expect(await page.$eval("[data-story-grain]", (el) => getComputedStyle(el).opacity)).toBe("0");
+      const titles = await page.$$eval(`${SCENES} h3`, (els) =>
+        els.map((el) => getComputedStyle(el).opacity),
+      );
+      expect(titles).toEqual(Array(8).fill("1"));
+    });
+  });
+});
