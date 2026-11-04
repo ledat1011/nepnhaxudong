@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
+import { FieldError, NotSavedNotice, RequiredMark, RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SingleImageSection } from "@/components/admin/media/SingleImageSection";
 import { Button } from "@/components/admin/ui/button";
@@ -10,9 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { adminFetch } from "@/lib/admin/api";
-import { AdminApiError } from "@/lib/admin/errors";
+import { fieldOfDetail, invalidProps, langOfDetail, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import type { LocalizedText, TimelineEventAdminDto, TimelineEventRequest } from "@/lib/admin/types";
+import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 
@@ -20,6 +22,14 @@ import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
 const YEAR_RANGE_MESSAGE = "Năm phải nằm trong khoảng 1900 đến 2100.";
+const YEAR_MISSING_MESSAGE = "Hãy nhập năm.";
+const TITLE_MISSING_MESSAGE = "Hãy nhập tiêu đề tiếng Việt.";
+
+/** The API messages that name a field of this form (see `TimelineService` and `TimelineEventRequest`). */
+const FIELD_RULES: FieldRule[] = [
+  { prefix: "Năm", field: "year" },
+  { prefix: "Tiêu đề mốc", field: (detail) => `title.${langOfDetail(detail)}` },
+];
 
 const EMPTY_TEXT: LocalizedText = { vi: null, en: null };
 
@@ -43,13 +53,26 @@ function parseYear(text: string): number | null {
   return year >= MIN_YEAR && year <= MAX_YEAR ? year : null;
 }
 
-/** The request body. A blank English box is `null`. `sortOrder` is left out: a new event goes last and an edited one stays. */
+/** The boxes that are wrong before anything is sent. */
+function check(state: FormState): FieldErrors {
+  const errors: Record<string, string> = {};
+  if (state.year.trim() === "") errors.year = YEAR_MISSING_MESSAGE;
+  else if (parseYear(state.year) === null) errors.year = YEAR_RANGE_MESSAGE;
+  if (toRequestText(state.title).vi === null) errors["title.vi"] = TITLE_MISSING_MESSAGE;
+  return errors;
+}
+
+/**
+ * The request body. A blank English box is `null`. `sortOrder` is left out: a new event goes last and an
+ * edited one stays. `check` has passed, so the year is valid.
+ */
 function toRequest(state: FormState): TimelineEventRequest {
-  const year = parseYear(state.year);
-  if (year === null) throw new AdminApiError(400, YEAR_RANGE_MESSAGE);
-  const title = toRequestText(state.title);
-  if (title.vi === null) throw new AdminApiError(400, "Hãy nhập tiêu đề tiếng Việt.");
-  return { year, title, description: toRequestText(state.description), mediaId: state.mediaId };
+  return {
+    year: parseYear(state.year) ?? 0,
+    title: toRequestText(state.title),
+    description: toRequestText(state.description),
+    mediaId: state.mediaId,
+  };
 }
 
 type Props = {
@@ -71,12 +94,18 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
   const [leaving, setLeaving] = useState(false);
   const dirty = JSON.stringify(state) !== baseline;
   useUnsavedChanges(dirty && !leaving);
+  const fields = useFieldErrors();
 
   const saving = useSave(async () => {
     const body = toRequest(state);
     return initial === undefined
       ? adminFetch<TimelineEventAdminDto>("/admin/timeline", { method: "POST", body })
       : adminFetch<TimelineEventAdminDto>(`/admin/timeline/${initial.id}`, { method: "PUT", body });
+  }, {
+    onError: (error) => {
+      const field = fieldOfDetail(error.detail, FIELD_RULES);
+      if (field !== null) fields.show({ [field]: error.detail });
+    },
   });
   const deleting = useSave(
     async () => {
@@ -86,12 +115,22 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
     { successMessage: "Đã xóa mốc." },
   );
 
+  // A wrong year is told while it is typed; the other errors appear when Lưu is pressed.
   const yearInvalid = state.year.trim() !== "" && parseYear(state.year) === null;
-  const titleBlank = toRequestText(state.title).vi === null;
+  const yearError = fields.errors.year ?? (yearInvalid ? YEAR_RANGE_MESSAGE : null);
   const busy = saving.pending || deleting.pending || leaving;
-  const canSave = !busy && !yearInvalid && parseYear(state.year) !== null && !titleBlank && (initial === undefined || dirty);
+  // Lưu stays on for a new event even when boxes are empty: pressing it shows what is missing.
+  const canSave = !busy && (initial === undefined || dirty);
+  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, FIELD_RULES) === null ? saving.error : null;
 
   async function save() {
+    const problems = check(state);
+    if (Object.keys(problems).length > 0) {
+      saving.reset();
+      fields.show(problems);
+      return;
+    }
+    fields.reset();
     if ((await saving.save()) === undefined) return;
     setLeaving(true);
     onChanged();
@@ -112,6 +151,7 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
 
   function patch(change: Partial<FormState>) {
     setState((current) => ({ ...current, ...change }));
+    fields.clear(...Object.keys(change).flatMap((key) => [key, `${key}.`]));
   }
 
   return (
@@ -123,20 +163,31 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
             <DialogDescription>Mốc hiện trên trang Hành trình của website.</DialogDescription>
           </DialogHeader>
           {/* Nothing can be typed while a save runs: the dialog closes after it and would drop that text. */}
-          <fieldset disabled={busy} className="flex min-w-0 flex-col gap-5">
+          <fieldset ref={fields.root} disabled={busy} className="flex min-w-0 flex-col gap-5">
+            <RequiredNote />
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={yearId}>Năm</Label>
+              <Label htmlFor={yearId}>
+                Năm
+                <RequiredMark />
+              </Label>
               <Input
                 id={yearId}
                 type="text"
                 inputMode="numeric"
+                required
                 value={state.year}
-                aria-invalid={yearInvalid}
+                {...invalidProps(yearId, yearError)}
                 onChange={(e) => patch({ year: e.target.value })}
               />
-              {yearInvalid ? <p className="text-sm text-destructive">{YEAR_RANGE_MESSAGE}</p> : null}
+              <FieldError id={yearId} message={yearError} />
             </div>
-            <BilingualField label="Tiêu đề" value={state.title} onChange={(title) => patch({ title })} viRequired />
+            <BilingualField
+              label="Tiêu đề"
+              value={state.title}
+              onChange={(title) => patch({ title })}
+              viRequired
+              errors={{ vi: fields.errors["title.vi"], en: fields.errors["title.en"] }}
+            />
             <BilingualField
               label="Mô tả"
               value={state.description}
@@ -145,7 +196,8 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
             />
             <SingleImageSection mediaId={state.mediaId} onChange={(mediaId) => patch({ mediaId })} />
 
-            <ProblemMessage error={saving.error ?? deleting.error} />
+            <ProblemMessage error={saveError ?? deleting.error} />
+            <NotSavedNotice show={fields.hasErrors} />
 
             <div className="flex flex-col gap-2">
               <Button type="button" onClick={() => void save()} disabled={!canSave}>

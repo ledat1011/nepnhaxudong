@@ -3,6 +3,7 @@
 import { useId, useLayoutEffect, useRef, useState, type ClipboardEvent } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
+import { FieldError, NotSavedNotice, RequiredMark, RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SingleImageSection } from "@/components/admin/media/SingleImageSection";
 import { Button } from "@/components/admin/ui/button";
@@ -11,9 +12,11 @@ import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { adminFetch } from "@/lib/admin/api";
 import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
+import { fieldOfDetail, invalidProps, langOfDetail, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import { useAdminSession } from "@/lib/admin/session";
 import type { LocalizedText, PressMentionAdminDto, PressMentionRequest, PressPreviewDto } from "@/lib/admin/types";
+import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 import { withReLogin } from "@/lib/admin/with-relogin";
@@ -21,6 +24,13 @@ import { withReLogin } from "@/lib/admin/with-relogin";
 const NOTHING_READ_MESSAGE = "Không đọc được thông tin từ trang này. Hãy tự nhập.";
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const EMPTY_TEXT: LocalizedText = { vi: null, en: null };
+
+/** The API messages that name a field of this form (see `PressService`). */
+const FIELD_RULES: FieldRule[] = [
+  { prefix: "Đường dẫn bài báo", field: "url" },
+  { prefix: "Tên báo", field: "sourceName" },
+  { prefix: "Tiêu đề bài báo", field: (detail) => `title.${langOfDetail(detail)}` },
+];
 
 type FormState = {
   url: string;
@@ -56,19 +66,28 @@ function isHttpUrl(text: string): boolean {
   }
 }
 
+/** The required boxes that are empty. The API checks the rest, such as the form of the link. */
+function check(state: FormState): FieldErrors {
+  const errors: Record<string, string> = {};
+  if (isBlank(state.url)) errors.url = "Hãy nhập đường dẫn bài báo.";
+  if (isBlank(state.sourceName)) errors.sourceName = "Hãy nhập tên báo.";
+  if (isBlank(state.title.vi)) errors["title.vi"] = "Hãy nhập tiêu đề tiếng Việt.";
+  return errors;
+}
+
 /**
  * The request body. A blank English title and a blank date are `null`. `sortOrder` is left out:
  * a new mention goes last and an edited one stays.
  */
 function toRequest(state: FormState): PressMentionRequest {
-  const url = state.url.trim();
-  const sourceName = state.sourceName.trim();
-  if (url === "") throw new AdminApiError(400, "Hãy nhập đường dẫn bài báo.");
-  if (sourceName === "") throw new AdminApiError(400, "Hãy nhập tên báo.");
-  const title = toRequestText(state.title);
-  if (title.vi === null) throw new AdminApiError(400, "Hãy nhập tiêu đề tiếng Việt.");
   const publishedOn = state.publishedOn.trim();
-  return { url, sourceName, publishedOn: publishedOn === "" ? null : publishedOn, title, mediaId: state.mediaId };
+  return {
+    url: state.url.trim(),
+    sourceName: state.sourceName.trim(),
+    publishedOn: publishedOn === "" ? null : publishedOn,
+    title: toRequestText(state.title),
+    mediaId: state.mediaId,
+  };
 }
 
 /** Puts the preview into the boxes that are empty now. A box with text is never changed. */
@@ -113,6 +132,7 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
   const [nothingRead, setNothingRead] = useState(false);
   const dirty = JSON.stringify(state) !== baseline;
   useUnsavedChanges(dirty && !leaving);
+  const fields = useFieldErrors();
 
   // Each preview gets a number. Only the newest one may change the form, and only while the link is still the same.
   const latestPreview = useRef(0);
@@ -126,6 +146,11 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
     return initial === undefined
       ? adminFetch<PressMentionAdminDto>("/admin/press", { method: "POST", body })
       : adminFetch<PressMentionAdminDto>(`/admin/press/${initial.id}`, { method: "PUT", body });
+  }, {
+    onError: (error) => {
+      const field = fieldOfDetail(error.detail, FIELD_RULES);
+      if (field !== null) fields.show({ [field]: error.detail });
+    },
   });
   const deleting = useSave(
     async () => {
@@ -136,8 +161,9 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
   );
 
   const busy = saving.pending || deleting.pending || leaving;
-  const canSave =
-    !busy && !isBlank(state.url) && !isBlank(state.sourceName) && !isBlank(state.title.vi) && (initial === undefined || dirty);
+  // Lưu stays on for a new mention even when boxes are empty: pressing it shows what is missing.
+  const canSave = !busy && (initial === undefined || dirty);
+  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, FIELD_RULES) === null ? saving.error : null;
   const trimmedUrl = state.url.trim();
 
   async function readPage(raw: string) {
@@ -180,6 +206,13 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
   }
 
   async function save() {
+    const problems = check(state);
+    if (Object.keys(problems).length > 0) {
+      saving.reset();
+      fields.show(problems);
+      return;
+    }
+    fields.reset();
     if ((await saving.save()) === undefined) return;
     setLeaving(true);
     onChanged();
@@ -200,6 +233,7 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
 
   function patch(change: Partial<FormState>) {
     setState((current) => ({ ...current, ...change }));
+    fields.clear(...Object.keys(change).flatMap((key) => [key, `${key}.`]));
   }
 
   return (
@@ -211,16 +245,22 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
             <DialogDescription>Bài báo hiện trong mục Báo chí của website.</DialogDescription>
           </DialogHeader>
           {/* Nothing can be typed while a save runs: the dialog closes after it and would drop that text. */}
-          <fieldset disabled={busy} className="flex min-w-0 flex-col gap-5">
+          <fieldset ref={fields.root} disabled={busy} className="flex min-w-0 flex-col gap-5">
+            <RequiredNote />
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={urlId}>Đường dẫn bài báo</Label>
+              <Label htmlFor={urlId}>
+                Đường dẫn bài báo
+                <RequiredMark />
+              </Label>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   id={urlId}
                   type="text"
                   inputMode="url"
                   autoComplete="off"
+                  required
                   value={state.url}
+                  {...invalidProps(urlId, fields.errors.url)}
                   onChange={(e) => {
                     patch({ url: e.target.value });
                     // The message was about the old link.
@@ -234,6 +274,7 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
                   Lấy thông tin
                 </Button>
               </div>
+              <FieldError id={urlId} message={fields.errors.url} />
               {previewing ? (
                 <p role="status" className="text-sm text-muted-foreground">
                   Đang đọc trang…
@@ -255,18 +296,34 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={sourceId}>
-                Tên báo<span aria-hidden> *</span>
+                Tên báo
+                <RequiredMark />
               </Label>
-              <Input id={sourceId} type="text" required value={state.sourceName} onChange={(e) => patch({ sourceName: e.target.value })} />
+              <Input
+                id={sourceId}
+                type="text"
+                required
+                value={state.sourceName}
+                {...invalidProps(sourceId, fields.errors.sourceName)}
+                onChange={(e) => patch({ sourceName: e.target.value })}
+              />
+              <FieldError id={sourceId} message={fields.errors.sourceName} />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={dateId}>Ngày đăng</Label>
               <Input id={dateId} type="date" value={state.publishedOn} onChange={(e) => patch({ publishedOn: e.target.value })} />
             </div>
-            <BilingualField label="Tiêu đề" value={state.title} onChange={(title) => patch({ title })} viRequired />
+            <BilingualField
+              label="Tiêu đề"
+              value={state.title}
+              onChange={(title) => patch({ title })}
+              viRequired
+              errors={{ vi: fields.errors["title.vi"], en: fields.errors["title.en"] }}
+            />
             <SingleImageSection mediaId={state.mediaId} onChange={(mediaId) => patch({ mediaId })} />
 
-            <ProblemMessage error={saving.error ?? deleting.error} />
+            <ProblemMessage error={saveError ?? deleting.error} />
+            <NotSavedNotice show={fields.hasErrors} />
 
             <div className="flex flex-col gap-2">
               <Button type="button" onClick={() => void save()} disabled={!canSave}>

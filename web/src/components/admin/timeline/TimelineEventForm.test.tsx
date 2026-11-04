@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdminApiError } from "@/lib/admin/errors";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TimelineEventAdminDto } from "@/lib/admin/types";
 
 const { adminFetch, requireReLogin } = vi.hoisted(() => ({
@@ -32,7 +32,15 @@ function writes() {
   return adminFetch.mock.calls.filter(([, init]) => ["PUT", "POST", "DELETE"].includes(init?.method));
 }
 
+const scrollIntoView = vi.fn();
+
+afterEach(() => {
+  delete (Element.prototype as Partial<Element>).scrollIntoView;
+});
+
 beforeEach(() => {
+  scrollIntoView.mockReset();
+  Element.prototype.scrollIntoView = scrollIntoView;
   adminFetch.mockReset();
   requireReLogin.mockReset();
   adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
@@ -50,18 +58,56 @@ describe("TimelineEventForm", () => {
     await user.clear(year);
     await user.type(year, "1899");
     expect(screen.getByText("Năm phải nằm trong khoảng 1900 đến 2100.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
+    expect(year).toHaveAccessibleDescription("Năm phải nằm trong khoảng 1900 đến 2100.");
     await user.click(screen.getByRole("button", { name: "Lưu" }));
     expect(writes()).toHaveLength(0);
+    expect(year).toHaveFocus();
   });
 
-  it("disables Lưu while the Vietnamese title is empty", async () => {
+  it("shows what is missing under each box when Lưu is pressed on an empty form, and moves to the first one", async () => {
     const user = userEvent.setup();
     render(<TimelineEventForm onClose={vi.fn()} onChanged={vi.fn()} />);
-    await user.type(screen.getByLabelText(/^Năm/), "2020");
-    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
-    await user.type(screen.getAllByLabelText(/Tiếng Việt/)[0], "Một mốc");
-    expect(screen.getByRole("button", { name: "Lưu" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    const year = screen.getByLabelText(/^Năm/);
+    const titleVi = screen.getAllByLabelText(/Tiếng Việt/)[0];
+    expect(year).toHaveAccessibleDescription("Hãy nhập năm.");
+    expect(titleVi).toHaveAccessibleDescription("Hãy nhập tiêu đề tiếng Việt.");
+    expect(titleVi).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => expect(year).toHaveFocus());
+    expect(screen.getByRole("alert")).toHaveTextContent("Chưa lưu. Hãy sửa ô có viền đỏ.");
+    expect(writes()).toHaveLength(0);
+
+    await user.type(year, "2020");
+    await user.type(titleVi, "Một mốc");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+  });
+
+  it("marks Năm and the Vietnamese title with * and explains the *", () => {
+    render(<TimelineEventForm onClose={vi.fn()} onChanged={vi.fn()} />);
+    expect(screen.getByText("Ô có dấu * là ô phải điền.")).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Năm/)).toBeRequired();
+    expect(screen.getByText(/^Năm/)).toHaveTextContent("Năm *");
+    expect(screen.getAllByLabelText(/Tiếng Việt/)[0]).toBeRequired();
+  });
+
+  it("puts an API error under the box it names", async () => {
+    const message = "Tiêu đề mốc (tiếng Anh) không được để trống khi đã có nội dung tiếng Anh.";
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") throw new AdminApiError(400, message);
+      return undefined;
+    });
+    const user = userEvent.setup();
+    render(<TimelineEventForm initial={existing()} onClose={vi.fn()} onChanged={vi.fn()} />);
+    const titleEn = screen.getAllByLabelText("English")[0];
+    await user.clear(titleEn);
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(titleEn).toHaveFocus());
+    expect(titleEn).toHaveAccessibleDescription(message);
+    expect(screen.getAllByText(message)).toHaveLength(1);
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(titleEn);
   });
 
   it("creates with POST, trims the text, sends null for blank boxes, and locks the form", async () => {
@@ -142,12 +188,14 @@ describe("TimelineEventForm", () => {
     expect(screen.getByText("Năm phải nằm trong khoảng 1900 đến 2100.")).toBeInTheDocument();
   });
 
-  it("disables Lưu for a whitespace-only Vietnamese title", async () => {
+  it("refuses a whitespace-only Vietnamese title without calling the API", async () => {
     const user = userEvent.setup();
     render(<TimelineEventForm onClose={vi.fn()} onChanged={vi.fn()} />);
     await user.type(screen.getByLabelText(/^Năm/), "2020");
     await user.type(screen.getAllByLabelText(/Tiếng Việt/)[0], "   ");
-    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    expect(screen.getAllByLabelText(/Tiếng Việt/)[0]).toHaveAccessibleDescription("Hãy nhập tiêu đề tiếng Việt.");
+    expect(writes()).toHaveLength(0);
   });
 
   it("closes at once when nothing changed", async () => {
