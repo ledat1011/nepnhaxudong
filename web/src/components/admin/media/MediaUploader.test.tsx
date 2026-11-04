@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
@@ -68,6 +68,25 @@ describe("MediaUploader", () => {
     await events.type(screen.getByLabelText(/English/), "Rice");
     await events.click(screen.getByRole("button", { name: "Tải lên" }));
     await waitFor(() => expect(asksBeforeUnload()).toBe(false));
+  });
+
+  it("locks the file and the descriptions while the upload runs", async () => {
+    let finish: (media: MediaAdminDto) => void = () => {};
+    adminUpload.mockReturnValue(new Promise<MediaAdminDto>((resolve) => (finish = resolve)));
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={() => {}} />);
+    await fill(events);
+    await events.click(screen.getByRole("button", { name: "Tải lên" }));
+
+    // A file or a text chosen now would be cleared when the upload ends.
+    expect(await screen.findByRole("button", { name: "Đang tải lên…" })).toBeDisabled();
+    expect(screen.getByLabelText("Chọn ảnh")).toBeDisabled();
+    expect(screen.getByLabelText(/Tiếng Việt/)).toBeDisabled();
+    expect(screen.getByLabelText(/English/)).toBeDisabled();
+
+    await act(async () => finish(created));
+    expect(screen.getByLabelText("Chọn ảnh")).toBeEnabled();
+    expect(screen.getByLabelText(/Tiếng Việt/)).toBeEnabled();
   });
 
   it("accepts JPEG, PNG and WebP without forcing the camera", () => {

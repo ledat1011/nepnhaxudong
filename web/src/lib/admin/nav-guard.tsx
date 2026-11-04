@@ -47,8 +47,13 @@ type Held = { go(): void };
 type TrapState = {
   /** True while the extra entry is on the history stack because a form is dirty. */
   armed: boolean;
-  /** True after the user chose to leave, until a form becomes dirty again. */
+  /**
+   * True after the user chose to leave, until a form becomes dirty again. Also reset when the question opens
+   * again or on the next back press: then the earlier navigation did not happen and the form still needs guarding.
+   */
   leaving: boolean;
+  /** True while the question is open because of the back button (not because of a link). */
+  askingBack: boolean;
   /** Popstate events that come from our own `history.back()` and must not open the dialog. */
   ignorePops: number;
   /** Runs after the last ignored popstate, when the extra entry is gone. */
@@ -70,7 +75,13 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
   const routerRef = useRef(router);
   const dirtyIds = useRef(new Set<string>());
   const passThrough = useRef(false);
-  const trapRef = useRef<TrapState>({ armed: false, leaving: false, ignorePops: 0, afterPop: null });
+  const trapRef = useRef<TrapState>({
+    armed: false,
+    leaving: false,
+    askingBack: false,
+    ignorePops: 0,
+    afterPop: null,
+  });
   const [held, setHeld] = useState<Held | null>(null);
 
   useEffect(() => {
@@ -99,8 +110,30 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
     }
 
     function sync() {
-      if (dirtyIds.current.size > 0) arm();
-      else disarm();
+      if (dirtyIds.current.size > 0) {
+        arm();
+      } else if (trap.askingBack) {
+        // The back button was pressed while a save ran, and the save has now ended: nothing is lost,
+        // so close the question and finish the back press. When the form already leaves by itself (`leaveTo`
+        // after a create) or our own back() is on its way, that navigation wins: a second one would fight it.
+        close();
+        if (!trap.leaving && trap.ignorePops === 0) goBack();
+      } else {
+        disarm();
+      }
+    }
+
+    /** Opens the question. A new question means an earlier "Rời trang" did not leave, so guard again. */
+    function ask(request: Held, back: boolean) {
+      trap.leaving = false;
+      trap.askingBack = back;
+      setHeld(request);
+      sync();
+    }
+
+    function close() {
+      trap.askingBack = false;
+      setHeld(null);
     }
 
     function leaveTo(go: () => void) {
@@ -115,13 +148,18 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
       else go();
     }
 
-    /** "Rời trang" after the back button: skip the extra entry and the page itself. */
+    /** "Rời trang" after the back button: skip the extra entry (when it is the current one) and the page itself. */
     function goBack() {
-      // Right after the extra entry was pushed again there is nothing after it, so length is its position + 1.
+      // Counted from the real state: a save that ended in the meantime can have removed the extra entry already.
+      const steps = isTrapState(window.history.state) ? 2 : 1;
+      // The extra entry has nothing after it, so length is its position + 1. Without it, the extra entry is the
+      // one entry after the page. Either way the page is at position length - 2, and there is an entry before it.
       if (window.history.length > 2) {
         trap.leaving = true;
         trap.armed = false;
-        window.history.go(-2);
+        // Our own traversal: its popstate is not a new back press.
+        trap.ignorePops += 1;
+        window.history.go(-steps);
       } else {
         // The page was the first one of the tab: there is nothing to go back to, so open the admin home.
         leaveTo(() => routerRef.current.replace(ADMIN_ROUTES.home));
@@ -139,12 +177,13 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
         sync();
         return;
       }
+      // A back press after "Rời trang" whose navigation never happened: beforeunload must ask again.
+      trap.leaving = false;
       const onTrap = isTrapState(event.state);
       if (trap.armed && !onTrap) {
         // The back button left the extra entry while a form is dirty: put it back and ask.
         trap.armed = false;
-        arm();
-        setHeld({ go: goBack });
+        ask({ go: goBack }, true);
         return;
       }
       // A clean page landed on an old extra entry (its form went away before it could be removed): skip it.
@@ -166,18 +205,40 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
       },
       confirmLeave(go) {
         if (dirtyIds.current.size === 0) go();
-        else setHeld({ go: () => leaveTo(go) });
+        else ask({ go: () => leaveTo(go) }, false);
       },
       leaveTo,
       isLeaving: () => trap.leaving,
     };
-    return { guard, onPopState };
+    /**
+     * At mount the current entry can be an old extra entry: after a reload or a restored tab, Next.js keeps
+     * the custom history state. A clean page removes it at once; a dirty form uses it again.
+     */
+    function start() {
+      // Under Strict Mode the effect runs twice: the back() of the first run is still on its way.
+      if (trap.ignorePops > 0) return;
+      trap.armed = isTrapState(window.history.state);
+      sync();
+    }
+
+    return { guard, onPopState, start, ask, close };
   }, []);
 
   useEffect(() => {
-    const { onPopState } = machine;
+    const { onPopState, start } = machine;
+    // Next.js's own popstate listener must run before this one. Next.js restores the route of the entry the
+    // browser went to (from `event.state` and the URL); this listener may then push the extra entry again in
+    // the same event. Listeners on `window` run in the order they were added. Next.js adds its listener when
+    // the app router mounts; NavGuardProvider mounts later, only after the session has loaded (AppShell shows
+    // "Đang tải…" first), so its listener comes second. Keep it that way if the provider ever moves up.
     window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    start();
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      // The shell goes away (for example the session ended): the forms that unmount next must not finish
+      // a back press. React runs this cleanup before the cleanups of the children.
+      machine.close();
+    };
   }, [machine]);
 
   useEffect(() => {
@@ -200,7 +261,7 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
       if (insideEditableText(anchor) || !leavesPage(anchor)) return;
       event.preventDefault();
       event.stopPropagation();
-      setHeld({ go: () => machine.guard.leaveTo(() => clickThrough(anchor)) });
+      machine.ask({ go: () => machine.guard.leaveTo(() => clickThrough(anchor)) }, false);
     }
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
@@ -208,7 +269,7 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
 
   function leave() {
     const request = held;
-    setHeld(null);
+    machine.close();
     request?.go();
   }
 
@@ -218,7 +279,7 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
       <ConfirmDialog
         open={held !== null}
         onOpenChange={(open) => {
-          if (!open) setHeld(null);
+          if (!open) machine.close();
         }}
         title="Bạn có thay đổi chưa lưu. Rời trang?"
         description="Nếu rời trang, những thay đổi này sẽ mất."

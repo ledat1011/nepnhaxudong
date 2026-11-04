@@ -324,6 +324,125 @@ describe("back button guard", () => {
     expect(window.history.state).toEqual({ page: "form" });
   });
 
+  it("finishes the back press once when a save ends while the question is open", async () => {
+    // The user taps "Lưu" and presses back at once. The save then ends and the form is clean.
+    window.history.pushState({ page: "A" }, "");
+    window.history.pushState({ page: "list" }, "");
+    window.history.pushState({ page: "form" }, "");
+    const { rerender } = render(<Page dirty />);
+
+    goBackInBrowser();
+    expect(await screen.findByText(QUESTION)).toBeInTheDocument();
+    rerender(<Page dirty={false} />);
+
+    // Nothing is lost any more, so the question closes and the back press goes to the page before the form.
+    await waitFor(() => expect(window.history.state).toEqual({ page: "list" }));
+    expect(screen.queryByText(QUESTION)).not.toBeInTheDocument();
+    // And only once: no later traversal moves on to the page before the list.
+    await settle();
+    expect(window.history.state).toEqual({ page: "list" });
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("lets a create that ends while the back question is open navigate once, without a second back", async () => {
+    // The user taps "Tạo" and presses back at once. The create then ends and the form opens the new item.
+    window.history.pushState({ page: "list" }, "");
+    window.history.pushState({ page: "new" }, "");
+    const statesAtNavigation: unknown[] = [];
+
+    function CreateForm() {
+      const [leaving, setLeaving] = useState(false);
+      const leavePage = useLeavePage();
+      useUnsavedChanges(!leaving);
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            setLeaving(true);
+            leavePage(() => statesAtNavigation.push(window.history.state));
+          }}
+        >
+          Tạo xong
+        </button>
+      );
+    }
+    render(
+      <NavGuardProvider>
+        <CreateForm />
+      </NavGuardProvider>,
+    );
+
+    goBackInBrowser();
+    expect(await screen.findByText(QUESTION)).toBeInTheDocument();
+    // The dialog hides the page from the accessibility tree; the click stands for the end of the save.
+    fireEvent.click(screen.getByRole("button", { name: "Tạo xong", hidden: true }));
+    await waitFor(() => expect(statesAtNavigation).toHaveLength(1));
+    // A second traversal (a back press finished on top) would arrive within this wait.
+    await settle();
+    await settle();
+
+    expect(screen.queryByText(QUESTION)).not.toBeInTheDocument();
+    expect(statesAtNavigation).toEqual([{ page: "new" }]);
+    expect(window.history.state).toEqual({ page: "new" });
+  });
+
+  it("leaves a clean page with one back press after a reload on an old extra entry", async () => {
+    // Next.js keeps the custom history state on the first load, so the page starts on the extra entry.
+    window.history.pushState({ page: "list" }, "");
+    window.history.pushState({ page: "form" }, "");
+    window.history.pushState({ nepNhaUnsavedTrap: true }, "");
+    render(<Page dirty={false} />);
+    // The clean page removes the old extra entry at once.
+    await waitFor(() => expect(window.history.state).toEqual({ page: "form" }));
+
+    goBackInBrowser();
+    await waitFor(() => expect(window.history.state).toEqual({ page: "list" }));
+  });
+
+  it("guards the back button when the form becomes dirty after a reload on an old extra entry", async () => {
+    window.history.pushState({ page: "form" }, "");
+    window.history.pushState({ nepNhaUnsavedTrap: true }, "");
+    const { rerender } = render(<Page dirty={false} />);
+    await settle();
+    rerender(<Page dirty />);
+
+    goBackInBrowser();
+    expect(await screen.findByText(QUESTION)).toBeInTheDocument();
+  });
+
+  /** "Rời trang" on a guarded link whose navigation never happens: the form stays on screen and dirty. */
+  async function leaveWithoutNavigation(events: ReturnType<typeof userEvent.setup>) {
+    window.history.pushState({ page: "form" }, "");
+    render(<Page dirty />);
+    const reached = vi.fn((event: Event) => event.preventDefault());
+    screen.getByRole("navigation", { name: "Menu chính" }).addEventListener("click", reached);
+    await events.click(screen.getByRole("link", { name: "Câu chuyện" }));
+    await events.click(await screen.findByRole("button", { name: "Rời trang" }));
+    await waitFor(() => expect(reached).toHaveBeenCalledTimes(1));
+    await settle();
+  }
+
+  it("guards again after the question opens again when an earlier Rời trang did not leave", async () => {
+    const events = userEvent.setup();
+    await leaveWithoutNavigation(events);
+
+    await events.click(screen.getByRole("link", { name: "Câu chuyện" }));
+    await events.click(await screen.findByRole("button", { name: "Ở lại" }));
+    await settle();
+    expect(beforeUnload().defaultPrevented).toBe(true);
+    goBackInBrowser();
+    expect(await screen.findByText(QUESTION)).toBeInTheDocument();
+  });
+
+  it("asks before unload again after the next back press when an earlier Rời trang did not leave", async () => {
+    const events = userEvent.setup();
+    await leaveWithoutNavigation(events);
+
+    goBackInBrowser();
+    await settle();
+    expect(beforeUnload().defaultPrevented).toBe(true);
+  });
+
   it("signs out at once from the More sheet when nothing is dirty", async () => {
     const events = userEvent.setup();
     render(

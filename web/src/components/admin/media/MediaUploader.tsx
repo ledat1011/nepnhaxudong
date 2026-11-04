@@ -88,7 +88,8 @@ export function MediaUploader({ onUploaded }: { onUploaded(media: MediaAdminDto)
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    // Nothing can be chosen or typed while the upload runs: the form is cleared after it and would drop that.
+    <fieldset disabled={pending} className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={fileInputId}>Chọn ảnh</Label>
         <Input key={inputKey} id={fileInputId} type="file" accept={IMAGE_ACCEPT} onChange={onFileChange} />
@@ -110,6 +111,6 @@ export function MediaUploader({ onUploaded }: { onUploaded(media: MediaAdminDto)
       <Button type="button" onClick={() => void upload()} disabled={!ready || pending}>
         {pending ? "Đang tải lên…" : error !== null ? "Thử lại" : "Tải lên"}
       </Button>
-    </div>
+    </fieldset>
   );
 }
