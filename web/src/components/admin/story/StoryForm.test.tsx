@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { MediaAdminDto, StoryAdminDto, StoryRequest } from "@/lib/admin/types";
 
@@ -87,6 +87,20 @@ beforeEach(() => {
   });
 });
 
+/** Answers the check panel that opens on "Đăng bài". The fixture story has gaps, so the button is "Vẫn đăng bài". */
+async function confirmPublish(events: ReturnType<typeof userEvent.setup>) {
+  const panel = await screen.findByRole("alertdialog", { name: "Kiểm tra trước khi đăng" });
+  await events.click(within(panel).getByRole("button", { name: /đăng bài/i }));
+}
+
+async function confirmUnpublish(events: ReturnType<typeof userEvent.setup>) {
+  const question = await screen.findByRole("alertdialog", { name: "Gỡ bài khỏi website?" });
+  await events.click(within(question).getByRole("button", { name: "Gỡ bài" }));
+}
+
+/** The title box. Its label ends with " *" on the Vietnamese tab; the editor toolbar also has "Tiêu đề …" buttons. */
+const TITLE_LABEL = /^Tiêu đề( \*)?$/;
+
 async function ready() {
   // The first test of a run also loads the editor chunk, which can be slow on a busy machine.
   await screen.findByRole("textbox", { name: "Nội dung" }, { timeout: 10_000 });
@@ -97,7 +111,7 @@ describe("StoryForm slug", () => {
     const events = userEvent.setup();
     render(<StoryForm initial={story()} />);
     await ready();
-    const title = screen.getByLabelText("Tiêu đề");
+    const title = screen.getByLabelText(TITLE_LABEL);
     await events.clear(title);
     await events.type(title, "Tên khác hoàn toàn");
     expect(screen.getByLabelText("Đường dẫn")).toHaveValue("mua-gat");
@@ -110,10 +124,10 @@ describe("StoryForm slug", () => {
     const events = userEvent.setup();
     render(<StoryForm />);
     await ready();
-    await events.type(screen.getByLabelText("Tiêu đề"), "Đồng lúa đẹp");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "Đồng lúa đẹp");
     expect(screen.getByLabelText("Đường dẫn")).toHaveValue("dong-lua-dep");
     await events.click(screen.getByRole("tab", { name: "English" }));
-    await events.type(screen.getByLabelText("Tiêu đề"), "Fine rice");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "Fine rice");
     expect(screen.getByLabelText("Đường dẫn")).toHaveValue("fine-rice");
   });
 
@@ -121,7 +135,7 @@ describe("StoryForm slug", () => {
     const events = userEvent.setup();
     render(<StoryForm />);
     await ready();
-    const title = screen.getByLabelText("Tiêu đề");
+    const title = screen.getByLabelText(TITLE_LABEL);
     await events.type(title, "Lúa");
     expect(screen.getByLabelText("Đường dẫn")).toHaveValue("lua");
     const slug = screen.getByLabelText("Đường dẫn");
@@ -137,7 +151,7 @@ describe("StoryForm save", () => {
     const events = userEvent.setup();
     render(<StoryForm />);
     await ready();
-    await events.type(screen.getByLabelText("Tiêu đề"), "  Mùa gặt  ");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "  Mùa gặt  ");
     await events.type(screen.getByLabelText("Tóm tắt"), "  Gặt lúa  ");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(writes()).toHaveLength(1));
@@ -169,7 +183,7 @@ describe("StoryForm save", () => {
     const events = userEvent.setup();
     render(<StoryForm />);
     await ready();
-    await events.type(screen.getByLabelText("Tiêu đề"), "Mùa gặt");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "Mùa gặt");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/cau-chuyen/9"));
     const save = screen.getByRole("button", { name: /Đang lưu|^Lưu$/ });
@@ -188,14 +202,14 @@ describe("StoryForm save", () => {
     });
     render(<StoryForm initial={story()} />);
     await ready();
-    const title = screen.getByLabelText("Tiêu đề");
+    const title = screen.getByLabelText(TITLE_LABEL);
     await events.type(title, " A");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(writes()).toHaveLength(1));
     const sent = writes()[0].body;
     await events.type(title, "B");
     await act(async () => finish(answer(5, sent)));
-    expect(screen.getByLabelText("Tiêu đề")).toHaveValue("Mùa gặt AB");
+    expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Mùa gặt AB");
     // The text typed after the request left is still unsaved.
     expect(screen.getByRole("button", { name: "Lưu" })).toBeEnabled();
   });
@@ -204,10 +218,10 @@ describe("StoryForm save", () => {
     const events = userEvent.setup();
     render(<StoryForm initial={story()} />);
     await ready();
-    await events.type(screen.getByLabelText("Tiêu đề"), "!");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled());
-    expect(screen.getByLabelText("Tiêu đề")).toHaveValue("Mùa gặt!");
+    expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Mùa gặt!");
   });
 });
 
@@ -330,7 +344,7 @@ describe("StoryForm untouched story", () => {
     const events = userEvent.setup();
     render(<StoryForm initial={story({ bodyHtml: { vi: "<ul><li>x</li></ul>", en: null } })} />);
     await ready();
-    await events.type(screen.getByLabelText("Tiêu đề"), "!");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(writes()).toHaveLength(1));
     expect(writes()[0].body.bodyHtml?.vi).toBe("<ul><li><p>x</p></li></ul>");
@@ -351,7 +365,7 @@ describe("StoryForm untouched story", () => {
     render(<StoryForm initial={story({ bodyHtml: { vi: body, en: null } })} />);
     await ready();
     await screen.findByText(IMAGE_WARNING);
-    await events.type(screen.getByLabelText("Tiêu đề"), "!");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(writes()).toHaveLength(1));
     expect(writes()[0].body.bodyHtml?.vi).toBe(body);
@@ -373,16 +387,16 @@ describe("StoryForm untouched story", () => {
     });
     render(<StoryForm />);
     await ready();
-    await events.type(screen.getByLabelText("Tiêu đề"), "Mùa gặt");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "Mùa gặt");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(writes()).toHaveLength(1));
-    expect(screen.getByLabelText("Tiêu đề")).toHaveAttribute("readonly");
+    expect(screen.getByLabelText(TITLE_LABEL)).toHaveAttribute("readonly");
     expect(screen.getByLabelText("Đường dẫn")).toHaveAttribute("readonly");
     expect(screen.getByLabelText("Tóm tắt")).toHaveAttribute("readonly");
     expect(screen.getByRole("textbox", { name: "Nội dung" })).toHaveAttribute("contenteditable", "false");
     expect(within(screen.getByRole("group", { name: "Ảnh bìa" })).getByRole("button", { name: "Chọn ảnh" })).toBeDisabled();
-    await events.type(screen.getByLabelText("Tiêu đề"), "xyz");
-    expect(screen.getByLabelText("Tiêu đề")).toHaveValue("Mùa gặt");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "xyz");
+    expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Mùa gặt");
     await act(async () => finish(answer(9, writes()[0].body)));
     expect(replace).toHaveBeenCalledWith("/admin/cau-chuyen/9");
   });
@@ -396,10 +410,10 @@ describe("StoryForm untouched story", () => {
     });
     render(<StoryForm />);
     await ready();
-    await events.type(screen.getByLabelText("Tiêu đề"), "Mùa gặt");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "Mùa gặt");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await screen.findByText("Máy chủ đang bận.");
-    expect(screen.getByLabelText("Tiêu đề")).not.toHaveAttribute("readonly");
+    expect(screen.getByLabelText(TITLE_LABEL)).not.toHaveAttribute("readonly");
   });
 });
 
@@ -414,7 +428,7 @@ describe("StoryForm preview", () => {
     render(<StoryForm initial={story()} />);
     await ready();
     expect(screen.getByRole("button", { name: "Xem trước" })).toBeEnabled();
-    await events.type(screen.getByLabelText("Tiêu đề"), "!");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
     expect(screen.getByRole("button", { name: "Xem trước" })).toBeDisabled();
     expect(screen.getByText("Hãy lưu trước khi xem trước.")).toBeInTheDocument();
     await events.click(screen.getByRole("button", { name: "Lưu" }));
@@ -431,7 +445,7 @@ describe("StoryForm preview", () => {
     });
     render(<StoryForm initial={story()} />);
     await ready();
-    await events.type(screen.getByLabelText("Tiêu đề"), "!");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Xem trước" })).toBeEnabled());
     await events.click(screen.getByRole("button", { name: "Xem trước" }));
@@ -450,6 +464,7 @@ describe("StoryForm publish", () => {
     await ready();
     expect(screen.getByText("Nháp")).toBeInTheDocument();
     await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    await confirmPublish(events);
     await waitFor(() => expect(screen.getByRole("button", { name: "Gỡ bài" })).toBeInTheDocument());
     expect(calls("/admin/stories/5/publish")).toHaveLength(1);
     expect(screen.getByText("Đã đăng")).toBeInTheDocument();
@@ -459,7 +474,7 @@ describe("StoryForm publish", () => {
     const events = userEvent.setup();
     render(<StoryForm initial={story()} />);
     await ready();
-    await events.type(screen.getByLabelText("Tiêu đề"), "!");
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
     expect(screen.getByRole("button", { name: "Đăng bài" })).toBeDisabled();
     expect(screen.getByText("Hãy lưu thay đổi trước khi đăng hoặc gỡ bài.")).toBeInTheDocument();
     await events.click(screen.getByRole("button", { name: "Đăng bài" }));
@@ -488,6 +503,7 @@ describe("StoryForm publish", () => {
     render(<StoryForm initial={story()} />);
     await ready();
     await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    await confirmPublish(events);
     await waitFor(() => expect(screen.getByRole("button", { name: "Gỡ bài" })).toBeInTheDocument());
     expect(requireReLogin).toHaveBeenCalledTimes(1);
     expect(attempts).toBe(2);
@@ -508,6 +524,7 @@ describe("StoryForm publish", () => {
     render(<StoryForm initial={story({ status: "PUBLISHED", publishedAt: "2026-11-01T00:00:00Z" })} />);
     await ready();
     await events.click(screen.getByRole("button", { name: "Gỡ bài" }));
+    await confirmUnpublish(events);
     await waitFor(() => expect(screen.getByRole("button", { name: "Đăng bài" })).toBeInTheDocument());
     expect(requireReLogin).toHaveBeenCalledTimes(1);
     expect(attempts).toBe(2);
@@ -523,6 +540,7 @@ describe("StoryForm publish", () => {
     render(<StoryForm initial={story()} />);
     await ready();
     await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    await confirmPublish(events);
     expect(await screen.findByText("Máy chủ đang bận.")).toBeInTheDocument();
     expect(screen.getByText("Nháp")).toBeInTheDocument();
   });
@@ -538,9 +556,135 @@ describe("StoryForm publish", () => {
     render(<StoryForm initial={story()} />);
     await ready();
     await events.click(screen.getByRole("button", { name: "Đăng bài" }));
-    await events.type(screen.getByLabelText("Tiêu đề"), "!");
+    await confirmPublish(events);
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
     expect(screen.getByRole("button", { name: /Đang lưu|^Lưu$/ })).toBeDisabled();
     await act(async () => finish(story({ status: "PUBLISHED" })));
-    expect(screen.getByLabelText("Tiêu đề")).toHaveValue("Mùa gặt!");
+    expect(screen.getByLabelText(TITLE_LABEL)).toHaveValue("Mùa gặt!");
   });
 });
+
+describe("StoryForm check before publishing", () => {
+  it("lists what is missing and publishes only after Vẫn đăng bài", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    const panel = await screen.findByRole("alertdialog", { name: "Kiểm tra trước khi đăng" });
+    expect(within(panel).getByText("Có tiêu đề")).toBeInTheDocument();
+    expect(within(panel).getByText("Chưa có ảnh bìa")).toBeInTheDocument();
+    expect(within(panel).getByText("Có tóm tắt")).toBeInTheDocument();
+    expect(within(panel).getByText("Bản tiếng Anh còn thiếu: tóm tắt, nội dung")).toBeInTheDocument();
+    expect(calls("/admin/stories/5/publish")).toHaveLength(0);
+    await events.click(within(panel).getByRole("button", { name: "Vẫn đăng bài" }));
+    await waitFor(() => expect(calls("/admin/stories/5/publish")).toHaveLength(1));
+  });
+
+  it("offers a plain Đăng bài when nothing is missing", async () => {
+    const events = userEvent.setup();
+    render(
+      <StoryForm
+        initial={story({
+          coverMediaId: 1,
+          excerpt: { vi: "Tóm tắt", en: "Summary" },
+          bodyHtml: { vi: "<p>Thân bài</p>", en: "<p>Body</p>" },
+          missingEn: false,
+        })}
+      />,
+    );
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    const panel = await screen.findByRole("alertdialog", { name: "Kiểm tra trước khi đăng" });
+    expect(within(panel).queryByText(/^Chưa có/)).not.toBeInTheDocument();
+    expect(within(panel).queryByRole("button", { name: "Vẫn đăng bài" })).not.toBeInTheDocument();
+    await events.click(within(panel).getByRole("button", { name: "Đăng bài" }));
+    await waitFor(() => expect(calls("/admin/stories/5/publish")).toHaveLength(1));
+  });
+
+  it("does not publish on Quay lại sửa and moves to the first missing part", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    const panel = await screen.findByRole("alertdialog", { name: "Kiểm tra trước khi đăng" });
+    await events.click(within(panel).getByRole("button", { name: "Quay lại sửa" }));
+    expect(panel).not.toBeInTheDocument();
+    // The first gap is the cover image, so the cursor goes to its button.
+    await waitFor(() => expect(screen.getByRole("button", { name: "Chọn ảnh" })).toHaveFocus());
+    expect(calls("/admin/stories/5/publish")).toHaveLength(0);
+  });
+
+  it("opens the English tab on Quay lại sửa when only the English version is missing", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story({ coverMediaId: 1, title: { vi: "Mùa gặt", en: null }, slug: { vi: "mua-gat", en: null } })} />);
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    const panel = await screen.findByRole("alertdialog", { name: "Kiểm tra trước khi đăng" });
+    expect(within(panel).getByText("Chưa có bản tiếng Anh")).toBeInTheDocument();
+    await events.click(within(panel).getByRole("button", { name: "Quay lại sửa" }));
+    expect(screen.getByRole("tab", { name: "English" })).toHaveAttribute("aria-selected", "true");
+    await waitFor(() => expect(screen.getByLabelText(TITLE_LABEL)).toHaveFocus());
+  });
+});
+
+describe("StoryForm unpublish question", () => {
+  it("asks before Gỡ bài, and Không gỡ keeps the story on the website", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story({ status: "PUBLISHED", publishedAt: "2026-11-01T00:00:00Z" })} />);
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Gỡ bài" }));
+    const question = await screen.findByRole("alertdialog", { name: "Gỡ bài khỏi website?" });
+    await events.click(within(question).getByRole("button", { name: "Không gỡ" }));
+    expect(calls("/admin/stories/5/unpublish")).toHaveLength(0);
+    expect(screen.getByText("Đã đăng")).toBeInTheDocument();
+
+    await events.click(screen.getByRole("button", { name: "Gỡ bài" }));
+    await confirmUnpublish(events);
+    await waitFor(() => expect(calls("/admin/stories/5/unpublish")).toHaveLength(1));
+  });
+});
+
+describe("StoryForm field errors", () => {
+  const scrollIntoView = vi.fn();
+  beforeEach(() => {
+    scrollIntoView.mockReset();
+    Element.prototype.scrollIntoView = scrollIntoView;
+  });
+  afterEach(() => {
+    delete (Element.prototype as Partial<Element>).scrollIntoView;
+  });
+
+  it("marks the Vietnamese title with * and asks for it before it calls the API", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm />);
+    await ready();
+    expect(screen.getByText("Ô có dấu * là ô phải điền.")).toBeInTheDocument();
+    const title = screen.getByLabelText(TITLE_LABEL);
+    expect(title).toBeRequired();
+    await events.type(screen.getByLabelText("Tóm tắt"), "Chỉ có tóm tắt");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    expect(title).toHaveAccessibleDescription("Tiêu đề bài viết (tiếng Việt) không được để trống.");
+    await waitFor(() => expect(title).toHaveFocus());
+    expect(screen.getByRole("alert")).toHaveTextContent("Chưa lưu. Hãy sửa ô có viền đỏ.");
+    expect(writes()).toHaveLength(0);
+  });
+
+  it("opens the English tab for an API error about the English title and moves there", async () => {
+    const message = "Tiêu đề bài viết (tiếng Anh) không được để trống khi đã có nội dung tiếng Anh.";
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") throw new AdminApiError(400, message);
+      return undefined;
+    });
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(screen.getByRole("tab", { name: "English" })).toHaveAttribute("aria-selected", "true"));
+    const titleEn = screen.getByLabelText(TITLE_LABEL);
+    await waitFor(() => expect(titleEn).toHaveFocus());
+    expect(titleEn).toHaveAccessibleDescription(message);
+  });
+});
+

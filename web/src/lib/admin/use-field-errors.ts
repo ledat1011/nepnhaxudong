@@ -12,11 +12,12 @@ const TARGET_SELECTOR = '[aria-invalid="true"], [data-error-target]';
  * Scrolls to the first wrong field inside `root`, in page order, and puts the cursor in it.
  * "center" keeps the field clear of the save bar and the bottom menu, which are fixed at the bottom.
  */
-export function focusFirstInvalid(root: ParentNode | null): void {
+export function focusFirstInvalid(root: ParentNode | null): boolean {
   const target = (root ?? document).querySelector<HTMLElement>(TARGET_SELECTOR);
-  if (target === null) return;
+  if (target === null) return false;
   target.scrollIntoView?.({ block: "center" });
   target.focus({ preventScroll: true });
+  return true;
 }
 
 /**
@@ -35,7 +36,10 @@ export function useFieldErrors() {
   const [moves, setMoves] = useState(0);
 
   useEffect(() => {
-    if (moves > 0) focusFirstInvalid(rootElement.current);
+    if (moves === 0 || focusFirstInvalid(rootElement.current)) return;
+    // A tab that was just chosen shows its panel one render later (Radix Presence), so look once more then.
+    const retry = setTimeout(() => focusFirstInvalid(rootElement.current), 0);
+    return () => clearTimeout(retry);
   }, [moves]);
 
   const show = useCallback((next: FieldErrors) => {
