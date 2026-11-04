@@ -25,6 +25,7 @@
 - Góp ý Hero (bản Task 3): người như bay, bông lúa không trĩu hạt → mascot đứng trước đồng lúa, neo vào đáy cảnh; đường chân trời ngang lưng mascot; bông lúa dày, trĩu hạt. Nền chỉ chiếm khoảng nửa chiều ngang (phía sau mascot), không nằm sau chữ "Nếp Nhà"; trời xanh và lúa mờ dần ở mép để không thấy vệt cắt với phần chữ và khối Sản phẩm. Đã sửa spec mục 2.
 - Góp ý hình túi (Task 5): túi hơi dày → vẽ mỏng như túi hút chân không 2 kg mẫu: dáng đứng, cao, cạnh bên mỏng, màng thừa chỉ ở trên. Ảnh mẫu lưu ở `.superpowers/ref/tui-mau-mong.png`.
 - Góp ý Hero lần 2: viền cảnh dài thêm sang trái, gần chạm chữ "Nếp Nhà" (vẫn mờ dần, không nằm sau chữ).
+- Công cụ vẽ: key Gemini ở gói miễn phí, hạn mức tạo ảnh là 0, nên không dùng Nano Banana. Chủ dự án đã đăng nhập Recraft. Quyết định: vẽ 6 tư thế người bằng Recraft trước (mascot làm mẫu, duyệt từng tư thế); 8 cảnh giữ bản vẽ bằng code, chỉ vẽ lại nền cảnh bằng Recraft nếu sau đó vẫn thấy đơn giản.
 
 ## Còn mở
 - Xác nhận khi duyệt tư thế người: áo của ba là xanh lá hay xanh dương. Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.
