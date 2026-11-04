@@ -56,11 +56,16 @@ test('preview: mascot nhung truc tiep, xoay quanh data-pivot, tat khi giam chuye
   assert.doesNotMatch(html, /<script|https?:\/\/(?!www\.w3\.org)/, 'no script, no external resource');
 });
 
-test('preview: 3 logo tren 3 nen, icon 4 co, cap chu / nen co ty le tuong phan', () => {
+test('preview: 3 logo tren 3 nen (ban sang tren Nau dat), icon 4 co, cap chu / nen co ty le tuong phan', () => {
   const html = buildPreview();
-  for (const name of ['logo-full', 'logo-icon', 'logo-mono']) {
-    assert.ok(html.split(`src="logo/${name}.svg"`).length - 1 >= 3, `${name} on 3 backgrounds`);
+  const count = (name) => html.split(`src="logo/${name}.svg"`).length - 1;
+  assert.ok(count('logo-icon') >= 3, 'logo-icon on 3 backgrounds');
+  for (const name of ['logo-full', 'logo-mono']) {
+    assert.equal(count(name), 2, `${name} on the 2 light backgrounds`);
+    assert.equal(count(`${name}-light`), 1, `${name}-light on Nau dat`);
   }
+  const dark = html.slice(html.indexOf('background: var(--color-nau-dat)'));
+  assert.match(dark.slice(0, dark.indexOf('</div>\n      </div>')), /logo-full-light\.svg[\s\S]*logo-mono-light\.svg/, 'light logos on Nau dat');
   for (const background of ['trang-gao', 'vang-rom', 'nau-dat']) {
     assert.match(html, new RegExp(`var\\(--color-${background}\\)`), background);
   }

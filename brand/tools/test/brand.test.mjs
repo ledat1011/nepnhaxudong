@@ -524,7 +524,7 @@ test('visibleBBox tinh ca clipPath, svg long nhau va phan tran ra ngoai viewBox'
 });
 
 const logoDir = fileURLToPath(new URL('../../logo/', import.meta.url));
-const LOGOS = ['logo-full.svg', 'logo-icon.svg', 'logo-mono.svg'];
+const LOGOS = ['logo-full-light.svg', 'logo-full.svg', 'logo-icon.svg', 'logo-mono-light.svg', 'logo-mono.svg'];
 const viewBoxOf = (facts) => facts.viewBox.trim().split(/[\s,]+/).map(Number);
 
 test('logo: co viewBox, khong the cam, href noi bo, id duy nhat, nhe', () => {
@@ -546,10 +546,12 @@ test('logo: co viewBox, khong the cam, href noi bo, id duy nhat, nhe', () => {
 // Size budgets follow the mascot each logo is built from: logo-full = the detailed mascot
 // (mascot-layered.svg) + the two text outlines; logo-mono = one recolored copy of the logo mascot
 // (mascot-logo.svg) inside a mask + the text, with a fixed overhead for the mask; logo-icon = the
-// logo mascot's head (mascot-logo-head.svg) + the disc and the frame.
+// logo mascot's head (mascot-logo-head.svg) + the disc and the frame. The light versions are the
+// same, logo-full-light with the sticker border too (one smooth path: about 3 KB).
 const WORDMARK_BUDGET = 24 * 1024;
 const MONO_OVERHEAD = 2 * 1024;
 const ICON_OVERHEAD = 1024;
+const STICKER_BUDGET = 6 * 1024;
 
 test('logo: kich thuoc theo mascot nguon, khong lon theo so phan tu', () => {
   const [mascotBytes, logoMascotBytes, headBytes] = [mascotPath, logoMascotPath, logoMascotHeadPath].map(
@@ -562,6 +564,14 @@ test('logo: kich thuoc theo mascot nguon, khong lon theo so phan tu', () => {
     `logo-mono ${bytes['logo-mono.svg']} byte`,
   );
   assert.ok(bytes['logo-icon.svg'] <= headBytes + ICON_OVERHEAD, `logo-icon ${bytes['logo-icon.svg']} byte`);
+  assert.ok(
+    bytes['logo-full-light.svg'] <= mascotBytes + WORDMARK_BUDGET + STICKER_BUDGET,
+    `logo-full-light ${bytes['logo-full-light.svg']} byte`,
+  );
+  assert.ok(
+    bytes['logo-mono-light.svg'] <= logoMascotBytes + WORDMARK_BUDGET + MONO_OVERHEAD,
+    `logo-mono-light ${bytes['logo-mono-light.svg']} byte`,
+  );
 });
 
 test('logo: noi dung ve ra nam trong viewBox', () => {
@@ -574,19 +584,63 @@ test('logo: noi dung ve ra nam trong viewBox', () => {
   }
 });
 
-test('logo-full va logo-icon: moi mau thuoc bang mau', () => {
+test('logo-full, logo-full-light va logo-icon: moi mau thuoc bang mau', () => {
   const allowed = palette();
-  for (const file of ['logo-full.svg', 'logo-icon.svg']) {
+  for (const file of ['logo-full.svg', 'logo-full-light.svg', 'logo-icon.svg']) {
     const facts = svgFacts(logoDir + file);
     assert.deepEqual([...facts.colors].filter((c) => !allowed.has(c)), [], `${file} mau ngoai bang`);
     assert.equal(facts.maskColors.size, 0, `${file} co mau trong <mask>`);
   }
 });
 
-test('logo-mono: chi mot mau Nau dat; mask chi trang / den', () => {
-  const facts = svgFacts(logoDir + 'logo-mono.svg');
-  assert.deepEqual([...facts.colors], ['#4a2c1a']);
-  assert.deepEqual([...facts.maskColors].filter((c) => !['#ffffff', '#000000'].includes(c)), [], 'mau la trong mask');
+test('logo-mono / logo-mono-light: chi mot mau (Nau dat / Trang gao); mask chi trang / den', () => {
+  const { color } = readTokens();
+  for (const [file, ink] of [['logo-mono.svg', 'nau-dat'], ['logo-mono-light.svg', 'trang-gao']]) {
+    const facts = svgFacts(logoDir + file);
+    assert.deepEqual([...facts.colors], [color[ink].value.toLowerCase()], `${file} muc`);
+    assert.deepEqual([...facts.maskColors].filter((c) => !['#ffffff', '#000000'].includes(c)), [], `${file} mau la trong mask`);
+  }
+});
+
+test('logo-mono-light: cung hinh voi logo-mono, chi doi mau muc', () => {
+  const { color } = readTokens();
+  const [mono, light] = ['logo-mono.svg', 'logo-mono-light.svg'].map((file) => readFileSync(logoDir + file, 'utf8'));
+  assert.equal(light, mono.replaceAll(color['nau-dat'].value, color['trang-gao'].value));
+});
+
+// The text of a logo: its top-level paths after the mascot (title, then tagline).
+const textFills = (file) => {
+  const root = parseSync(readFileSync(logoDir + file, 'utf8'));
+  const top = root.children.filter((c) => c.type === 'element');
+  const after = top.slice(top.findIndex((c) => c.name === 'svg') + 1);
+  return after.map((c) => c.attributes.fill.toLowerCase());
+};
+
+test('logo ban sang: mau chu va nen Nau dat la mot cap trong textPairs (dat AA)', () => {
+  const { color, textPairs } = readTokens();
+  const name = Object.fromEntries(Object.entries(color).map(([token, { value }]) => [value.toLowerCase(), token]));
+  for (const file of ['logo-full-light.svg', 'logo-mono-light.svg']) {
+    const fills = textFills(file);
+    assert.equal(fills.length, 2, `${file}: tieu de + dong phu`);
+    for (const fill of fills) {
+      assert.ok(textPairs.some(([text, bg]) => text === name[fill] && bg === 'nau-dat'), `${file}: ${name[fill]} tren nau-dat`);
+      assert.ok(contrast(fill, color['nau-dat'].value) >= 4.5, `${file}: ${name[fill]} duoi AA`);
+    }
+  }
+});
+
+test('logo-full-light: vien nhan dan la mot hinh tron tru, khong lo, sau mascot', () => {
+  const root = parseSync(readFileSync(logoDir + 'logo-full-light.svg', 'utf8'));
+  const [first, second] = root.children.filter((c) => c.type === 'element');
+  assert.equal(first.name, 'path', 'vien phai ve truoc mascot');
+  assert.equal(second.attributes.id, 'mascot');
+  assert.equal(first.attributes.fill, readTokens().color['trang-gao'].value);
+  assert.equal(first.attributes.d.match(/[Mm]/g).length, 1, 'vien phai la mot duong kin');
+  const [vx, vy, vw, vh] = viewBoxOf(svgFacts(logoDir + 'logo-full-light.svg'));
+  const alone = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vx} ${vy} ${vw} ${vh}"><path d="${first.attributes.d}" fill="#000"/></svg>`;
+  const { enclosed, pieces } = alphaFacts(alone, 1024);
+  assert.equal(enclosed, 0, `${enclosed} px lo trong vien`);
+  assert.equal(pieces.filter((n) => n > SPECK_PIXELS).length, 1);
 });
 
 const MONO_SCALE_WIDTH = 1024;

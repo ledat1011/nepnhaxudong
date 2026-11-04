@@ -10,10 +10,12 @@ const brandDir = fileURLToPath(new URL('../', import.meta.url));
 const previewPath = `${brandDir}preview.html`;
 
 const LOGOS = ['logo-full', 'logo-icon', 'logo-mono'];
+// On the dark background, the light versions of logo-full and logo-mono.
+const LIGHT_LOGOS = ['logo-full-light', 'logo-icon', 'logo-mono-light'];
 const BACKGROUNDS = [
-  { token: 'trang-gao', name: 'Trắng gạo', text: 'nau-dat' },
-  { token: 'vang-rom', name: 'Vàng rơm', text: 'nau-dat' },
-  { token: 'nau-dat', name: 'Nâu đất', text: 'trang-gao' },
+  { token: 'trang-gao', name: 'Trắng gạo', text: 'nau-dat', logos: LOGOS },
+  { token: 'vang-rom', name: 'Vàng rơm', text: 'nau-dat', logos: LOGOS },
+  { token: 'nau-dat', name: 'Nâu đất', text: 'trang-gao', logos: LIGHT_LOGOS },
 ];
 const ICON_SIZES = [16, 32, 64, 192];
 const SWAY_DEGREES = { head: 3, rice: 6 };
@@ -58,11 +60,11 @@ export function buildPreview() {
   const hex = (token) => tokens.color[token].value;
 
   const logoPanels = BACKGROUNDS.map(
-    ({ token, name, text }) => `
+    ({ token, name, text, logos }) => `
       <div class="panel" style="background: var(--color-${token}); color: var(--color-${text})">
         <h3>Nền ${name} <code>${hex(token)}</code></h3>
         <div class="logos">
-${LOGOS.map((logo) => `          <figure><img src="logo/${logo}.svg" alt="${logo}"><figcaption>${logo}</figcaption></figure>`).join('\n')}
+${logos.map((logo) => `          <figure><img src="logo/${logo}.svg" alt="${logo}"><figcaption>${logo}</figcaption></figure>`).join('\n')}
         </div>
       </div>`,
   ).join('');

@@ -1,6 +1,9 @@
-// Builds brand/logo/logo-{full,icon,mono}.svg and the brand fonts:
+// Builds brand/logo/logo-{full,icon,mono}.svg and the light versions logo-{full,mono}-light.svg
+// from the mascots and the brand fonts:
 // - logo-full from the detailed illustration brand/mascot/mascot-layered.svg (large uses);
 // - logo-mono from the simplified logo mascot brand/logo/mascot-logo.svg (small sizes, one-color print);
+// - logo-full-light / logo-mono-light: the same for dark backgrounds (light text, a Trắng gạo
+//   sticker border around the mascot, Trắng gạo ink);
 // - logo-icon from brand/logo/mascot-logo-head.svg: the logo mascot's whole head, without the holes
 //   where the rice lies in front of it.
 // Run it again (npm run logos) after every change to a mascot; a test fails while the logos are stale.
@@ -8,6 +11,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import opentype from 'opentype.js';
 import { parseSync, stringify } from 'svgson';
+import { stickerPath } from './lib/silhouette.mjs';
 import { contentBBox, visibleBBox } from './lib/svg-check.mjs';
 
 const brandDir = new URL('../', import.meta.url);
@@ -42,6 +46,19 @@ const ICON_DISC = color('vang-rom');
 // The hat is Vàng rơm like the disc; in the icon it is lifted to Trắng gạo so it stands off the disc.
 const ICON_DISC_LIFT = color('trang-gao');
 
+// Light versions, for dark backgrounds (Nâu đất): title and tagline colors (both form an AA pair
+// with Nâu đất in textPairs), the one-color ink, and the sticker border behind the full mascot. The
+// border grows the mascot's silhouette by STICKER_WIDTH after closing gaps up to 2 x STICKER_CLOSE
+// wide (between grains and leaf tips), so it is one smooth shape without holes.
+const LIGHT_TITLE = 'trang-gao';
+const LIGHT_TAGLINE = 'vang-lua';
+const LIGHT_INK = 'trang-gao';
+const STICKER = 'trang-gao';
+const STICKER_WIDTH = 9;
+const STICKER_CLOSE = 10;
+// Room around the 512 canvas when the silhouette is measured, so the border is not cut off.
+const STICKER_PAD = 2 * (STICKER_WIDTH + STICKER_CLOSE);
+
 const num = (value) => String(Number(value.toFixed(1)));
 
 function loadFont(file) {
@@ -58,7 +75,7 @@ function textOutline(font, text, width, top, options = {}) {
   return { d: path.toPathData(1), bottom: top + box.y2 - box.y1 };
 }
 
-function wordmark() {
+function wordmark(titleColor = 'nau-dat', taglineColor = 'nau-ao') {
   const title = textOutline(loadFont('Pacifico-Regular.ttf'), TITLE, TITLE_WIDTH, MASCOT_SIZE + TITLE_GAP);
   const tagline = textOutline(
     loadFont('Quicksand-700.ttf'),
@@ -68,7 +85,7 @@ function wordmark() {
     { letterSpacing: TAGLINE_LETTER_SPACING },
   );
   return (
-    `<path d="${title.d}" fill="${color('nau-dat')}"/>\n` + `<path d="${tagline.d}" fill="${color('nau-ao')}"/>\n`
+    `<path d="${title.d}" fill="${color(titleColor)}"/>\n` + `<path d="${tagline.d}" fill="${color(taglineColor)}"/>\n`
   );
 }
 
@@ -241,7 +258,7 @@ function monoNode(node, keepIds) {
 // shape covers in the color mascot stays covered: the hair stays solid around an empty face, and
 // lines under the hands, grains and sleeves stay hidden. One Nâu đất rectangle shows through the
 // ink. The mask region is the 512 x 512 canvas, which also cuts the bust at its bottom edge.
-export function monoMascot(source) {
+export function monoMascot(source, ink = 'nau-dat') {
   const mascot = parseSync(source);
   const { xmlns, viewBox, ...rootPaint } = mascot.attributes;
   const root = monoNode({ ...mascot, name: 'g', attributes: rootPaint }, false);
@@ -250,7 +267,7 @@ export function monoMascot(source) {
     `<defs>\n<mask id="mono-ink" maskUnits="userSpaceOnUse" x="0" y="0" width="${width}" height="${height}">\n` +
     `${stringify(root)}\n</mask>\n</defs>\n` +
     `<svg x="0" y="0" width="${MASCOT_SIZE}" height="${MASCOT_SIZE}" viewBox="${viewBox}">\n` +
-    `<rect width="${width}" height="${height}" fill="${color('nau-dat')}" mask="url(#mono-ink)"/>\n</svg>\n`
+    `<rect width="${width}" height="${height}" fill="${color(ink)}" mask="url(#mono-ink)"/>\n</svg>\n`
   );
 }
 
@@ -264,15 +281,27 @@ export function monoReference() {
   return wrap(logoFrame(words), fullMascot(parseSync(readFileSync(logoMascotPath, 'utf8'))) + words);
 }
 
+// The Trắng gạo border behind the mascot: its silhouette as drawn in the logo (clipped at the 512
+// canvas), gaps closed, grown by STICKER_WIDTH.
+function sticker(mascotSvg) {
+  const drawn = `<svg xmlns="${XMLNS}" viewBox="0 0 ${MASCOT_SIZE} ${MASCOT_SIZE}">${mascotSvg}</svg>`;
+  const box = [-STICKER_PAD, -STICKER_PAD, MASCOT_SIZE + 2 * STICKER_PAD, MASCOT_SIZE + 2 * STICKER_PAD];
+  const pathData = stickerPath(drawn, box, { close: STICKER_CLOSE, width: STICKER_WIDTH });
+  return `<path d="${pathData}" fill="${color(STICKER)}"/>\n`;
+}
+
 export function buildLogos() {
   const words = wordmark();
-  const full = fullMascot(parseSync(readFileSync(mascotPath, 'utf8'))) + words;
+  const mascot = fullMascot(parseSync(readFileSync(mascotPath, 'utf8')));
   const viewBox = logoFrame(words);
-  const monoWords = words.replace(new RegExp(color('nau-ao'), 'g'), color('nau-dat'));
+  const logoMascot = readFileSync(logoMascotPath, 'utf8');
+  const fullLight = sticker(mascot) + mascot + wordmark(LIGHT_TITLE, LIGHT_TAGLINE);
   return {
-    'logo-full.svg': wrap(viewBox, full),
+    'logo-full.svg': wrap(viewBox, mascot + words),
+    'logo-full-light.svg': frame(fullLight),
     'logo-icon.svg': iconLogo(parseSync(readFileSync(logoMascotHeadPath, 'utf8'))),
-    'logo-mono.svg': wrap(viewBox, monoMascot(readFileSync(logoMascotPath, 'utf8')) + monoWords),
+    'logo-mono.svg': wrap(viewBox, monoMascot(logoMascot) + wordmark('nau-dat', 'nau-dat')),
+    'logo-mono-light.svg': wrap(viewBox, monoMascot(logoMascot, LIGHT_INK) + wordmark(LIGHT_INK, LIGHT_INK)),
   };
 }
 
