@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetCsrfToken } from "./csrf";
 import { AdminApiError, NETWORK_ERROR_MESSAGE, PAYLOAD_TOO_LARGE_MESSAGE } from "./errors";
-import { uploadWithProgress } from "./upload-progress";
+import { UPLOAD_TIMEOUT_MESSAGE, uploadWithProgress } from "./upload-progress";
 
 /** A stand-in for XMLHttpRequest: each instance waits until the test answers it. */
 class FakeXhr {
@@ -18,6 +18,8 @@ class FakeXhr {
   onload: (() => void) | null = null;
   onerror: (() => void) | null = null;
   onabort: (() => void) | null = null;
+  ontimeout: (() => void) | null = null;
+  timeout = 0;
   aborted = false;
 
   constructor() {
@@ -118,5 +120,13 @@ describe("uploadWithProgress", () => {
     controller.abort();
     expect(xhr.aborted).toBe(true);
     await expect(result).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("gives up after two minutes, so a stalled phone connection does not hold the queue", async () => {
+    const result = uploadWithProgress("/admin/media", new FormData());
+    const xhr = await sent(0);
+    expect(xhr.timeout).toBe(120_000);
+    xhr.ontimeout?.();
+    await expect(result).rejects.toMatchObject({ status: 0, detail: UPLOAD_TIMEOUT_MESSAGE });
   });
 });

@@ -1,6 +1,10 @@
 import { CSRF_HEADER, getCsrfToken, resetCsrfToken } from "./csrf";
 import { AdminApiError, CSRF_INVALID_CODE, GENERIC_ERROR_MESSAGE, errorFromResponse, networkError } from "./errors";
 
+/** A photo of a few MB takes well under this on 4G; after it, the request is stopped and can be tried again. */
+export const UPLOAD_TIMEOUT_MS = 120_000;
+export const UPLOAD_TIMEOUT_MESSAGE = "Mạng chậm, ảnh chưa gửi xong sau 2 phút. Hãy thử lại.";
+
 type Options = {
   /** Called with a number from 0 to 1 while the file goes up. */
   onProgress?(fraction: number): void;
@@ -22,6 +26,7 @@ function sendOnce(url: string, form: FormData, token: string, options: Options):
     }
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
+    xhr.timeout = UPLOAD_TIMEOUT_MS;
     xhr.setRequestHeader("Accept", "application/json");
     xhr.setRequestHeader(CSRF_HEADER, token);
     xhr.upload.onprogress = (event) => {
@@ -37,6 +42,10 @@ function sendOnce(url: string, form: FormData, token: string, options: Options):
     xhr.onerror = () => {
       done();
       reject(networkError());
+    };
+    xhr.ontimeout = () => {
+      done();
+      reject(new AdminApiError(0, UPLOAD_TIMEOUT_MESSAGE));
     };
     xhr.onabort = () => {
       done();
