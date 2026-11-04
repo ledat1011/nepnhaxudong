@@ -40,7 +40,9 @@ function fakeModules() {
     invalidate: vi.fn().mockReturnThis(),
   });
   const quickTween = tween();
+  const angles = new Map<string, number>();
   const gsap = {
+    getProperty: vi.fn((target: Element) => angles.get(target.id) ?? 0),
     set: vi.fn(),
     to: vi.fn(tween),
     delayedCall: vi.fn(tween),
@@ -60,6 +62,7 @@ function fakeModules() {
     gsap,
     ScrollTrigger,
     quick,
+    angles,
     update: (velocity: number) => onUpdate?.({ getVelocity: () => velocity }),
   };
 }
@@ -94,7 +97,22 @@ describe("setupMascot", () => {
     );
 
     fake.update(FULL_TILT_VELOCITY / 2);
-    expect(fake.quick.get("head")).toHaveBeenLastCalledWith(HEAD_MAX_DEG / 2);
-    expect(fake.quick.get("rice")).toHaveBeenLastCalledWith(-RICE_MAX_DEG / 2);
+    expect(fake.quick.get("head")).toHaveBeenLastCalledWith(HEAD_MAX_DEG / 2, 0);
+    expect(fake.quick.get("rice")).toHaveBeenLastCalledWith(-RICE_MAX_DEG / 2, 0);
+  });
+
+  it("starts every follow from the angle the group has now", () => {
+    document.body.innerHTML =
+      '<svg data-mascot=""><g><g id="head"></g><g id="rice"></g></g></svg>';
+    const fake = fakeModules();
+    setupMascot(fake.modules, document);
+
+    // After a settle the groups are near 0°, not at the last follow angle.
+    fake.angles.set("head", 0.25);
+    fake.angles.set("rice", -0.5);
+    fake.update(FULL_TILT_VELOCITY);
+    expect(fake.gsap.getProperty).toHaveBeenCalledWith(document.getElementById("head"), "rotation");
+    expect(fake.quick.get("head")).toHaveBeenLastCalledWith(HEAD_MAX_DEG, 0.25);
+    expect(fake.quick.get("rice")).toHaveBeenLastCalledWith(-RICE_MAX_DEG, -0.5);
   });
 });

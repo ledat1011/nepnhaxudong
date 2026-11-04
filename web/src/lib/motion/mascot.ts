@@ -39,6 +39,7 @@ export const setupMascot: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   gsap.set(head, { svgOrigin: svgOrigin(MASCOT_PIVOTS.head), rotation: 0 });
   gsap.set(rice, { svgOrigin: svgOrigin(MASCOT_PIVOTS.rice), rotation: 0 });
 
+  const angleOf = (group: SVGGElement) => Number(gsap.getProperty(group, "rotation"));
   const headTo = gsap.quickTo(head, "rotation", { duration: HEAD_FOLLOW_S, ease: FOLLOW_EASE });
   const riceTo = gsap.quickTo(rice, "rotation", { duration: RICE_FOLLOW_S, ease: FOLLOW_EASE });
   // Every tween is made here, paused, so `matchMedia().revert()` also removes the ones
@@ -73,9 +74,11 @@ export const setupMascot: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
       const velocity = self.getVelocity();
       headSettle.pause();
       riceSettle.pause();
-      headTo(tiltFor(velocity, HEAD_MAX_DEG, FULL_TILT_VELOCITY));
+      // Start from the angle the group has now: by default quickTo would start from its own
+      // last value, and after a settle that makes the group jump back to the old angle.
+      headTo(tiltFor(velocity, HEAD_MAX_DEG, FULL_TILT_VELOCITY), angleOf(head));
       // The rice bundle lags behind, so it leans against the direction of the head.
-      riceTo(-tiltFor(velocity, RICE_MAX_DEG, FULL_TILT_VELOCITY));
+      riceTo(-tiltFor(velocity, RICE_MAX_DEG, FULL_TILT_VELOCITY), angleOf(rice));
       settleLater.restart(true);
     },
   });

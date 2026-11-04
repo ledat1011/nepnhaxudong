@@ -87,6 +87,28 @@ async function wheelDown(page: Page) {
   }
 }
 
+/** Records the angle of the first `transform` write on each mascot group from now on. */
+async function recordFirstWrites(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as { __firstAngle: Record<string, number> };
+    w.__firstAngle = {};
+    for (const id of ["head", "rice"]) {
+      const group = document.querySelector(`svg[data-mascot] g#${id}`);
+      if (!group) throw new Error(`mascot group ${id} not found`);
+      const setAttribute = group.setAttribute.bind(group);
+      group.setAttribute = (name: string, value: string) => {
+        const match = /^matrix\(([^,]+),([^,]+),/.exec(value);
+        if (name === "transform" && match && !(id in w.__firstAngle)) {
+          w.__firstAngle[id] = (Math.atan2(Number(match[2]), Number(match[1])) * 180) / Math.PI;
+        }
+        setAttribute(name, value);
+      };
+    }
+  });
+  return () =>
+    page.evaluate(() => (window as unknown as { __firstAngle: Record<string, number> }).__firstAngle);
+}
+
 test("motion starts and nothing stays hidden after scrolling to the end", async ({ page }) => {
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);
@@ -257,6 +279,35 @@ test("turning reduced motion on puts a tilted mascot back at 0 degrees", async (
   );
   expect(Math.abs(await rotationOf(page, "head"))).toBe(0);
   expect(Math.abs(await rotationOf(page, "rice"))).toBe(0);
+});
+
+test("a new scroll after the mascot settled starts from the current angle", async ({ page }) => {
+  await page.setViewportSize(MOBILE);
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await wheelDown(page);
+  await page.waitForTimeout(2500);
+  const firstWrites = await recordFirstWrites(page);
+  // Back up inside the mascot range; the first update writes the start of the new follow.
+  await page.mouse.wheel(0, -WHEEL_STEP_PX);
+  await expect.poll(async () => Object.keys(await firstWrites()).length).toBe(2);
+  const first = await firstWrites();
+  expect(Math.abs(first.head)).toBeLessThan(0.1);
+  expect(Math.abs(first.rice)).toBeLessThan(0.1);
+});
+
+test("turning reduced motion off again tilts the mascot about the same pivots", async ({ page }) => {
+  await page.setViewportSize(MOBILE);
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.waitForSelector("html:not([data-motion])");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.waitForSelector(MOTION_ON);
+  await wheelDown(page);
+  expect(Math.abs(await rotationOf(page, "head"))).toBeGreaterThan(0.5);
+  expect(await pivotDrift(page, "head", HEAD_PIVOT.x, HEAD_PIVOT.y)).toBeLessThan(1);
+  expect(await pivotDrift(page, "rice", RICE_PIVOT.x, RICE_PIVOT.y)).toBeLessThan(1);
 });
 
 test.describe("reduced motion", () => {
