@@ -171,8 +171,13 @@ export function TimelineList({ events, refreshing = false, onSelect }: Props) {
     idsToSend.current = next.map((item) => item.id);
     setOrdered(next);
     const saved = await reorder.save();
-    // A reload that replaced the list while the save ran makes the old order meaningless: keep the new list.
-    if (saved === undefined && latestEvents.current === loadedFrom) setOrdered(previous);
+    if (saved !== undefined) return;
+    if (latestEvents.current === loadedFrom) {
+      setOrdered(previous);
+    } else {
+      // A reload replaced the list while the save ran: the old order and its error mean nothing now.
+      reorder.reset();
+    }
   }
 
   function move(index: number, delta: -1 | 1) {

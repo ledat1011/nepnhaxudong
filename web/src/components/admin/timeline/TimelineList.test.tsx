@@ -121,15 +121,29 @@ describe("TimelineList", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("does not roll back to the old list when the failing save finishes after a reload", async () => {
+  async function failAfterReload() {
     let fail: (e: Error) => void = () => {};
-    adminFetch.mockReturnValue(new Promise<void>((_, reject) => (fail = reject)));
-    const { rerender } = render(<TimelineList events={EVENTS} onSelect={vi.fn()} />);
+    adminFetch
+      .mockResolvedValueOnce(undefined)
+      .mockReturnValueOnce(new Promise<void>((_, reject) => (fail = reject)));
+    const view = render(<TimelineList events={EVENTS} onSelect={vi.fn()} />);
     await userEvent.click(screen.getByRole("button", { name: "Đưa mốc Mốc 1 xuống" }));
-    rerender(<TimelineList events={[event(2, 2000), event(3, 2010)]} onSelect={vi.fn()} />);
-    fail(new AdminApiError(400, "Lỗi."));
     await waitFor(() => expect(screen.getByRole("button", { name: "Đưa mốc Mốc 3 lên" })).toBeEnabled());
-    expect(shownOrder()).toEqual(["Mốc 2", "Mốc 3"]);
+    expect(shownOrder()).toEqual(["Mốc 2", "Mốc 1", "Mốc 3"]);
+    await userEvent.click(screen.getByRole("button", { name: "Đưa mốc Mốc 3 lên" }));
+    view.rerender(<TimelineList events={[event(4, 2020), event(5, 2030)]} onSelect={vi.fn()} />);
+    fail(new AdminApiError(400, "Lỗi."));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Đưa mốc Mốc 5 lên" })).toBeEnabled());
+  }
+
+  it("does not roll back to the old order when the failing save finishes after a reload", async () => {
+    await failAfterReload();
+    expect(shownOrder()).toEqual(["Mốc 4", "Mốc 5"]);
+  });
+
+  it("shows no error for a list that was replaced while the save ran", async () => {
+    await failAfterReload();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("does not open a row while a reorder is being saved", async () => {
