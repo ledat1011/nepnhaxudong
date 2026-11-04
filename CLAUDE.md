@@ -45,6 +45,10 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
   Treat them as this project's `DESIGN.md`. Do not invent a new palette, font pair or layout style.
 - Then use the `antislop` skills as the filter for UI, copy and front-end code (`antislop`, `antislop-ui`,
   `antislop-layoutmobile`, `antislop-human`, `antislop-copywriting`, `antislop-code`).
+  - The owner chose antislop mode `during` (2026-11-04): apply the rules while you build, and run the antislop
+    Delivery Gate (PASS/FAIL report with evidence) before you deliver any UI work or open a PR with UI changes.
+  - Dials, inferred from the spec: public site `ENERGY 2 / RHYTHM 2 / MOTION 2` (warm family brand, mascot
+    and scroll motion); admin `ENERGY 1 / RHYTHM 1 / MOTION 1` (a tool for family members on a phone).
 - `taste-skill`: use its critique, its browser inspector (`inspect.mjs`, and `--app` for admin screens) and its
   look-and-fix loop. Do not use `draw.mjs` to pick a new direction, because the brand is already decided.
 - GSAP code (part B4 and later): follow the `gsap-*` skills.
