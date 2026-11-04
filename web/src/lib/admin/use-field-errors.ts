@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { withoutFields, type FieldErrors } from "./field-errors";
 
 const NO_ERRORS: FieldErrors = {};
@@ -23,24 +23,23 @@ export function focusFirstInvalid(root: ParentNode | null): boolean {
 /**
  * The errors shown under the fields of one form. `show` replaces them and, when there is one, moves to the
  * first wrong field after the next render (so a field that a tab change shows first can be found).
- * Put `root` on the element that holds the fields.
+ * Spread `rootProps` on the element that holds the fields. (A data attribute, not a ref: the form reads
+ * `errors` while it renders, and a ref in the same object would make that a ref read for the React linter.)
  */
 export function useFieldErrors() {
-  const rootElement = useRef<HTMLElement | null>(null);
-  // A callback ref fits any element type (a fieldset, a div, a form).
-  const root = useCallback((node: HTMLElement | null) => {
-    rootElement.current = node;
-  }, []);
+  const id = useId();
+  const rootProps = { "data-error-root": id };
   const [errors, setErrors] = useState<FieldErrors>(NO_ERRORS);
   // Counts the requests to move, so the same errors shown twice still move the cursor twice.
   const [moves, setMoves] = useState(0);
 
   useEffect(() => {
-    if (moves === 0 || focusFirstInvalid(rootElement.current)) return;
+    const root = () => document.querySelector(`[data-error-root="${id}"]`);
+    if (moves === 0 || focusFirstInvalid(root())) return;
     // A tab that was just chosen shows its panel one render later (Radix Presence), so look once more then.
-    const retry = setTimeout(() => focusFirstInvalid(rootElement.current), 0);
+    const retry = setTimeout(() => focusFirstInvalid(root()), 0);
     return () => clearTimeout(retry);
-  }, [moves]);
+  }, [moves, id]);
 
   const show = useCallback((next: FieldErrors) => {
     setErrors(next);
@@ -52,5 +51,5 @@ export function useFieldErrors() {
 
   const reset = useCallback(() => setErrors(NO_ERRORS), []);
 
-  return { root, errors, show, clear, reset, hasErrors: Object.keys(errors).length > 0 };
+  return { rootProps, errors, show, clear, reset, hasErrors: Object.keys(errors).length > 0 };
 }

@@ -128,7 +128,7 @@ function ContactFields({ initial }: { initial: ContactSettings }) {
   const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, rules) === null ? saving.error : null;
 
   return (
-    <div ref={fields.root} className="flex flex-col gap-5">
+    <div {...fields.rootProps} className="flex flex-col gap-5">
       <SettingField
         label="Điện thoại"
         inputMode="tel"

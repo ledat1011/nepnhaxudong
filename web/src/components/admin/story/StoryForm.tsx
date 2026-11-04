@@ -182,7 +182,9 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [checking, setChecking] = useState(false);
   const [askUnpublish, setAskUnpublish] = useState(false);
-  const [fix, setFix] = useState<FixTarget | null>(null);
+  // The box "Quay lại sửa" moves to, once its tab is shown. A ref plus a counter: the effect reads it without a state update.
+  const fix = useRef<FixTarget | null>(null);
+  const [fixRequests, setFixRequests] = useState(0);
   const fields = useFieldErrors();
   const coverRef = useRef<HTMLFieldSetElement>(null);
   // True after a create succeeded, until the page changes: no second tap may create the story again.
@@ -325,8 +327,9 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
       },
     };
     const target = targets[gap.key];
+    fix.current = target;
     setTab(target.lang);
-    setFix(target);
+    setFixRequests((count) => count + 1);
   }
 
   function patchLang(lang: Lang, change: Partial<LangFields>) {
@@ -374,10 +377,11 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
 
   // After the tab of a "Quay lại sửa" target is shown, the cursor goes into its box.
   useEffect(() => {
-    if (fix === null || fix.lang !== tab) return;
+    const wanted = fix.current;
+    if (fixRequests === 0 || wanted === null || wanted.lang !== tab) return;
     function focusBox(): boolean {
-      if (fix === null) return true;
-      const box = document.querySelector<HTMLElement>(`[data-fix="${fix.lang}-${fix.box}"]`);
+      if (wanted === null) return true;
+      const box = document.querySelector<HTMLElement>(`[data-fix="${wanted.lang}-${wanted.box}"]`);
       if (box === null) return false;
       const target = box.matches("input, textarea") ? box : (box.querySelector<HTMLElement>("[contenteditable]") ?? box);
       target.scrollIntoView?.({ block: "center" });
@@ -385,16 +389,16 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
       return true;
     }
     if (focusBox()) {
-      setFix(null);
+      fix.current = null;
       return;
     }
     // The panel of a tab that was just chosen appears one render later (Radix Presence).
     const retry = setTimeout(() => {
       focusBox();
-      setFix(null);
+      fix.current = null;
     }, 0);
     return () => clearTimeout(retry);
-  }, [fix, tab]);
+  }, [fixRequests, tab]);
 
   return (
     <div className="flex flex-col gap-6 p-4 pb-44">
@@ -451,7 +455,7 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
         />
       </fieldset>
 
-      <Tabs ref={fields.root} value={tab} onValueChange={(next) => setTab(next as Lang)}>
+      <Tabs {...fields.rootProps} value={tab} onValueChange={(next) => setTab(next as Lang)}>
         <TabsList className="w-full">
           <TabsTrigger value="vi">Tiếng Việt</TabsTrigger>
           <TabsTrigger value="en">English</TabsTrigger>

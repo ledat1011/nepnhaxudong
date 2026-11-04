@@ -226,7 +226,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, FIELD_RULES) === null ? saving.error : null;
 
   return (
-    <fieldset ref={fields.root} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
+    <fieldset {...fields.rootProps} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
       <RequiredNote />
       <BilingualField
         label="Tên sản phẩm"

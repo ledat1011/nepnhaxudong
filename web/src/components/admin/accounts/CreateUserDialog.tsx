@@ -136,7 +136,7 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
               </Button>
             </div>
           ) : (
-            <div ref={fields.root} className="flex flex-col gap-4">
+            <div {...fields.rootProps} className="flex flex-col gap-4">
               <RequiredNote />
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor={emailId}>

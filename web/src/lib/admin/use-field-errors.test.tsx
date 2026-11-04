@@ -1,4 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
+import { useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useFieldErrors } from "./use-field-errors";
 
@@ -6,9 +7,11 @@ let api: ReturnType<typeof useFieldErrors> | null = null;
 
 function Form() {
   const errors = useFieldErrors();
-  api = errors;
+  useEffect(() => {
+    api = errors;
+  });
   return (
-    <div ref={errors.root}>
+    <div {...errors.rootProps}>
       <label htmlFor="a">Ô A</label>
       <input id="a" aria-invalid={errors.errors.a ? true : undefined} />
       <label htmlFor="b">Ô B</label>

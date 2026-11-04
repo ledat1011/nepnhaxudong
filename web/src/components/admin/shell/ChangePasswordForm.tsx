@@ -96,7 +96,7 @@ export function ChangePasswordForm() {
           Bạn đang dùng mật khẩu tạm. Hãy đặt mật khẩu mới trước khi tiếp tục.
         </p>
       )}
-      <form ref={fields.root} onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <form {...fields.rootProps} onSubmit={submit} noValidate className="flex flex-col gap-4">
         <RequiredNote />
         {error && (
           <p role="alert" className="rounded-md border border-destructive p-3 text-sm text-destructive">
