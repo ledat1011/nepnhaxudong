@@ -282,10 +282,11 @@ test("the contact block at the end of the page appears", async ({ page }) => {
   const contact = "section[aria-labelledby='lien-he'] [data-reveal]";
   expect((await revealOpacities(page, contact)).every((opacity) => opacity === "0")).toBe(true);
   await page.keyboard.press("End");
-  await page.waitForTimeout(1500);
-  const opacities = await revealOpacities(page, "section[aria-labelledby='lien-he'] [data-reveal]");
-  expect(opacities.length).toBeGreaterThan(0);
-  expect(opacities.every((opacity) => opacity === "1")).toBe(true);
+  // The reveal runs when the scroll reaches the block; on a busy machine that takes a while.
+  await expect
+    .poll(async () => (await revealOpacities(page, contact)).every((opacity) => opacity === "1"))
+    .toBe(true);
+  expect((await revealOpacities(page, contact)).length).toBeGreaterThan(0);
 });
 
 const SCROLL_TARGET_FROM_END_PX = 200;
@@ -409,8 +410,11 @@ test("turning reduced motion on while the page is open reverts the motion", asyn
   await page.waitForSelector(MOTION_ON);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForSelector("html:not([data-motion])");
-  const opacities = await revealOpacities(page);
-  expect(opacities.every((opacity) => opacity === "1")).toBe(true);
+  // With reduced motion, globals.css gives every property a 0.01 ms CSS transition, so the
+  // reverted opacity shows from the next rendered frame on. Poll for it.
+  await expect
+    .poll(async () => (await revealOpacities(page)).every((opacity) => opacity === "1"))
+    .toBe(true);
 });
 
 test("the mascot tilts while scrolling and settles after", async ({ page }) => {
@@ -525,6 +529,51 @@ test("the plant does not widen the page at 320 px", async ({ page }) => {
   await scrollThroughPage(page);
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(320);
+});
+
+const FIRST_CLOUD = "[data-hero-cloud]";
+
+function cloudTransform(page: Page) {
+  return page.$eval(FIRST_CLOUD, (el) => getComputedStyle(el).transform);
+}
+
+test("the hero clouds move and the pause button stops them", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  const pause = page.getByRole("button", { name: "Tạm dừng chuyển động" }).first();
+  await expect(pause).toBeVisible();
+  const first = await cloudTransform(page);
+  await page.waitForTimeout(1000);
+  expect(await cloudTransform(page)).not.toBe(first);
+
+  await pause.click();
+  await expect(page.getByRole("button", { name: "Chạy lại chuyển động" }).first()).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  const stopped = await cloudTransform(page);
+  await page.waitForTimeout(1000);
+  expect(await cloudTransform(page)).toBe(stopped);
+});
+
+test("the paused choice survives a reload", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await page.getByRole("button", { name: "Tạm dừng chuyển động" }).first().click();
+  await page.reload();
+  await page.waitForSelector(MOTION_ON);
+  await expect(page.getByRole("button", { name: "Chạy lại chuyển động" }).first()).toBeVisible();
+  const before = await cloudTransform(page);
+  await page.waitForTimeout(1000);
+  expect(await cloudTransform(page)).toBe(before);
+});
+
+test("reduced motion hides the pause button and leaves the clouds still", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/vi");
+  await page.waitForTimeout(1500);
+  await expect(page.getByRole("button", { name: /chuyển động/ })).toBeHidden();
+  expect(await cloudTransform(page)).toBe("none");
 });
 
 test.describe("reduced motion", () => {

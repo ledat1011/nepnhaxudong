@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { loadGsap, type GsapModules, type MotionSetup } from "@/lib/motion/load-gsap";
 import { whenScrollingStops } from "@/lib/motion/scroll-wait";
 import { setupJourney } from "@/lib/motion/journey";
+import { setupHeroScene } from "@/lib/motion/hero-scene";
 import { setupMascot } from "@/lib/motion/mascot";
 import {
   MOTION_OK_QUERY,
@@ -12,7 +13,7 @@ import {
 } from "@/lib/motion/reduced-motion";
 import { setupReveals } from "@/lib/motion/reveal";
 
-const HOME_SETUPS: MotionSetup[] = [setupReveals, setupMascot, setupJourney];
+const HOME_SETUPS: MotionSetup[] = [setupReveals, setupMascot, setupHeroScene, setupJourney];
 const IDLE_TIMEOUT_MS = 2000;
 const IDLE_FALLBACK_MS = 200;
 
