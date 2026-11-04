@@ -3,21 +3,23 @@
 Cập nhật: 2026-11-04 — máy công ty
 
 ## Giai đoạn hiện tại
-Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã xong trên nhánh `feat/phan-b2-web`, đang mở PR để merge.
+`main` đã có API (B1, PR #3), web công khai (B2, PR #4) và logo, mascot (phần A, PR #5). Hiệu ứng GSAP (B4) đã xong trên nhánh `feat/phan-b4-gsap`, chưa push. Trang quản trị (B3) làm song song trên nhánh `feat/phan-b3-admin`.
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
 - Phần C (nền tảng làm việc) đã merge vào `main` (PR #1).
 - Phần B1 (API và cơ sở dữ liệu) đã merge vào `main` (PR #3): 11 task đã review, 492 test, API đã chạy thật ở local và đã thử bằng `curl` (xem "Thử API" trong `docs/setup.md`).
-- Phần B2 (web công khai): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
+- Phần B2 (web công khai) đã merge vào `main` (PR #4): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
+- Phần A (logo, mascot, icon) đã merge vào `main` (PR #5).
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
-
-- Phần B4 (hiệu ứng GSAP) xong trên nhánh `feat/phan-b4-gsap`, 5 task đã review: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 và kết quả xem bằng mắt nằm trong `docs/setup.md` và báo cáo task 5.
+- Phần B4 (hiệu ứng GSAP) xong trên nhánh `feat/phan-b4-gsap`, 5 task đã review và đã sửa theo review cuối của cả nhánh: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 nằm trong `docs/setup.md`.
+- Kết quả xem bằng mắt sau B4. Chromium có cửa sổ không mở được trên máy, nên đã xem bằng Chromium không cửa sổ (headless), cùng bộ máy vẽ:
+  - Đầu và bó lúa xoay đúng tâm, không có mảnh nào bị tách ra. Góc lớn nhất đo được khi cuộn nhanh: đầu 2,7°, bó lúa 4,2°.
+  - Mascot nằm gọn trong hero. Logo ở header rõ ở cỡ 36 px.
+  - Chưa xem favicon thật trên tab trình duyệt. Chỉ mới mở file `/icon.svg`: file này hiện đúng.
 
 ## Đang làm
-- Phần B2: mở PR, chờ CI, merge vào `main` (chủ dự án đã đồng ý).
 - Phần B4: nhánh `feat/phan-b4-gsap` CHƯA push. Chủ dự án quyết định push, mở PR và merge.
-- Phần A (logo) chờ chủ dự án duyệt linh vật, nhánh `feat/phan-a-thuong-hieu`.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
@@ -58,9 +60,11 @@ Các việc phát sinh khi làm B2 (web công khai):
 
 Các việc phát sinh khi làm B4 (hiệu ứng):
 - Khi khách mở thẳng một đường dẫn có `#neo` (ví dụ `/vi#bao-chi`), chuyển động chỉ bắt đầu sau khi trang cuộn xong tới đó, có thể chậm tới 2,5 giây.
+- Khi khách đang cuộn lúc chuyển động khởi động, bước đo lại vị trí (refresh) đợi trang dừng cuộn rồi mới chạy, để không cắt ngang lần cuộn đó.
 - Khi phần Hành trình đã nằm trong màn hình lúc trang mở, thân cây lúa giữ nguyên dạng đã mọc đủ (không co lại rồi mọc theo cuộn).
 - Một lần đo `/vi` có Performance 86 do TBT cao (560 ms); các lần khác từ 91 trở lên. Nếu cần, xem lại chi phí tải GSAP khi đo lần sau.
-- Mascot của hero là SVG chi tiết nhúng thẳng vào HTML (khoảng 90 KB); nếu LCP hoặc TBT xấu đi, cân nhắc dùng `brand/logo/mascot-logo.svg`.
+- Mascot của hero là SVG chi tiết nhúng thẳng vào HTML. Trang `/vi` dựng sẵn nặng 297.757 byte (73.988 byte sau gzip). Phần mascot có mặt hai lần, mỗi lần khoảng 89,7 KB: một lần trong HTML và một lần trong dữ liệu RSC gửi kèm, vì `Mascot` là server component dùng `dangerouslySetInnerHTML`.
+- Việc sau này: bỏ bản mascot thứ hai trong dữ liệu RSC. Nếu LCP hoặc TBT xấu đi, cân nhắc dùng `brand/logo/mascot-logo.svg`.
 
 ## Quyết định gần nhất
 - `docs/decisions/0005-spring-boot-4.md`
