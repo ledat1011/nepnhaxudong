@@ -17,7 +17,7 @@ Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã x
 ## Đang làm
 - Phần B2: mở PR, chờ CI, merge vào `main` (chủ dự án đã đồng ý).
 - Phần A (logo) chờ chủ dự án duyệt linh vật, nhánh `feat/phan-a-thuong-hieu`.
-- Review admin B3: chủ dự án đã duyệt 5 việc ưu tiên (`docs/decisions/0007-uu-tien-sua-admin.md`). Việc tiếp theo là sửa trên nhánh B3. Nhánh review chưa push, chưa mở PR.
+- Review admin B3: chủ dự án đã duyệt 5 việc ưu tiên (`docs/decisions/0008-uu-tien-sua-admin.md`). Việc tiếp theo là sửa trên nhánh B3. Nhánh review đã mở PR #9.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).

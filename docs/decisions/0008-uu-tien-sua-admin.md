@@ -1,4 +1,4 @@
-# 0007 — 5 việc ưu tiên để sửa trang quản trị
+# 0008 — 5 việc ưu tiên để sửa trang quản trị
 
 ## Bối cảnh
 Ngày 2026-11-04, trang quản trị (phần B3, nhánh `feat/phan-b3-admin`) được review về độ dễ dùng cho người nhà lớn tuổi dùng điện thoại. Báo cáo: `docs/reviews/2026-11-04-admin-ux.md`. Mục 7 của báo cáo đề xuất 5 việc nên làm trước.
