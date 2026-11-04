@@ -41,6 +41,7 @@ Chạy song song với session phần C (nhánh `feat/phan-c-nen-tang`). Không 
 - Không dùng Nano Banana / Recraft (khác quy trình ở spec 2.3) — chủ dự án quyết định; Claude vẽ SVG trực tiếp, có nhóm `<g id>` ngay từ đầu, nên không cần bước chuyển ảnh sang SVG.
 - Thêm màu `da` = `#F4CDA8`, chỉ dùng trong mascot — chủ dự án duyệt theo plan.
 - Thêm màu `toc` = `#222222` (tóc đen), chỉ dùng trong mascot — chủ dự án chọn tóc đen như ảnh gốc.
+- Ảnh gốc của mascot (ảnh Gemini v5 đã duyệt) lưu lâu dài ngoài repo, trong thư mục logo riêng của chủ dự án, tên `nepnha-mascot-source-gemini-v5.png`, SHA-256 `65ae40db…b352`; script `vectorize-mascot.py` kiểm tra mã này — chủ dự án chọn.
 - Được tải font Pacifico / Quicksand + OFL, gói npm `@resvg/resvg-js`, `opentype.js`, `svgo`, `svgson` — chủ dự án duyệt theo plan.
 
 ## Còn mở
