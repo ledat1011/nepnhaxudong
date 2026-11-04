@@ -102,17 +102,64 @@ async function pivotDrift(page: Page, id: MascotGroup, x: number, y: number) {
 }
 
 // The mascot sits at the top of the page, so its scroll range at 375x812 is only about 260 px.
-// Headless Chromium applies a wheel step at once. The steps must stay inside that range:
-// otherwise the last scroll update comes early and the mascot is already settling at the reading.
+// The steps must stay inside that range, so that every step gives a scroll update.
 const WHEEL_STEP_PX = 80;
 const WHEEL_COUNT = 3;
 const WHEEL_GAP_MS = 30;
+const PAUSE_AHEAD_MS = 100;
+const SETTLE_WAIT_MS = 2500;
+// The settle starts 150 ms after the last scroll update; this is a little later.
+const SETTLE_RUNNING_MS = 160;
+const PAUSE_ATTEMPTS = 5;
 
+/** Pauses the page time (Date, performance.now, requestAnimationFrame) a moment from now. */
+async function pauseClock(page: Page) {
+  for (let attempt = 1; ; attempt++) {
+    const now = await page.evaluate(() => Date.now());
+    try {
+      await page.clock.pauseAt(now + PAUSE_AHEAD_MS);
+      return;
+    } catch (error) {
+      // On a slow machine the running clock can pass `now + PAUSE_AHEAD_MS` before the pause
+      // arrives; then read the time again.
+      if (attempt >= PAUSE_ATTEMPTS || !String(error).includes("to the past")) throw error;
+    }
+  }
+}
+
+/**
+ * Opens the home page at phone size and pauses the page time once the motion runs.
+ * GSAP's ticker and ScrollTrigger's velocity use that time, so the tests move it forward in
+ * fixed steps and read the mascot while it stands still: no reading depends on machine speed.
+ */
+async function openWithPausedClock(page: Page) {
+  await openWithClock(page);
+  await pauseClock(page);
+}
+
+/** Opens the home page at phone size with a fake page clock that still runs. */
+async function openWithClock(page: Page) {
+  await page.clock.install();
+  await page.setViewportSize(MOBILE);
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+}
+
+/** Scrolls by `deltaY`, waits until the page has moved, then lets the page time run one gap. */
+async function wheelStep(page: Page, deltaY: number) {
+  const before = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, deltaY);
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBe(Math.max(0, before + deltaY));
+  await page.clock.runFor(WHEEL_GAP_MS);
+}
+
+/** Needs `page.clock.install()` first. */
 async function wheelDown(page: Page) {
   await page.mouse.move(MOBILE.width / 2, MOBILE.height / 2);
   for (let i = 0; i < WHEEL_COUNT; i++) {
-    await page.mouse.wheel(0, WHEEL_STEP_PX);
-    await page.waitForTimeout(WHEEL_GAP_MS);
+    await wheelStep(page, WHEEL_STEP_PX);
   }
 }
 
@@ -304,9 +351,7 @@ test("turning reduced motion on while the page is open reverts the motion", asyn
 });
 
 test("the mascot tilts while scrolling and settles after", async ({ page }) => {
-  await page.setViewportSize(MOBILE);
-  await page.goto("/vi");
-  await page.waitForSelector(MOTION_ON);
+  await openWithPausedClock(page);
   await wheelDown(page);
   const head = await rotationOf(page, "head");
   const rice = await rotationOf(page, "rice");
@@ -315,7 +360,7 @@ test("the mascot tilts while scrolling and settles after", async ({ page }) => {
   expect(Math.abs(rice)).toBeLessThanOrEqual(RICE_LIMIT_DEG);
   expect(await pivotDrift(page, "head", HEAD_PIVOT.x, HEAD_PIVOT.y)).toBeLessThan(1);
   expect(await pivotDrift(page, "rice", RICE_PIVOT.x, RICE_PIVOT.y)).toBeLessThan(1);
-  await page.waitForTimeout(2500);
+  await page.clock.runFor(SETTLE_WAIT_MS);
   expect(Math.abs(await rotationOf(page, "head"))).toBeLessThan(0.1);
   expect(Math.abs(await rotationOf(page, "rice"))).toBeLessThan(0.1);
 });
@@ -336,45 +381,41 @@ test("very fast scrolling stays within the limits", async ({ page }) => {
 });
 
 test("turning reduced motion on puts a tilted mascot back at 0 degrees", async ({ page }) => {
-  await page.setViewportSize(MOBILE);
-  await page.goto("/vi");
-  await page.waitForSelector(MOTION_ON);
+  await openWithPausedClock(page);
   await wheelDown(page);
+  // Revert while the settle tween is running, not only while the follow tweens are.
+  await page.clock.runFor(SETTLE_RUNNING_MS);
   expect(Math.abs(await rotationOf(page, "head"))).toBeGreaterThan(0.5);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForSelector("html:not([data-motion])");
-  // With reduced motion, globals.css gives every property a 0.01 ms transition. The reverted
-  // transform therefore shows from the next animation frame on, not in the same task.
-  await page.evaluate(
-    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
-  );
-  expect(Math.abs(await rotationOf(page, "head"))).toBe(0);
-  expect(Math.abs(await rotationOf(page, "rice"))).toBe(0);
+  // The page time is paused, so no tween can bring the angle to 0: only the revert can.
+  // With reduced motion, globals.css gives every property a 0.01 ms CSS transition, so the
+  // reverted transform shows from the next rendered frame on. Poll for it.
+  await expect.poll(async () => Math.abs(await rotationOf(page, "head"))).toBe(0);
+  await expect.poll(async () => Math.abs(await rotationOf(page, "rice"))).toBe(0);
 });
 
 test("a new scroll after the mascot settled starts from the current angle", async ({ page }) => {
-  await page.setViewportSize(MOBILE);
-  await page.goto("/vi");
-  await page.waitForSelector(MOTION_ON);
+  await openWithPausedClock(page);
   await wheelDown(page);
-  await page.waitForTimeout(2500);
+  await page.clock.runFor(SETTLE_WAIT_MS);
   const firstWrites = await recordFirstWrites(page);
   // Back up inside the mascot range; the first update writes the start of the new follow.
-  await page.mouse.wheel(0, -WHEEL_STEP_PX);
-  await expect.poll(async () => Object.keys(await firstWrites()).length).toBe(2);
+  await wheelStep(page, -WHEEL_STEP_PX);
   const first = await firstWrites();
+  expect(Object.keys(first)).toHaveLength(2);
   expect(Math.abs(first.head)).toBeLessThan(0.1);
   expect(Math.abs(first.rice)).toBeLessThan(0.1);
 });
 
 test("turning reduced motion off again tilts the mascot about the same pivots", async ({ page }) => {
-  await page.setViewportSize(MOBILE);
-  await page.goto("/vi");
-  await page.waitForSelector(MOTION_ON);
+  await openWithClock(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForSelector("html:not([data-motion])");
   await page.emulateMedia({ reducedMotion: "no-preference" });
+  // GSAP starts the motion again from its ticker, so the clock is paused only after that.
   await page.waitForSelector(MOTION_ON);
+  await pauseClock(page);
   await wheelDown(page);
   expect(Math.abs(await rotationOf(page, "head"))).toBeGreaterThan(0.5);
   expect(await pivotDrift(page, "head", HEAD_PIVOT.x, HEAD_PIVOT.y)).toBeLessThan(1);
@@ -442,6 +483,7 @@ test.describe("reduced motion", () => {
   });
 
   test("reduced motion: the mascot does not move", async ({ page }) => {
+    await page.clock.install();
     await page.setViewportSize(MOBILE);
     await page.goto("/vi");
     await page.waitForTimeout(3000);
