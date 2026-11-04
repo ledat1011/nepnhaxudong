@@ -78,7 +78,7 @@ function prefixIds(body, slug) {
 }
 
 /** Throws when the finished scene still has a slot or a reference that is not prefixed. */
-function assertComposed(body, slug) {
+export function assertComposed(body, slug) {
   const leftover = body.match(/data-(?:person|include)=/);
   if (leftover !== null) throw new Error(`scene ${slug} still has ${leftover[0]} after expansion`);
   const refs = [

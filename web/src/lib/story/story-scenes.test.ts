@@ -3,6 +3,7 @@ import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { ILLUSTRATION_PALETTE } from "../brand/colors";
 import {
+  assertComposed,
   composeScene,
   SCENE_BUDGET_BYTES,
   SCENE_SLUGS,
@@ -159,7 +160,7 @@ describe("colorProblems", () => {
   });
 });
 
-const hasScenes =existsSync("../brand/story/scenes");
+const hasScenes = existsSync("../brand/story/scenes");
 const read = (path: string) => readFileSync(path, "utf8");
 const readDir = (dir: string): Record<string, string> =>
   Object.fromEntries(
@@ -216,4 +217,17 @@ describe.skipIf(!hasScenes)("story scene files", () => {
   it.each(built)("$slug uses only palette colors", ({ actual }) => {
     expect(colorProblems(actual())).toEqual([]);
   });
+});
+
+describe("assertComposed", () => {
+  const check = assertComposed as (body: string, slug: string) => void;
+  it("accepts prefixed references", () => {
+    expect(() => check('<path fill="url(#cay-ma-a)"/><use href="#cay-ma-b"/><use href=\'#cay-ma-c\'/>', "cay-ma")).not.toThrow();
+  });
+  it.each(['<path fill="url(#x)"/>', '<use href="#x"/>', "<use href='#x'/>", '<use xlink:href="#x"/>'])(
+    "throws for an unprefixed reference in %s",
+    (body) => {
+      expect(() => check(body, "cay-ma")).toThrow(/unprefixed/);
+    },
+  );
 });
