@@ -110,3 +110,28 @@ describe("useSave", () => {
     expect(toastSuccess).toHaveBeenCalledWith("Đã xóa.");
   });
 });
+
+describe("useSave latest action and reset", () => {
+  it("runs the newest action when save is called right after a re-render", async () => {
+    const first = vi.fn(() => Promise.resolve("first"));
+    const second = vi.fn(() => Promise.resolve("second"));
+    const { result, rerender } = renderHook(({ action }) => useSave(action), { initialProps: { action: first } });
+    rerender({ action: second });
+    let value: string | undefined;
+    await act(async () => {
+      value = await result.current.save();
+    });
+    expect(value).toBe("second");
+    expect(first).not.toHaveBeenCalled();
+  });
+
+  it("clears the error with reset", async () => {
+    const { result } = renderHook(() => useSave(() => Promise.reject(new AdminApiError(503, "Bận."))));
+    await act(async () => {
+      await result.current.save();
+    });
+    expect(result.current.error).not.toBeNull();
+    act(() => result.current.reset());
+    expect(result.current.error).toBeNull();
+  });
+});

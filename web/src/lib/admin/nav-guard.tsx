@@ -2,7 +2,6 @@
 
 import { createContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
-import { ADMIN_ROUTES } from "./routes";
 
 /** Forms that have unsaved changes tell the guard through `useUnsavedChanges`. */
 export type NavGuard = {
@@ -12,19 +11,19 @@ export type NavGuard = {
 
 export const NavGuardContext = createContext<NavGuard | null>(null);
 
-function isAdminLink(anchor: HTMLAnchorElement): boolean {
+/** True for a same-origin link to another page. A link that differs only in its #hash stays on the page. */
+function leavesPage(anchor: HTMLAnchorElement): boolean {
   const url = new URL(anchor.href, window.location.href);
   if (url.origin !== window.location.origin) return false;
-  const insideAdmin = url.pathname === ADMIN_ROUTES.home || url.pathname.startsWith(`${ADMIN_ROUTES.home}/`);
-  const samePage = url.pathname === window.location.pathname && url.search === window.location.search;
-  return insideAdmin && !samePage;
+  return url.pathname !== window.location.pathname || url.search !== window.location.search;
 }
 
 /**
  * One in-app navigation guard for the admin shell. While a form is dirty, a click on any link
- * that goes to another admin page is held back and the user is asked first. The check runs in the
+ * that goes to another page of this site (admin or public) is held back and the user is asked first.
+ * A Next.js `<Link>` is a soft navigation, so `beforeunload` does not fire for it. The check runs in the
  * capture phase of the document, so it needs no change in BottomNav, MoreSheet or any other link.
- * The browser back button is not covered: only `beforeunload` (reload, close tab) is.
+ * Links to other sites are covered by `beforeunload`. The browser back button is not covered.
  */
 export function NavGuardProvider({ children }: { children: ReactNode }) {
   const dirtyIds = useRef(new Set<string>());
@@ -46,7 +45,7 @@ export function NavGuardProvider({ children }: { children: ReactNode }) {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
       if (anchor === null || (anchor.target !== "" && anchor.target !== "_self") || anchor.hasAttribute("download")) return;
-      if (!isAdminLink(anchor)) return;
+      if (!leavesPage(anchor)) return;
       event.preventDefault();
       event.stopPropagation();
       setHeld(anchor);

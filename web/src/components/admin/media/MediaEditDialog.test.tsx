@@ -6,7 +6,8 @@ import type { MediaAdminDto } from "@/lib/admin/types";
 
 const { adminFetch } = vi.hoisted(() => ({ adminFetch: vi.fn() }));
 vi.mock("@/lib/admin/api", () => ({ adminFetch }));
-vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin: vi.fn() }) }));
+const stableReLogin = vi.fn();
+vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin: stableReLogin }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
 import { MediaEditDialog } from "./MediaEditDialog";

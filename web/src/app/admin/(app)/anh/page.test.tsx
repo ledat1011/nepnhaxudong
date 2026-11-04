@@ -1,12 +1,12 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { MediaAdminDto } from "@/lib/admin/types";
 
-const { adminFetch } = vi.hoisted(() => ({ adminFetch: vi.fn() }));
+const { adminFetch, requireReLogin } = vi.hoisted(() => ({ adminFetch: vi.fn(), requireReLogin: vi.fn() }));
 vi.mock("@/lib/admin/api", () => ({ adminFetch, adminUpload: vi.fn() }));
-vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin: vi.fn() }) }));
+vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
 import MediaPage from "./page";
@@ -63,5 +63,24 @@ describe("Ảnh page", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Máy chủ đang bận.");
     await events.click(screen.getByRole("button", { name: "Thử lại" }));
     expect(await screen.findByAltText("Ảnh 1")).toBeInTheDocument();
+  });
+
+  it("does not reopen the edit dialog when a save finishes after it was closed", async () => {
+    let finish!: (value: MediaAdminDto) => void;
+    adminFetch.mockImplementation((path: string, init?: { method?: string }) =>
+      init?.method === "PUT" ? new Promise((resolve) => (finish = resolve)) : Promise.resolve([media(3)]),
+    );
+    const events = userEvent.setup();
+    render(<MediaPage />);
+    await events.click(await screen.findByAltText("Ảnh 3"));
+    const dialog = await screen.findByRole("dialog");
+    const en = within(dialog).getByLabelText(/English/);
+    await events.clear(en);
+    await events.type(en, "Three");
+    await events.click(within(dialog).getByRole("button", { name: "Lưu" }));
+    await events.keyboard("{Escape}");
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await act(async () => finish({ ...media(3), altEn: "Three" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

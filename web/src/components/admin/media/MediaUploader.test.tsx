@@ -137,4 +137,28 @@ describe("MediaUploader", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Không kết nối được máy chủ");
     expect(screen.getByLabelText(/English/)).toHaveValue("Rice");
   });
+
+  it("clears the old error and the retry label when a new file is picked", async () => {
+    adminUpload.mockRejectedValue(new AdminApiError(503, "Máy chủ đang bận. Hãy thử lại sau."));
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={() => {}} />);
+    await fill(events);
+    await events.click(screen.getByRole("button", { name: "Tải lên" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await events.upload(screen.getByLabelText("Chọn ảnh"), jpeg("khac.jpg"));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Tải lên" })).toBeInTheDocument();
+  });
+
+  it("gives each uploader its own file input id", () => {
+    const { container } = render(
+      <>
+        <MediaUploader onUploaded={() => {}} />
+        <MediaUploader onUploaded={() => {}} />
+      </>,
+    );
+    const ids = Array.from(container.querySelectorAll("input[type=file]")).map((input) => input.id);
+    expect(new Set(ids).size).toBe(2);
+    expect(screen.getAllByLabelText("Chọn ảnh")).toHaveLength(2);
+  });
 });

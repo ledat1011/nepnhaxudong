@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { Button } from "@/components/admin/ui/button";
@@ -28,9 +28,10 @@ export function MediaUploader({ onUploaded }: { onUploaded(media: MediaAdminDto)
   const [alt, setAlt] = useState<LocalizedText>(EMPTY_ALT);
   // A new key makes React drop the old file input, which clears its chosen file.
   const [inputKey, setInputKey] = useState(0);
+  const fileInputId = useId();
   const previewRef = useRef<string | null>(null);
 
-  const { save, pending, error } = useSave(
+  const { save, pending, error, reset } = useSave(
     () => {
       const request = toRequestText(alt);
       const form = new FormData();
@@ -61,6 +62,7 @@ export function MediaUploader({ onUploaded }: { onUploaded(media: MediaAdminDto)
     const picked = event.target.files?.[0] ?? null;
     const problem = picked === null ? null : checkImageFile(picked);
     setFileError(problem);
+    reset();
     choose(problem === null ? picked : null);
   }
 
@@ -85,8 +87,8 @@ export function MediaUploader({ onUploaded }: { onUploaded(media: MediaAdminDto)
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="media-file">Chọn ảnh</Label>
-        <Input key={inputKey} id="media-file" type="file" accept={IMAGE_ACCEPT} onChange={onFileChange} />
+        <Label htmlFor={fileInputId}>Chọn ảnh</Label>
+        <Input key={inputKey} id={fileInputId} type="file" accept={IMAGE_ACCEPT} onChange={onFileChange} />
         <p className="text-sm text-muted-foreground">JPEG, PNG hoặc WebP, tối đa 15 MB.</p>
       </div>
       {fileError !== null ? (

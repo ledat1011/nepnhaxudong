@@ -59,7 +59,8 @@ export default function MediaPage() {
         onClose={() => setEditing(null)}
         onChanged={(media) => {
           library.changed(media);
-          setEditing(media);
+          // Only update the open dialog. If the user closed it while the save ran, it stays closed.
+          setEditing((current) => (current?.id === media.id ? media : current));
         }}
         onDeleted={(id) => {
           library.removed(id);

@@ -5,7 +5,8 @@ import type { MediaAdminDto } from "@/lib/admin/types";
 
 const { adminFetch } = vi.hoisted(() => ({ adminFetch: vi.fn() }));
 vi.mock("@/lib/admin/api", () => ({ adminFetch, adminUpload: vi.fn() }));
-vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin: vi.fn() }) }));
+const stableReLogin = vi.fn();
+vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin: stableReLogin }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
 import { MediaPicker } from "./MediaPicker";

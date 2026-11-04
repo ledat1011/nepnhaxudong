@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AdminApiError, GENERIC_ERROR_MESSAGE, isSessionExpired } from "./errors";
+import { AdminApiError, GENERIC_ERROR_MESSAGE } from "./errors";
 import { useAdminSession } from "./session";
+import { withReLogin } from "./with-relogin";
 
 type Options = {
   /** The toast after a success. `null` shows none. */
@@ -27,8 +28,10 @@ export function useSave<T>(action: () => Promise<T>, options: Options = {}) {
   const running = useRef(false);
   const { successMessage } = options;
   const latest = useRef({ action, successMessage });
-  // The newest action and message are used by a save that starts after the next render.
-  useEffect(() => {
+  // useLayoutEffect runs right after the DOM commit and before the browser can deliver the next click or
+  // key event, so a save() from an event handler always sees the newest action. A plain useEffect runs later.
+  // (Assigning during render would also work, but React may render without committing, which would leave a stale action.)
+  useLayoutEffect(() => {
     latest.current = { action, successMessage };
   });
 
@@ -38,16 +41,8 @@ export function useSave<T>(action: () => Promise<T>, options: Options = {}) {
     setPending(true);
     setError(null);
     try {
-      let result: T;
-      try {
-        result = await latest.current.action();
-      } catch (first) {
-        if (!isSessionExpired(first)) throw first;
-        // Rejects when the user cancels or signs in as someone else. That error says why, so it is shown as it is.
-        await requireReLogin();
-        // One retry only. A second session-expired error is shown instead of opening the dialog again.
-        result = await latest.current.action();
-      }
+      // Rejects when the user cancels or signs in as someone else. That error says why, so it is shown as it is.
+      const result = await withReLogin(() => latest.current.action(), requireReLogin);
       const message = latest.current.successMessage === undefined ? "Đã lưu." : latest.current.successMessage;
       if (message !== null) toast.success(message);
       return result;
@@ -60,5 +55,7 @@ export function useSave<T>(action: () => Promise<T>, options: Options = {}) {
     }
   }, [requireReLogin]);
 
-  return { save, pending, error };
+  const reset = useCallback(() => setError(null), []);
+
+  return { save, pending, error, reset };
 }
