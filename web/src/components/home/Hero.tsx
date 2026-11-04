@@ -21,18 +21,34 @@ const BUTTON_CLASS =
 
 /**
  * First screen. The largest element is the brand text, so the LCP is text, not an image.
- * Layers, back to front: sky gradient, sun (z-0), clouds and field (z-1), text and mascot (z-2),
- * pause button (z-10). The section is `isolate`, so these z values stay inside the hero.
+ *
+ * The illustrated scene (sky, clouds, village, field) is a panel behind the mascot only: on a
+ * phone the top band of the hero, from `md` the right half. The text side stays plain Trắng gạo.
+ * The panel fades out toward the text side and toward the bottom (`hero-fade-*` in globals.css).
+ * `--hero-m` is the mascot width; the mascot stands on the bottom of the panel, and the field is
+ * sized from `--hero-m` so that its horizon is at the mascot's waist (HeroScene.tsx).
+ *
+ * Layers, back to front: panel (z-0), sun (z-1), text and mascot (z-2), pause button (z-10).
+ * The section is `isolate`, so these z values stay inside the hero.
  */
 export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {
   return (
     <section
       data-hero-scene=""
-      className="relative isolate overflow-hidden bg-linear-to-b from-sky from-0% via-sky-light via-55% to-rice to-80%"
+      className="relative isolate overflow-hidden bg-rice [--hero-m:11rem] md:[--hero-m:18rem] lg:[--hero-m:20rem]"
     >
-      <HeroSky />
-      <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 pb-36 pt-10 md:grid-cols-2 md:gap-10 md:pt-16 md:pb-[clamp(10rem,13vw,17rem)]">
-        <div className="relative z-[2] order-2 text-center md:order-1 md:text-left">
+      <div
+        data-hero-panel=""
+        aria-hidden="true"
+        className="hero-fade-side pointer-events-none absolute inset-x-0 top-0 z-0 h-[calc(2.5rem+var(--hero-m))] md:inset-y-0 md:left-1/2 md:h-auto"
+      >
+        <div className="hero-fade-bottom absolute inset-0 bg-linear-to-b from-sky from-0% via-sky-light via-50% to-rice to-95%">
+          <HeroSky />
+          <HeroField />
+        </div>
+      </div>
+      <div className="relative mx-auto grid max-w-6xl gap-6 px-4 pt-10 pb-16 md:grid-cols-2 md:items-center md:gap-10 md:pt-16 md:pb-0">
+        <div className="relative z-[2] order-2 text-center md:order-1 md:py-16 md:text-left">
           <h1 className="font-display text-6xl leading-[1.3] text-earth md:text-7xl">{dict.site.name}</h1>
           <p className="mx-auto mt-4 max-w-md text-lg font-medium md:mx-0 md:text-xl">{tagline}</p>
           {(zalo !== null || hasJourney) && (
@@ -56,12 +72,11 @@ export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {
             </div>
           )}
         </div>
-        <div className="relative order-1 mx-auto w-40 md:order-2 md:w-72" aria-hidden="true">
+        <div className="relative order-1 mx-auto w-(--hero-m) md:order-2 md:self-end" aria-hidden="true">
           <HeroSun />
-          <Mascot title={dict.site.name} className="relative z-[2] h-auto w-full" />
+          <Mascot title={dict.site.name} className="hero-fade-mascot relative z-[2] block h-auto w-full" />
         </div>
       </div>
-      <HeroField />
       <div className="absolute right-4 bottom-4 z-10">
         <MotionPauseButton dict={dict} />
       </div>

@@ -69,6 +69,28 @@ body {
   }
 }
 
+/*
+ * Hero scene panel (Hero.tsx): the sky and the rice fade to transparent toward the next section
+ * and, from md, toward the text side, so no cut line shows. A mask uses only the alpha of the
+ * gradient, so the color in it is never drawn. The mascot fades a little at its bottom edge too.
+ */
+.hero-fade-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, var(--color-earth) 90%, transparent);
+  mask-image: linear-gradient(to bottom, var(--color-earth) 90%, transparent);
+}
+
+.hero-fade-mascot {
+  -webkit-mask-image: linear-gradient(to bottom, var(--color-earth) 92%, transparent);
+  mask-image: linear-gradient(to bottom, var(--color-earth) 92%, transparent);
+}
+
+@media (width >= 48rem) {
+  .hero-fade-side {
+    -webkit-mask-image: linear-gradient(to right, transparent, var(--color-earth) 24%);
+    mask-image: linear-gradient(to right, transparent, var(--color-earth) 24%);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;

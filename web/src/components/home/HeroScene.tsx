@@ -1,12 +1,14 @@
 import { BRAND, ILLUSTRATION_ONLY_COLORS } from "@/lib/brand/colors";
 
 /*
- * The static hero background: sky with clouds, a sun behind the mascot, a far village and a rice
- * field. Every part is decorative (aria-hidden); the content of the hero is HTML text.
+ * The static hero scene: sky with clouds, a sun behind the mascot, a far village and a rice field.
+ * It sits in a panel behind the mascot only (Hero.tsx); the text side of the hero stays plain.
+ * Every part is decorative (aria-hidden); the content of the hero is HTML text.
  * The motion code (Task 4) moves only the groups marked with data-hero-* attributes.
+ * The hero sets `--hero-m`, the mascot width; the field is sized from it.
  */
 
-/** Left edge of each cloud, as a fraction of the hero width. The motion code starts from here. */
+/** Left edge of each cloud, as a fraction of the panel width. The motion code starts from here. */
 export const HERO_CLOUD_STARTS: readonly number[] = [0.08, 0.42, 0.74];
 
 /** Number of rice-stalk groups that sway together (data-hero-gust), from left to right. */
@@ -21,7 +23,7 @@ const round = (n: number) => Math.round(n * 10) / 10;
 // Sky
 // ---------------------------------------------------------------------------------------------
 
-/** `top` is a class: on a phone the mascot sits at the top, so the small cloud goes lower there. */
+/** `top` is a class, so a cloud can sit at a different height on a phone. */
 type Cloud = { body: string; belly: string; width: string; maxWidth: string; top: string };
 
 /** Three cloud shapes in a 120 x 60 box with a flat base. The second one is drawn smaller. */
@@ -38,7 +40,7 @@ const CLOUDS: readonly Cloud[] = [
     belly: "M18 50C34 45 56 46 70 49C82 46 94 46 99 50Z",
     width: "13%",
     maxWidth: "7rem",
-    top: "top-[62%] md:top-[30%]",
+    top: "top-[2%]",
   },
   {
     body: "M14 50C3 49 4 36 15 35C12 24 25 17 35 23C38 12 55 8 63 19C70 7 92 8 94 24C106 21 117 33 110 42C118 46 113 51 106 50Z",
@@ -49,10 +51,10 @@ const CLOUDS: readonly Cloud[] = [
   },
 ];
 
-/** Full-width cloud strip in the top half of the hero. Each cloud is placed by its `left` percent. */
+/** Cloud strip across the top half of the scene panel. Each cloud is placed by its `left` percent. */
 export function HeroSky() {
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-1/2" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2" aria-hidden="true">
       {CLOUDS.map((cloud, i) => (
         <svg
           key={HERO_CLOUD_STARTS[i]}
@@ -98,7 +100,7 @@ export function HeroSun() {
       viewBox="0 0 160 160"
       aria-hidden="true"
       focusable="false"
-      className="pointer-events-none absolute -top-6 -right-14 z-0 w-28 md:-top-10 md:-right-6 md:w-40 lg:-right-24 lg:w-44"
+      className="pointer-events-none absolute -top-6 -right-14 z-[1] w-28 md:-top-10 md:-right-6 md:w-40 lg:-right-24 lg:w-44"
       xmlns="http://www.w3.org/2000/svg"
     >
       <g data-hero-sun-rays="" fill={straw} stroke={earth} strokeWidth="1.5" strokeLinejoin="round">
@@ -118,7 +120,16 @@ export function HeroSun() {
 // Field
 // ---------------------------------------------------------------------------------------------
 
-const VILLAGE_BASE = 166;
+/** y of the horizon (the rice tops) in the 1440 x 260 field. */
+const HORIZON = 196;
+
+/*
+ * The mascot's waist is 0.21 of her height above her bottom edge, and she is square, so the
+ * horizon must be 0.21 x --hero-m above the bottom of the field. The field keeps its 1440 x 260
+ * aspect, so its width is 0.21 x 1440 / (260 - HORIZON) = 4.73 x --hero-m (the class below).
+ */
+
+const VILLAGE_BASE = HORIZON + 4;
 
 /** One clump of bamboo: feathery tips that rise to the middle of the clump. */
 function bambooClump(x: number, w: number, h: number): string {
@@ -135,7 +146,7 @@ function bambooClump(x: number, w: number, h: number): string {
   return `${d}Z`;
 }
 
-/** A house with walls and a roof whose eaves turn up a little at both ends. */
+/** A house with walls and a roof whose eaves reach a little past the walls. */
 function house(x: number, w: number, h: number): string {
   const eave = VILLAGE_BASE - h * 0.5;
   const ridge = VILLAGE_BASE - h;
@@ -147,36 +158,38 @@ function house(x: number, w: number, h: number): string {
 }
 
 const VILLAGE_PATH = [
-  `M0 ${VILLAGE_BASE}H1440V${VILLAGE_BASE + 8}H0Z`,
   ...(
     [
-      [0, 70, 40],
-      [62, 96, 56],
-      [240, 82, 46],
-      [318, 54, 32],
-      [470, 110, 58],
-      [640, 70, 40],
-      [802, 98, 54],
-      [990, 64, 36],
-      [1060, 120, 60],
-      [1250, 84, 46],
-      [1330, 110, 52],
+      [0, 70, 34],
+      [62, 96, 46],
+      [240, 82, 40],
+      [318, 54, 28],
+      [470, 110, 50],
+      [640, 70, 36],
+      [802, 98, 46],
+      [990, 64, 32],
+      [1060, 120, 52],
+      [1250, 84, 40],
+      [1330, 110, 46],
     ] as const
   ).map(([x, w, h]) => bambooClump(x, w, h)),
   ...(
     [
-      [176, 58, 26],
-      [380, 76, 32],
-      [586, 50, 24],
-      [892, 80, 34],
-      [1196, 56, 26],
+      [176, 58, 24],
+      [380, 76, 28],
+      [586, 50, 22],
+      [892, 80, 30],
+      [1196, 56, 24],
     ] as const
   ).map(([x, w, h]) => house(x, w, h)),
 ].join("");
 
-/** Grains along a drooping panicle (a quadratic curve), alternating on both sides of it. */
+/** The far field's top edge: small bumps, like the tops of many far rice plants. */
+const FAR_EDGE = Array.from({ length: 72 }, (_, i) => `Q${i * 20 + 10} ${HORIZON - 7} ${i * 20 + 20} ${HORIZON}`).join("");
+
+/** Plump grains along a drooping ear (a quadratic curve), alternating on both sides of it. */
 function grains(p0: [number, number], p1: [number, number], p2: [number, number]) {
-  const ts = [0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.82, 0.94];
+  const ts = [0.04, 0.14, 0.24, 0.34, 0.44, 0.54, 0.64, 0.74, 0.84, 0.94];
   return ts.map((t, i) => {
     const u = 1 - t;
     const x = u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0];
@@ -185,9 +198,9 @@ function grains(p0: [number, number], p1: [number, number], p2: [number, number]
     const dy = 2 * u * (p1[1] - p0[1]) + 2 * t * (p2[1] - p1[1]);
     const len = Math.hypot(dx, dy);
     const side = i % 2 === 0 ? 1 : -1;
-    const cx = round(x + (-dy / len) * 3 * side);
-    const cy = round(y + (dx / len) * 3 * side);
-    const angle = round((Math.atan2(dy, dx) * 180) / Math.PI + 90 - 32 * side);
+    const cx = round(x + (-dy / len) * 4 * side);
+    const cy = round(y + (dx / len) * 4 * side);
+    const angle = round((Math.atan2(dy, dx) * 180) / Math.PI + 90 - 24 * side);
     return { cx, cy, angle };
   });
 }
@@ -196,50 +209,88 @@ type StalkShape = {
   id: string;
   stem: string;
   leaves: readonly string[];
-  panicle: [[number, number], [number, number], [number, number]];
+  ear: [[number, number], [number, number], [number, number]];
 };
 
-/** Two stalk shapes, each with its root at (0, 0) and its heavy head bending to the right. */
+/**
+ * Three stalk shapes, each about 100 high with its root at (0, 0). The heavy ear hangs down to the
+ * right, so the top of the stem bends under its weight.
+ */
 const STALK_SHAPES: readonly StalkShape[] = [
   {
     id: "nn-hero-stalk-a",
-    stem: "M0 0Q3-62 14-116",
-    leaves: ["M0-4C-6-30-20-56-40-74C-24-64-10-44 4-20Z", "M2-30C12-44 24-54 40-58C26-46 14-36 5-22Z"],
-    panicle: [
-      [14, -116],
-      [38, -124],
-      [44, -84],
+    stem: "M0 0C1-40 4-74 16-98",
+    leaves: ["M0-6C-6-30-18-48-34-60C-20-50-8-34 3-16Z", "M2-26C12-40 24-48 38-52C24-42 14-32 5-18Z"],
+    ear: [
+      [16, -98],
+      [42, -106],
+      [46, -54],
     ],
   },
   {
     id: "nn-hero-stalk-b",
-    stem: "M0 0Q-2-54 8-100",
-    leaves: ["M0-6C8-28 22-46 42-56C28-42 14-28 4-14Z"],
-    panicle: [
-      [8, -100],
-      [30, -110],
-      [36, -72],
+    stem: "M0 0C-1-34 2-64 10-86",
+    leaves: ["M0-6C8-26 20-40 36-48C22-36 12-24 4-12Z"],
+    ear: [
+      [10, -86],
+      [34, -96],
+      [38, -46],
+    ],
+  },
+  {
+    id: "nn-hero-stalk-c",
+    stem: "M0 0C2-44 8-80 22-100",
+    leaves: ["M0-8C-8-28-20-40-32-46C-20-36-8-24 2-14Z"],
+    ear: [
+      [22, -100],
+      [48, -104],
+      [50, -58],
     ],
   },
 ];
 
-/** Stalks per gust group, left to right: 22 stalks in 5 groups. */
-const GUST_SIZES = [4, 4, 5, 4, 5] as const;
-const STALK_SCALES = [1, 0.86, 1.08, 0.92, 1.02, 0.84, 1.1, 0.95, 0.88, 1.04, 0.9];
+const SCALES = [1, 0.9, 1.06, 0.94, 1.02, 0.88, 1.08, 0.96, 0.92, 1.04, 0.98];
 
-/** Root x of each stalk, and its shape and size. Spread across the 1440 wide field. */
-const STALKS = Array.from({ length: GUST_SIZES.reduce((a, b) => a + b, 0) }, (_, i) => ({
-  x: 22 + i * 66 + ((i * 37) % 23) - 11,
-  shape: STALK_SHAPES[i % 3 === 1 ? 1 : 0].id,
-  scale: STALK_SCALES[i % STALK_SCALES.length],
-}));
+/** A row of stalks: roots on y, `count` stalks from x0 with step dx, each scaled around `size`. */
+function row(y: number, x0: number, dx: number, count: number, size: number) {
+  return Array.from({ length: count }, (_, i) => ({
+    x: x0 + i * dx + ((i * 37) % 13) - 6,
+    y,
+    shape: STALK_SHAPES[i % 3].id,
+    scale: round(size * SCALES[i % SCALES.length] * 100) / 100,
+  }));
+}
+
+/** Far rows are smaller (perspective). Only the near row sways (data-hero-gust). */
+const FAR_ROW = row(212, 4, 22, 66, 0.26);
+const MID_ROW = row(232, 10, 34, 43, 0.4);
+
+/** Stalks per gust group, left to right: 22 near stalks in 5 groups. */
+const GUST_SIZES = [4, 4, 5, 4, 5] as const;
+/** The near row sits in the middle part of the field, the part a panel shows at most widths. */
+const NEAR_ROW = row(260, 250, 45, 22, 0.64);
 
 const GUSTS = GUST_SIZES.map((size, g) => {
   const start = GUST_SIZES.slice(0, g).reduce((a, b) => a + b, 0);
-  return STALKS.slice(start, start + size);
+  return NEAR_ROW.slice(start, start + size);
 });
 
-/** The far village and the rice field along the bottom of the hero. */
+type Stalk = (typeof NEAR_ROW)[number];
+
+function StalkUse({ s, hook }: { s: Stalk; hook?: boolean }) {
+  return (
+    <use
+      data-hero-stalk={hook ? "" : undefined}
+      href={`#${s.shape}`}
+      transform={`translate(${s.x} ${s.y}) scale(${s.scale})`}
+    />
+  );
+}
+
+/**
+ * The far village and the rice field at the bottom of the scene panel. It is 4.73 x the mascot
+ * width, centered, so the horizon is at the mascot's waist.
+ */
 export function HeroField() {
   return (
     <svg
@@ -247,7 +298,7 @@ export function HeroField() {
       preserveAspectRatio="xMidYMax slice"
       aria-hidden="true"
       focusable="false"
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-40 w-full md:h-[clamp(13rem,18vw,18rem)]"
+      className="pointer-events-none absolute bottom-0 left-1/2 h-auto w-[calc(var(--hero-m)*4.73)] max-w-none -translate-x-1/2"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
@@ -259,15 +310,15 @@ export function HeroField() {
               ))}
             </g>
             <path
-              d={`${s.stem}Q${s.panicle[1].join(" ")} ${s.panicle[2].join(" ")}`}
+              d={`${s.stem}Q${s.ear[1].join(" ")} ${s.ear[2].join(" ")}`}
               fill="none"
               stroke={coat}
-              strokeWidth="3"
+              strokeWidth="3.5"
               strokeLinecap="round"
             />
-            <g fill={grain} stroke={earth} strokeWidth="1.5">
-              {grains(...s.panicle).map(({ cx, cy, angle }) => (
-                <ellipse key={`${cx} ${cy}`} cx={cx} cy={cy} rx="3.6" ry="6.6" transform={`rotate(${angle} ${cx} ${cy})`} />
+            <g fill={grain} stroke={earth} strokeWidth="1.6">
+              {grains(...s.ear).map(({ cx, cy, angle }) => (
+                <ellipse key={`${cx} ${cy}`} cx={cx} cy={cy} rx="5" ry="8.6" transform={`rotate(${angle} ${cx} ${cy})`} />
               ))}
             </g>
           </g>
@@ -276,40 +327,26 @@ export function HeroField() {
 
       <path d={VILLAGE_PATH} fill={coat} opacity="0.35" />
 
-      <path d="M0 162Q180 148 360 158T720 156T1080 160T1440 154V260H0Z" fill={straw} />
-      <path
-        d="M0 162Q180 148 360 158T720 156T1080 160T1440 154"
-        fill="none"
-        stroke={earth}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <g fill="none" stroke={coat} strokeWidth="1.5" strokeLinecap="round" opacity="0.45">
-        <path d="M120 176Q420 170 700 178" />
-        <path d="M760 174Q1060 166 1360 172" />
-        <path d="M260 160L200 200M980 160L1040 198" />
+      <path d={`M0 ${HORIZON}${FAR_EDGE}V260H0Z`} fill={straw} />
+      <path d={`M0 ${HORIZON}${FAR_EDGE}`} fill="none" stroke={earth} strokeWidth="1.5" strokeLinejoin="round" />
+      <g>
+        {FAR_ROW.map((s) => (
+          <StalkUse key={s.x} s={s} />
+        ))}
       </g>
 
-      <path d="M0 200Q240 184 480 196T960 194T1440 190V260H0Z" fill={grain} opacity="0.55" />
-      <path d="M0 238Q360 224 720 236T1440 232V260H0Z" fill={grain} />
-      <path
-        d="M0 238Q360 224 720 236T1440 232"
-        fill="none"
-        stroke={earth}
-        strokeWidth="2"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
+      <path d="M0 218Q360 210 720 218T1440 216V260H0Z" fill={grain} opacity="0.55" />
+      <g>
+        {MID_ROW.map((s) => (
+          <StalkUse key={s.x} s={s} />
+        ))}
+      </g>
 
+      <path d="M0 244Q360 236 720 244T1440 242V260H0Z" fill={grain} />
       {GUSTS.map((stalks) => (
         <g key={stalks[0].x} data-hero-gust="">
           {stalks.map((s) => (
-            <use
-              key={s.x}
-              data-hero-stalk=""
-              href={`#${s.shape}`}
-              transform={`translate(${s.x} 260)${s.scale === 1 ? "" : ` scale(${s.scale})`}`}
-            />
+            <StalkUse key={s.x} s={s} hook />
           ))}
         </g>
       ))}

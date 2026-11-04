@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { Hero } from "./Hero";
@@ -53,6 +54,45 @@ describe("Hero", () => {
     expect(scene?.querySelectorAll("[data-hero-gust]")).toHaveLength(5);
     // The old FieldBackdrop strip (viewBox 0 0 1200 160) is gone.
     expect(container.querySelector('svg[viewBox="0 0 1200 160"]')).toBeNull();
+  });
+
+  it("keeps the text side plain: the section has no sky gradient", () => {
+    const { container } = renderHero(null);
+    const section = container.querySelector("section[data-hero-scene]");
+    expect(section).toHaveClass("bg-rice");
+    expect(section?.className).not.toMatch(/from-sky|bg-linear/);
+  });
+
+  it("puts the sky, the clouds and the field in a faded panel behind the mascot only", () => {
+    const { container } = renderHero("0000 000 000");
+    const panel = container.querySelector("[data-hero-panel]");
+    expect(panel).not.toBeNull();
+    expect(panel).toHaveAttribute("aria-hidden", "true");
+    expect(panel).toHaveClass("hero-fade-side");
+    const sky = panel?.querySelector(".hero-fade-bottom");
+    expect(sky?.className).toMatch(/bg-linear-to-b from-sky/);
+    expect(sky?.querySelectorAll("[data-hero-cloud]")).toHaveLength(3);
+    expect(sky?.querySelectorAll("[data-hero-gust]")).toHaveLength(5);
+    expect(panel?.querySelector("h1, a, svg[data-mascot]")).toBeNull();
+  });
+
+  it("anchors the mascot to the bottom of the panel and sizes both from --hero-m", () => {
+    const { container } = renderHero(null);
+    const section = container.querySelector("section[data-hero-scene]");
+    expect(section?.className).toContain("[--hero-m:");
+    const box = container.querySelector("svg[data-mascot]")?.parentElement;
+    expect(box).toHaveClass("w-(--hero-m)", "md:self-end");
+    expect(box?.parentElement).toHaveClass("md:pb-0");
+    expect(container.querySelector("[data-hero-panel]")?.className).toContain("h-[calc(2.5rem+var(--hero-m))]");
+  });
+
+  it("defines the fade masks with and without the -webkit- prefix", () => {
+    const css = readFileSync("src/app/globals.css", "utf8");
+    for (const name of ["hero-fade-side", "hero-fade-bottom"]) {
+      const rule = new RegExp(`\\.${name}\\s*\\{([^}]*)\\}`).exec(css)?.[1] ?? "";
+      expect(rule, name).toMatch(/-webkit-mask-image:\s*linear-gradient/);
+      expect(rule, name).toMatch(/(^|[^-])mask-image:\s*linear-gradient/);
+    }
   });
 
   it("puts the sun in the mascot box, behind the mascot", () => {
