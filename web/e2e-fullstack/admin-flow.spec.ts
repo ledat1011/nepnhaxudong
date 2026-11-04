@@ -102,21 +102,65 @@ test("a draft story is hidden until it is published", async () => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(STORY_TITLE);
 });
 
-test("an uploaded photo appears in the media grid", async ({}, testInfo) => {
-  const jpegPath = testInfo.outputPath("tiny.jpg");
-  writeFileSync(jpegPath, makeTinyJpeg());
+test("two photos picked at once are shrunk in the browser, described once and uploaded", async ({}, testInfo) => {
+  // A real-size phone photo, drawn by the browser: 4000 x 3000 px, with enough detail to weigh several MB.
+  const bigJpeg = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 4000;
+    canvas.height = 3000;
+    const context = canvas.getContext("2d") as CanvasRenderingContext2D;
+    for (let y = 0; y < 3000; y += 20) {
+      for (let x = 0; x < 4000; x += 20) {
+        context.fillStyle = `rgb(${(x * 7 + y) % 256}, ${(x + y * 3) % 256}, ${(x * y) % 256})`;
+        context.fillRect(x, y, 20, 20);
+      }
+    }
+    const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b as Blob), "image/jpeg", 0.95));
+    return Array.from(new Uint8Array(await blob.arrayBuffer()));
+  });
+  const bigPath = testInfo.outputPath("big.jpg");
+  const tinyPath = testInfo.outputPath("tiny.jpg");
+  writeFileSync(bigPath, Buffer.from(bigJpeg));
+  writeFileSync(tinyPath, makeTinyJpeg());
 
   await page.goto(ADMIN_ROUTES.media);
   await page.getByRole("button", { name: "Tải ảnh mới" }).click();
   const form = dialog("Tải ảnh mới");
-  await form.getByLabel("Chọn ảnh").setInputFiles(jpegPath);
-  const alt = form.getByRole("group", { name: /^Mô tả ảnh/ });
-  await alt.getByLabel("Tiếng Việt").fill(ALT_VI);
-  await alt.getByLabel("English").fill(ALT_EN);
-  await form.getByRole("button", { name: "Tải lên" }).click();
-  await expect(form).toBeHidden();
-  // The file is on the list. (Production serves /media through Caddy, so the thumbnail itself may not load here.)
-  await expect(page.locator(`img[alt="${ALT_VI}"]`)).toBeAttached();
+  // The browser does not give Playwright a multipart body with a file, so the page itself notes each file it sends.
+  await page.evaluate(() => {
+    const sent: File[] = [];
+    Object.assign(window, { sentFiles: sent });
+    const send = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function (body) {
+      if (body instanceof FormData) sent.push(body.get("file") as File);
+      return send.call(this, body);
+    };
+  });
+  await form.locator('input[type="file"]').setInputFiles([bigPath, tinyPath]);
+  const first = form.getByRole("group", { name: /^Ảnh 1\b/ });
+  await expect(form.getByRole("group", { name: /^Ảnh 2\b/ })).toBeVisible();
+  await expect(first.getByText("Cần mô tả tiếng Việt và tiếng Anh để tải lên.")).toBeVisible();
+  await first.getByLabel("Tiếng Việt").fill(ALT_VI);
+  await first.getByLabel("English").fill(ALT_EN);
+  await first.getByRole("button", { name: "Dùng mô tả này cho 1 ảnh chưa có mô tả" }).click();
+
+  // The box closes when both photos are up, and both are first in the grid.
+  await expect(form).toBeHidden({ timeout: 30_000 });
+  await expect(page.locator(`img[alt="${ALT_VI}"]`)).toHaveCount(2);
+  const sent = await page.evaluate(async () => {
+    const files = (window as unknown as { sentFiles: File[] }).sentFiles;
+    return Promise.all(
+      files.map(async (file) => {
+        const picture = await createImageBitmap(file);
+        return { type: file.type, size: file.size, width: picture.width, height: picture.height };
+      }),
+    );
+  });
+  expect(sent).toHaveLength(2);
+  expect(sent[0]).toMatchObject({ type: "image/jpeg", width: 2560, height: 1920 });
+  expect(sent[0].size).toBeLessThan(bigJpeg.length);
+  // The small photo is sent as it is.
+  expect(sent[1]).toEqual({ type: "image/jpeg", size: makeTinyJpeg().length, width: 64, height: 64 });
 });
 
 test("restoring the earlier copy of an edit brings the old title back", async () => {
@@ -211,6 +255,27 @@ test("a press item with a 200-character link and a long contact address are save
   await save.click();
   // Lưu turns off again once the API has stored the address.
   await expect(save).toBeDisabled();
+});
+
+test("a to-do row on Tổng quan opens the timeline event at its English title box", async () => {
+  await page.goto(ADMIN_ROUTES.home);
+  // The event was created with a Vietnamese title only.
+  const row = page.getByRole("link", { name: new RegExp(`^Mốc 2031 “\\[E2E\\] Mốc ${run}.*” thiếu tiếng Anh ở Tiêu đề\\.$`) });
+  await expect(row).toBeVisible();
+  await row.click();
+  await expect(page).toHaveURL(/\/admin\/hanh-trinh\?sua=\d+&o=timeline\.title\.en$/);
+  const form = dialog("Sửa mốc");
+  await expect(form).toBeVisible();
+  const english = form.getByRole("group", { name: /^Tiêu đề/ }).getByLabel("English");
+  await expect(english).toBeFocused();
+  await english.fill(`[E2E] Event ${run}`);
+  await form.getByRole("button", { name: "Lưu", exact: true }).click();
+  await expect(form).toBeHidden();
+
+  await page.goto(ADMIN_ROUTES.home);
+  await expect(page.getByRole("heading", { name: /^Việc cần làm/ })).toBeVisible();
+  await expect(page.getByText("Đang kiểm tra nội dung…")).toHaveCount(0);
+  await expect(row).toHaveCount(0);
 });
 
 test("the session is saved for the mobile and accessibility checks", async () => {

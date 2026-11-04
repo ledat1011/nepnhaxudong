@@ -44,7 +44,7 @@ export default function MediaPage() {
         <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tải ảnh mới</DialogTitle>
-            <DialogDescription>Chọn một hoặc nhiều ảnh. Mỗi ảnh tải lên khi đã có mô tả tiếng Việt và tiếng Anh.</DialogDescription>
+            <DialogDescription>Chụp ảnh mới hoặc chọn ảnh có sẵn trong máy.</DialogDescription>
           </DialogHeader>
           <MediaUploader
             multiple
