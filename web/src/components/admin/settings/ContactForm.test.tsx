@@ -145,8 +145,8 @@ describe("ContactForm", () => {
     await waitFor(() => expect(puts()).toHaveLength(1));
     await user.type(phone, "01");
     finish({ ...empty, phone: "09" });
-        expect(phone).toHaveValue("0901");
     await waitFor(() => expect(screen.getByRole("button", { name: "Lưu" })).toBeEnabled());
+    expect(phone).toHaveValue("0901");
   });
 
   it("asks the browser to confirm leaving while there are unsaved changes, and not otherwise", async () => {

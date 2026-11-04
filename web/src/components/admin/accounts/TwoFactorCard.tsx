@@ -9,7 +9,6 @@ import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { adminFetch } from "@/lib/admin/api";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
-import { useAdminSession } from "@/lib/admin/session";
 import type { TotpSetupResponse } from "@/lib/admin/types";
 import { useSave } from "@/lib/admin/use-save";
 
@@ -57,7 +56,6 @@ type Props = {
  */
 export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
   const codeId = useId();
-  const { refresh } = useAdminSession();
   // Shows the new state at once; the parent gives the card a new key when the loaded state changes.
   const [override, setOverride] = useState<boolean | null>(null);
   const enabled = override ?? enabledNow;
@@ -105,7 +103,6 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
     setSwitchingOff(false);
     setCode("");
     setOverride(nowEnabled);
-    await refresh();
     onChanged();
   }
 

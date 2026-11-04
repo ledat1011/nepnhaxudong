@@ -62,10 +62,12 @@ describe("UserList", () => {
     expect(within(row("Chi")).getByText("Đã khóa")).toBeInTheDocument();
   });
 
-  it("has no Khóa button on the row of the signed-in user, and has one on the others", () => {
+  it("has no Khóa and no Đặt lại mật khẩu button on the row of the signed-in user, and has them on the others", () => {
     render(<UserList users={users} onChanged={vi.fn()} />);
     expect(within(row("An")).queryByRole("button", { name: /^Khóa/ })).not.toBeInTheDocument();
+    expect(within(row("An")).queryByRole("button", { name: /^Đặt lại mật khẩu/ })).not.toBeInTheDocument();
     expect(within(row("Bình")).getByRole("button", { name: /^Khóa/ })).toBeInTheDocument();
+    expect(within(row("Bình")).getByRole("button", { name: /^Đặt lại mật khẩu/ })).toBeInTheDocument();
     expect(within(row("Chi")).getByRole("button", { name: /^Mở khóa/ })).toBeInTheDocument();
   });
 
@@ -86,7 +88,7 @@ describe("UserList", () => {
     expect(onChanged).toHaveBeenCalledTimes(1);
   });
 
-  it("sends one change at a time while a request is still running", async () => {
+  it("disables the buttons of every row while a change runs", async () => {
     const user = userEvent.setup();
     let finish: () => void = () => {};
     adminFetch.mockImplementation(() => new Promise<void>((resolve) => (finish = resolve)));
@@ -94,10 +96,11 @@ describe("UserList", () => {
     await user.click(within(row("Bình")).getByRole("button", { name: /^Khóa/ }));
     await user.click(await screen.findByRole("button", { name: "Khóa tài khoản" }));
     await waitFor(() => expect(posts()).toHaveLength(1));
-    await user.click(within(row("Chi")).getByRole("button", { name: /^Mở khóa/ }));
-    await user.click(await screen.findByRole("button", { name: "Mở khóa tài khoản" }));
-    expect(posts()).toHaveLength(1);
+    expect(within(row("Chi")).getByRole("button", { name: /^Mở khóa/ })).toBeDisabled();
+    expect(within(row("Chi")).getByRole("button", { name: /^Đặt lại mật khẩu/ })).toBeDisabled();
+    expect(within(row("Bình")).getByRole("button", { name: /^Khóa/ })).toBeDisabled();
     finish();
+    await waitFor(() => expect(within(row("Chi")).getByRole("button", { name: /^Mở khóa/ })).toBeEnabled());
   });
 
   it("does nothing when the question is answered with Hủy", async () => {

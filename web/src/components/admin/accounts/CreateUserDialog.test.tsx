@@ -50,7 +50,7 @@ describe("CreateUserDialog", () => {
     render(<CreateUserDialog open onOpenChange={vi.fn()} onCreated={onCreated} />);
     await fill(user);
     // The generated password is in the hidden field, not in the text of the page.
-    expect(screen.queryByText(PASSWORD_TEXT)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^Mật khẩu tạm thời/)).toHaveAttribute("type", "password");
     await user.click(screen.getByRole("button", { name: "Tạo tài khoản" }));
     await waitFor(() => expect(posts()).toHaveLength(1));
     const body = posts()[0];
@@ -69,8 +69,48 @@ describe("CreateUserDialog", () => {
     await fill(user);
     await user.click(screen.getByRole("button", { name: "Tạo tài khoản" }));
     expect(await screen.findByText("Email đã được dùng.")).toBeInTheDocument();
-    expect(screen.queryByText(PASSWORD_TEXT)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^Mật khẩu tạm thời/)).toHaveAttribute("type", "password");
+    expect(document.body.textContent).not.toContain(posts()[0].temporaryPassword);
     expect(screen.queryByRole("button", { name: "Sao chép" })).not.toBeInTheDocument();
+  });
+
+  it("keeps password managers from offering to save the temporary password", () => {
+    render(<CreateUserDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
+    const field = screen.getByLabelText(/^Mật khẩu tạm thời/);
+    expect(field).toHaveAttribute("autocomplete", "off");
+    expect(field).toHaveAttribute("data-1p-ignore");
+    expect(field).toHaveAttribute("data-lpignore", "true");
+  });
+
+  it("reloads the list after a failure that is not a 400, because the account may exist", async () => {
+    const user = userEvent.setup();
+    const onCreated = vi.fn();
+    adminFetch.mockRejectedValue(new AdminApiError(503, "Máy chủ đang bận."));
+    render(<CreateUserDialog open onOpenChange={vi.fn()} onCreated={onCreated} />);
+    await fill(user);
+    await user.click(screen.getByRole("button", { name: "Tạo tài khoản" }));
+    expect(await screen.findByText("Máy chủ đang bận.")).toBeInTheDocument();
+    expect(onCreated).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not reload the list after a 400", async () => {
+    const user = userEvent.setup();
+    const onCreated = vi.fn();
+    adminFetch.mockRejectedValue(new AdminApiError(400, "Email không hợp lệ."));
+    render(<CreateUserDialog open onOpenChange={vi.fn()} onCreated={onCreated} />);
+    await fill(user);
+    await user.click(screen.getByRole("button", { name: "Tạo tài khoản" }));
+    expect(await screen.findByText("Email không hợp lệ.")).toBeInTheDocument();
+    expect(onCreated).not.toHaveBeenCalled();
+  });
+
+  it("hints at Đặt lại mật khẩu when the email is already used", async () => {
+    const user = userEvent.setup();
+    adminFetch.mockRejectedValue(new AdminApiError(409, "Email đã được dùng."));
+    render(<CreateUserDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
+    await fill(user);
+    await user.click(screen.getByRole("button", { name: "Tạo tài khoản" }));
+    expect(await screen.findByText(/có thể đã có rồi/)).toBeInTheDocument();
   });
 
   it("clears the password from the state when the dialog closes", async () => {

@@ -74,7 +74,7 @@ describe("TwoFactorCard (switched off)", () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 
-  it("sends the trimmed code, clears the secret and the QR, and refreshes the session", async () => {
+  it("sends the trimmed code, clears the secret and the QR, and does not ask the session for a refresh", async () => {
     const user = userEvent.setup();
     const onChanged = vi.fn();
     const { container } = render(<TwoFactorCard enabled={false} onChanged={onChanged} />);
@@ -86,7 +86,7 @@ describe("TwoFactorCard (switched off)", () => {
     expect(calls("/admin/me/totp/enable")[0][1]).toEqual({ method: "POST", body: { code: "123456" } });
     await waitFor(() => expect(screen.queryByText(setup.secret)).not.toBeInTheDocument());
     expect(container.querySelector("svg")).toBeNull();
-    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(refresh).not.toHaveBeenCalled();
     expect(onChanged).toHaveBeenCalledTimes(1);
     expect(await screen.findByText("Đang bật")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Tắt xác thực 2 lớp" })).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe("TwoFactorCard (switched off)", () => {
 });
 
 describe("TwoFactorCard (switched on)", () => {
-  it("asks for a code to switch it off and refreshes the session", async () => {
+  it("asks for a code to switch it off and leaves the session alone", async () => {
     const user = userEvent.setup();
     const onChanged = vi.fn();
     render(<TwoFactorCard enabled onChanged={onChanged} />);
@@ -149,8 +149,8 @@ describe("TwoFactorCard (switched on)", () => {
     await user.click(screen.getByRole("button", { name: "Xác nhận và tắt" }));
     await waitFor(() => expect(calls("/admin/me/totp/disable")).toHaveLength(1));
     expect(calls("/admin/me/totp/disable")[0][1]).toEqual({ method: "POST", body: { code: "654321" } });
-    await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
-    expect(onChanged).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(refresh).not.toHaveBeenCalled();
     expect(await screen.findByText("Chưa bật")).toBeInTheDocument();
   });
 

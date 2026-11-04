@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { adminFetch } from "@/lib/admin/api";
+import { AdminApiError, isSessionExpired } from "@/lib/admin/errors";
 import { TEMP_PASSWORD_MIN_LENGTH, generateTempPassword } from "@/lib/admin/temp-password";
 import type { CreateUserRequest, UserSummary } from "@/lib/admin/types";
 import { useSave } from "@/lib/admin/use-save";
@@ -46,7 +47,13 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
         displayName: displayName.trim(),
         temporaryPassword: password,
       };
-      await adminFetch<UserSummary>("/admin/users", { method: "POST", body });
+      try {
+        await adminFetch<UserSummary>("/admin/users", { method: "POST", body });
+      } catch (failure) {
+        // Unless the API said the request was wrong, the account may exist now (a lost answer): show the list as it is.
+        if (failure instanceof AdminApiError && failure.status !== 400 && !isSessionExpired(failure)) onCreated();
+        throw failure;
+      }
       // The caller shows this value, so it is exactly the password of the request the server accepted.
       return body.temporaryPassword;
     },
@@ -119,7 +126,9 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
                 <Input
                   id={passwordId}
                   type="password"
-                  autoComplete="new-password"
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
                   value={password}
                   disabled={saving.pending}
                   onChange={(event) => setPassword(event.target.value)}
@@ -135,6 +144,11 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
                 <p className="text-sm text-muted-foreground">Mật khẩu hiện ra một lần sau khi tạo tài khoản.</p>
               </div>
               <ProblemMessage error={saving.error} />
+              {saving.error?.status === 409 ? (
+                <p className="text-sm text-muted-foreground">
+                  Tài khoản này có thể đã có rồi. Hãy xem danh sách; dùng &quot;Đặt lại mật khẩu&quot; để đặt mật khẩu tạm thời mới.
+                </p>
+              ) : null}
               <div className="flex flex-col gap-2">
                 <Button type="button" onClick={() => void create()} disabled={!canCreate}>
                   {saving.pending ? "Đang tạo…" : "Tạo tài khoản"}
