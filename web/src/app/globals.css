@@ -16,6 +16,8 @@
   --animate-overlay-in: overlay-in 150ms ease-out;
   --animate-dialog-in: dialog-in 180ms ease-out;
   --animate-sheet-in: sheet-in 220ms ease-out;
+  /* The page loading bar grows and then holds at 90%: it shows that the wait goes on. */
+  --animate-nav-progress: nav-progress 4s cubic-bezier(0.1, 0.6, 0.3, 1) forwards;
 
   @keyframes overlay-in {
     from {
@@ -31,6 +33,14 @@
   @keyframes sheet-in {
     from {
       transform: translateY(100%);
+    }
+  }
+  @keyframes nav-progress {
+    from {
+      transform: scaleX(0.1);
+    }
+    to {
+      transform: scaleX(0.9);
     }
   }
 }
