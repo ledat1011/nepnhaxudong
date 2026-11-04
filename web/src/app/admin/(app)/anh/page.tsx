@@ -5,6 +5,7 @@ import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { MediaEditDialog } from "@/components/admin/media/MediaEditDialog";
 import { MediaGrid } from "@/components/admin/media/MediaGrid";
 import { MediaUploader } from "@/components/admin/media/MediaUploader";
+import { useUploadDialog } from "@/components/admin/media/use-upload-dialog";
 import { Button } from "@/components/admin/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/admin/ui/dialog";
 import type { MediaAdminDto } from "@/lib/admin/types";
@@ -14,11 +15,11 @@ import { useMediaLibrary } from "@/lib/admin/use-media-library";
 export default function MediaPage() {
   const library = useMediaLibrary();
   const [editing, setEditing] = useState<MediaAdminDto | null>(null);
-  const [uploadOpen, setUploadOpen] = useState(false);
+  const upload = useUploadDialog();
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <Button type="button" onClick={() => setUploadOpen(true)}>
+      <Button type="button" onClick={() => upload.onOpenChange(true)}>
         Tải ảnh mới
       </Button>
       {library.items.length > 0 || !library.loading ? <MediaGrid items={library.items} onSelect={setEditing} /> : null}
@@ -39,20 +40,21 @@ export default function MediaPage() {
         </Button>
       ) : null}
 
-      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+      <Dialog open={upload.open} onOpenChange={upload.onOpenChange}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tải ảnh mới</DialogTitle>
-            <DialogDescription>Mô tả ảnh bằng tiếng Việt và tiếng Anh đều bắt buộc.</DialogDescription>
+            <DialogDescription>Chọn một hoặc nhiều ảnh. Mỗi ảnh tải lên khi đã có mô tả tiếng Việt và tiếng Anh.</DialogDescription>
           </DialogHeader>
           <MediaUploader
-            onUploaded={(media) => {
-              library.added(media);
-              setUploadOpen(false);
-            }}
+            multiple
+            onUploaded={library.added}
+            onPendingChange={upload.setPending}
+            onAllDone={upload.close}
           />
         </DialogContent>
       </Dialog>
+      {upload.confirm}
 
       <MediaEditDialog
         media={editing}

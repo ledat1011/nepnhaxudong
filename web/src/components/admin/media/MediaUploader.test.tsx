@@ -1,49 +1,72 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { MediaAdminDto } from "@/lib/admin/types";
 
-const { adminUpload, requireReLogin } = vi.hoisted(() => ({ adminUpload: vi.fn(), requireReLogin: vi.fn() }));
-vi.mock("@/lib/admin/api", () => ({ adminUpload, adminFetch: vi.fn() }));
+const { uploadWithProgress, shrinkImage, requireReLogin, toastSuccess } = vi.hoisted(() => ({
+  uploadWithProgress: vi.fn(),
+  shrinkImage: vi.fn(),
+  requireReLogin: vi.fn(),
+  toastSuccess: vi.fn(),
+}));
+vi.mock("@/lib/admin/upload-progress", () => ({ uploadWithProgress }));
+vi.mock("./shrink-image", () => ({ shrinkImage }));
 vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin }) }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: { success: toastSuccess } }));
 
 import { MediaUploader } from "./MediaUploader";
 
-const created: MediaAdminDto = {
-  id: 9,
-  url: "/media/9.webp",
-  width: 800,
-  height: 600,
-  mime: "image/webp",
-  altVi: "Gạo",
-  altEn: "Rice",
-};
+function media(id: number, altVi = "Gạo", altEn = "Rice"): MediaAdminDto {
+  return { id, url: `/media/${id}.jpg`, width: 800, height: 600, mime: "image/jpeg", altVi, altEn };
+}
 
-const createObjectURL = vi.fn(() => "blob:preview");
-const revokeObjectURL = vi.fn();
+function jpeg(name = "gao.jpg", bytes = 10): File {
+  return new File([new Uint8Array(bytes)], name, { type: "image/jpeg" });
+}
 
+/** A call that waits until the test settles it. */
+function deferred<T>() {
+  let resolve: (value: T) => void = () => {};
+  let reject: (reason: unknown) => void = () => {};
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes;
+    reject = no;
+  });
+  return { promise, resolve, reject };
+}
+
+let urls = 0;
 beforeEach(() => {
-  adminUpload.mockReset();
+  uploadWithProgress.mockReset();
+  shrinkImage.mockReset();
+  shrinkImage.mockImplementation(async (file: File) => ({ file, shrunk: false }));
   requireReLogin.mockReset();
-  createObjectURL.mockClear();
-  revokeObjectURL.mockClear();
-  Object.assign(URL, { createObjectURL, revokeObjectURL });
+  toastSuccess.mockReset();
+  urls = 0;
+  Object.assign(URL, { createObjectURL: vi.fn(() => `blob:preview-${++urls}`), revokeObjectURL: vi.fn() });
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function jpeg(name = "gao.jpg"): File {
-  return new File(["x"], name, { type: "image/jpeg" });
+function picker() {
+  return screen.getByLabelText("Chụp hoặc chọn ảnh") as HTMLInputElement;
 }
 
-async function fill(events: ReturnType<typeof userEvent.setup>, en = "Rice") {
-  await events.upload(screen.getByLabelText("Chọn ảnh"), jpeg());
-  await events.type(screen.getByLabelText(/Tiếng Việt/), "Gạo");
-  if (en) await events.type(screen.getByLabelText(/English/), en);
+function item(n: number) {
+  return screen.getByRole("group", { name: new RegExp(`^Ảnh ${n}\\b`) });
+}
+
+async function describeItem(events: ReturnType<typeof userEvent.setup>, n: number, vi = "Gạo", en = "Rice") {
+  const box = item(n);
+  if (vi) await events.type(within(box).getByLabelText(/Tiếng Việt/), vi);
+  if (en) await events.type(within(box).getByLabelText(/English/), en);
+}
+
+function sentForm(call: number): FormData {
+  return uploadWithProgress.mock.calls[call][1] as FormData;
 }
 
 function asksBeforeUnload(): boolean {
@@ -53,154 +76,210 @@ function asksBeforeUnload(): boolean {
 }
 
 describe("MediaUploader", () => {
-  it("asks before the page closes while a file or a description is waiting, and not after the upload", async () => {
-    const events = userEvent.setup();
-    adminUpload.mockResolvedValue(created);
-    render(<MediaUploader onUploaded={() => {}} />);
-    expect(asksBeforeUnload()).toBe(false);
-    await events.type(screen.getByLabelText(/English/), "R");
-    expect(asksBeforeUnload()).toBe(true);
-    await events.clear(screen.getByLabelText(/English/));
-    expect(asksBeforeUnload()).toBe(false);
-    await events.upload(screen.getByLabelText("Chọn ảnh"), jpeg());
-    expect(asksBeforeUnload()).toBe(true);
-    await events.type(screen.getByLabelText(/Tiếng Việt/), "Gạo");
-    await events.type(screen.getByLabelText(/English/), "Rice");
-    await events.click(screen.getByRole("button", { name: "Tải lên" }));
-    await waitFor(() => expect(asksBeforeUnload()).toBe(false));
-  });
-
-  it("locks the file and the descriptions while the upload runs", async () => {
-    let finish: (media: MediaAdminDto) => void = () => {};
-    adminUpload.mockReturnValue(new Promise<MediaAdminDto>((resolve) => (finish = resolve)));
-    const events = userEvent.setup();
-    render(<MediaUploader onUploaded={() => {}} />);
-    await fill(events);
-    await events.click(screen.getByRole("button", { name: "Tải lên" }));
-
-    // A file or a text chosen now would be cleared when the upload ends.
-    expect(await screen.findByRole("button", { name: "Đang tải lên…" })).toBeDisabled();
-    expect(screen.getByLabelText("Chọn ảnh")).toBeDisabled();
-    expect(screen.getByLabelText(/Tiếng Việt/)).toBeDisabled();
-    expect(screen.getByLabelText(/English/)).toBeDisabled();
-
-    await act(async () => finish(created));
-    expect(screen.getByLabelText("Chọn ảnh")).toBeEnabled();
-    expect(screen.getByLabelText(/Tiếng Việt/)).toBeEnabled();
-  });
-
-  it("accepts JPEG, PNG and WebP without forcing the camera", () => {
-    render(<MediaUploader onUploaded={() => {}} />);
-    const input = screen.getByLabelText("Chọn ảnh");
-    expect(input).toHaveAttribute("accept", "image/jpeg,image/png,image/webp");
-    expect(input).not.toHaveAttribute("capture");
-  });
-
-  it("disables Upload until a file and both descriptions are given", async () => {
-    const events = userEvent.setup();
-    render(<MediaUploader onUploaded={() => {}} />);
-    const button = screen.getByRole("button", { name: "Tải lên" });
-    expect(button).toBeDisabled();
-    await fill(events, "");
-    expect(button).toBeDisabled();
-    await events.type(screen.getByLabelText(/English/), "Rice");
-    expect(button).toBeEnabled();
-  });
-
-  it("shows a preview and revokes it when the file changes and on unmount", async () => {
-    const events = userEvent.setup();
-    const { unmount } = render(<MediaUploader onUploaded={() => {}} />);
-    await events.upload(screen.getByLabelText("Chọn ảnh"), jpeg("a.jpg"));
-    expect(screen.getByAltText("Xem trước")).toHaveAttribute("src", "blob:preview");
-    await events.upload(screen.getByLabelText("Chọn ảnh"), jpeg("b.jpg"));
-    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+  it("has one big button for the camera or the gallery: any image type, no capture, many files only in a library", () => {
+    const { unmount } = render(<MediaUploader multiple onUploaded={() => {}} />);
+    expect(screen.getByRole("button", { name: "Chụp hoặc chọn ảnh" })).toBeInTheDocument();
+    expect(picker()).toHaveAttribute("accept", "image/*");
+    expect(picker()).not.toHaveAttribute("capture");
+    expect(picker().multiple).toBe(true);
+    expect(screen.getByText(/cần mô tả tiếng Việt và tiếng Anh/)).toBeInTheDocument();
     unmount();
-    expect(revokeObjectURL).toHaveBeenCalledTimes(2);
-  });
-
-  it("checks the file in the browser and never sends a bad one", async () => {
-    const events = userEvent.setup({ applyAccept: false });
     render(<MediaUploader onUploaded={() => {}} />);
-    await events.upload(screen.getByLabelText("Chọn ảnh"), new File(["x"], "a.heic", { type: "" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Ảnh HEIC chưa được hỗ trợ. Hãy chọn ảnh JPEG hoặc PNG.");
-    expect(screen.getByRole("button", { name: "Tải lên" })).toBeDisabled();
-    expect(adminUpload).not.toHaveBeenCalled();
+    expect(picker().multiple).toBe(false);
   });
 
-  it("sends the file and trimmed descriptions, then reports the new image", async () => {
-    adminUpload.mockResolvedValue(created);
+  it("lists every chosen photo with its own description boxes and says which text is still needed", async () => {
+    const events = userEvent.setup();
+    render(<MediaUploader multiple onUploaded={() => {}} />);
+    await events.upload(picker(), [jpeg("a.jpg"), jpeg("b.jpg"), jpeg("c.jpg")]);
+    expect(await screen.findAllByRole("group", { name: /^Ảnh \d/ })).toHaveLength(3);
+    expect(within(item(1)).getByText("Cần mô tả tiếng Việt và tiếng Anh để tải lên.")).toBeInTheDocument();
+    await events.type(within(item(1)).getByLabelText(/Tiếng Việt/), "Gạo");
+    expect(within(item(1)).getByText("Cần mô tả tiếng Anh để tải lên.")).toBeInTheDocument();
+    expect(uploadWithProgress).not.toHaveBeenCalled();
+  });
+
+  it("shrinks the photo, then sends the smaller file with both texts when the user leaves the filled item", async () => {
+    const small = new File([new Uint8Array(3)], "a.jpg", { type: "image/jpeg" });
+    shrinkImage.mockResolvedValue({ file: small, shrunk: true });
+    uploadWithProgress.mockResolvedValue(media(1));
     const onUploaded = vi.fn();
     const events = userEvent.setup();
-    render(<MediaUploader onUploaded={onUploaded} />);
-    await events.upload(screen.getByLabelText("Chọn ảnh"), jpeg());
-    await events.type(screen.getByLabelText(/Tiếng Việt/), "  Gạo ");
-    await events.type(screen.getByLabelText(/English/), "Rice  ");
-    await events.click(screen.getByRole("button", { name: "Tải lên" }));
-    await waitFor(() => expect(onUploaded).toHaveBeenCalledWith(created));
-    const [path, form] = adminUpload.mock.calls[0] as [string, FormData];
-    expect(path).toBe("/admin/media");
-    expect((form.get("file") as File).name).toBe("gao.jpg");
-    expect(form.get("altVi")).toBe("Gạo");
-    expect(form.get("altEn")).toBe("Rice");
-    expect(screen.getByLabelText(/Tiếng Việt/)).toHaveValue("");
-  });
-
-  it("keeps the file and descriptions after a 413 and shows the size message", async () => {
-    adminUpload.mockRejectedValue(new AdminApiError(413, "Ảnh quá lớn. Tối đa 15 MB."));
-    const events = userEvent.setup();
-    render(<MediaUploader onUploaded={() => {}} />);
-    await fill(events);
-    await events.click(screen.getByRole("button", { name: "Tải lên" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Ảnh quá lớn. Tối đa 15 MB.");
-    expect(screen.getByLabelText(/Tiếng Việt/)).toHaveValue("Gạo");
-    expect(screen.getByLabelText(/English/)).toHaveValue("Rice");
-    expect(screen.getByAltText("Xem trước")).toBeInTheDocument();
-  });
-
-  it("shows the detail of a 503 and offers a retry that sends again", async () => {
-    adminUpload.mockRejectedValueOnce(new AdminApiError(503, "Máy chủ đang bận. Hãy thử lại sau.")).mockResolvedValueOnce(created);
-    const onUploaded = vi.fn();
-    const events = userEvent.setup();
-    render(<MediaUploader onUploaded={onUploaded} />);
-    await fill(events);
-    await events.click(screen.getByRole("button", { name: "Tải lên" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Máy chủ đang bận. Hãy thử lại sau.");
-    await events.click(screen.getByRole("button", { name: "Thử lại" }));
-    await waitFor(() => expect(onUploaded).toHaveBeenCalledWith(created));
-    expect(adminUpload).toHaveBeenCalledTimes(2);
-  });
-
-  it("keeps the form on a network failure", async () => {
-    adminUpload.mockRejectedValue(new AdminApiError(0, "Không kết nối được máy chủ. Hãy kiểm tra mạng rồi thử lại."));
-    const events = userEvent.setup();
-    render(<MediaUploader onUploaded={() => {}} />);
-    await fill(events);
-    await events.click(screen.getByRole("button", { name: "Tải lên" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Không kết nối được máy chủ");
-    expect(screen.getByLabelText(/English/)).toHaveValue("Rice");
-  });
-
-  it("clears the old error and the retry label when a new file is picked", async () => {
-    adminUpload.mockRejectedValue(new AdminApiError(503, "Máy chủ đang bận. Hãy thử lại sau."));
-    const events = userEvent.setup();
-    render(<MediaUploader onUploaded={() => {}} />);
-    await fill(events);
-    await events.click(screen.getByRole("button", { name: "Tải lên" }));
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
-    await events.upload(screen.getByLabelText("Chọn ảnh"), jpeg("khac.jpg"));
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Tải lên" })).toBeInTheDocument();
-  });
-
-  it("gives each uploader its own file input id", () => {
-    const { container } = render(
+    render(
       <>
-        <MediaUploader onUploaded={() => {}} />
-        <MediaUploader onUploaded={() => {}} />
+        <MediaUploader multiple onUploaded={onUploaded} />
+        <button type="button">Ở ngoài</button>
       </>,
     );
-    const ids = Array.from(container.querySelectorAll("input[type=file]")).map((input) => input.id);
-    expect(new Set(ids).size).toBe(2);
-    expect(screen.getAllByLabelText("Chọn ảnh")).toHaveLength(2);
+    const original = jpeg("a.jpg", 5000);
+    await events.upload(picker(), original);
+    await describeItem(events, 1, "  Gạo  ", "Rice");
+    expect(uploadWithProgress).not.toHaveBeenCalled();
+    await events.click(screen.getByRole("button", { name: "Ở ngoài" }));
+
+    await waitFor(() => expect(onUploaded).toHaveBeenCalledWith(media(1)));
+    expect(shrinkImage).toHaveBeenCalledWith(original);
+    expect(uploadWithProgress.mock.calls[0][0]).toBe("/admin/media");
+    expect(sentForm(0).get("file")).toBe(small);
+    expect(sentForm(0).get("altVi")).toBe("Gạo");
+    expect(sentForm(0).get("altEn")).toBe("Rice");
+  });
+
+  it("also sends with the Tải lên button of the item", async () => {
+    uploadWithProgress.mockResolvedValue(media(1));
+    const onUploaded = vi.fn();
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={onUploaded} />);
+    await events.upload(picker(), jpeg());
+    await describeItem(events, 1);
+    await events.click(within(item(1)).getByRole("button", { name: "Tải lên" }));
+    await waitFor(() => expect(onUploaded).toHaveBeenCalledTimes(1));
+  });
+
+  it("shows the progress of each photo and locks its boxes while it goes up", async () => {
+    const call = deferred<MediaAdminDto>();
+    uploadWithProgress.mockReturnValue(call.promise);
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={() => {}} />);
+    await events.upload(picker(), jpeg());
+    await describeItem(events, 1);
+    await events.click(within(item(1)).getByRole("button", { name: "Tải lên" }));
+    await waitFor(() => expect(uploadWithProgress).toHaveBeenCalled());
+
+    act(() => uploadWithProgress.mock.calls[0][2].onProgress(0.4));
+    expect(within(item(1)).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "40");
+    expect(within(item(1)).getByText("Đang tải lên 40%")).toBeInTheDocument();
+    expect(within(item(1)).getByLabelText(/English/)).toBeDisabled();
+    expect(within(item(1)).getByLabelText(/Tiếng Việt/)).toBeDisabled();
+    await act(async () => call.resolve(media(1)));
+  });
+
+  it("keeps a failed photo with the reason, and Thử lại sends it again", async () => {
+    uploadWithProgress.mockRejectedValueOnce(new AdminApiError(503, "Máy chủ đang xử lý ảnh khác. Hãy thử lại sau."));
+    uploadWithProgress.mockResolvedValueOnce(media(4));
+    const onUploaded = vi.fn();
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={onUploaded} />);
+    await events.upload(picker(), jpeg());
+    await describeItem(events, 1);
+    await events.click(within(item(1)).getByRole("button", { name: "Tải lên" }));
+    expect(await within(item(1)).findByText("Máy chủ đang xử lý ảnh khác. Hãy thử lại sau.")).toBeInTheDocument();
+    expect(within(item(1)).getByLabelText(/English/)).toHaveValue("Rice");
+
+    await events.click(within(item(1)).getByRole("button", { name: "Thử lại" }));
+    await waitFor(() => expect(onUploaded).toHaveBeenCalledWith(media(4)));
+    expect(uploadWithProgress).toHaveBeenCalledTimes(2);
+  });
+
+  it("removes a failed photo with Bỏ ảnh này", async () => {
+    uploadWithProgress.mockRejectedValue(new AdminApiError(0, "Không kết nối được máy chủ."));
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={() => {}} />);
+    await events.upload(picker(), jpeg());
+    await describeItem(events, 1);
+    await events.click(within(item(1)).getByRole("button", { name: "Tải lên" }));
+    await within(item(1)).findByText("Không kết nối được máy chủ.");
+    await events.click(within(item(1)).getByRole("button", { name: "Bỏ ảnh này" }));
+    expect(screen.queryByRole("group", { name: /^Ảnh 1/ })).not.toBeInTheDocument();
+    expect(asksBeforeUnload()).toBe(false);
+  });
+
+  it("adds an iPhone tip when the API refuses a HEIC photo", async () => {
+    uploadWithProgress.mockRejectedValue(new AdminApiError(415, "Ảnh HEIC chưa được hỗ trợ. Hãy chọn ảnh JPEG hoặc PNG."));
+    // The browser would hide these files from the picker; the test sends them anyway.
+    const events = userEvent.setup({ applyAccept: false });
+    render(<MediaUploader onUploaded={() => {}} />);
+    await events.upload(picker(), new File(["x"], "IMG_1.HEIC", { type: "" }));
+    await describeItem(events, 1);
+    await events.click(within(item(1)).getByRole("button", { name: "Tải lên" }));
+    expect(await within(item(1)).findByText("Ảnh HEIC chưa được hỗ trợ. Hãy chọn ảnh JPEG hoặc PNG.")).toBeInTheDocument();
+    expect(within(item(1)).getByText(/Tương thích nhất/)).toBeInTheDocument();
+  });
+
+  it("does not send a file that is not an image, and offers only to remove it", async () => {
+    // The browser would hide these files from the picker; the test sends them anyway.
+    const events = userEvent.setup({ applyAccept: false });
+    render(<MediaUploader multiple onUploaded={() => {}} />);
+    await events.upload(picker(), new File(["x"], "ghi-chu.pdf", { type: "application/pdf" }));
+    expect(await within(item(1)).findByText("Tệp này không phải là ảnh.")).toBeInTheDocument();
+    expect(within(item(1)).queryByRole("button", { name: "Thử lại" })).not.toBeInTheDocument();
+    expect(within(item(1)).queryByLabelText(/English/)).not.toBeInTheDocument();
+    expect(within(item(1)).getByRole("button", { name: "Bỏ ảnh này" })).toBeInTheDocument();
+  });
+
+  it("refuses a photo that is still over 15 MB after shrinking", async () => {
+    const big = new File(["x"], "to.png", { type: "image/png" });
+    Object.defineProperty(big, "size", { value: 16 * 1024 * 1024 });
+    shrinkImage.mockResolvedValue({ file: big, shrunk: false });
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={() => {}} />);
+    await events.upload(picker(), big);
+    expect(await within(item(1)).findByText("Ảnh quá lớn. Tối đa 15 MB.")).toBeInTheDocument();
+    expect(uploadWithProgress).not.toHaveBeenCalled();
+  });
+
+  it("copies one description to the photos without one, then sends them one at a time", async () => {
+    const first = deferred<MediaAdminDto>();
+    uploadWithProgress.mockReturnValueOnce(first.promise).mockResolvedValueOnce(media(2)).mockResolvedValueOnce(media(3));
+    const onUploaded = vi.fn();
+    const onAllDone = vi.fn();
+    const events = userEvent.setup();
+    render(<MediaUploader multiple onUploaded={onUploaded} onAllDone={onAllDone} />);
+    await events.upload(picker(), [jpeg("a.jpg"), jpeg("b.jpg"), jpeg("c.jpg")]);
+    await screen.findAllByRole("group", { name: /^Ảnh \d/ });
+    await describeItem(events, 1, "Ruộng lúa", "Rice field");
+    await events.click(within(item(1)).getByRole("button", { name: "Dùng mô tả này cho 2 ảnh chưa có mô tả" }));
+
+    expect(within(item(2)).getByLabelText(/English/)).toHaveValue("Rice field");
+    await waitFor(() => expect(uploadWithProgress).toHaveBeenCalledTimes(1));
+    // The second photo waits until the first one is done.
+    expect(within(item(2)).getByText("Đang chờ tải lên…")).toBeInTheDocument();
+    await act(async () => first.resolve(media(1)));
+
+    await waitFor(() => expect(onAllDone).toHaveBeenCalledWith(3));
+    expect(onUploaded.mock.calls.map(([m]) => (m as MediaAdminDto).id)).toEqual([1, 2, 3]);
+    expect(sentForm(2).get("altVi")).toBe("Ruộng lúa");
+    expect(toastSuccess).toHaveBeenCalledWith("Đã tải lên 3 ảnh.");
+  });
+
+  it("asks before the page closes while a photo is not uploaded, and not after", async () => {
+    uploadWithProgress.mockResolvedValue(media(1));
+    const onPendingChange = vi.fn();
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={() => {}} onPendingChange={onPendingChange} />);
+    expect(asksBeforeUnload()).toBe(false);
+    await events.upload(picker(), jpeg());
+    expect(asksBeforeUnload()).toBe(true);
+    expect(onPendingChange).toHaveBeenLastCalledWith(true);
+    await describeItem(events, 1);
+    await events.click(within(item(1)).getByRole("button", { name: "Tải lên" }));
+    await waitFor(() => expect(asksBeforeUnload()).toBe(false));
+    expect(onPendingChange).toHaveBeenLastCalledWith(false);
+    expect(toastSuccess).toHaveBeenCalledWith("Đã tải ảnh lên.");
+  });
+
+  it("in single mode, a new choice replaces the photo that waits for its text", async () => {
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={() => {}} />);
+    await events.upload(picker(), jpeg("a.jpg"));
+    await describeItem(events, 1, "Cũ", "");
+    await events.upload(picker(), jpeg("b.jpg"));
+    await waitFor(() => expect(within(item(1)).getByLabelText(/Tiếng Việt/)).toHaveValue(""));
+    expect(screen.getAllByRole("group", { name: /^Ảnh \d/ })).toHaveLength(1);
+  });
+
+  it("sends again after the user signs in, when the session had expired", async () => {
+    uploadWithProgress
+      .mockRejectedValueOnce(new AdminApiError(401, "Phiên đăng nhập đã hết hạn.", "session-expired"))
+      .mockResolvedValueOnce(media(7));
+    requireReLogin.mockResolvedValue(undefined);
+    const onUploaded = vi.fn();
+    const events = userEvent.setup();
+    render(<MediaUploader onUploaded={onUploaded} />);
+    await events.upload(picker(), jpeg());
+    await describeItem(events, 1);
+    await events.click(within(item(1)).getByRole("button", { name: "Tải lên" }));
+    await waitFor(() => expect(onUploaded).toHaveBeenCalledWith(media(7)));
+    expect(requireReLogin).toHaveBeenCalledTimes(1);
   });
 });
