@@ -691,6 +691,26 @@ describe("StoryForm field errors", () => {
   });
 });
 
+describe("StoryForm English title error", () => {
+  it("goes away once the English text it asks about is deleted", async () => {
+    const message = "Tiêu đề bài viết (tiếng Anh) không được để trống khi đã có nội dung tiếng Anh.";
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") throw new AdminApiError(400, message);
+      return undefined;
+    });
+    const events = userEvent.setup();
+    render(<StoryForm initial={story({ excerpt: { vi: "Tóm tắt", en: "Summary" } })} />);
+    await ready();
+    await events.click(screen.getByRole("tab", { name: "English" }));
+    await events.clear(screen.getByLabelText(TITLE_LABEL));
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(screen.getByLabelText(TITLE_LABEL)).toHaveAttribute("aria-invalid", "true"));
+    await events.clear(screen.getByLabelText("Tóm tắt"));
+    expect(screen.getByLabelText(TITLE_LABEL)).not.toHaveAttribute("aria-invalid");
+  });
+});
+
 describe("StoryForm draft in the browser", () => {
   // 18:20 on 4 November 2026 in Viet Nam.
   const SAVED_AT = Date.UTC(2026, 10, 4, 11, 20);

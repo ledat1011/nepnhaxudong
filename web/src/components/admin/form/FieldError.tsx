@@ -7,7 +7,7 @@ import { NOT_SAVED_NOTICE } from "@/lib/admin/field-errors";
 export function FieldError({ id, message }: { id: string; message: string | null | undefined }) {
   if (!message) return null;
   return (
-    <p id={`${id}-error`} className="text-sm font-medium text-destructive">
+    <p id={`${id}-error`} data-field-error className="text-sm font-medium text-destructive">
       {message}
     </p>
   );

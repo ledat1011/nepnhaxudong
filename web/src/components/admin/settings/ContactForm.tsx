@@ -5,7 +5,7 @@ import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
 import { adminFetch } from "@/lib/admin/api";
-import { fieldOfDetail, langOfDetail, NOT_SAVED_NOTICE, type FieldRule, type Lang } from "@/lib/admin/field-errors";
+import { apiRest, langOfDetail, NOT_SAVED_NOTICE, type FieldRule, type Lang } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import type { ContactSettings, LocalizedText } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
@@ -69,7 +69,12 @@ function fieldRules(state: FormState): FieldRule[] {
     { prefix: "Đường dẫn Messenger", field: "messenger" },
     { prefix: "Đường dẫn bản đồ", field: "mapUrl" },
     { prefix: "Địa chỉ", field: (detail) => `address.${langOfDetail(detail, longBox(state.address))}` },
-    { prefix: "Giờ làm việc", field: (detail) => `hours.${langOfDetail(detail, longBox(state.hours))}` },
+    {
+      prefix: "Giờ làm việc",
+      field: (detail) => `hours.${langOfDetail(detail, longBox(state.hours))}`,
+      // The API calls it "Giờ làm việc"; the box here is "Giờ liên hệ".
+      text: (detail) => detail.replace("Giờ làm việc", "Giờ liên hệ"),
+    },
   ];
 }
 
@@ -97,8 +102,7 @@ function ContactFields({ initial }: { initial: ContactSettings }) {
     return adminFetch<ContactSettings>("/admin/settings/contact", { method: "PUT", body });
   }, {
     onError: (error) => {
-      const field = fieldOfDetail(error.detail, rules);
-      if (field !== null) fields.show({ [field]: error.detail });
+      fields.showApi(error.detail, rules);
     },
   });
 
@@ -125,7 +129,8 @@ function ContactFields({ initial }: { initial: ContactSettings }) {
   }
 
   // An error that names a field is shown under that field, not at the end of the form.
-  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, rules) === null ? saving.error : null;
+  // The part of a failed save that names no field, and errors whose box is not on screen.
+  const saveError = [apiRest(saving.error, rules), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   return (
     <div {...fields.rootProps} className="flex flex-col gap-5">
@@ -172,7 +177,7 @@ function ContactFields({ initial }: { initial: ContactSettings }) {
         onChange={(hours) => patch({ hours })}
         errors={{ vi: fields.errors["hours.vi"], en: fields.errors["hours.en"] }}
       />
-      <ProblemMessage error={saveError} />
+      <ProblemMessage message={saveError} />
       <SaveBar
         dirty={dirty}
         pending={saving.pending}

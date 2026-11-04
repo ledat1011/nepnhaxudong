@@ -12,7 +12,7 @@ import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { adminFetch } from "@/lib/admin/api";
 import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
-import { fieldOfDetail, invalidProps, langOfDetail, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
+import { apiRest, invalidProps, langOfDetail, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import { useAdminSession } from "@/lib/admin/session";
 import type { LocalizedText, PressMentionAdminDto, PressMentionRequest, PressPreviewDto } from "@/lib/admin/types";
@@ -148,8 +148,7 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
       : adminFetch<PressMentionAdminDto>(`/admin/press/${initial.id}`, { method: "PUT", body });
   }, {
     onError: (error) => {
-      const field = fieldOfDetail(error.detail, FIELD_RULES);
-      if (field !== null) fields.show({ [field]: error.detail });
+      fields.showApi(error.detail, FIELD_RULES);
     },
   });
   const deleting = useSave(
@@ -163,7 +162,8 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
   const busy = saving.pending || deleting.pending || leaving;
   // Lưu stays on for a new mention even when boxes are empty: pressing it shows what is missing.
   const canSave = !busy && (initial === undefined || dirty);
-  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, FIELD_RULES) === null ? saving.error : null;
+  // The part of a failed save that names no field, and errors whose box is not on screen.
+  const saveError = [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
   const trimmedUrl = state.url.trim();
 
   async function readPage(raw: string) {
@@ -322,7 +322,7 @@ export function PressForm({ initial, onClose, onChanged }: Props) {
             />
             <SingleImageSection mediaId={state.mediaId} onChange={(mediaId) => patch({ mediaId })} />
 
-            <ProblemMessage error={saveError ?? deleting.error} />
+            <ProblemMessage message={saveError} error={deleting.error} />
             <NotSavedNotice show={fields.hasErrors} />
 
             <div className="flex flex-col gap-2">

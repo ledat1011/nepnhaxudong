@@ -6,7 +6,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { adminFetch } from "@/lib/admin/api";
 import { resetCsrfToken } from "@/lib/admin/csrf";
 import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
-import { fieldOfDetail, type FieldRule } from "@/lib/admin/field-errors";
+import { mapApiDetail, type FieldRule } from "@/lib/admin/field-errors";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
@@ -59,6 +59,7 @@ export function ChangePasswordForm() {
     event.preventDefault();
     if (pending) return;
     setError(null);
+    fields.reset();
     const problems: Record<string, string> = {};
     if (currentPassword === "") problems.current = CURRENT_MISSING_MESSAGE;
     if (newPassword.length < MIN_PASSWORD_LENGTH) problems.new = TOO_SHORT_MESSAGE;
@@ -75,10 +76,10 @@ export function ChangePasswordForm() {
       router.replace(ADMIN_ROUTES.home);
     } catch (caught) {
       const detail = caught instanceof AdminApiError ? caught.detail : GENERIC_ERROR_MESSAGE;
-      const field = fieldOfDetail(detail, FIELD_RULES);
+      const { errors: mapped, rest } = mapApiDetail(detail, FIELD_RULES);
       // A message that names a box is shown under that box; any other message at the top of the form.
-      if (field !== null) fields.show({ [field]: detail });
-      else setError(detail);
+      if (Object.keys(mapped).length > 0) fields.showApi(detail, FIELD_RULES);
+      setError(rest);
       setPending(false);
     }
   }

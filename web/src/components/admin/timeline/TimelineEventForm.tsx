@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { adminFetch } from "@/lib/admin/api";
-import { fieldOfDetail, invalidProps, langOfDetail, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
+import { apiRest, invalidProps, langOfDetail, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import type { LocalizedText, TimelineEventAdminDto, TimelineEventRequest } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
@@ -103,8 +103,7 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
       : adminFetch<TimelineEventAdminDto>(`/admin/timeline/${initial.id}`, { method: "PUT", body });
   }, {
     onError: (error) => {
-      const field = fieldOfDetail(error.detail, FIELD_RULES);
-      if (field !== null) fields.show({ [field]: error.detail });
+      fields.showApi(error.detail, FIELD_RULES);
     },
   });
   const deleting = useSave(
@@ -121,7 +120,8 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
   const busy = saving.pending || deleting.pending || leaving;
   // Lưu stays on for a new event even when boxes are empty: pressing it shows what is missing.
   const canSave = !busy && (initial === undefined || dirty);
-  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, FIELD_RULES) === null ? saving.error : null;
+  // The part of a failed save that names no field, and errors whose box is not on screen.
+  const saveError = [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   async function save() {
     const problems = check(state);
@@ -151,7 +151,10 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
 
   function patch(change: Partial<FormState>) {
     setState((current) => ({ ...current, ...change }));
-    fields.clear(...Object.keys(change).flatMap((key) => [key, `${key}.`]));
+    const cleared = Object.keys(change).flatMap((key) => [key, `${key}.`]);
+    // "Tiêu đề mốc (tiếng Anh) ... khi đã có nội dung tiếng Anh" may no longer hold once the description changes.
+    if (change.description !== undefined) cleared.push("title.en");
+    fields.clear(...cleared);
   }
 
   return (
@@ -196,7 +199,7 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
             />
             <SingleImageSection mediaId={state.mediaId} onChange={(mediaId) => patch({ mediaId })} />
 
-            <ProblemMessage error={saveError ?? deleting.error} />
+            <ProblemMessage message={saveError} error={deleting.error} />
             <NotSavedNotice show={fields.hasErrors} />
 
             <div className="flex flex-col gap-2">

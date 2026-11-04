@@ -74,6 +74,16 @@ describe("CreateUserDialog", () => {
     expect(screen.queryByRole("button", { name: "Sao chép" })).not.toBeInTheDocument();
   });
 
+  it("puts each of several joined API messages under its own box", async () => {
+    const user = userEvent.setup();
+    adminFetch.mockRejectedValue(new AdminApiError(400, "Email quá dài. Tên hiển thị quá dài."));
+    render(<CreateUserDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
+    await fill(user);
+    await user.click(screen.getByRole("button", { name: "Tạo tài khoản" }));
+    await waitFor(() => expect(screen.getByLabelText(/^Email/)).toHaveAccessibleDescription("Email quá dài."));
+    expect(screen.getByLabelText(/^Tên hiển thị/)).toHaveAccessibleDescription("Tên hiển thị quá dài.");
+  });
+
   it("keeps password managers from offering to save the temporary password", () => {
     render(<CreateUserDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
     const field = screen.getByLabelText(/^Mật khẩu tạm thời/);

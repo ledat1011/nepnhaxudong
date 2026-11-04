@@ -1,3 +1,5 @@
+import type { AdminApiError } from "./errors";
+
 /** The error text of each wrong field of a form, by field key (for example "name.vi" or "year"). */
 export type FieldErrors = Readonly<Record<string, string>>;
 
@@ -13,6 +15,8 @@ export const NOT_SAVED_NOTICE = "Chưa lưu. Hãy sửa ô có viền đỏ.";
 export type FieldRule = {
   prefix: string;
   field: string | ((detail: string) => string);
+  /** The text shown under the box, when the form names the field another way than the API. */
+  text?: (detail: string) => string;
 };
 
 /** The field the API message is about, or null when no rule matches. The first matching rule wins. */
@@ -20,6 +24,42 @@ export function fieldOfDetail(detail: string, rules: readonly FieldRule[]): stri
   const rule = rules.find((candidate) => detail.startsWith(candidate.prefix));
   if (rule === undefined) return null;
   return typeof rule.field === "string" ? rule.field : rule.field(detail);
+}
+
+/**
+ * The API joins several validation messages with a space (`handleMethodArgumentNotValid`). Each one is a
+ * sentence that ends with a period, so a period followed by a space and a capital letter starts the next one.
+ */
+export function splitDetail(detail: string): string[] {
+  return detail
+    .split(/(?<=\.)\s+(?=\p{Lu})/u)
+    .map((part) => part.trim())
+    .filter((part) => part !== "");
+}
+
+/**
+ * Each sentence of an API message goes to the field it names. `rest` holds the sentences that name no
+ * field (or null), for the general message of the form.
+ */
+export function mapApiDetail(detail: string, rules: readonly FieldRule[]): { errors: FieldErrors; rest: string | null } {
+  const errors: Record<string, string> = {};
+  const rest: string[] = [];
+  for (const part of splitDetail(detail)) {
+    const rule = rules.find((candidate) => part.startsWith(candidate.prefix));
+    if (rule === undefined) {
+      rest.push(part);
+      continue;
+    }
+    const field = typeof rule.field === "string" ? rule.field : rule.field(part);
+    const text = rule.text?.(part) ?? part;
+    errors[field] = errors[field] === undefined ? text : `${errors[field]} ${text}`;
+  }
+  return { errors, rest: rest.length > 0 ? rest.join(" ") : null };
+}
+
+/** The part of a failed save that is not shown under a field, or null. */
+export function apiRest(error: AdminApiError | null, rules: readonly FieldRule[]): string | null {
+  return error === null ? null : mapApiDetail(error.detail, rules).rest;
 }
 
 /** The language named in brackets in an API message, or `fallback` when the message names none. */

@@ -496,5 +496,63 @@ describe("ProductForm field errors", () => {
     expect(first).not.toHaveAttribute("aria-invalid");
     expect(writeBodies()).toHaveLength(0);
   });
-});
 
+  it("does not check a price that is hidden, so it cannot block the save", async () => {
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    const price = screen.getByLabelText("Giá (VND)");
+    await events.clear(price);
+    await events.type(price, "1.5");
+    await events.click(screen.getByRole("switch", { name: "Hiện giá" }));
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writeBodies()).toHaveLength(1));
+    expect(screen.queryByText("Chưa lưu. Hãy sửa ô có viền đỏ.")).not.toBeInTheDocument();
+  });
+
+  it("clears only the errors of the pack row that the user changed", async () => {
+    const events = userEvent.setup();
+    render(
+      <ProductForm
+        initial={product({
+          packagings: [
+            { weightGrams: 500, priceVnd: null, sortOrder: 0 },
+            { weightGrams: 1000, priceVnd: null, sortOrder: 1 },
+          ],
+        })}
+      />,
+    );
+    const [first, second] = screen.getAllByLabelText(/^Khối lượng/);
+    await events.clear(first);
+    await events.clear(second);
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(second).toHaveAttribute("aria-invalid", "true"));
+    expect(first).toHaveAttribute("aria-invalid", "true");
+    await events.type(first, "250");
+    expect(first).not.toHaveAttribute("aria-invalid");
+    expect(second).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("clears the English name error once the other English text changes", async () => {
+    const message = "Tên sản phẩm (tiếng Anh) không được để trống khi đã có nội dung tiếng Anh.";
+    failPut(message);
+    const events = userEvent.setup();
+    render(<ProductForm initial={product({ description: { vi: "Mô tả", en: "Description" } })} />);
+    const nameEn = within(screen.getByRole("group", { name: "Tên sản phẩm" })).getByLabelText("English");
+    await events.clear(nameEn);
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(nameEn).toHaveAttribute("aria-invalid", "true"));
+    await events.clear(within(screen.getByRole("group", { name: /^Mô tả/ })).getByLabelText("English"));
+    expect(nameEn).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("splits joined API messages: a known field goes under its box, the rest stays at the end", async () => {
+    failPut("Tên sản phẩm (tiếng Việt) không được để trống. Một sản phẩm có tối đa 30 ảnh.");
+    const events = userEvent.setup();
+    render(<ProductForm initial={product()} />);
+    const nameVi = within(screen.getByRole("group", { name: "Tên sản phẩm" })).getByLabelText(/^Tiếng Việt/);
+    await events.clear(nameVi);
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(nameVi).toHaveAccessibleDescription("Tên sản phẩm (tiếng Việt) không được để trống."));
+    expect(screen.getAllByRole("alert").map((node) => node.textContent)).toContain("Một sản phẩm có tối đa 30 ảnh.");
+  });
+});

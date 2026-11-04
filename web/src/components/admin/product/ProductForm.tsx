@@ -12,7 +12,7 @@ import { MediaPicker } from "@/components/admin/media/MediaPicker";
 import { Button } from "@/components/admin/ui/button";
 import { Switch } from "@/components/admin/ui/switch";
 import { adminFetch } from "@/lib/admin/api";
-import { fieldOfDetail, langOfDetail, NOT_SAVED_NOTICE, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
+import { apiRest, langOfDetail, NOT_SAVED_NOTICE, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
@@ -94,7 +94,7 @@ function priceOf(row: PackagingRow): number | null {
 }
 
 /** The pack boxes that the API would refuse, checked here so the error can sit under the right box. */
-function packagingErrors(rows: PackagingRow[]): FieldErrors {
+function packagingErrors(rows: PackagingRow[], showPrice: boolean): FieldErrors {
   const errors: Record<string, string> = {};
   for (const row of rows) {
     const weight = Number(row.weight);
@@ -103,6 +103,8 @@ function packagingErrors(rows: PackagingRow[]): FieldErrors {
     } else if (weight > MAX_WEIGHT_GRAMS) {
       errors[packagingErrorKey(row, "weight")] = "Khối lượng quá lớn.";
     }
+    // A hidden price box cannot be seen or fixed, so it is not checked here; the API still checks what is sent.
+    if (!showPrice) continue;
     const price = priceOf(row);
     if (price !== null && (!Number.isInteger(price) || price < 0)) {
       errors[packagingErrorKey(row, "price")] = "Giá phải là số nguyên không âm.";
@@ -163,8 +165,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
         });
   }, {
     onError: (error) => {
-      const field = fieldOfDetail(error.detail, FIELD_RULES);
-      if (field !== null) fields.show({ [field]: error.detail });
+      fields.showApi(error.detail, FIELD_RULES);
     },
   });
   const deleting = useSave(
@@ -178,7 +179,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   );
 
   async function save() {
-    const problems = packagingErrors(state.packagings);
+    const problems = packagingErrors(state.packagings, state.showPrice);
     if (Object.keys(problems).length > 0) {
       saving.reset();
       fields.show(problems);
@@ -215,15 +216,29 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   }
 
   function patch(change: Partial<FormState>) {
+    const before = state.packagings;
     setState((current) => ({ ...current, ...change }));
-    // The error of a field goes away once the user changes that field.
-    fields.clear(...Object.keys(change).flatMap((key) => [key, `${key}.`]));
+    // The error of a field goes away once the user changes that field. For the packs: only the rows that changed.
+    const keys = Object.keys(change).filter((key) => key !== "packagings");
+    const cleared = keys.flatMap((key) => [key, `${key}.`]);
+    if (change.packagings !== undefined) {
+      const after = change.packagings;
+      for (const row of before) {
+        const now = after.find((other) => other.key === row.key);
+        if (now === undefined || now.weight !== row.weight) cleared.push(packagingErrorKey(row, "weight"));
+        if (now === undefined || now.price !== row.price) cleared.push(packagingErrorKey(row, "price"));
+      }
+    }
+    // "Tên sản phẩm (tiếng Anh) ... khi đã có nội dung tiếng Anh" may no longer hold once other English text changes.
+    if (keys.some((key) => key === "description" || key === "cookingTips" || key === "features")) cleared.push("name.en");
+    fields.clear(...cleared);
   }
 
   // While a new product is created the fields cannot change: the page goes to the new product and would lose the text.
   const locked = baseline === undefined && (saving.pending || leaving);
   // An error that names a field is shown under that field, not here.
-  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, FIELD_RULES) === null ? saving.error : null;
+  // The part of a failed save that names no field, and errors whose box is not on screen.
+  const saveError = [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   return (
     <fieldset {...fields.rootProps} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
@@ -266,7 +281,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
 
       <ImageSection ids={state.mediaIds} onChange={(mediaIds) => patch({ mediaIds })} />
 
-      <ProblemMessage error={saveError ?? deleting.error} />
+      <ProblemMessage message={saveError} error={deleting.error} />
 
       {baseline !== undefined ? (
         <Button

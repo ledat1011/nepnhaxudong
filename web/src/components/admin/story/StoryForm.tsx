@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/admin/ui/
 import { Textarea } from "@/components/admin/ui/textarea";
 import { adminFetch } from "@/lib/admin/api";
 import { AdminApiError } from "@/lib/admin/errors";
-import { fieldOfDetail, invalidProps, langOfDetail, NOT_SAVED_NOTICE, type FieldRule } from "@/lib/admin/field-errors";
+import { apiRest, invalidProps, mapApiDetail, langOfDetail, NOT_SAVED_NOTICE, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
@@ -231,11 +231,11 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
     }
   }, {
     onError: (error) => {
-      const field = fieldOfDetail(error.detail, FIELD_RULES);
-      if (field === null) return;
-      // The box may be on the other tab: show that tab first, then the cursor moves there.
-      setTab(field.endsWith(".en") ? "en" : "vi");
-      fields.show({ [field]: error.detail });
+      const keys = Object.keys(mapApiDetail(error.detail, FIELD_RULES).errors);
+      if (keys.length === 0) return;
+      // The box may be on the other tab: show that tab first (Vietnamese when both), then the cursor moves there.
+      setTab(keys.some((key) => key.endsWith(".vi")) ? "vi" : "en");
+      fields.showApi(error.detail, FIELD_RULES);
     },
   });
   const publishing = useSave(() => adminFetch<StoryAdminDto>(`/admin/stories/${baseline?.id}/publish`, { method: "POST" }), {
@@ -338,6 +338,8 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   function patchLang(lang: Lang, change: Partial<LangFields>) {
     setState((current) => ({ ...current, [lang]: { ...current[lang], ...change } }));
     if (change.title !== undefined) fields.clear(`title.${lang}`);
+    // "Tiêu đề bài viết (tiếng Anh) ... khi đã có nội dung tiếng Anh" may no longer hold once English text changes.
+    if (lang === "en" && Object.keys(change).some((key) => key !== "title")) fields.clear("title.en");
     if (change.slug !== undefined) setConflicts((current) => ({ ...current, [lang]: null }));
   }
 
@@ -373,10 +375,9 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const statusBlocked = busy || dirty;
   // While a new story is created the fields cannot change: the page goes to the new story and would lose the text.
   const locked = baseline === undefined && (saving.pending || leaving);
+  // A slug conflict is shown under the slug box; other errors that name a field under that field.
   const saveError =
-    saving.error === null || saving.error.status === 409 || fieldOfDetail(saving.error.detail, FIELD_RULES) !== null
-      ? null
-      : saving.error;
+    saving.error?.status === 409 ? null : [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   // After the tab of a "Quay lại sửa" target is shown, the cursor goes into its box.
   useEffect(() => {
@@ -482,7 +483,7 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
         ))}
       </Tabs>
 
-      <ProblemMessage error={saveError} />
+      <ProblemMessage message={saveError} />
 
       <SaveBar
         dirty={dirty}

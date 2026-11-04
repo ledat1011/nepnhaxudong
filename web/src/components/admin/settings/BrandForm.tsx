@@ -5,7 +5,7 @@ import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
 import { adminFetch } from "@/lib/admin/api";
-import { fieldOfDetail, langOfDetail, NOT_SAVED_NOTICE, type FieldRule } from "@/lib/admin/field-errors";
+import { apiRest, langOfDetail, NOT_SAVED_NOTICE, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
 import type { BrandSettings, LocalizedText } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
@@ -46,8 +46,7 @@ function BrandFields({ initial }: { initial: BrandSettings }) {
     return adminFetch<BrandSettings>("/admin/settings/brand", { method: "PUT", body });
   }, {
     onError: (error) => {
-      const field = fieldOfDetail(error.detail, rules);
-      if (field !== null) fields.show({ [field]: error.detail });
+      fields.showApi(error.detail, rules);
     },
   });
 
@@ -72,7 +71,8 @@ function BrandFields({ initial }: { initial: BrandSettings }) {
     fields.clear("tagline.");
   }
 
-  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, rules) === null ? saving.error : null;
+  // The part of a failed save that names no field, and errors whose box is not on screen.
+  const saveError = [apiRest(saving.error, rules), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   return (
     <div {...fields.rootProps} className="flex flex-col gap-5">
@@ -82,7 +82,7 @@ function BrandFields({ initial }: { initial: BrandSettings }) {
         onChange={change}
         errors={{ vi: fields.errors["tagline.vi"], en: fields.errors["tagline.en"] }}
       />
-      <ProblemMessage error={saveError} />
+      <ProblemMessage message={saveError} />
       <SaveBar
         dirty={dirty}
         pending={saving.pending}

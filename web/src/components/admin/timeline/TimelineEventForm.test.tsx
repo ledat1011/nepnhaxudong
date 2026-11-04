@@ -241,6 +241,29 @@ describe("TimelineEventForm", () => {
     });
   });
 
+
+  it("clears the English title error once the English description changes", async () => {
+    const message = "Tiêu đề mốc (tiếng Anh) không được để trống khi đã có nội dung tiếng Anh.";
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") throw new AdminApiError(400, message);
+      return undefined;
+    });
+    const user = userEvent.setup();
+    render(
+      <TimelineEventForm
+        initial={{ ...existing(), description: { vi: "Mô tả", en: "Text" } }}
+        onClose={vi.fn()}
+        onChanged={vi.fn()}
+      />,
+    );
+    const titleEn = screen.getAllByLabelText("English")[0];
+    await user.clear(titleEn);
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(titleEn).toHaveAttribute("aria-invalid", "true"));
+    await user.clear(screen.getAllByLabelText("English")[1]);
+    expect(titleEn).not.toHaveAttribute("aria-invalid");
+  });
   it("signs in again on session-expired and sends the same body with the typed text kept", async () => {
     const user = userEvent.setup();
     requireReLogin.mockResolvedValue(undefined);

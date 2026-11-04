@@ -1,6 +1,7 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { FieldError } from "@/components/admin/form/FieldError";
 import { useFieldErrors } from "./use-field-errors";
 
 let api: ReturnType<typeof useFieldErrors> | null = null;
@@ -16,6 +17,7 @@ function Form() {
       <input id="a" aria-invalid={errors.errors.a ? true : undefined} />
       <label htmlFor="b">Ô B</label>
       <input id="b" aria-invalid={errors.errors.b ? true : undefined} />
+      <FieldError id="b" message={errors.errors.b} />
       <button type="button" data-error-target={errors.errors.c ? true : undefined}>
         Thêm
       </button>
@@ -32,6 +34,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   // jsdom has no scrollIntoView of its own.
   delete (Element.prototype as Partial<Element>).scrollIntoView;
 });
@@ -72,3 +75,36 @@ describe("useFieldErrors", () => {
     expect(screen.getByLabelText("Ô B")).toHaveFocus();
   });
 });
+
+describe("useFieldErrors and the API", () => {
+  it("does not take the cursor from a box the user types in when a slow save fails", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(10_000);
+    render(<Form />);
+    act(() => api!.reset());
+    act(() => screen.getByLabelText("Ô B").focus());
+    now.mockReturnValue(12_000);
+    act(() => api!.showApi("Ô A sai.", [{ prefix: "Ô A", field: "a" }]));
+    expect(api!.errors).toEqual({ a: "Ô A sai." });
+    expect(screen.getByLabelText("Ô B")).toHaveFocus();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByLabelText("Ô B")).toHaveFocus();
+  });
+
+  it("still moves to the box when the answer comes fast", () => {
+    vi.spyOn(Date, "now").mockReturnValue(10_000);
+    render(<Form />);
+    act(() => api!.reset());
+    act(() => screen.getByLabelText("Ô B").focus());
+    act(() => api!.showApi("Ô A sai.", [{ prefix: "Ô A", field: "a" }]));
+    expect(screen.getByLabelText("Ô A")).toHaveFocus();
+  });
+
+  it("lists the errors that have no box on screen, so they can still be read", async () => {
+    render(<Form />);
+    act(() => api!.show({ b: "Sai B", hidden: "Giá phải là số nguyên không âm." }));
+    await waitFor(() => expect(api!.unshown).toEqual(["Giá phải là số nguyên không âm."]));
+    act(() => api!.clear("hidden"));
+    expect(api!.unshown).toEqual([]);
+  });
+});
+

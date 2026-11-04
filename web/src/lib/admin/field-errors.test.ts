@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { fieldOfDetail, langOfDetail, withoutFields } from "./field-errors";
+import { apiRest, fieldOfDetail, langOfDetail, mapApiDetail, splitDetail, withoutFields } from "./field-errors";
+import { AdminApiError } from "./errors";
 
 describe("fieldOfDetail", () => {
   const rules = [
@@ -43,3 +44,44 @@ describe("withoutFields", () => {
     expect(withoutFields({ "name.vi": "x", "name.en": "y", year: "z" }, ["name."])).toEqual({ year: "z" });
   });
 });
+
+describe("splitDetail", () => {
+  it("splits the sentences that the API joined with a space", () => {
+    expect(splitDetail("Email không hợp lệ. Tên hiển thị quá dài.")).toEqual(["Email không hợp lệ.", "Tên hiển thị quá dài."]);
+  });
+
+  it("keeps a sentence with a number or a web address in one piece", () => {
+    expect(splitDetail("Đường dẫn bài báo phải bắt đầu bằng http:// hoặc https:// và dài tối đa 2.000 ký tự.")).toHaveLength(1);
+  });
+});
+
+describe("mapApiDetail", () => {
+  const rules = [
+    { prefix: "Email", field: "email" },
+    { prefix: "Tên hiển thị", field: "displayName" },
+    { prefix: "Giờ làm việc", field: "hours.vi", text: (part: string) => part.replace("Giờ làm việc", "Giờ liên hệ") },
+  ];
+
+  it("puts each joined message under its own field", () => {
+    expect(mapApiDetail("Email không hợp lệ. Tên hiển thị quá dài.", rules)).toEqual({
+      errors: { email: "Email không hợp lệ.", displayName: "Tên hiển thị quá dài." },
+      rest: null,
+    });
+  });
+
+  it("keeps the parts that name no field for the general message", () => {
+    expect(mapApiDetail("Email không hợp lệ. Mật khẩu quá dài.", rules)).toEqual({
+      errors: { email: "Email không hợp lệ." },
+      rest: "Mật khẩu quá dài.",
+    });
+    expect(apiRest(new AdminApiError(400, "Email không hợp lệ. Mật khẩu quá dài."), rules)).toBe("Mật khẩu quá dài.");
+    expect(apiRest(null, rules)).toBeNull();
+  });
+
+  it("can write the field name the way the form label says it", () => {
+    expect(mapApiDetail("Giờ làm việc dài tối đa 500 ký tự.", rules).errors).toEqual({
+      "hours.vi": "Giờ liên hệ dài tối đa 500 ký tự.",
+    });
+  });
+});
+

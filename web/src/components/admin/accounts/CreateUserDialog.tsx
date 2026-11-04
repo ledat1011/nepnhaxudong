@@ -10,7 +10,7 @@ import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { adminFetch } from "@/lib/admin/api";
 import { AdminApiError, isSessionExpired } from "@/lib/admin/errors";
-import { fieldOfDetail, invalidProps, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
+import { apiRest, invalidProps, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { TEMP_PASSWORD_MIN_LENGTH, generateTempPassword } from "@/lib/admin/temp-password";
 import type { CreateUserRequest, UserSummary } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
@@ -83,8 +83,7 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
     {
       successMessage: "Đã tạo tài khoản.",
       onError: (error) => {
-        const field = fieldOfDetail(error.detail, FIELD_RULES);
-        if (field !== null) fields.show({ [field]: error.detail });
+        fields.showApi(error.detail, FIELD_RULES);
       },
     },
   );
@@ -93,7 +92,8 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
   const dirty = !done && (email !== "" || displayName !== "" || password !== "");
   // On even with empty boxes: pressing it shows what is missing.
   const canCreate = !saving.pending;
-  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, FIELD_RULES) === null ? saving.error : null;
+  // The part of a failed save that names no field, and errors whose box is not on screen.
+  const saveError = [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   async function create() {
     const problems = check(email, displayName, password);
@@ -211,7 +211,7 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
                 </Button>
                 <p className="text-sm text-muted-foreground">Mật khẩu hiện ra một lần sau khi tạo tài khoản.</p>
               </div>
-              <ProblemMessage error={saveError} />
+              <ProblemMessage message={saveError} />
               <NotSavedNotice show={fields.hasErrors} />
               {saving.error?.status === 409 ? (
                 <p className="text-sm text-muted-foreground">

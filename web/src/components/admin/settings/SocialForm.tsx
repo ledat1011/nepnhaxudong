@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
 import { adminFetch } from "@/lib/admin/api";
-import { fieldOfDetail, NOT_SAVED_NOTICE, type FieldRule } from "@/lib/admin/field-errors";
+import { apiRest, NOT_SAVED_NOTICE, type FieldRule } from "@/lib/admin/field-errors";
 import type { SocialSettings } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
@@ -62,8 +62,7 @@ function SocialFields({ initial }: { initial: SocialSettings }) {
     return adminFetch<SocialSettings>("/admin/settings/social", { method: "PUT", body });
   }, {
     onError: (error) => {
-      const field = fieldOfDetail(error.detail, rules);
-      if (field !== null) fields.show({ [field]: error.detail });
+      fields.showApi(error.detail, rules);
     },
   });
 
@@ -89,7 +88,8 @@ function SocialFields({ initial }: { initial: SocialSettings }) {
   }
 
   // An error that names a field is shown under that field, not at the end of the form.
-  const saveError = saving.error !== null && fieldOfDetail(saving.error.detail, rules) === null ? saving.error : null;
+  // The part of a failed save that names no field, and errors whose box is not on screen.
+  const saveError = [apiRest(saving.error, rules), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   return (
     <div {...fields.rootProps} className="flex flex-col gap-5">
@@ -117,7 +117,7 @@ function SocialFields({ initial }: { initial: SocialSettings }) {
         error={fields.errors.tiktok}
         onChange={(tiktok) => patch({ tiktok })}
       />
-      <ProblemMessage error={saveError} />
+      <ProblemMessage message={saveError} />
       <SaveBar
         dirty={dirty}
         pending={saving.pending}

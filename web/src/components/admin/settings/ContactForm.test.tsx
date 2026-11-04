@@ -139,6 +139,23 @@ describe("ContactForm", () => {
     expect(addressEn).toHaveAccessibleDescription("Địa chỉ dài tối đa 500 ký tự.");
   });
 
+
+  it("names the hours box the way its label does", async () => {
+    const user = userEvent.setup();
+    serve(empty);
+    render(<ContactForm />);
+    const hoursEn = within(await screen.findByRole("group", { name: /Giờ liên hệ/ })).getByLabelText("English");
+    await user.type(hoursEn, "8am");
+    adminFetch.mockImplementation(async (_path: string, init?: { method?: string }) => {
+      if (init?.method === "PUT") throw new AdminApiError(400, "Giờ làm việc (tiếng Việt) không được để trống khi đã có nội dung tiếng Anh.");
+      return empty;
+    });
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    const hoursVi = within(screen.getByRole("group", { name: /Giờ liên hệ/ })).getByLabelText("Tiếng Việt");
+    await waitFor(() =>
+      expect(hoursVi).toHaveAccessibleDescription("Giờ liên hệ (tiếng Việt) không được để trống khi đã có nội dung tiếng Anh."),
+    );
+  });
   it("keeps Lưu off until something changed, and Bỏ thay đổi brings the saved values back after a yes", async () => {
     const user = userEvent.setup();
     serve(filled);
