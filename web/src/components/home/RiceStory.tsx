@@ -86,7 +86,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
           >
             <RiceGrain className="block" />
           </span>
-          <ol data-story-list>
+          <ol data-story-list role="list">
             {STORY_SCENES.map((scene, i) => {
               const { title, text } = sceneText(dict, scene.slug);
               const isLast = i === STORY_SCENES.length - 1;

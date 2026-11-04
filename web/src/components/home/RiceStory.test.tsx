@@ -26,6 +26,8 @@ describe("RiceStory", () => {
     const section = container.querySelector("section[data-rice-story]");
     expect(section).toHaveAttribute("aria-labelledby", "tu-hat-lua");
     expect(container.querySelectorAll("div[data-story-road-wrap] > ol[data-story-list] > li")).toHaveLength(8);
+    // Tailwind's reset removes the list styling, and Safari then drops the list role.
+    expect(container.querySelector("ol[data-story-list]")).toHaveAttribute("role", "list");
   });
 
   it("is one vertical road timeline: no pinned track, no progress bar", () => {
