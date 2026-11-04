@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { NavGuardProvider } from "@/lib/admin/nav-guard";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
 import { AdminHeader } from "./AdminHeader";
@@ -37,10 +38,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-dvh pb-24">
-      <AdminHeader title={screenTitle(pathname)} userName={user.displayName} />
-      <main>{children}</main>
-      <BottomNav />
-    </div>
+    <NavGuardProvider>
+      <div className="min-h-dvh pb-24">
+        <AdminHeader title={screenTitle(pathname)} userName={user.displayName} />
+        <main>{children}</main>
+        <BottomNav />
+      </div>
+    </NavGuardProvider>
   );
 }
