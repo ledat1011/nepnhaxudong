@@ -1,7 +1,9 @@
-// Builds brand/logo/logo-{full,icon,mono}.svg from brand/mascot/mascot-layered.svg and the brand fonts.
-// logo-icon uses brand/mascot/head-full.svg instead: the whole head, without the holes where the rice
-// lies in front of it in the mascot.
-// Run it again (npm run logos) after every change to the mascot; a test fails while the logos are stale.
+// Builds brand/logo/logo-{full,icon,mono}.svg and the brand fonts:
+// - logo-full from the detailed illustration brand/mascot/mascot-layered.svg (large uses);
+// - logo-mono from the simplified logo mascot brand/logo/mascot-logo.svg (small sizes, one-color print);
+// - logo-icon from brand/logo/mascot-logo-head.svg: the logo mascot's whole head, without the holes
+//   where the rice lies in front of it.
+// Run it again (npm run logos) after every change to a mascot; a test fails while the logos are stale.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import opentype from 'opentype.js';
@@ -10,7 +12,8 @@ import { contentBBox, visibleBBox } from './lib/svg-check.mjs';
 
 const brandDir = new URL('../', import.meta.url);
 const mascotPath = fileURLToPath(new URL('mascot/mascot-layered.svg', brandDir));
-const headFullPath = fileURLToPath(new URL('mascot/head-full.svg', brandDir));
+const logoMascotPath = fileURLToPath(new URL('logo/mascot-logo.svg', brandDir));
+const logoMascotHeadPath = fileURLToPath(new URL('logo/mascot-logo-head.svg', brandDir));
 const fontsDir = fileURLToPath(new URL('fonts/', brandDir));
 const logoDir = fileURLToPath(new URL('logo/', brandDir));
 const tokens = JSON.parse(readFileSync(fileURLToPath(new URL('tokens/tokens.json', brandDir)), 'utf8'));
@@ -29,9 +32,9 @@ const TAGLINE_WIDTH = 0.86 * MASCOT_SIZE;
 const TAGLINE_GAP = 22;
 const TAGLINE_LETTER_SPACING = 0.16;
 
-// These three only act on a stroked, hand-drawn head (lines and eye ellipses). The traced head-full.svg
-// is filled paths only, so for it they do nothing; they stay for a future simplified logo mascot.
-const ICON_STROKE_SCALE = 1.9;
+// These three only act on stroked lines and eye ellipses in the icon's head. The head of
+// mascot-logo-head.svg is traced (filled paths only), so for it they do nothing today.
+const ICON_STROKE_SCALE = 1.3;
 const ICON_EYE_SCALE = 1.35;
 const ICON_DETAIL_STROKE = 4;
 const ICON_DISC_SCALE = 1.04;
@@ -251,18 +254,25 @@ export function monoMascot(source) {
   );
 }
 
-export function buildLogos() {
-  const source = readFileSync(mascotPath, 'utf8');
-  const mascot = parseSync(source);
+// logo-mono takes the frame of logo-full, so the two can swap in any layout.
+const logoFrame = (words) => frameViewBox(fullMascot(parseSync(readFileSync(mascotPath, 'utf8'))) + words);
+
+// The logo mascot in color with the wordmark, in the frame of logo-mono: what logo-mono must match
+// in one color (a test compares the two).
+export function monoReference() {
   const words = wordmark();
-  const full = fullMascot(mascot) + words;
-  // logo-mono takes the frame of logo-full, so the two can swap in any layout.
-  const viewBox = frameViewBox(full);
+  return wrap(logoFrame(words), fullMascot(parseSync(readFileSync(logoMascotPath, 'utf8'))) + words);
+}
+
+export function buildLogos() {
+  const words = wordmark();
+  const full = fullMascot(parseSync(readFileSync(mascotPath, 'utf8'))) + words;
+  const viewBox = logoFrame(words);
   const monoWords = words.replace(new RegExp(color('nau-ao'), 'g'), color('nau-dat'));
   return {
     'logo-full.svg': wrap(viewBox, full),
-    'logo-icon.svg': iconLogo(parseSync(readFileSync(headFullPath, 'utf8'))),
-    'logo-mono.svg': wrap(viewBox, monoMascot(source) + monoWords),
+    'logo-icon.svg': iconLogo(parseSync(readFileSync(logoMascotHeadPath, 'utf8'))),
+    'logo-mono.svg': wrap(viewBox, monoMascot(readFileSync(logoMascotPath, 'utf8')) + monoWords),
   };
 }
 

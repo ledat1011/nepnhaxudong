@@ -200,7 +200,8 @@ test('rotateGroups xoay nhom quanh data-pivot', () => {
 });
 
 const mascotPath = fileURLToPath(new URL('../../mascot/mascot-layered.svg', import.meta.url));
-const headFullPath = fileURLToPath(new URL('../../mascot/head-full.svg', import.meta.url));
+const logoMascotPath = fileURLToPath(new URL('../../logo/mascot-logo.svg', import.meta.url));
+const logoMascotHeadPath = fileURLToPath(new URL('../../logo/mascot-logo-head.svg', import.meta.url));
 const ANIMATED = { head: 3, rice: 6 };
 
 const pivotOf = (facts, id) => {
@@ -249,9 +250,9 @@ test('mascot dung mau, khong the cam, nhe', () => {
 // color (Trang gao) is left transparent, not painted.
 const TRACED_ATTRIBUTES = new Set(['d', 'fill', 'transform']);
 
-test('mascot va head-full: chi gom path to mau, nen trong suot', () => {
+test('mascot: chi gom path to mau, nen trong suot', () => {
   const background = readTokens().color['trang-gao'].value.toLowerCase();
-  for (const file of [mascotPath, headFullPath]) {
+  for (const file of [mascotPath]) {
     const root = parseSync(readFileSync(file, 'utf8'));
     const groups = root.children.filter((child) => child.type === 'element');
     const visit = (node, where) => {
@@ -308,7 +309,7 @@ test('mascot: toc den chi trong head, vien van Nau dat', () => {
   }
 });
 
-const HEAD_FULL_SIZE = 512;
+const HEAD_SIZE = 512;
 // A few pixels of antialiasing can touch between two shapes; a real loose piece is far larger.
 const SPECK_PIXELS = 24;
 
@@ -364,16 +365,99 @@ test('alphaFacts dem lo kin va manh roi', () => {
   assert.equal(facts.pieces.filter((n) => n > SPECK_PIXELS).length, 2);
 });
 
-test('head-full: dau day du cho logo-icon, khong lo, mot khoi', () => {
-  const facts = svgFacts(headFullPath);
-  assert.equal(facts.viewBox, `0 0 ${HEAD_FULL_SIZE} ${HEAD_FULL_SIZE}`);
+// ---------- logo mascot: the simplified mascot for logo-mono and logo-icon ----------
+
+// Hand-drawn body / rice / hands with stroked outlines and a traced head: about 21 KB. The limit
+// keeps it a small, simplified drawing (the detailed mascot-layered.svg is about 88 KB).
+const LOGO_MASCOT_MAX_BYTES = 30 * 1024;
+// What the logo mascot's elements may carry: geometry, fill, stroke (its outlines are strokes) and
+// the animation attributes of #head / #rice. Anything else could paint in a way the logos do not handle.
+const LOGO_MASCOT_ATTRIBUTES = new Set([
+  'd', 'fill', 'stroke', 'stroke-width', 'stroke-linejoin', 'stroke-linecap', 'cx', 'cy', 'r', 'id', 'data-pivot', 'style',
+]);
+
+test('logo mascot: viewBox, nhom dung thu tu, dung mau, khong the cam, nhe', () => {
+  const facts = svgFacts(logoMascotPath);
+  assert.equal(facts.viewBox, '0 0 512 512');
+  assert.deepEqual(facts.topLevel, ['body', 'rice', 'hands', 'head'].map((id) => ({ tag: 'g', id })), 'nhom cap 1 sai');
+  const allowed = palette();
+  assert.deepEqual([...facts.colors].filter((c) => !allowed.has(c)), [], 'mau ngoai bang');
+  for (const tag of ['image', 'text', 'script', 'style', 'foreignObject', 'linearGradient', 'radialGradient']) {
+    assert.ok(!facts.tags.has(tag), `co the <${tag}>`);
+  }
+  assert.deepEqual(facts.hrefs, [], 'co href');
+  assert.ok(facts.bytes <= LOGO_MASCOT_MAX_BYTES, `${facts.bytes} byte`);
+});
+
+test('logo mascot: chi path / circle, thuoc tinh trong danh sach (cho phep stroke), toc chi trong head', () => {
+  const { color } = readTokens();
+  const [hair, background] = [color.toc.value, color['trang-gao'].value].map((c) => c.toLowerCase());
+  const root = parseSync(readFileSync(logoMascotPath, 'utf8'));
+  const visit = (node, group) => {
+    for (const child of node.children.filter((c) => c.type === 'element')) {
+      const inGroup = group ?? child.attributes.id;
+      const where = `g#${inGroup}`;
+      assert.ok(['g', 'path', 'circle'].includes(child.name), `${where} co the <${child.name}>`);
+      const extra = Object.keys(child.attributes).filter((key) => !LOGO_MASCOT_ATTRIBUTES.has(key));
+      assert.deepEqual(extra, [], `${where} co thuoc tinh ${extra.join(', ')}`);
+      const paints = [child.attributes.fill, child.attributes.stroke].map((c) => c?.toLowerCase());
+      assert.ok(!paints.includes(background), `${where} to mau nen`);
+      if (inGroup !== 'head') assert.ok(!paints.includes(hair), `${where} co mau toc`);
+      visit(child, inGroup);
+    }
+  };
+  visit(root, undefined);
+  assert.equal(root.attributes.stroke, color['nau-dat'].value, 'vien phai la Nau dat');
+});
+
+test('logo mascot: pivot head / rice giong mascot-layered, khop transform-origin, nam trong nhom', () => {
+  const facts = svgFacts(logoMascotPath);
+  const detailed = svgFacts(mascotPath);
+  const svg = readFileSync(logoMascotPath, 'utf8');
+  for (const id of Object.keys(ANIMATED)) {
+    const pivot = pivotOf(facts, id);
+    assert.deepEqual(pivot, pivotOf(detailed, id), `pivot ${id} khac mascot-layered`);
+    assert.ok(inside(pivot, contentBBox(svg, id)), `pivot ${id} nam ngoai khung nhom`);
+  }
+});
+
+test('mascot-logo-head: dau day du cho logo-icon, khong lo, mot khoi', () => {
+  const facts = svgFacts(logoMascotHeadPath);
+  assert.equal(facts.viewBox, `0 0 ${HEAD_SIZE} ${HEAD_SIZE}`);
   assert.deepEqual(facts.topLevel, [{ tag: 'g', id: 'head' }]);
   const allowed = palette();
   assert.deepEqual([...facts.colors].filter((c) => !allowed.has(c)), [], 'mau ngoai bang');
-  const { enclosed, pieces } = alphaFacts(readFileSync(headFullPath, 'utf8'), HEAD_FULL_SIZE);
+  const { enclosed, pieces } = alphaFacts(readFileSync(logoMascotHeadPath, 'utf8'), HEAD_SIZE);
   assert.equal(enclosed, 0, `${enclosed} px lo trong dau`);
   const big = pieces.filter((n) => n > SPECK_PIXELS);
   assert.equal(big.length, 1, `dau gom ${big.length} manh: ${big.join(', ')} px`);
+});
+
+test('logo mascot sinh tu build-logo-mascot.mjs (chay npm run logo-mascot sau khi sua hinh ve)', async () => {
+  const { buildLogoMascot, committedHead } = await import('../build-logo-mascot.mjs');
+  const built = buildLogoMascot(committedHead());
+  for (const [name, file] of [['mascot-logo.svg', logoMascotPath], ['mascot-logo-head.svg', logoMascotHeadPath]]) {
+    const onDisk = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+    assert.ok(onDisk === built[name], `${name} cu, chay npm run logo-mascot`);
+  }
+});
+
+const traceHeadPath = fileURLToPath(new URL('../trace-logo-head.py', import.meta.url));
+const logoMascotBuilderPath = fileURLToPath(new URL('../build-logo-mascot.mjs', import.meta.url));
+
+test('trace-logo-head.py: doc nguon qua read_source (kiem SHA-256), khong co duong dan may', () => {
+  const script = readFileSync(traceHeadPath, 'utf8');
+  const header = script.slice(0, script.indexOf('"""', 3));
+  assert.match(header, /approved on 2026-11-03/, 'thieu ghi chu nguon anh');
+  assert.match(script, /vm\.read_source\(/, 'phai doc nguon qua read_source cua vectorize-mascot.py');
+  const vectorize = readFileSync(vectorizePath, 'utf8');
+  const readSource = vectorize.slice(vectorize.indexOf('def read_source'), vectorize.indexOf('def main'));
+  assert.match(readSource, /!= SOURCE_SHA256/, 'read_source phai kiem SHA-256');
+  for (const file of [traceHeadPath, logoMascotBuilderPath]) {
+    for (const local of [/\b[A-Za-z]:\\/, /AppData/i, /scratchpad/i, /\/(Users|home)\//]) {
+      assert.doesNotMatch(readFileSync(file, 'utf8'), local, `${file} co duong dan may ${local}`);
+    }
+  }
 });
 
 test('mascot: pivot head / rice khop transform-origin va nam trong nhom', () => {
@@ -405,13 +489,17 @@ test('mascot: xoay head / rice khong lo nen', () => {
   }
 });
 
-test('mascot: xoay head / rice van nam trong viewBox', () => {
-  const svg = readFileSync(mascotPath, 'utf8');
-  for (const sign of [1, -1]) {
-    const angles = Object.fromEntries(Object.entries(ANIMATED).map(([id, deg]) => [id, sign * deg]));
-    const box = contentBBox(rotateGroups(svg, angles));
-    assert.ok(box.x >= 0 && box.y >= 0, `goc ${sign > 0 ? '+' : '-'}: tran trai/tren ${JSON.stringify(box)}`);
-    assert.ok(box.x + box.width <= 512, `goc ${sign > 0 ? '+' : '-'}: tran phai ${JSON.stringify(box)}`);
+test('mascot va logo mascot: xoay head / rice van nam trong viewBox', () => {
+  for (const file of [mascotPath, logoMascotPath]) {
+    const svg = readFileSync(file, 'utf8');
+    const name = file.split(/[\\/]/).pop();
+    for (const sign of [1, -1]) {
+      const angles = Object.fromEntries(Object.entries(ANIMATED).map(([id, deg]) => [id, sign * deg]));
+      const box = contentBBox(rotateGroups(svg, angles));
+      const where = `${name} goc ${sign > 0 ? '+' : '-'}`;
+      assert.ok(box.x >= 0 && box.y >= 0, `${where}: tran trai/tren ${JSON.stringify(box)}`);
+      assert.ok(box.x + box.width <= 512, `${where}: tran phai ${JSON.stringify(box)}`);
+    }
   }
 });
 
@@ -455,18 +543,25 @@ test('logo: co viewBox, khong the cam, href noi bo, id duy nhat, nhe', () => {
   }
 });
 
-// Size budget follows the mascot (whose own test caps it at MASCOT_MAX_BYTES): logo-full = mascot + the two
-// text outlines; logo-mono = one recolored copy of the same mascot inside a mask, so it may not grow
-// past logo-full by more than a fixed overhead; logo-icon is part of the head.
+// Size budgets follow the mascot each logo is built from: logo-full = the detailed mascot
+// (mascot-layered.svg) + the two text outlines; logo-mono = one recolored copy of the logo mascot
+// (mascot-logo.svg) inside a mask + the text, with a fixed overhead for the mask; logo-icon = the
+// logo mascot's head (mascot-logo-head.svg) + the disc and the frame.
 const WORDMARK_BUDGET = 24 * 1024;
 const MONO_OVERHEAD = 2 * 1024;
+const ICON_OVERHEAD = 1024;
 
-test('logo: kich thuoc theo mascot, khong lon theo so phan tu', () => {
-  const mascotBytes = statSync(mascotPath).size;
+test('logo: kich thuoc theo mascot nguon, khong lon theo so phan tu', () => {
+  const [mascotBytes, logoMascotBytes, headBytes] = [mascotPath, logoMascotPath, logoMascotHeadPath].map(
+    (file) => statSync(file).size,
+  );
   const bytes = Object.fromEntries(LOGOS.map((file) => [file, svgFacts(logoDir + file).bytes]));
   assert.ok(bytes['logo-full.svg'] <= mascotBytes + WORDMARK_BUDGET, `logo-full ${bytes['logo-full.svg']} byte`);
-  assert.ok(bytes['logo-mono.svg'] <= bytes['logo-full.svg'] + MONO_OVERHEAD, `logo-mono ${bytes['logo-mono.svg']} byte`);
-  assert.ok(bytes['logo-icon.svg'] <= mascotBytes, `logo-icon ${bytes['logo-icon.svg']} byte`);
+  assert.ok(
+    bytes['logo-mono.svg'] <= logoMascotBytes + WORDMARK_BUDGET + MONO_OVERHEAD,
+    `logo-mono ${bytes['logo-mono.svg']} byte`,
+  );
+  assert.ok(bytes['logo-icon.svg'] <= headBytes + ICON_OVERHEAD, `logo-icon ${bytes['logo-icon.svg']} byte`);
 });
 
 test('logo: noi dung ve ra nam trong viewBox', () => {
@@ -499,22 +594,23 @@ const DARK_TOLERANCE = 24;
 const EDGE_RADIUS = 1;
 const MAX_MONO_MISMATCH = 0.01;
 
-// Pixels of the mascot area of logo-full (dark = Nâu đất or the black hair, or not) against the ink
-// of logo-mono, rendered on the same grid. Mono must keep exactly the dark areas: a color area that
+// Pixels of the mascot area of the color logo mascot in the logo-mono frame (monoReference(); dark =
+// Nâu đất or the black hair, or not) against the ink of logo-mono, rendered on the same grid. Mono must keep exactly the dark areas: a color area that
 // turns solid dark, or a dark area that is lost, shows up as mismatching pixels. Antialiased edges differ by about one
 // pixel between the two renders, so a pixel only counts when no pixel within EDGE_RADIUS of it in
 // the other render agrees.
-test('logo-mono: muc giong vung Nau dat cua logo-full', () => {
+test('logo-mono: muc giong vung Nau dat cua logo mascot mau', async () => {
+  const { monoReference } = await import('../build-logos.mjs');
   const full = svgFacts(logoDir + 'logo-full.svg');
   const mono = svgFacts(logoDir + 'logo-mono.svg');
   assert.equal(mono.viewBox, full.viewBox, 'logo-mono phai dung chung viewBox voi logo-full');
-  const [vx, vy, vw] = viewBoxOf(full);
-  const render = (file) =>
-    new Resvg(readFileSync(logoDir + file, 'utf8'), { fitTo: { mode: 'width', value: MONO_SCALE_WIDTH } }).render();
-  const [a, b] = [render('logo-full.svg'), render('logo-mono.svg')];
+  const [vx, vy, vw] = viewBoxOf(mono);
+  const render = (svg) => new Resvg(svg, { fitTo: { mode: 'width', value: MONO_SCALE_WIDTH } }).render();
+  const reference = monoReference();
+  const [a, b] = [render(reference), render(readFileSync(logoDir + 'logo-mono.svg', 'utf8'))];
   const { width, height } = a;
   const scale = width / vw;
-  const area = full.elements.mascot.attributes;
+  const area = parseSync(reference).children.find((child) => child.attributes?.id === 'mascot').attributes;
   const x0 = Math.max(0, Math.floor((Number(area.x) - vx) * scale));
   const y0 = Math.max(0, Math.floor((Number(area.y) - vy) * scale));
   const x1 = Math.min(width, Math.ceil((Number(area.x) + Number(area.width) - vx) * scale));
@@ -548,7 +644,7 @@ test('logo-mono: muc giong vung Nau dat cua logo-full', () => {
       if (isDark[p] && !isInk[p] && !near(isInk, x, y, 1)) lostInk++;
     }
   }
-  assert.ok(darkCount > 0, 'logo-full khong co vung Nau dat');
+  assert.ok(darkCount > 0, 'logo mascot khong co vung Nau dat');
   const ratio = (extraInk + lostInk) / darkCount;
   assert.ok(
     ratio <= MAX_MONO_MISMATCH,

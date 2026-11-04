@@ -1,4 +1,4 @@
-"""Builds brand/mascot/mascot-layered.svg and head-full.svg from the approved mascot illustration.
+"""Builds brand/mascot/mascot-layered.svg from the approved mascot illustration.
 
 Source: an AI-generated raster illustration (1024 x 1024 PNG, girl with a nón lá holding a rice
 sheaf) that the owner approved on 2026-11-03. The PNG is not kept in the repository: the owner keeps
@@ -6,7 +6,7 @@ a copy outside it, and that copy must be kept, since every rule below fits this 
 script stops when the input's SHA-256 is not SOURCE_SHA256 (--any-source skips the check, for a new
 image whose zones are measured again).
 
-    python vectorize-mascot.py SOURCE.png OUT.svg [--head-full HEAD.svg] [--debug DIR] [--any-source]
+    python vectorize-mascot.py SOURCE.png OUT.svg [--debug DIR] [--any-source]
 
 Steps:
 1. Classify every pixel to one of the source colors (ANCHORS), in CIE Lab. A pixel between two
@@ -21,8 +21,9 @@ Steps:
 5. Smooth each part (3 x 3 majority; the drawn pixels are kept as drawn), trace it on its own with
    vtracer, snap each color to the brand palette, scale to 512 x 512 and write compact relative
    path data.
-6. Write head-full.svg for logo-icon: the head with the pixels the rice hides painted in, cut below
-   the chin (head_full()). The mascot's own head keeps those holes, since the leaves lie in front.
+
+trace-logo-head.py reads the same source through read_source() and reuses these steps for the
+head of the simplified logo mascot.
 
 Needs Python 3 with the versions in requirements-mascot.txt (pip install -r requirements-mascot.txt).
 Another vtracer version may trace differently, so the script warns about it.
@@ -206,16 +207,6 @@ LOW_REGION = [(630, 876)] + SLEEVE_EDGE + [(1000, 850), (1000, 1040), (630, 1040
 WATERMARK = [(900, 872), (934, 904), (902, 936), (875, 903)]
 # Width of the hands' own outline: darker hand pixels farther from the skin over the straws go.
 HAND_OUTLINE = 8
-
-# The whole head for logo-icon: the head part closed with this radius (it takes in the brim and
-# hair the rice hides, and the loose brim bits between the leaves), cut at HEAD_FULL_CUT (below the
-# chin, so the long hair does not make the icon tall), outlined HEAD_FULL_OUTLINE wide where guessed.
-HEAD_FULL_CLOSE = 64
-HEAD_FULL_CUT = 515
-HEAD_FULL_OUTLINE = 7
-# The closed head is smoothed with a box filter this wide, so leaf outline bits that stick out go
-# and the guessed brim edge is an even curve.
-HEAD_FULL_BLUR = 21
 
 # Extra paint under the parts above, in source pixels.
 UNDER_LAYER = 14
@@ -495,42 +486,6 @@ def extend(part, color):
         colors[p] = spread(colors[p], masks[p], under)
         masks[p] |= under
     return masks, colors
-
-
-def largest_region(mask):
-    if not mask.any():
-        raise SystemExit('no head pixels: wrong source image?')
-    ids, regions = components(mask.astype(np.int8))
-    best = max((rid for rid, r in enumerate(regions) if r['value']), key=lambda rid: regions[rid]['area'])
-    return ids == best
-
-
-def head_full(part, color):
-    """The whole head for logo-icon: the head part with the pixels the rice hides painted in (hat
-    under the brim, hair, skin), cut below the chin, as one piece. Returns (mask, color)."""
-    head = part == HEAD
-    rows = np.arange(SOURCE_SIZE)[:, None]
-    full = fill_holes(erode(dilate(head, HEAD_FULL_CLOSE), HEAD_FULL_CLOSE) | head)
-    # Box filter, then keep the pixels more than half inside: a smoothed silhouette.
-    full = (box_mean(full.astype(float), HEAD_FULL_BLUR) >= 0.5) & (rows < HEAD_FULL_CUT)
-    full = fill_holes(largest_region(full))
-    # Hat ribs (gold) are thin lines, not a fill to extend.
-    fills = head & ~np.isin(color, [BRAND.index(DARK), BRAND.index(GOLD)])
-    guessed = full & ~head
-    # Through the head's outlines too, so a guessed area that they close off still gets a color.
-    painted = spread(np.where(fills, color, -1), fills, guessed | (head & ~fills))
-    colors = np.where(head, color, painted)
-    # Outlines along the whole smoothed silhouette and the cut, and where two fill colors meet in
-    # the guessed areas (hat brim against hair or face).
-    border = full & dilate(~full, HEAD_FULL_OUTLINE)
-    fill_color = np.where(fills | guessed, colors, -1)
-    seam = np.zeros_like(full)
-    for dy, dx in ((1, 0), (0, 1)):
-        moved = shift(fill_color, dy, dx)
-        seam |= (moved != fill_color) & (moved >= 0) & (fill_color >= 0)
-    seam = dilate(seam & guessed, HEAD_FULL_OUTLINE // 2) & guessed
-    colors = np.where(border | seam, BRAND.index(DARK), colors)
-    return full, np.where(full, colors, -1)
 
 
 def write_svg(path, body):
@@ -961,30 +916,34 @@ def save_debug(directory, part, masks, colors):
         Image.fromarray(img).save(directory / f'part-{name}.png')
 
 
-def main(argv):
-    parser = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    parser.add_argument('source')
-    parser.add_argument('out')
-    parser.add_argument('--head-full', type=Path,
-                        help='where to write the whole head for logo-icon (default: head-full.svg next to OUT)')
-    parser.add_argument('--debug', type=Path, help='folder for the part masks as PNG')
-    parser.add_argument('--any-source', action='store_true',
-                        help='skip the SHA-256 check of the source (for a new image: measure the zones again)')
-    args = parser.parse_args(argv)
-    digest = hashlib.sha256(Path(args.source).read_bytes()).hexdigest()
-    if digest != SOURCE_SHA256 and not args.any_source:
-        raise SystemExit(f'{args.source} is not the approved illustration (SHA-256 {digest}); '
+def read_source(path, any_source=False):
+    """The approved illustration as an RGB array. Stops when its SHA-256 is not SOURCE_SHA256 (unless
+    any_source) or it is not SOURCE_SIZE square; warns about another vtracer version."""
+    digest = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    if digest != SOURCE_SHA256 and not any_source:
+        raise SystemExit(f'{path} is not the approved illustration (SHA-256 {digest}); '
                          'the zones fit only that image. Use --any-source for a new one.')
     found = importlib.metadata.version('vtracer')
     if found != VTRACER_VERSION:
         print(f'warning: vtracer {found}, built with {VTRACER_VERSION}: the trace may differ', file=sys.stderr)
-    source = Image.open(args.source)
+    source = Image.open(path)
     if 'A' in source.getbands() and source.getchannel('A').getextrema()[0] < 255:
         print('warning: the source has transparent pixels; they are read as if opaque', file=sys.stderr)
     image = source.convert('RGB')
     if image.size != (SOURCE_SIZE, SOURCE_SIZE):
         raise SystemExit(f'expected a {SOURCE_SIZE} x {SOURCE_SIZE} image, got {image.size}')
-    pixels = np.asarray(image)
+    return np.asarray(image)
+
+
+def main(argv):
+    parser = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    parser.add_argument('source')
+    parser.add_argument('out')
+    parser.add_argument('--debug', type=Path, help='folder for the part masks as PNG')
+    parser.add_argument('--any-source', action='store_true',
+                        help='skip the SHA-256 check of the source (for a new image: measure the zones again)')
+    args = parser.parse_args(argv)
+    pixels = read_source(args.source, args.any_source)
     anchor = classify_picture(pixels)
     part, color = assign_parts(anchor)
     masks, colors = extend(part, color)
@@ -996,10 +955,6 @@ def main(argv):
               for p, name in enumerate(PARTS)}
     traced['rice'] += straw_lines
     write_svg(args.out, ''.join(group(name, traced[name]) for name in PARTS))
-    head_mask, head_colors = head_full(part, color)
-    head_out = args.head_full or Path(args.out).with_name('head-full.svg')
-    write_svg(head_out, f'<g id="head">\n' + '\n'.join(
-        f'<path d="{d}" fill="{fill}"/>' for d, fill in trace(head_mask, head_colors, TRACE)) + '\n</g>\n')
 
 
 if __name__ == '__main__':

@@ -4,12 +4,13 @@
 
 | File | Dùng ở đâu |
 |---|---|
-| `logo/logo-full.svg` | Logo đầy đủ (mascot + "Nếp Nhà" + dòng phụ): đầu trang, trang giới thiệu, bao bì. |
-| `logo/logo-icon.svg` | Biểu tượng (đầu đội nón lá): avatar mạng xã hội, chỗ nhỏ. |
-| `logo/logo-mono.svg` | Logo một màu Nâu đất: in một màu, khắc, đóng dấu. |
+| `logo/logo-full.svg` | Logo đầy đủ (mascot chi tiết + "Nếp Nhà" + dòng phụ), cho chỗ lớn: bao bì, banner, đầu trang. |
+| `logo/logo-icon.svg` | Biểu tượng (đầu đội nón lá, từ mascot giản lược): avatar mạng xã hội, chỗ nhỏ. |
+| `logo/logo-mono.svg` | Logo một màu Nâu đất (từ mascot giản lược): in một màu, khắc, đóng dấu. |
 | `png/logo-icon-{32,192,512}.png` | Favicon (32), icon ứng dụng web (192, 512). |
 | `mascot/mascot-layered.svg` | Mascot tách lớp `#head`, `#rice`, `#hands`, `#body` (có `data-pivot` để làm hiệu ứng). |
-| `mascot/head-full.svg` | Cả cái đầu (không bị bó lúa che), nguồn của `logo-icon.svg`. |
+| `logo/mascot-logo.svg` | Mascot giản lược (ít hạt lúa hơn, hạt to hơn, nét dày hơn), cùng nhóm và `data-pivot` như mascot chi tiết; nguồn của `logo-mono.svg`. |
+| `logo/mascot-logo-head.svg` | Cả cái đầu của mascot giản lược (không bị bó lúa che), nguồn của `logo-icon.svg`. |
 | `tokens/tokens.json` | Nguồn gốc màu, font, các cặp chữ / nền hợp lệ. |
 | `tokens/tokens.css` | Biến CSS sinh từ `tokens.json` (`--color-*`, `--font-*`). |
 | `fonts/` | Pacifico, Quicksand 400 / 500 / 700 (giấy phép OFL). |
@@ -36,11 +37,17 @@ Trong `brand/tools` (Node 22), lần đầu chạy `npm ci`, sau đó:
 |---|---|
 | `npm run tokens` | `tokens.json` → `tokens.css` |
 | `npm run concepts` | 6 concept SVG → `concepts/concepts.png` |
-| `npm run logos` | mascot + chữ → 3 file `logo/*.svg` |
+| `npm run logo-mascot` | Vẽ lại thân, bó lúa, tay của `logo/mascot-logo.svg`, giữ cái đầu đã trace trong file |
+| `npm run logo-mascot -- --source <png>` | Như trên, và trace lại cái đầu từ ảnh mascot gốc đã duyệt (cùng kiểm SHA-256 như `vectorize-mascot.py`) → `logo/mascot-logo.svg` và `logo/mascot-logo-head.svg`. Cần Python như dòng `vectorize-mascot.py`. Chạy lệnh này sau khi sửa bó lúa: lỗ trên cái đầu đi theo bó lúa. |
+| `npm run logos` | 2 mascot + chữ → 3 file `logo/logo-*.svg` |
 | `npm run png` | `logo/logo-icon.svg` → `png/logo-icon-{32,192,512}.png` |
 | `npm run preview` | mascot + tokens → `preview.html` |
 | `npm test` | Kiểm tra token, font, SVG, PNG, preview |
-| `python vectorize-mascot.py <png> ../mascot/mascot-layered.svg` | Ảnh mascot gốc đã duyệt (PNG giữ ngoài repo) → `mascot/mascot-layered.svg` và `mascot/head-full.svg`. Cần Python: `pip install -r requirements-mascot.txt`. Sau đó chạy `npm run logos`, `npm run png`, `npm run preview`. |
+| `python vectorize-mascot.py <png> ../mascot/mascot-layered.svg` | Ảnh mascot gốc đã duyệt (PNG giữ ngoài repo) → `mascot/mascot-layered.svg`. Cần Python: `pip install -r requirements-mascot.txt`. Sau đó chạy `npm run logos`, `npm run png`, `npm run preview`. |
+
+Hai mascot, hai việc: `logo-full` dùng mascot chi tiết (`mascot/mascot-layered.svg`) cho chỗ lớn
+(bao bì, banner, đầu trang); `logo-icon` và `logo-mono` dùng mascot giản lược (`logo/mascot-logo.svg`)
+cho cỡ nhỏ và in một màu, vì ở cỡ đó mascot chi tiết bị nhòe.
 
 Khi mascot đổi: chạy `npm run logos`, rồi `npm run png`, rồi `npm run preview`, rồi `npm test`.
 Test báo lỗi nếu PNG hoặc `preview.html` cũ hơn SVG.
