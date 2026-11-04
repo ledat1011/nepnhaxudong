@@ -24,6 +24,7 @@
 - Góp ý 8 cảnh, cảnh 1: có những người nông dân cùng mẹ cấy → thêm 2 nông dân (nón lá, áo Vàng rơm, cùng một tư thế, người thứ hai lật ngang); tư thế người thành 6. Đã sửa spec, plan, storyboard.
 - Góp ý Hero (bản Task 3): người như bay, bông lúa không trĩu hạt → mascot đứng trước đồng lúa, neo vào đáy cảnh; đường chân trời ngang lưng mascot; bông lúa dày, trĩu hạt. Nền chỉ chiếm khoảng nửa chiều ngang (phía sau mascot), không nằm sau chữ "Nếp Nhà"; trời xanh và lúa mờ dần ở mép để không thấy vệt cắt với phần chữ và khối Sản phẩm. Đã sửa spec mục 2.
 - Góp ý hình túi (Task 5): túi hơi dày → vẽ mỏng như túi hút chân không 2 kg mẫu: dáng đứng, cao, cạnh bên mỏng, màng thừa chỉ ở trên. Ảnh mẫu lưu ở `.superpowers/ref/tui-mau-mong.png`.
+- Góp ý Hero lần 2: viền cảnh dài thêm sang trái, gần chạm chữ "Nếp Nhà" (vẫn mờ dần, không nằm sau chữ).
 
 ## Còn mở
 - Xác nhận khi duyệt tư thế người: áo của ba là xanh lá hay xanh dương. Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.

@@ -57,7 +57,7 @@ Trang chủ có thêm ba phần minh hoạ có chuyển động, theo hướng "
 Mascot giữ nguyên (`brand/mascot/mascot-layered.svg`).
 
 ### Bố cục (sửa theo góp ý của chủ dự án, 2026-11-04)
-- **Cảnh chỉ chiếm khoảng một nửa chiều ngang**, phía sau mascot (máy tính: nửa phải). Bên chữ "Nếp Nhà", tagline và nút giữ nền Trắng gạo trơn.
+- **Cảnh chiếm phần bên phải, phía sau mascot**, và kéo dài sang trái tới sát phần chữ: mép trái của cảnh (đã mờ dần) gần chạm chữ "Nếp Nhà", tagline và nút, nhưng không nằm sau chữ (sửa theo góp ý thứ hai của chủ dự án). Bên chữ giữ nền Trắng gạo trơn.
 - **Mép cảnh mờ dần** về Trắng gạo (mép giáp phần chữ và mép dưới giáp khối Sản phẩm), bằng `mask-image` dạng gradient, nên không thấy vệt cắt.
 - **Mascot đứng trước đồng lúa, ruộng ở sau.** Mascot neo vào đáy cảnh (phần dưới của mascot chạm mép dưới, như ảnh chụp ngang hông), không lơ lửng.
 - **Đường chân trời** (ngọn lúa giáp bầu trời) nằm **ngang lưng** mascot.
@@ -93,7 +93,7 @@ Mascot giữ nguyên (`brand/mascot/mascot-layered.svg`).
 ### 3 chú thích (chữ HTML, vi / en; chủ dự án có thể sửa câu)
 1. "Túi trong: nhìn rõ từng hạt gạo"
 2. "Hút chân không: gạo giữ khô và thơm lâu"
-3. "Khối vuông: dễ cất, dễ làm quà"
+3. "Túi gọn: dễ cất, dễ làm quà"
 
 ### Chuyển động: chạy một lần khi vào màn hình (khoảng 2,5 giây), rồi đứng yên
 1. Túi còn phồng; khoảng 10 hạt gạo rơi vào, hạt sau chậm hơn hạt trước (`stagger`).
