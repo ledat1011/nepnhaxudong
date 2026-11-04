@@ -3,7 +3,7 @@
 Cập nhật: 2026-11-04 — máy công ty
 
 ## Giai đoạn hiện tại
-Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã xong trên nhánh `feat/phan-b2-web`, đang mở PR để merge.
+Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã xong trên nhánh `feat/phan-b2-web`, đang mở PR để merge. Trang quản trị (B3) đã xong trên nhánh `feat/phan-b3-admin`.
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
@@ -12,15 +12,18 @@ Phần B — API (B1) đã merge vào `main` (PR #3). Web công khai (B2) đã x
 - Phần B2 (web công khai): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
 
+- Phần B3 (trang quản trị) đã xong trên nhánh `feat/phan-b3-admin`: 9 màn hình (Tổng quan, Sản phẩm, Hành trình, Báo chí, Câu chuyện, Ảnh, Liên hệ & cài đặt, Tài khoản, Lịch sử), đã review từng task. Có bộ test đầu-cuối với API thật (`npm run test:fullstack`) và workflow CI `fullstack`. Cách chạy ở local và cách chạy test nằm trong `docs/setup.md`.
+
 ## Đang làm
 - Phần B2: mở PR, chờ CI, merge vào `main` (chủ dự án đã đồng ý).
+- Phần B4 (hiệu ứng GSAP và linh vật thật) đang làm song song ở một session khác, trên nhánh `feat/phan-b4-gsap`.
 - Phần A (logo) chờ chủ dự án duyệt linh vật, nhánh `feat/phan-a-thuong-hieu`.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
-2. Viết plan B3 (trang quản trị).
-3. B4 (hiệu ứng GSAP) sau khi có linh vật cuối cùng.
-4. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới.
+2. Mở PR cho B3 (`feat/phan-b3-admin`), chờ CI (có workflow `fullstack` mới), rồi merge vào `main`.
+3. Hoàn tất B4 (`feat/phan-b4-gsap`, đang làm song song).
+4. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới. Trong đó có việc phục vụ `/media` ở production.
 5. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
 6. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
 

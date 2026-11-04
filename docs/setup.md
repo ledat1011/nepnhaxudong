@@ -203,3 +203,43 @@ Nếu máy không có `python`, đọc token bằng `jq -r .token` thay cho ph�
 Một lệnh ghi thiếu header `X-XSRF-TOKEN` trả 403. Token chỉ được đọc từ header này; API không nhận token gửi trong phần thân form hay trên đường dẫn.
 
 Lưu ý về ảnh: ở môi trường local, API chỉ ghi file vào `MEDIA_DIR`; đường dẫn `/media/*` chưa có ai phục vụ. Caddy sẽ phục vụ `/media/*` ở phần D, nên web local chưa hiện được ảnh đã tải lên. Đây là cách làm đã chốt: API chỉ lưu file, việc phục vụ file thuộc về máy chủ web phía trước.
+
+## Chạy trang quản trị ở local
+Trang quản trị nằm ở `/admin` của web và gọi API qua đường dẫn `/api/...` cùng gốc. Cần Docker, JDK 21 và Node 22.
+
+1. Chạy Postgres local:
+   ```bash
+   docker compose -f infra/compose.dev.yml up -d
+   ```
+2. Chạy API với profile `dev`, có `MEDIA_DIR` (thư mục chứa ảnh tải lên) và admin đầu tiên. Làm trong `api/`:
+   ```bash
+   export BOOTSTRAP_ADMIN_EMAIL=admin@example.com
+   export BOOTSTRAP_ADMIN_PASSWORD='<mật khẩu tạm>'
+   export MEDIA_DIR=./data/media
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+   ```
+3. Trong `web/`, đặt hai biến rồi chạy web với API thật. Cả hai có trong `web/.env.example`; có thể chép vào `web/.env.local`.
+   - `API_PROXY_ORIGIN=http://localhost:8080`: Next chuyển `/api/*` sang API. Biến này được đọc lúc build, nên đổi giá trị thì chạy lại `npm run dev:api`.
+   - `MEDIA_DEV_DIR=../api/data/media`: web phục vụ ảnh đã tải lên ở `/media` (chỉ ngoài production). Đường dẫn này phải trùng `MEDIA_DIR` của API.
+   ```bash
+   npm run dev:api
+   ```
+4. Mở `http://localhost:3000/admin` và đăng nhập bằng admin đầu tiên.
+5. Lần đầu bạn phải đổi mật khẩu. Chưa đổi thì mọi màn hình khác đều không dùng được.
+
+Cổng 8080 hoặc 3000 đang bị chiếm thì đổi cổng của API (`--server.port=...`) và đổi `API_PROXY_ORIGIN` cho khớp.
+
+## Chạy kiểm thử đầu-cuối của trang quản trị
+Bộ test này chạy với hệ thống thật: Postgres, API và web đều khởi động mới. Cần Docker, JDK 21 (`JAVA_HOME` trỏ tới JDK 21) và Node 22. Lần đầu trên máy: `npx playwright install chromium` (trong `web/`). Sau đó:
+```bash
+cd web
+npm run test:fullstack
+```
+Lệnh `run.mjs` làm lần lượt:
+1. Chạy một container Postgres tạm trên cổng rảnh.
+2. Build API (`./mvnw -DskipTests package`) và chạy file jar với profile mặc định.
+3. Build web vào thư mục riêng `.next-e2e-fullstack` (không đụng tới `.next` của `npm run dev`) và chạy bản standalone.
+4. Chạy Playwright: đăng nhập lần đầu, đổi mật khẩu, thêm mốc, tạo và đăng bài, tải ảnh, khôi phục từ Lịch sử, đăng nhập lại khi phiên hết hạn, kiểm tra màn hình 375 px và kiểm tra axe.
+5. Dừng web và API, xóa container và các thư mục tạm, kể cả khi test lỗi.
+
+Các cổng và mật khẩu được sinh lúc chạy, không ghi ra file. Mất khoảng 3 phút (đến 8 phút khi máy bận), phần lớn là hai lần build. Khi test lỗi, xem báo cáo bằng `npx playwright show-report`. Trên GitHub, workflow `fullstack` chạy bộ test này cho mỗi pull request đổi `api/` hoặc `web/`.
