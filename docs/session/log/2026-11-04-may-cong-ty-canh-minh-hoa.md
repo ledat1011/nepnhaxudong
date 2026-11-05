@@ -29,7 +29,12 @@
 - Áo của ba: xanh lá nhạt (đã xác nhận).
 - Recraft gói Free: hình tạo ra có thể công khai và không có quyền dùng thương mại. Quyết định: vẽ thử 6 tư thế bằng gói Free để duyệt kiểu dáng; trước khi đưa lên web thật, chủ dự án nâng lên gói trả phí và tạo lại bản cuối bằng gói đó.
 - Góp ý Hero lần 3: nền trời và ruộng kéo mờ dần ra tới mép trái, nằm cả sau chữ "Nếp Nhà" (thay cho ý "không để sau chữ" trước đó).
+- Hero lần 3 (cảnh trải hết bề ngang, mờ tới mép trái): chủ dự án duyệt ("Được rồi").
 - Góp ý khối câu chuyện 8 cảnh: không để từng hình rời (lưới thẻ), mà làm thành một timeline giống khối "Hành trình phát triển"; kiểu timeline có thể khác khối Hành trình. Chủ dự án chọn "Dọc, con đường": một con đường đất dọc ở giữa, uốn nhẹ, từ ruộng về mâm cơm; 8 cảnh xen kẽ trái/phải, mỗi cảnh có "Bước 1–8"; một hạt gạo đi dọc con đường khi cuộn; điện thoại để đường bên trái. Bỏ dải trượt ngang ghim màn hình trên máy tính (thay cho bố cục 3b đã duyệt trước đó).
+- Timeline con đường trên máy tính: giữ xen kẽ trái / phải, không xếp so le; thu gọn khoảng cách giữa các cảnh và thu nhỏ hình một chút để bớt khoảng trống.
+- Đoạn đường hạt gạo đã đi qua: dải Vàng lúa rộng gần hết mặt đường (không để hẹp như vạch giữa đường).
+- 6 tư thế người vẽ thử bằng Recraft: duyệt kiểu dáng. Sửa: áo ba thành xanh lá nhạt, túi mẹ trao mỏng như túi 2 kg mẫu, vô lăng máy gặt không dùng màu da, quần anh 2 không màu đen.
+- Áo ba: thêm một màu xanh lá nhạt chỉ dùng trong hình minh hoạ (ghi vào quyết định 0007).
 
 ## Còn mở
 Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.
