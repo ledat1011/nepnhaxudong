@@ -207,7 +207,7 @@ describe("RiceStory", () => {
     window.localStorage.clear();
     render(
       <>
-        <Hero lang="vi" dict={dict} tagline="t" zalo={null} hasJourney={false} />
+        <Hero lang="vi" dict={dict} tagline="t" zalo={null} />
         <RiceStory dict={dict} zalo={null} />
       </>,
     );

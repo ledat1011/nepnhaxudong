@@ -30,7 +30,7 @@ const vi = {
   },
   hero: {
     zaloCta: "Liên hệ qua Zalo",
-    journeyCta: "Xem hành trình",
+    riceStoryCta: "Từ đồng tới mâm cơm",
   },
   motion: {
     pause: "Tạm dừng chuyển động",
@@ -167,7 +167,7 @@ const en: Dictionary = {
   },
   hero: {
     zaloCta: "Contact us on Zalo",
-    journeyCta: "See the journey",
+    riceStoryCta: "From field to table",
   },
   motion: {
     pause: "Pause motion",
