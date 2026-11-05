@@ -14,7 +14,7 @@ type HeroProps = {
   tagline: string;
   zalo: string | null;
   /** The Messenger link. Shown on the English page only: visitors from abroad often have no Zalo. */
-  messenger: string | null;
+  messenger?: string | null;
   /** Whether the page has a journey section to link to. */
   hasJourney: boolean;
 };
@@ -40,7 +40,7 @@ const BUTTON_CLASS =
  * the panel bottom), right of the centered mascot and above the text; from `md` it is the
  * bottom-right corner of the hero.
  */
-export function Hero({ lang, dict, tagline, zalo, messenger, hasJourney }: HeroProps) {
+export function Hero({ lang, dict, tagline, zalo, messenger = null, hasJourney }: HeroProps) {
   const messengerHref = lang === "en" ? messenger : null;
   return (
     <section
@@ -65,7 +65,9 @@ export function Hero({ lang, dict, tagline, zalo, messenger, hasJourney }: HeroP
           <p className="mx-auto mt-2 max-w-md text-xl font-bold text-balance md:mx-0 md:text-2xl">
             {dict.hero.what}
           </p>
-          <p className="mx-auto mt-3 max-w-md text-lg font-medium md:mx-0 md:text-xl">{tagline}</p>
+          <p data-hero-tagline className="mx-auto mt-3 max-w-md text-lg font-medium md:mx-0 md:text-xl">
+            {tagline}
+          </p>
           {(zalo !== null || messengerHref !== null || hasJourney) && (
             <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
               {zalo !== null && (

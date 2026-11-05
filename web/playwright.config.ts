@@ -19,12 +19,13 @@ export default defineConfig({
   projects: [
     {
       name: "mock",
-      testIgnore: /revalidate\.spec\.ts/,
+      testIgnore: /(revalidate|broken-image)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], baseURL: origin(TARGETS.mock.port) },
     },
     {
       name: "api",
-      testMatch: /revalidate\.spec\.ts/,
+      // Specs that need content from the fake API (the mock fixtures have no images).
+      testMatch: /(revalidate|broken-image)\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], baseURL: origin(TARGETS.api.port) },
     },
   ],

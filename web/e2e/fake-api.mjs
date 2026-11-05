@@ -16,6 +16,18 @@ const fixture = (name) =>
 const home = Object.fromEntries(LANGS.map((lang) => [lang, fixture(`home.${lang}`)]));
 const stories = Object.fromEntries(LANGS.map((lang) => [lang, fixture(`stories.${lang}`)]));
 
+// A story that only the broken-image test opens: its cover file does not exist. It is not in the
+// lists, so no other test sees it.
+const BROKEN_IMAGE_STORY = {
+  slug: "e2e-anh-loi",
+  title: "[MẪU] Bài có ảnh bìa bị lỗi",
+  excerpt: "[MẪU] Trích đoạn",
+  publishedAt: "2026-01-01T02:00:00Z",
+  cover: { url: "/media/e2e/khong-co.webp", width: 1600, height: 900, alt: "[MẪU] Ảnh bìa không có" },
+  bodyHtml: "<p>[MẪU] Nội dung</p>",
+  alternateSlug: null,
+};
+
 const newestFirst = (lang) =>
   [...stories[lang]].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 
@@ -79,6 +91,7 @@ const server = createServer(async (req, res) => {
 
   if (resource === "stories") {
     const slug = decodeURIComponent(rawSlug);
+    if (slug === BROKEN_IMAGE_STORY.slug) return send(res, 200, BROKEN_IMAGE_STORY);
     const story = stories[lang].find((item) => item.slug === slug);
     return story ? send(res, 200, story) : send(res, 404, { error: "no such story" });
   }

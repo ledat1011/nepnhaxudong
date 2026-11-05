@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { FAKE_API_PORT, origin, REVALIDATE_SECRET } from "./targets.mjs";
 
 const FAKE_API = origin(FAKE_API_PORT);
-const tagline = (page: Page) => page.locator("main h1 + p");
+const tagline = (page: Page) => page.locator("main [data-hero-tagline]");
 
 test("content changed in the API shows after a revalidate call, and not before", async ({
   page,
