@@ -1,0 +1,110 @@
+# Production stack of Nếp Nhà. On the VPS this file lives in /opt/nepnha next to .env (see infra/prod.env.example).
+# Sized for a 2 vCPU / 2 GB VPS with 2 GB swap (docs/decisions/0012-ha-tang-vps-nho.md).
+name: nepnha
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  caddy:
+    image: ${IMAGE_PREFIX:?}/nepnha-caddy:${IMAGE_TAG:?}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_HOST: ${SITE_HOST:?}
+      TLS_MODE: ${TLS_MODE:-acme}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+    volumes:
+      - ${MEDIA_HOST_DIR:-/srv/nepnha/media}:/srv/media:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [edge]
+    depends_on: [web, api]
+    mem_limit: 128m
+    logging: *logging
+
+  web:
+    image: ${IMAGE_PREFIX:?}/nepnha-web:${IMAGE_TAG:?}
+    restart: unless-stopped
+    environment:
+      SITE_URL: https://${SITE_HOST:?}
+      CONTENT_SOURCE: api
+      API_BASE_URL: http://api:8080
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:?}
+      # Kept from the image: HOSTNAME=0.0.0.0 (else Node listens on the container ID), PORT=3000.
+    networks: [edge]
+    mem_limit: 384m
+    logging: *logging
+
+  api:
+    image: ${IMAGE_PREFIX:?}/nepnha-api:${IMAGE_TAG:?}
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/nepnha
+      DB_USER: nepnha
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      WEB_BASE_URL: http://web:3000
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:?}
+      # TLS ends at Caddy: trust its X-Forwarded-* headers, so cookies are Secure and HSTS is sent.
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      # Heap 768 MB: image processing needs it (STATE.md, notes for part D). The container limit leaves room
+      # for metaspace, threads and the native buffers of the JPEG decoder.
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx768m -XX:+ExitOnOutOfMemoryError}
+    volumes:
+      - ${MEDIA_HOST_DIR:-/srv/nepnha/media}:/data/media
+    # api is on "edge" too: it fetches press pages from the internet and calls the web app for revalidate.
+    networks: [edge, internal]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    stop_grace_period: 30s
+    mem_limit: 1100m
+    logging: *logging
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_buffers=96MB
+      - -c
+      - effective_cache_size=256MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - max_connections=30
+    environment:
+      POSTGRES_DB: nepnha
+      POSTGRES_USER: nepnha
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Only on the internal network: no port is published and the container has no route outside.
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nepnha -d nepnha"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    shm_size: 64m
+    mem_limit: 384m
+    logging: *logging
+
+networks:
+  edge:
+  internal:
+    internal: true
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

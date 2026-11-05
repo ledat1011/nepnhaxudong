@@ -1,0 +1,111 @@
+# Caddy for Nếp Nhà (production). One host name:
+#   /api/*   -> Spring Boot (api:8080)
+#   /media/* -> uploaded images on disk (read-only mount)
+#   others   -> Next.js (web:3000)
+# Env: SITE_HOST (required), TLS_MODE (acme | cloudflare, default acme), CLOUDFLARE_API_TOKEN (only for cloudflare).
+# This file is baked into the caddy image, so a rollback to an older image also rolls back this file.
+{
+	# rate_limit comes from github.com/mholt/caddy-ratelimit (see Dockerfile).
+	order rate_limit before basic_auth
+	# Inside a container Caddy cannot install its local CA; it is only used for "localhost" in the smoke test.
+	skip_install_trust
+	servers {
+		# Cloudflare edge ranges (https://www.cloudflare.com/ips/, checked 2026-11-05). Only these may set the client IP.
+		# Without Cloudflare in front, no request comes from these ranges, so the TCP peer stays the client IP.
+		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+		client_ip_headers CF-Connecting-IP X-Forwarded-For
+	}
+}
+
+# Certificate from Let's Encrypt over HTTP (works for <ip>.sslip.io and for a domain that is not proxied yet).
+(tls_acme) {
+}
+
+# Certificate over the Cloudflare DNS API: works while the domain is proxied by Cloudflare ("Full (strict)").
+(tls_cloudflare) {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+}
+
+{$SITE_HOST} {
+	import tls_{$TLS_MODE:acme}
+
+	log {
+		output stdout
+		format json
+	}
+
+	# Each login costs about 16 MiB and CPU for Argon2, and an unknown email is never locked, so limit by IP
+	# and also in total. The admin limit only slows down a flood of odd requests; real use is far below it.
+	rate_limit {
+		zone login_per_ip {
+			match {
+				method POST
+				path /api/auth/login
+			}
+			key {client_ip}
+			events 5
+			window 1m
+		}
+		zone login_total {
+			match {
+				method POST
+				path /api/auth/login
+			}
+			key static
+			events 30
+			window 1m
+		}
+		zone admin_per_ip {
+			match {
+				path /api/admin/*
+			}
+			key {client_ip}
+			events 120
+			window 1m
+		}
+	}
+
+	header {
+		-Server
+		-Via
+		# ">" sets it after the upstream answered, so there is one value even when Spring sends its own.
+		>Strict-Transport-Security "max-age=31536000"
+	}
+
+	# Pages send "s-maxage=31536000". A CDN that kept them would hide admin changes, so Cloudflare must not cache
+	# HTML; only build files and uploaded images may be cached at the edge. Caddy itself caches nothing.
+	@not_static not path /_next/static/* /media/*
+	header @not_static Cloudflare-CDN-Cache-Control "no-store"
+
+	@compress not path /media/*
+	encode @compress zstd gzip
+
+	# Spring rejects more than 16 MB (multipart max-request-size); stop a bigger body here with 413.
+	@api path /api/*
+	request_body @api {
+		max_size 16MB
+	}
+
+	handle /api/* {
+		# Caddy sets X-Forwarded-Proto/For/Host; the API trusts them (SERVER_FORWARD_HEADERS_STRATEGY=framework),
+		# so cookies get "Secure". POST /api/revalidate of the web app is never reachable from outside: all of
+		# /api/* goes to Spring, and the API calls the web app on the internal network.
+		reverse_proxy api:8080
+	}
+
+	handle_path /media/* {
+		root * /srv/media
+		header X-Content-Type-Options nosniff
+		# File names are UUIDs, so a file never changes. A 404 must not be cached for a year.
+		@found file
+		header @found Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	handle {
+		# The "rsc" header and the "_rsc" query parameter pass through unchanged (reverse_proxy default).
+		reverse_proxy web:3000
+	}
+}

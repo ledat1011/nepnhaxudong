@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the Nep Nha backup every night at 02:30 (server time zone: Asia/Ho_Chi_Minh)
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+# Runs at the next boot when the server was off at 02:30.
+Persistent=true
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target
