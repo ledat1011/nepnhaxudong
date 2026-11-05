@@ -28,6 +28,7 @@ const user: UserResponse = {
   role: "OWNER",
   totpEnabled: false,
   mustSetupTotp: false,
+  totpRequired: false,
 };
 
 type Session = ReturnType<typeof useAdminSession>;

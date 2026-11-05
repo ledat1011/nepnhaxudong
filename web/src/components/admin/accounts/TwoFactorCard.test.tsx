@@ -13,6 +13,7 @@ vi.mock("@/lib/admin/api", () => ({ adminFetch, adminUpload: vi.fn() }));
 vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin, refresh }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
+import { toast } from "sonner";
 import { TwoFactorCard } from "./TwoFactorCard";
 
 const setup: TotpSetupResponse = {
@@ -138,6 +139,14 @@ describe("TwoFactorCard (switched off)", () => {
   });
 });
 
+describe("TwoFactorCard (switched on and kept on by an owner)", () => {
+  it("offers no switch-off and says that only an owner can switch it off", () => {
+    render(<TwoFactorCard enabled canSwitchOff={false} onChanged={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Tắt xác thực 2 lớp" })).not.toBeInTheDocument();
+    expect(screen.getByText("Chỉ Chủ tắt được xác thực 2 lớp của bạn.")).toBeInTheDocument();
+  });
+});
+
 describe("TwoFactorCard (switched on)", () => {
   it("asks for a code to switch it off and leaves the session alone", async () => {
     const user = userEvent.setup();
@@ -210,6 +219,34 @@ describe("TwoFactorCard on a phone", () => {
     await user.click(screen.getByRole("button", { name: "Bật xác thực 2 lớp" }));
     const open = await screen.findByRole("link", { name: "Mở ứng dụng xác thực" });
     expect(open).toHaveAttribute("href", setup.otpauthUri);
+  });
+
+  it("shows no app link when the address is not an otpauth TOTP address", async () => {
+    touchScreen(true);
+    respond({ "/admin/me/totp/setup": { ...setup, otpauthUri: "javascript:alert(1)" } });
+    const user = userEvent.setup();
+    render(<TwoFactorCard enabled={false} onChanged={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Bật xác thực 2 lớp" }));
+    await screen.findByText(setup.secret);
+    expect(screen.queryByRole("link", { name: "Mở ứng dụng xác thực" })).not.toBeInTheDocument();
+  });
+
+  it("reminds the user to clear the copied secret from the clipboard once it is on", async () => {
+    touchScreen(true);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    render(<TwoFactorCard enabled={false} onChanged={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Bật xác thực 2 lớp" }));
+    clipboard(writeText);
+    await user.click(await screen.findByRole("button", { name: "Sao chép mã" }));
+    await user.type(screen.getByLabelText("Mã 6 số"), "123456");
+    await user.click(screen.getByRole("button", { name: "Xác nhận và bật" }));
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        "Đã bật xác thực 2 lớp. Hãy xóa mã bí mật đã sao chép khỏi lịch sử bộ nhớ tạm của điện thoại.",
+        expect.objectContaining({ duration: expect.any(Number) }),
+      ),
+    );
   });
 
   it("shows no app link on a computer, where the QR code is scanned with the phone", async () => {

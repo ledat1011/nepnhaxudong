@@ -27,6 +27,7 @@ function account(overrides: Partial<UserSummary>): UserSummary {
     mustChangePassword: false,
     role: "MEMBER",
     mustSetupTotp: false,
+    totpRequired: false,
     ...overrides,
   };
 }
@@ -214,9 +215,11 @@ describe("UserList", () => {
     expect(within(row("An")).queryByRole("button", { name: /^Tắt xác thực 2 lớp/ })).not.toBeInTheDocument();
     expect(within(row("Chi")).queryByRole("button", { name: /^Tắt xác thực 2 lớp/ })).not.toBeInTheDocument();
     await user.click(within(row("Bình")).getByRole("button", { name: "Tắt xác thực 2 lớp của Bình" }));
-    expect(await screen.findByText(/phải bật lại xác thực 2 lớp/)).toBeInTheDocument();
-    await user.click(await screen.findByRole("button", { name: "Tắt xác thực 2 lớp" }));
-    await waitFor(() => expect(posts()).toEqual([["/admin/users/2/disable-totp", undefined]]));
+    const dialog = await screen.findByRole("dialog", { name: "Tắt xác thực 2 lớp" });
+    await user.click(within(dialog).getByRole("button", { name: "Tắt 2 lớp và đặt mật khẩu tạm" }));
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(posts()[0][0]).toBe("/admin/users/2/disable-totp");
+    expect(posts()[0][1]).toMatchObject({ temporaryPassword: expect.any(String) });
     expect(onChanged).toHaveBeenCalledTimes(1);
   });
 

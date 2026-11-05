@@ -29,6 +29,7 @@ const user: UserResponse = {
   role: "OWNER",
   totpEnabled: false,
   mustSetupTotp: false,
+  totpRequired: false,
 };
 
 function renderShell() {

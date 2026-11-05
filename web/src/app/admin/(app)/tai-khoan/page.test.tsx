@@ -8,7 +8,14 @@ const { adminFetch, requireReLogin, refresh, session } = vi.hoisted(() => ({
   adminFetch: vi.fn(),
   requireReLogin: vi.fn(),
   refresh: vi.fn(),
-  session: { user: { id: 1, role: "OWNER", totpEnabled: false } as { id: number; role: string; totpEnabled: boolean } },
+  session: {
+    user: { id: 1, role: "OWNER", totpEnabled: false, totpRequired: false } as {
+      id: number;
+      role: string;
+      totpEnabled: boolean;
+      totpRequired: boolean;
+    },
+  },
 }));
 vi.mock("@/lib/admin/api", () => ({ adminFetch, adminUpload: vi.fn() }));
 vi.mock("@/lib/admin/session", () => ({
@@ -28,6 +35,7 @@ function account(id: number, name: string, overrides: Partial<UserSummary> = {})
     mustChangePassword: false,
     role: "MEMBER",
     mustSetupTotp: false,
+    totpRequired: false,
     ...overrides,
   };
 }
@@ -37,12 +45,12 @@ beforeEach(() => {
   requireReLogin.mockReset();
   refresh.mockReset();
   refresh.mockResolvedValue(undefined);
-  session.user = { id: 1, role: "OWNER", totpEnabled: false };
+  session.user = { id: 1, role: "OWNER", totpEnabled: false, totpRequired: false };
 });
 
 describe("Tài khoản page of a member", () => {
   it("shows only the own two-factor card, from the session, and never asks for the account list", async () => {
-    session.user = { id: 2, role: "MEMBER", totpEnabled: true };
+    session.user = { id: 2, role: "MEMBER", totpEnabled: true, totpRequired: false };
     render(<AccountsPage />);
     expect(screen.getByRole("heading", { name: "Xác thực 2 lớp" })).toBeInTheDocument();
     expect(screen.getByText("Đang bật")).toBeInTheDocument();
@@ -52,9 +60,16 @@ describe("Tài khoản page of a member", () => {
     await waitFor(() => expect(adminFetch).not.toHaveBeenCalled());
   });
 
+  it("offers no switch-off to a member whose two-factor login an owner made required", () => {
+    session.user = { id: 2, role: "MEMBER", totpEnabled: true, totpRequired: true };
+    render(<AccountsPage />);
+    expect(screen.queryByRole("button", { name: "Tắt xác thực 2 lớp" })).not.toBeInTheDocument();
+    expect(screen.getByText("Chỉ Chủ tắt được xác thực 2 lớp của bạn.")).toBeInTheDocument();
+  });
+
   it("reads the session again after the member switched two-factor login on", async () => {
     const user = userEvent.setup();
-    session.user = { id: 2, role: "MEMBER", totpEnabled: false };
+    session.user = { id: 2, role: "MEMBER", totpEnabled: false, totpRequired: false };
     adminFetch.mockImplementation(async (path: string) =>
       path === "/admin/me/totp/setup" ? { secret: "JBSWY3DPEHPK3PXP", otpauthUri: "otpauth://totp/x" } : undefined,
     );

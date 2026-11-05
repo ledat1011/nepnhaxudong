@@ -12,6 +12,7 @@ const MEMBER_NAME = `[E2E] Người nhà ${run}`;
 const MEMBER_EMAIL = `nguoi-nha-${run}@example.com`;
 const MEMBER_TEMP_PASSWORD = `tam-thoi-${run}-mat-khau`;
 const MEMBER_PASSWORD = `moi-${run}-mat-khau-dai`;
+const MEMBER_THIRD_PASSWORD = `ba-${run}-mat-khau-dai`;
 
 let ownerContext: BrowserContext;
 let memberContext: BrowserContext;
@@ -103,6 +104,13 @@ test("a family member sees no account management, and the API refuses it with 40
   const lock = await member.request.post("/api/admin/users/1/disable", { headers: { [csrf.headerName]: csrf.token } });
   expect(lock.status()).toBe(403);
   expect((await lock.json()).code).toBe("owner-required");
+
+  // The history has no account lines for a member: the owner created this account, and that line is hidden.
+  const accountLines = await member.request.get("/api/admin/audit?entityType=app_user");
+  expect(accountLines.status()).toBe(200);
+  expect(await accountLines.json()).toEqual([]);
+  await member.goto(ADMIN_ROUTES.history);
+  await expect(member.getByLabel("Loại nội dung").locator("option", { hasText: "Tài khoản" })).toHaveCount(0);
 });
 
 test("after a lost phone the owner switches off the member's 2FA, and the member must set it up again", async () => {
@@ -111,15 +119,28 @@ test("after a lost phone the owner switches off the member's 2FA, and the member
 
   await owner.reload();
   await memberRow().getByRole("button", { name: `Tắt xác thực 2 lớp của ${MEMBER_NAME}` }).click();
-  await owner.getByRole("alertdialog").getByRole("button", { name: "Tắt xác thực 2 lớp" }).click();
+  // Both happen in one step: 2FA off and a new temporary password, shown once to the owner.
+  const lostPhone = owner.getByRole("dialog", { name: "Tắt xác thực 2 lớp" });
+  await lostPhone.getByRole("button", { name: "Tắt 2 lớp và đặt mật khẩu tạm" }).click();
+  const temporary = (await lostPhone.getByText(/^[A-Za-z2-9]{16}$/).textContent())!.trim();
+  await lostPhone.getByRole("button", { name: "Xong" }).click();
   await expect(memberRow().getByText("Cần bật lại 2 lớp")).toBeVisible();
 
   // The session on the lost phone has ended.
   await member.goto(ADMIN_ROUTES.media);
   await expect(member).toHaveURL(new RegExp(`${ADMIN_ROUTES.login}`));
 
-  // The next sign-in needs no code and opens only the 2FA setup.
+  // The saved password no longer works: a thief with the phone cannot get in.
   await signInAs(member, MEMBER_EMAIL, MEMBER_PASSWORD);
+  await expect(member.getByText("Email hoặc mật khẩu không đúng.")).toBeVisible();
+
+  // With the temporary password: first a new password, then only the 2FA setup is open.
+  await signInAs(member, MEMBER_EMAIL, temporary);
+  await expect(member).toHaveURL(new RegExp(`${ADMIN_ROUTES.changePassword}$`));
+  await member.getByLabel("Mật khẩu hiện tại").fill(temporary);
+  await member.getByLabel(/^Mật khẩu mới/).fill(MEMBER_THIRD_PASSWORD);
+  await member.getByLabel("Nhập lại mật khẩu mới").fill(MEMBER_THIRD_PASSWORD);
+  await member.getByRole("button", { name: "Đổi mật khẩu" }).click();
   await expect(member).toHaveURL(new RegExp(`${ADMIN_ROUTES.setupTotp}$`));
   await expect(member.getByRole("heading", { level: 1, name: "Bật lại xác thực 2 lớp" })).toBeVisible();
   await member.goto(ADMIN_ROUTES.media);
@@ -128,6 +149,12 @@ test("after a lost phone the owner switches off the member's 2FA, and the member
   await switchOnTwoFactor(member);
   await expect(member).toHaveURL(new RegExp(`${ADMIN_ROUTES.home}$`));
   await expect(member.getByRole("navigation", { name: "Menu chính" })).toBeVisible();
+
+  // From now on only an owner can switch it off.
+  await member.goto(ADMIN_ROUTES.accounts);
+  await expect(member.getByText("Đang bật")).toBeVisible();
+  await expect(member.getByRole("button", { name: "Tắt xác thực 2 lớp" })).toHaveCount(0);
+  await expect(member.getByText("Chỉ Chủ tắt được xác thực 2 lớp của bạn.")).toBeVisible();
 
   // The owner's action is in the history.
   await owner.goto(ADMIN_ROUTES.history);

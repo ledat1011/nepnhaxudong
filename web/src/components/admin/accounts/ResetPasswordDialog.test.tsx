@@ -23,6 +23,7 @@ const target: UserSummary = {
   mustChangePassword: false,
   role: "MEMBER",
   mustSetupTotp: false,
+  totpRequired: false,
 };
 
 const PASSWORD_TEXT = /^[A-Za-z2-9]{16}$/;
@@ -106,6 +107,22 @@ describe("ResetPasswordDialog", () => {
     await user.click(screen.getByRole("button", { name: "Đặt lại mật khẩu" }));
     await waitFor(() => expect(resets()).toHaveLength(2));
     expect(resets()[1].body.temporaryPassword).not.toBe(first);
+  });
+
+  it("in the lost-phone mode, says both things happen, posts to disable-totp and shows the password once", async () => {
+    const user = userEvent.setup();
+    const onDone = vi.fn();
+    render(<ResetPasswordDialog user={target} mode="turn-off-totp" onClose={vi.fn()} onDone={onDone} />);
+    expect(screen.getByRole("heading", { name: "Tắt xác thực 2 lớp" })).toBeInTheDocument();
+    expect(screen.getByText(/tắt xác thực 2 lớp và đặt một mật khẩu tạm thời mới/)).toBeInTheDocument();
+    expect(screen.getByText(/đổi mật khẩu, rồi bật lại xác thực 2 lớp/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Tắt 2 lớp và đặt mật khẩu tạm" }));
+    await waitFor(() => expect(resets()).toHaveLength(1));
+    expect(resets()[0].path).toBe("/admin/users/4/disable-totp");
+    const password = resets()[0].body.temporaryPassword;
+    expect(password).toMatch(PASSWORD_TEXT);
+    expect(await screen.findByText(password)).toBeInTheDocument();
+    expect(onDone).toHaveBeenCalledTimes(1);
   });
 
   it("asks the parent to close from Hủy and from Xong", async () => {

@@ -13,9 +13,9 @@ import { useAdminSession } from "@/lib/admin/session";
 import type { UserSummary } from "@/lib/admin/types";
 import { withReLogin } from "@/lib/admin/with-relogin";
 import { CreateUserDialog } from "./CreateUserDialog";
-import { ResetPasswordDialog } from "./ResetPasswordDialog";
+import { ResetPasswordDialog, type ResetMode } from "./ResetPasswordDialog";
 
-type ActionKind = "disable" | "enable" | "promote" | "demote" | "disable-totp";
+type ActionKind = "disable" | "enable" | "promote" | "demote";
 
 type Action = { user: UserSummary; kind: ActionKind; isMe: boolean };
 
@@ -27,7 +27,6 @@ const REQUESTS: Record<ActionKind, { path: string; body?: unknown }> = {
   enable: { path: "enable" },
   promote: { path: "role", body: { role: "OWNER" } },
   demote: { path: "role", body: { role: "MEMBER" } },
-  "disable-totp": { path: "disable-totp" },
 };
 
 const DONE_MESSAGES: Record<ActionKind, string> = {
@@ -35,7 +34,6 @@ const DONE_MESSAGES: Record<ActionKind, string> = {
   enable: "Đã mở khóa tài khoản.",
   promote: "Đã cho làm Chủ.",
   demote: "Đã thôi làm Chủ.",
-  "disable-totp": "Đã tắt xác thực 2 lớp.",
 };
 
 function question({ user, kind, isMe }: Action): Question {
@@ -71,13 +69,6 @@ function question({ user, kind, isMe }: Action): Question {
         confirmLabel: "Thôi làm Chủ",
         destructive: true,
       };
-    case "disable-totp":
-      return {
-        title: `Tắt xác thực 2 lớp của ${name}?`,
-        description: `Dùng khi ${name} mất hoặc đổi điện thoại. ${name} sẽ bị đăng xuất, và lần đăng nhập tới phải bật lại xác thực 2 lớp.`,
-        confirmLabel: "Tắt xác thực 2 lớp",
-        destructive: true,
-      };
   }
 }
 
@@ -91,7 +82,8 @@ type Props = {
 export function UserList({ users, onChanged }: Props) {
   const { requireReLogin, refresh, user: me } = useAdminSession();
   const [creating, setCreating] = useState(false);
-  const [resetting, setResetting] = useState<UserSummary | null>(null);
+  // The reset dialog also serves the lost-phone action: both set a temporary password shown once.
+  const [resetting, setResetting] = useState<{ user: UserSummary; mode: ResetMode } | null>(null);
   const [asked, setAsked] = useState<Action | null>(null);
   // The last question stays for the labels of the dialog while it closes, so the words do not change meanwhile.
   const [lastAsked, setLastAsked] = useState<Action | null>(null);
@@ -195,7 +187,7 @@ export function UserList({ users, onChanged }: Props) {
                     variant="outline"
                     aria-label={`Đặt lại mật khẩu của ${user.displayName}`}
                     disabled={busy}
-                    onClick={() => setResetting(user)}
+                    onClick={() => setResetting({ user, mode: "reset" })}
                   >
                     Đặt lại mật khẩu
                   </Button>
@@ -228,7 +220,7 @@ export function UserList({ users, onChanged }: Props) {
                     variant="outline"
                     aria-label={`Tắt xác thực 2 lớp của ${user.displayName}`}
                     disabled={busy}
-                    onClick={() => ask(user, "disable-totp", isMe)}
+                    onClick={() => setResetting({ user, mode: "turn-off-totp" })}
                   >
                     Tắt xác thực 2 lớp
                   </Button>
@@ -240,7 +232,12 @@ export function UserList({ users, onChanged }: Props) {
       </ul>
 
       <CreateUserDialog open={creating} onOpenChange={setCreating} onCreated={onChanged} />
-      <ResetPasswordDialog user={resetting} onClose={() => setResetting(null)} onDone={onChanged} />
+      <ResetPasswordDialog
+        user={resetting?.user ?? null}
+        mode={resetting?.mode}
+        onClose={() => setResetting(null)}
+        onDone={onChanged}
+      />
       <ConfirmDialog
         open={asked !== null}
         onOpenChange={(open) => (open ? undefined : setAsked(null))}

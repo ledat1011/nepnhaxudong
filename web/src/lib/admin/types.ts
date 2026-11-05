@@ -173,6 +173,8 @@ export type UserResponse = {
   totpEnabled: boolean;
   /** An owner switched off this user's two-factor login: it must be set up again before anything else. */
   mustSetupTotp: boolean;
+  /** After such a forced setup, only an owner may switch two-factor login off. */
+  totpRequired: boolean;
 };
 
 export type UserSummary = {
@@ -184,6 +186,7 @@ export type UserSummary = {
   mustChangePassword: boolean;
   role: UserRole;
   mustSetupTotp: boolean;
+  totpRequired: boolean;
 };
 
 export type ChangeRoleRequest = {

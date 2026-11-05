@@ -26,7 +26,12 @@ function MemberSecurity() {
   return (
     <div className="flex flex-col gap-6 p-4">
       {/* A new key when the session changes: the card starts again and keeps no secret from before. */}
-      <TwoFactorCard key={String(enabled)} enabled={enabled} onChanged={() => void refresh()} />
+      <TwoFactorCard
+        key={String(enabled)}
+        enabled={enabled}
+        canSwitchOff={!(me?.totpRequired ?? false)}
+        onChanged={() => void refresh()}
+      />
       <p className="text-sm text-muted-foreground">
         Tài khoản của cả nhà do Chủ quản lý. Khi cần mở khóa, đặt lại mật khẩu hay tắt xác thực 2 lớp vì mất
         điện thoại, hãy nhờ Chủ.
@@ -77,7 +82,12 @@ function OwnerAccounts() {
       ) : null}
       {self !== undefined ? (
         // A new key when the loaded state changes: the card starts again and keeps no secret from before.
-        <TwoFactorCard key={String(self.totpEnabled)} enabled={self.totpEnabled} onChanged={reload} />
+        <TwoFactorCard
+          key={String(self.totpEnabled)}
+          enabled={self.totpEnabled}
+          canSwitchOff={!self.totpRequired}
+          onChanged={reload}
+        />
       ) : null}
       {users !== null ? <UserList users={users} onChanged={reload} /> : null}
     </div>

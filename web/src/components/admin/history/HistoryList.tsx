@@ -14,7 +14,8 @@ import { HistoryDetail } from "./HistoryDetail";
 /** The API sends 50 lines a page: a shorter page is the last one. */
 const PAGE_SIZE = 50;
 const ALL_TYPES = "";
-const TYPES = ["product", "timeline_event", "press_mention", "story", "media", "site_setting", "app_user"];
+const ACCOUNT_TYPE = "app_user";
+const TYPES = ["product", "timeline_event", "press_mention", "story", "media", "site_setting", ACCOUNT_TYPE];
 
 function listPath(entityType: string, page: number): string {
   const type = entityType === ALL_TYPES ? "" : `entityType=${encodeURIComponent(entityType)}&`;
@@ -23,7 +24,9 @@ function listPath(entityType: string, page: number): string {
 
 /** The edit history, newest first, with a filter by kind of content and paging. Tap a line to see it and restore it. */
 export function HistoryList() {
-  const { requireReLogin } = useAdminSession();
+  const { requireReLogin, user } = useAdminSession();
+  // The API leaves account lines out of a member's list, so the filter does not offer them.
+  const types = user?.role === "OWNER" ? TYPES : TYPES.filter((type) => type !== ACCOUNT_TYPE);
   const [entityType, setEntityType] = useState(ALL_TYPES);
   const [page, setPage] = useState(0);
   const [entries, setEntries] = useState<AuditEntryDto[] | null>(null);
@@ -83,7 +86,7 @@ export function HistoryList() {
             className="h-11 rounded-md border bg-background px-3 text-base font-normal"
           >
             <option value={ALL_TYPES}>Tất cả</option>
-            {TYPES.map((type) => (
+            {types.map((type) => (
               <option key={type} value={type}>
                 {entityTypeLabel(type)}
               </option>

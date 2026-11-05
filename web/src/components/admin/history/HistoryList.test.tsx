@@ -9,7 +9,8 @@ const { adminFetch, requireReLogin } = vi.hoisted(() => ({
   requireReLogin: vi.fn(),
 }));
 vi.mock("@/lib/admin/api", () => ({ adminFetch }));
-vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin }) }));
+const { session } = vi.hoisted(() => ({ session: { role: "OWNER" as "OWNER" | "MEMBER" } }));
+vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin, user: { id: 1, role: session.role } }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
 import { HistoryList } from "./HistoryList";
@@ -45,6 +46,25 @@ function deferred<T>() {
 beforeEach(() => {
   adminFetch.mockReset();
   requireReLogin.mockReset();
+  session.role = "OWNER";
+});
+
+describe("HistoryList filter by role", () => {
+  it("offers the account kind to an owner", async () => {
+    adminFetch.mockResolvedValue([]);
+    render(<HistoryList />);
+    await screen.findByText("Chưa có thay đổi nào.");
+    expect(screen.getByRole("option", { name: "Tài khoản" })).toBeInTheDocument();
+  });
+
+  it("does not offer the account kind to a member, whose list has no account lines", async () => {
+    session.role = "MEMBER";
+    adminFetch.mockResolvedValue([]);
+    render(<HistoryList />);
+    await screen.findByText("Chưa có thay đổi nào.");
+    expect(screen.queryByRole("option", { name: "Tài khoản" })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Câu chuyện" })).toBeInTheDocument();
+  });
 });
 
 describe("HistoryList", () => {
