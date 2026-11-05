@@ -38,14 +38,14 @@
     <path d="M230 260H340V350H230Z" fill="#CFE4EE"/>
     <path d="M230 260H340V350H230ZM285 260V350" fill="none" stroke="#8B5A2B" stroke-width="7"/>
     <!-- the supermarket -->
-    <path d="M410 90H820V470H410Z" fill="#FBF7EE"/>
-    <path d="M410 90H820V150H410Z" fill="#6E8B3D"/>
+    <path d="M410 90H796V470H410Z" fill="#FBF7EE"/>
+    <path d="M410 90H796V150H410Z" fill="#6E8B3D"/>
     <g transform="translate(605 120)">
       <ellipse rx="10" ry="16" transform="rotate(-30)" fill="#D9A13B" stroke-width="3"/>
       <ellipse cx="22" rx="10" ry="16" transform="rotate(30 22 0)" fill="#D9A13B" stroke-width="3"/>
       <ellipse cx="-22" rx="10" ry="16" transform="rotate(30 -22 0)" fill="#FBF7EE" stroke-width="3"/>
     </g>
-    <path d="M404 150H826V172Q816 188 806 172Q781 194 756 172Q731 194 706 172Q681 194 656 172Q631 194 606 172Q581 194 556 172Q531 194 506 172Q481 194 456 172Q431 194 404 172Z" fill="#E59A84"/>
+    <path d="M404 150H798V172Q777 192 756 172Q731 194 706 172Q681 194 656 172Q631 194 606 172Q581 194 556 172Q531 194 506 172Q481 194 456 172Q431 194 404 172Z" fill="#E59A84"/>
     <path d="M456 150V172M506 150V172M556 150V172M606 150V172M656 150V172M706 150V172M756 150V172" fill="none" stroke="#FBF7EE" stroke-width="8"/>
     <path d="M436 200H782V470H436Z" fill="#E9F2F1"/>
     <path d="M444 270H774M444 340H774M444 410H774" fill="none" stroke="#8B5A2B" stroke-width="9"/>
