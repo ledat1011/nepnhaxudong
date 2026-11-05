@@ -94,6 +94,20 @@ describe("RiceStory", () => {
     });
   });
 
+  it("darkens almost the whole road surface, leaving the brown edges", () => {
+    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
+    const road = container.querySelector("[data-story-road]") as HTMLElement;
+    const widths = (path: Element | null) =>
+      [...(path?.getAttribute("class") ?? "").matchAll(/\[stroke-width:(\d+)px\]/g)].map((m) => Number(m[1]));
+    const [edge, surface] = [...road.querySelectorAll(":scope > svg path")].map(widths);
+    const band = widths(road.querySelector("[data-story-road-passed] path"));
+    // Below 768 px, then from 768 px.
+    band.forEach((width, i) => {
+      expect(width).toBeGreaterThanOrEqual(surface[i] * 0.85);
+      expect(width).toBeLessThan(edge[i]);
+    });
+  });
+
   it.each(["vi", "en"] as const)("labels each %s scene with its step number", (lang) => {
     const dict = getDictionary(lang);
     const { container } = render(<RiceStory dict={dict} zalo={null} />);

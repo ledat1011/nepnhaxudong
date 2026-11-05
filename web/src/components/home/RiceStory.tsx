@@ -127,7 +127,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                             d={roadPath(bend)}
                             stroke={BRAND.grain}
                             vectorEffect="non-scaling-stroke"
-                            className="[stroke-width:6px] md:[stroke-width:10px]"
+                            className="[stroke-width:12px] md:[stroke-width:20px]"
                           />
                         </svg>
                       </span>
