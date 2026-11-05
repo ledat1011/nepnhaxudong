@@ -1,8 +1,17 @@
 "use client";
 
-import { useId, useState } from "react";
-import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
+import { useId, useRef, useState } from "react";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/admin/ui/alert-dialog";
 import { Switch } from "@/components/admin/ui/switch";
 import { adminFetch } from "@/lib/admin/api";
 import type { FieldKey } from "@/lib/admin/field-targets";
@@ -29,9 +38,12 @@ type Props = {
  * The "Hiện trên web" switch of one product (decision 0010, item 2). The switch shows what the API stored: it moves
  * only after the API answered. Turning it on opens the check panel first; turning it off asks first, like "Gỡ bài".
  * The whole row is the label, so the tap target is the full width and at least 44 px high.
+ * The panels open from code, not from a trigger, so they give the focus back to the switch themselves. While a change
+ * is sent the switch is only marked `aria-disabled`: a real `disabled` would drop the focus to the page.
  */
 export function VisibilitySwitch({ product, label, disabled = false, onChanged, onFix, className }: Props) {
   const id = useId();
+  const switchRef = useRef<HTMLButtonElement>(null);
   const [checking, setChecking] = useState(false);
   const [askHide, setAskHide] = useState(false);
   const showing = useSave(() => adminFetch<ProductAdminDto>(`/admin/products/${product?.id}/show`, { method: "POST" }), {
@@ -54,11 +66,17 @@ export function VisibilitySwitch({ product, label, disabled = false, onChanged, 
       <label htmlFor={id} className="flex min-h-11 items-center justify-between gap-3 text-base font-semibold">
         <span>Hiện trên web</span>
         <Switch
+          ref={switchRef}
           id={id}
           aria-label={label}
+          aria-disabled={pending || undefined}
           checked={product?.visible ?? false}
-          disabled={product === undefined || disabled || pending}
-          onCheckedChange={(next) => (next ? setChecking(true) : setAskHide(true))}
+          disabled={product === undefined || disabled}
+          onCheckedChange={(next) => {
+            if (pending) return;
+            if (next) setChecking(true);
+            else setAskHide(true);
+          }}
         />
       </label>
       <ProblemMessage error={showing.error ?? hiding.error} />
@@ -70,17 +88,29 @@ export function VisibilitySwitch({ product, label, disabled = false, onChanged, 
             checks={showChecks(product)}
             onShow={() => void change(showing)}
             onFix={(gap) => onFix(gap.fix)}
+            onClosed={() => switchRef.current?.focus()}
           />
-          <ConfirmDialog
-            open={askHide}
-            onOpenChange={setAskHide}
-            title="Ẩn sản phẩm khỏi website?"
-            description="Khách sẽ không thấy sản phẩm này nữa. Sản phẩm vẫn được giữ ở đây và bạn có thể bật hiện lại."
-            confirmLabel="Ẩn sản phẩm"
-            cancelLabel="Không ẩn"
-            destructive
-            onConfirm={() => void change(hiding)}
-          />
+          <AlertDialog open={askHide} onOpenChange={setAskHide}>
+            <AlertDialogContent
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                switchRef.current?.focus();
+              }}
+            >
+              <AlertDialogHeader>
+                <AlertDialogTitle>Ẩn sản phẩm khỏi website?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Khách sẽ không thấy sản phẩm này nữa. Sản phẩm vẫn được giữ ở đây và bạn có thể bật hiện lại.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Không ẩn</AlertDialogCancel>
+                <AlertDialogAction variant="destructive" onClick={() => void change(hiding)}>
+                  Ẩn sản phẩm
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       ) : null}
     </div>

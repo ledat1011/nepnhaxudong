@@ -21,6 +21,8 @@ type Props = {
   onShow(): void;
   /** Called after the panel closed on "Quay lại sửa", with the first gap, so the caller can go to it. */
   onFix(gap: ShowCheck): void;
+  /** Called after the panel closed any other way. The panel has no trigger, so the caller puts the focus back. */
+  onClosed(): void;
 };
 
 /**
@@ -29,18 +31,21 @@ type Props = {
  * "Quay lại sửa" closes and goes to the first gap. The check mark and the cross only repeat the text next to them,
  * so they are hidden from screen readers.
  */
-export function ShowCheckDialog({ open, onOpenChange, checks, onShow, onFix }: Props) {
+export function ShowCheckDialog({ open, onOpenChange, checks, onShow, onFix, onClosed }: Props) {
   const fixing = useRef(false);
   const gap = checks.find((check) => !check.ok);
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent
         onCloseAutoFocus={(event) => {
-          if (!fixing.current || gap === undefined) return;
-          // The caller moves the cursor to the first gap instead of back to the switch.
-          fixing.current = false;
           event.preventDefault();
-          onFix(gap);
+          if (fixing.current && gap !== undefined) {
+            // The caller moves the cursor to the first gap instead of back to the switch.
+            fixing.current = false;
+            onFix(gap);
+          } else {
+            onClosed();
+          }
         }}
       >
         <AlertDialogHeader>

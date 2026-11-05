@@ -109,6 +109,40 @@ describe("VisibilitySwitch", () => {
     expect(screen.getByRole("switch", { name: "Hiện trên web" })).toBeChecked();
   });
 
+  it("gives the focus back to the switch when a panel closes without a change", async () => {
+    const events = userEvent.setup();
+    const { rerender } = render(<VisibilitySwitch product={product()} onChanged={vi.fn()} onFix={vi.fn()} />);
+    const toggle = screen.getByRole("switch", { name: "Hiện trên web" });
+    toggle.focus();
+    await events.keyboard(" ");
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    await events.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(toggle).toHaveFocus());
+
+    rerender(<VisibilitySwitch product={product({ visible: true })} onChanged={vi.fn()} onFix={vi.fn()} />);
+    await events.keyboard(" ");
+    await events.click(screen.getByRole("button", { name: "Không ẩn" }));
+    await waitFor(() => expect(toggle).toHaveFocus());
+  });
+
+  it("keeps the focus on the switch while the change is sent", async () => {
+    const events = userEvent.setup();
+    let answer: (value: ProductAdminDto) => void = () => {};
+    adminFetch.mockReturnValue(new Promise<ProductAdminDto>((resolve) => (answer = resolve)));
+    render(<VisibilitySwitch product={product({ mediaIds: [1] })} onChanged={vi.fn()} onFix={vi.fn()} />);
+    const toggle = screen.getByRole("switch", { name: "Hiện trên web" });
+    toggle.focus();
+    await events.keyboard(" ");
+    await events.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Hiện trên web" }));
+    await waitFor(() => expect(toggle).toHaveFocus());
+    expect(toggle).toHaveAttribute("aria-disabled", "true");
+    await events.click(toggle);
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    answer(product({ visible: true, mediaIds: [1] }));
+    await waitFor(() => expect(toggle).not.toHaveAttribute("aria-disabled"));
+  });
+
   it("shows the API error and leaves the switch as it was", async () => {
     const events = userEvent.setup();
     const onChanged = vi.fn();
