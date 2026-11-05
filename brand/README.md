@@ -24,6 +24,7 @@
 - Vàng lúa `#D9A13B` không dùng làm màu chữ trên nền sáng (không đủ tương phản). Chỉ dùng cho điểm nhấn, hoặc làm chữ trên nền Nâu đất.
 - Hồng má `#E59A84`, `da` `#F4CDA8` và `toc` `#222222` chỉ dùng trong hình minh hoạ (mascot, người, than hồng, máy xay, hộp quà), không dùng làm màu chữ.
 - Xanh trời `#CFE4EE` và Xanh trời nhạt `#E9F2F1` chỉ dùng trong hình minh hoạ (bầu trời, mặt nước ruộng, nền cảnh ngoài trời, nền hình nhỏ trên nhãn túi). Không dùng cho chữ, nút, viền giao diện, hay làm nền của một khối giao diện. Trời chuyển dần từ Xanh trời xuống Trắng gạo ở chân trời.
+- Xanh lá nhạt `#A9C47F` chỉ dùng trong hình minh hoạ (áo của ba). Không dùng cho chữ, nút, viền giao diện. Không có cặp chữ / nền nào với màu này.
 - Xanh mạ `#6E8B3D` dùng rất ít (lá lúa).
 - Chỉ ghép chữ / nền theo `textPairs` trong `tokens.json`; mọi cặp đạt WCAG AA (4,5 : 1).
 

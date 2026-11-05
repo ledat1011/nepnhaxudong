@@ -27,6 +27,7 @@ test('tokens khop spec 2.1', () => {
     toc: '#222222',
     'xanh-troi': '#CFE4EE',
     'xanh-troi-nhat': '#E9F2F1',
+    'xanh-la-nhat': '#A9C47F',
   };
   assert.deepEqual(Object.keys(color).sort(), Object.keys(expected).sort());
   for (const [name, hex] of Object.entries(expected)) {
@@ -37,14 +38,15 @@ test('tokens khop spec 2.1', () => {
 
 test('use cua cac mau chi dung trong hinh minh hoa ghi ro dieu do', () => {
   const { color } = readTokens();
-  for (const name of ['hong-ma', 'da', 'toc', 'xanh-troi', 'xanh-troi-nhat']) {
+  for (const name of ['hong-ma', 'da', 'toc', 'xanh-troi', 'xanh-troi-nhat', 'xanh-la-nhat']) {
     assert.ok(color[name].use.includes('chỉ trong hình minh hoạ'), `${name}: use thieu "chỉ trong hình minh hoạ"`);
   }
 });
 
-test('palette() tra ve 11 ma hex chu thuong', () => {
+test('palette() tra ve 12 ma hex chu thuong', () => {
   const p = palette();
-  assert.equal(p.size, 11);
+  assert.equal(p.size, 12);
+  assert.ok(p.has('#a9c47f'));
   assert.ok(p.has('#cfe4ee'));
   assert.ok(p.has('#4a2c1a'));
   assert.ok(p.has('#f4cda8'));

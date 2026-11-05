@@ -19,6 +19,7 @@ const NAMES: Record<string, string> = {
   toc: "hair",
   "xanh-troi": "sky",
   "xanh-troi-nhat": "skyLight",
+  "xanh-la-nhat": "leafLight",
 };
 
 describe("brand colors", () => {
@@ -32,6 +33,7 @@ describe("brand colors", () => {
 
   it("palette has every brand and illustration color", () => {
     expect(ILLUSTRATION_PALETTE.has("#cfe4ee")).toBe(true);
-    expect(ILLUSTRATION_PALETTE.size).toBe(11);
+    expect(ILLUSTRATION_PALETTE.has("#a9c47f")).toBe(true);
+    expect(ILLUSTRATION_PALETTE.size).toBe(12);
   });
 });

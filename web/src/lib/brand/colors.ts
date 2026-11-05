@@ -14,6 +14,7 @@ export const ILLUSTRATION_ONLY_COLORS = {
   hair: "#222222",
   sky: "#CFE4EE",
   skyLight: "#E9F2F1",
+  leafLight: "#A9C47F",
 } as const;
 
 /** Every color an illustration may use, lowercase. */
