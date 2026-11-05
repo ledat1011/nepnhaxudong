@@ -1,6 +1,6 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-05 — máy công ty
+Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop` (chạy thử web)
 
 ## Giai đoạn hiện tại
 `main` (`addcdd3`) đã có đủ phần B: API (B1), web công khai (B2), trang quản trị (B3, PR #11), hiệu ứng GSAP (B4), logo và mascot (phần A), popup Zalo và thanh đang tải (PR #12), 10 việc cải tiến trang quản trị (quyết định `0008` và `0010`, PR #14, #15, #17, #18, #20) và cảnh minh họa (PR #21). Không còn nhánh nào chờ merge. Việc tiếp theo: rà trang công khai bằng các skill giao diện, các việc sau của cảnh minh họa, rồi phần D (hạ tầng).
@@ -29,6 +29,7 @@ Cập nhật: 2026-11-05 — máy công ty
 
 ## Đang làm
 - Không có nhánh nào đang làm. Bản xem thử local: web http://localhost:3011 và API cổng 8090, chạy `main` mới nhất trên database `nepnha_b3` (đã chạy migration V3, V4; tài khoản admin là "Chủ"). Hai server chạy trong cửa sổ PowerShell thu nhỏ; script ở thư mục scratchpad của session, không nằm trong repo.
+- Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ liệu mẫu ở http://localhost:3000 (`npm run dev`, cấu hình `web-mock` trong `.claude/launch.json`). Máy này không có Docker và đang dùng Java 17, nên chưa chạy được API và trang quản trị. Node trên máy là 24 (tài liệu ghi 22); web vẫn chạy được.
 
 ## Việc tiếp theo
 1. Rà trang công khai bằng các skill giao diện (taste-skill, Delivery Gate của antislop, `web-interface-guidelines`) trên `main` hiện tại, gộp với báo cáo trang quản trị thành một danh sách đề xuất cho chủ dự án. Làm ở máy (cần plugin và trình duyệt).
@@ -46,6 +47,7 @@ Cập nhật: 2026-11-05 — máy công ty
 - Chưa đặt `GEMINI_API_KEY`.
 - 4 MCP của dự án chưa được duyệt trong Claude Code.
 - Chưa đăng nhập Recraft.
+- Máy `C:\Users\Admin\Desktop`: cần cài Docker Desktop và JDK 21 (`JAVA_HOME` trỏ tới JDK 21) thì mới chạy được API, trang quản trị và `npm run test:fullstack`.
 
 ## Ghi chú cho phần D
 Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, Docker, máy chủ).
