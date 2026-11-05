@@ -931,9 +931,9 @@ test.describe("the rice story road", () => {
       expect(gap).toBeGreaterThan(40);
       expect(gap).toBeLessThan(90);
     });
-    // The owner asked for a shorter section (it was about 4800 px at 1280).
+    // The owner asked for a shorter section (it was about 4800 px at 1280), then for wider pictures.
     const height = await page.$eval("[data-rice-story]", (el) => el.getBoundingClientRect().height);
-    expect(height).toBeLessThan(4000);
+    expect(height).toBeLessThan(4500);
   });
 
   test("desktop: the grain moves down the road and the stop in view fills", async ({ page }) => {

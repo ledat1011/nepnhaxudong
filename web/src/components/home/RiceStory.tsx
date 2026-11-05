@@ -142,7 +142,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                   </span>
                   <div
                     data-story-content
-                    className={`md:max-w-[21rem] ${onLeft ? "md:ml-auto" : ""}`.trim()}
+                    className={`md:max-w-[26rem] ${onLeft ? "md:ml-auto" : ""}`.trim()}
                   >
                     <p data-story-step className="font-bold leading-7 text-coat">
                       {`${dict.story.step} ${i + 1}`}
