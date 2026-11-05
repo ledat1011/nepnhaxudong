@@ -1,0 +1,25 @@
+[
+  {
+    "name": "2-ngay",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-2-nang-mua-gio-1600.png",
+      "me-trao-tui-512.png",
+      "ba-canh-lo-512.png"
+    ],
+    "prompt": "Edit the first attached image (a rice field scene with sun, rain cloud and wind). Changes:\n1. Make the rice field THICKER and denser: more rice plants, fuller clumps, filling the whole width of the field, still the same simple flat style of rice plants.\n2. Add BA and ME (father and mother) standing in the field among the rice, waist-deep in the rice, on the left half of the field, caring for the rice: ME (like the woman in the second attached picture: conical non la hat, brown blouse) gently holds a rice head and looks at the grains; BA stands next to her, checking a rice plant. Both are smiling softly. They are small compared to the scene, like the people in the other story scenes.\nBA (the father) must look like this: a thin Vietnamese man about 65 to 70 years old, short grey-white hair (mostly grey, a little dark at the back), a thin face with high cheekbones and a kind, quiet smile, slim build. He wears a plain dark grey button-up shirt with rolled sleeves and light khaki trousers, sandals. No cap.\n\nKeep the sun, the cloud with rain drops and the wind lines in the sky.\nKEEP THE STYLE EXACTLY like the attached scene: simple, rustic flat cartoon illustration, flat colour fills, even dark-brown outlines, no shading, no gradients, no texture, no extra detail. Same colours, same sky, same ground bands, same framing, keep the important content inside a central 2:1 band. People drawn in the same simple flat style as the attached character pictures. No text, no letters, no watermark.\n"
+  },
+  {
+    "name": "4-say",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-4-say-1600.png",
+      "ba-canh-lo-512.png"
+    ],
+    "prompt": "Edit the first attached image (drying paddy at home: fan, brick coal furnace, drying bed under a roof). Changes:\n1. Make the FAN LOWER: shorten its wooden stand so the fan centre is about at the height of the middle of the furnace (about waist height of a man); the fan still blows into the furnace.\n2. Move BA: he now stands BEHIND the fan, on the left side of the scene, leaning forward and putting coal into the furnace with a small shovel. Make the furnace fire door on the side facing him so he can reach it. Remove the man who stood between the furnace and the drying bed.\nBA (the father) must look like this: a thin Vietnamese man about 65 to 70 years old, short grey-white hair (mostly grey, a little dark at the back), a thin face with high cheekbones and a kind, quiet smile, slim build. He wears a plain dark grey button-up shirt with rolled sleeves and light khaki trousers, sandals. No cap.\n\nKeep the furnace, the drying bed, the roof, the hot-air arrows and everything else the same.\nKEEP THE STYLE EXACTLY like the attached scene: simple, rustic flat cartoon illustration, flat colour fills, even dark-brown outlines, no shading, no gradients, no texture, no extra detail. Same colours, same sky, same ground bands, same framing, keep the important content inside a central 2:1 band. People drawn in the same simple flat style as the attached character pictures. No text, no letters, no watermark.\n"
+  }
+]
