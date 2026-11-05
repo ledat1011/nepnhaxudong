@@ -8,6 +8,9 @@ import { FIELD_PARAM } from "@/lib/admin/field-targets";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { ScreenDetail } from "./screen-detail";
 
+/** The header's row lines up with the 960 px page column below it (AppShell's CONTENT_WIDTH). */
+const ROW_WIDTH = "mx-auto w-full max-w-[60rem]";
+
 type Back = { href: string; label: string };
 
 type Props = {
@@ -24,10 +27,12 @@ const HEADER_LINK =
 export function AdminHeader({ title, userName, back, detail }: Props) {
   if (back) return <DetailHeader back={back} detail={detail ?? null} />;
   return (
-    <header className="sticky top-0 z-30 flex min-h-14 items-center justify-between gap-3 border-b bg-card px-4">
-      {/* The screen name is the one level-1 heading of every private admin page; sections below use h2. */}
-      <h1 className="truncate text-lg font-bold">{title}</h1>
-      <p className="max-w-[50%] truncate text-sm text-muted-foreground">{userName}</p>
+    <header className="sticky top-0 z-30 border-b bg-card">
+      <div className={`${ROW_WIDTH} flex min-h-14 items-center justify-between gap-3 px-4`}>
+        {/* The screen name is the one level-1 heading of every private admin page; sections below use h2. */}
+        <h1 className="truncate text-lg font-bold">{title}</h1>
+        <p className="max-w-[50%] truncate text-sm text-muted-foreground">{userName}</p>
+      </div>
     </header>
   );
 }
@@ -57,7 +62,7 @@ function BackLink({ to, home }: { to: Back; home: boolean }) {
 function DetailHeader({ back, detail }: { back: Back; detail: ScreenDetail | null }) {
   return (
     <header className="border-b bg-card">
-      <div className="flex min-h-12 items-center justify-between gap-2 px-2 pt-1">
+      <div className={`${ROW_WIDTH} flex min-h-12 items-center justify-between gap-2 px-2 pt-1`}>
         {/* The search params are known only in the browser; until then the link goes to the list. */}
         <Suspense fallback={<BackLink to={back} home={false} />}>
           <BackLinkForSearch list={back} />
@@ -76,7 +81,7 @@ function DetailHeader({ back, detail }: { back: Back; detail: ScreenDetail | nul
           </a>
         ) : null}
       </div>
-      <div className="px-4 pb-3">
+      <div className={`${ROW_WIDTH} px-4 pb-3`}>
         {detail ? <p className="text-sm text-muted-foreground">{back.label}</p> : null}
         {/* Long names wrap: the user must see which item is open. */}
         <h1 className="text-xl leading-snug font-bold text-pretty [overflow-wrap:anywhere]">{detail?.name ?? back.label}</h1>

@@ -72,6 +72,12 @@
     scroll-padding-top: 4rem;
     scroll-padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
   }
+  /* From 1024 px the menu is on the left: only the Lưu bar (about 68 px) covers the bottom. */
+  @media (min-width: 64rem) {
+    html {
+      scroll-padding-bottom: 5rem;
+    }
+  }
   body {
     @apply bg-background text-foreground;
   }

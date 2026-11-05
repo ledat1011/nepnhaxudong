@@ -8,6 +8,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname.value }));
 vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ signOut }) }));
 
 import { BottomNav } from "./BottomNav";
+import { TodoCountContext } from "./todo-count";
 
 beforeEach(() => {
   pathname.value = "/admin";
@@ -64,6 +65,20 @@ describe("BottomNav", () => {
       expect(item.className).not.toMatch(/(^| )text-xs( |$)/);
     }
     expect(within(nav).getByRole("list").className).toMatch(/(^| )px-\d/);
+  });
+
+  it("shows the number of jobs to do on Tổng quan, and says it to a screen reader", () => {
+    render(
+      <TodoCountContext.Provider value={{ count: 3, publish: () => {} }}>
+        <BottomNav />
+      </TodoCountContext.Provider>,
+    );
+    expect(screen.getByRole("link", { name: "Tổng quan, 3 việc cần làm" })).toBeInTheDocument();
+  });
+
+  it("is hidden from 1024 px, where the left menu takes over", () => {
+    render(<BottomNav />);
+    expect(screen.getByRole("navigation", { name: "Menu chính" })).toHaveClass("lg:hidden");
   });
 
   it("is fixed to the bottom and respects the safe area", () => {

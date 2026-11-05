@@ -25,6 +25,16 @@ export type TodoSources = {
   brand?: BrandSettings;
 };
 
+/** The admin lists the to-do rows come from. The dashboard asks for all of them at the same time. */
+export const TODO_SOURCES: { key: keyof TodoSources; label: string; api: string }[] = [
+  { key: "contact", label: "Liên hệ", api: "/admin/settings/contact" },
+  { key: "brand", label: "Thương hiệu", api: "/admin/settings/brand" },
+  { key: "stories", label: "Câu chuyện", api: "/admin/stories" },
+  { key: "products", label: "Sản phẩm", api: "/admin/products" },
+  { key: "timeline", label: "Hành trình", api: "/admin/timeline" },
+  { key: "press", label: "Báo chí", api: "/admin/press" },
+];
+
 function blank(value: string | null | undefined): boolean {
   return value == null || value.trim() === "";
 }

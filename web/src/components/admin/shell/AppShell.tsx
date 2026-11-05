@@ -12,6 +12,11 @@ import { FieldFocus } from "./FieldFocus";
 import { screenTitleFor } from "./nav-access";
 import { parentScreen } from "./nav-items";
 import { ScreenDetailContext, type ScreenDetail } from "./screen-detail";
+import { SideNav } from "./SideNav";
+import { TodoCountProvider } from "./todo-count";
+
+/** The page column: full width on a phone, at most 960 px and centred on a wide screen. Shared with the header. */
+export const CONTENT_WIDTH = "mx-auto w-full max-w-[60rem]";
 
 /** The gate of every private admin screen. It renders nothing private until the session is known. */
 export function AppShell({ children }: { children: ReactNode }) {
@@ -45,18 +50,25 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <NavGuardProvider>
-      <ScreenDetailContext.Provider value={setDetail}>
-        <div className="min-h-dvh pb-24">
-          <AdminHeader
-            title={screenTitleFor(pathname, user.role)}
-            userName={user.displayName}
-            back={parentScreen(pathname)}
-            detail={detail}
-          />
-          <main>{children}</main>
-          <BottomNav />
-        </div>
-      </ScreenDetailContext.Provider>
+      <TodoCountProvider>
+        <ScreenDetailContext.Provider value={setDetail}>
+          {/*
+           * Phone: bottom menu. From 1024 px: a menu on the left and the page next to it. The page is at most
+           * 960 px wide (CONTENT_WIDTH), so lines and text boxes stay short enough to read on a laptop.
+           */}
+          <div className="min-h-dvh pb-24 lg:pb-8 lg:pl-60">
+            <SideNav />
+            <AdminHeader
+              title={screenTitleFor(pathname, user.role)}
+              userName={user.displayName}
+              back={parentScreen(pathname)}
+              detail={detail}
+            />
+            <main className={CONTENT_WIDTH}>{children}</main>
+            <BottomNav />
+          </div>
+        </ScreenDetailContext.Provider>
+      </TodoCountProvider>
       {/* Opens a screen at one field when a link says which (?o=…). It reads the search params, hence Suspense. */}
       <Suspense fallback={null}>
         <FieldFocus />

@@ -7,6 +7,8 @@ import { useState } from "react";
 import { cn } from "@/lib/admin/utils";
 import { MoreSheet } from "./MoreSheet";
 import { NAV_ITEMS, isActivePath, isMoreActive } from "./nav-items";
+import { ADMIN_ROUTES } from "@/lib/admin/routes";
+import { TodoBadge, todoCountLabel, useTodoCount } from "./todo-count";
 
 // 13 px labels: 12 px was hard to read for older eyes, and 14 px does not fit "Câu chuyện" on a 360 px phone.
 const ITEM_CLASS =
@@ -26,16 +28,18 @@ export function BottomNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreActive = isMoreActive(pathname);
+  const todoCount = useTodoCount();
 
   return (
     <>
       <nav
         aria-label="Menu chính"
-        className="fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
         <ul className={cn("grid px-3", COLUMNS)}>
           {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
             const active = isActivePath(pathname, href);
+            const home = href === ADMIN_ROUTES.home;
             return (
               <li key={href}>
                 <Link
@@ -43,8 +47,15 @@ export function BottomNav() {
                   aria-current={active ? "page" : undefined}
                   className={cn(ITEM_CLASS, active ? ACTIVE_CLASS : IDLE_CLASS)}
                 >
-                  <Icon aria-hidden className="size-5" />
-                  <span>{label}</span>
+                  {/* The badge sits on the corner of the icon, so the label keeps its width. */}
+                  <span className="relative">
+                    <Icon aria-hidden className="size-5" />
+                    {home ? <TodoBadge count={todoCount} className="absolute -top-2 left-3.5" /> : null}
+                  </span>
+                  <span>
+                    {label}
+                    {home && todoCountLabel(todoCount) ? <span className="sr-only">{todoCountLabel(todoCount)}</span> : null}
+                  </span>
                 </Link>
               </li>
             );

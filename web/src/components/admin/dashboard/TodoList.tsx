@@ -2,24 +2,17 @@
 
 import { ChevronRight, CircleCheck } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useContext, useEffect, useId, useState } from "react";
 import { Button } from "@/components/admin/ui/button";
 import { adminFetch } from "@/lib/admin/api";
 import { useAdminSession } from "@/lib/admin/session";
 import { withReLogin } from "@/lib/admin/with-relogin";
-import { buildTodos, type Todo, type TodoSection, type TodoSources } from "./todo";
+import { TodoCountContext } from "@/components/admin/shell/todo-count";
+import { buildTodos, TODO_SOURCES, type Todo, type TodoSection, type TodoSources } from "./todo";
 
 type SourceKey = keyof TodoSources;
 
-/** The lists the to-do rows come from. All are asked for at the same time. */
-const SOURCES: { key: SourceKey; label: string; api: string }[] = [
-  { key: "contact", label: "Liên hệ", api: "/admin/settings/contact" },
-  { key: "brand", label: "Thương hiệu", api: "/admin/settings/brand" },
-  { key: "stories", label: "Câu chuyện", api: "/admin/stories" },
-  { key: "products", label: "Sản phẩm", api: "/admin/products" },
-  { key: "timeline", label: "Hành trình", api: "/admin/timeline" },
-  { key: "press", label: "Báo chí", api: "/admin/press" },
-];
+const SOURCES = TODO_SOURCES;
 
 const SECTIONS: { key: TodoSection; title: string }[] = [
   { key: "settings", title: "Liên hệ & cài đặt" },
@@ -83,6 +76,13 @@ export function TodoList() {
 
   const firstLoad = loading && Object.keys(sources).length === 0;
   const todos = firstLoad ? [] : buildTodos(sources);
+
+  // The badge on the "Tổng quan" menu item shows the same number as this list.
+  const todoCount = useContext(TodoCountContext);
+  const shownCount = loading ? null : todos.length;
+  useEffect(() => {
+    if (shownCount !== null) todoCount?.publish(shownCount);
+  }, [todoCount, shownCount]);
 
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
