@@ -1,7 +1,20 @@
 # Cài đặt
 
 ## Cài đặt một máy mới (Windows)
-1. Cài Git for Windows, Node 22, JDK 21, Rancher Desktop (xem mục "Docker trên máy"), uv và Python 3 (Python 3 cần cho hai skill `state-diagram` và `call-chain`).
+1. Cài Git for Windows, Node 22, Claude Code (lệnh `claude`; ứng dụng Claude desktop không thêm lệnh này vào PATH), JDK 21, Docker Desktop hoặc Rancher Desktop (xem mục "Docker trên máy"), uv và Python 3 (Python 3 cần cho hai skill `state-diagram` và `call-chain`). Cài bằng `winget` được, ví dụ:
+   ```bash
+   winget install --id Anthropic.ClaudeCode -e
+   winget install --id EclipseAdoptium.Temurin.21.JDK -e
+   winget install --id astral-sh.uv -e
+   winget install --id Docker.DockerDesktop -e
+   ```
+   - Bộ cài Temurin đặt `JAVA_HOME` cho cả máy. Nếu máy có sẵn JDK khác, kiểm tra bằng `java -version` trong một terminal mới.
+   - Docker Desktop cần quyền admin (bấm Yes ở hộp thoại UAC) và WSL 2. Nếu `wsl --status` báo thiếu nhân WSL 2, chạy `wsl --update` trước. Có thể phải khởi động lại máy.
+   - Nếu dùng ứng dụng Claude trên Windows (bản desktop), đặt thêm biến sau, để Python mà `uv` tải về không nằm trong `AppData` (ứng dụng ảo hóa thư mục này, làm hỏng liên kết của `uv` và MCP `nanobanana` không chạy được):
+     ```bat
+     setx UV_PYTHON_INSTALL_DIR "%USERPROFILE%\.local\share\uv\python"
+     ```
+   - Biến môi trường mới chỉ có hiệu lực sau khi mở lại terminal; với ứng dụng Claude desktop thì phải thoát hẳn ứng dụng rồi mở lại.
 2. Lấy code:
    ```bash
    git clone https://github.com/ledat1011/nepnhaxudong.git
@@ -18,7 +31,19 @@
    ```
    Mở lại terminal để biến có hiệu lực.
 5. Mở Claude Code trong thư mục repo và chấp nhận cài các plugin được đề nghị. Lần đầu mở repo, Claude Code cũng hỏi có duyệt các MCP server của dự án trong `.mcp.json` không — hãy duyệt.
-6. Recraft cần đăng nhập một lần: trong Claude Code chạy `/mcp`, chọn `recraft`, rồi chọn Authenticate.
+   Ứng dụng Claude desktop không hỏi cài plugin. Khi đó cài bằng dòng lệnh, trong thư mục repo (marketplace được thêm tự động từ `.claude/settings.json`; nếu chưa có, thêm bằng `claude plugin marketplace add <owner/repo>`):
+   ```bash
+   claude plugin install antislop@anti-slop --scope project
+   claude plugin install taste-skill@taste-skill --scope project
+   claude plugin install gsap-skills@gsap-skills --scope project
+   claude plugin install frontend-design@claude-plugins-official --scope project
+   claude plugin install playwright@claude-plugins-official --scope project
+   claude plugin install claude-seo@agricidaniel-claude-seo --scope project
+   claude plugin install andrej-karpathy-skills@karpathy-skills --scope project
+   ```
+   Lệnh cài viết lại định dạng của `.claude/settings.json` (nội dung không đổi): trả file về bằng `git restore .claude/settings.json`. Kiểm tra bằng `claude plugin list`, rồi mở session mới.
+   Lần đầu mở session, MCP `shadcn` và `next-devtools` có thể báo quá thời gian vì `npx` đang tải gói; mở session mới là được.
+6. Recraft cần đăng nhập một lần, trong terminal (ứng dụng Claude desktop không có lệnh `/mcp`). Trong thư mục repo chạy `claude`; lần đầu nó hỏi có dùng các MCP server trong `.mcp.json` không — chọn dùng tất cả. Sau đó gõ `/mcp`, chọn `recraft`, rồi chọn Authenticate và đăng nhập trên trình duyệt. Nếu terminal báo không tìm thấy `claude` ngay sau khi cài, mở một cửa sổ PowerShell mới.
 7. Kiểm tra: hỏi "Giai đoạn hiện tại là gì?". Agent phải trả lời đúng theo `docs/session/STATE.md` mà không cần bạn kể lại.
 
 ## Gói cài thêm cho các skill dùng chung
@@ -111,21 +136,29 @@ Sẽ điền sau khi kiểm tra trên claude.ai/code.
 
 Lưu ý: `scripts/cloud-setup.sh` có thể in `java=unknown` khi máy có java nhưng script không đọc được số phiên bản.
 
-## Docker trên máy (Rancher Desktop)
-Dự án dùng Rancher Desktop để có lệnh `docker`, không dùng Docker Desktop. Postgres local, test của API (Testcontainers) và kiểm thử đầu-cuối đầy đủ đều cần nó.
+## Docker trên máy (Docker Desktop hoặc Rancher Desktop)
+Lệnh `docker` có thể đến từ Docker Desktop hoặc Rancher Desktop; máy nào có cái nào thì dùng cái đó. Postgres local, test của API (Testcontainers) và kiểm thử đầu-cuối đầy đủ đều cần nó.
 
-1. Cài Rancher Desktop một lần mỗi máy. Trong Preferences, chọn Container Engine là `dockerd (moby)`. Không cần bật Kubernetes cho dự án này.
+1. Cài một trong hai, một lần mỗi máy.
+   - Rancher Desktop: trong Preferences, chọn Container Engine là `dockerd (moby)`. Không cần bật Kubernetes cho dự án này.
+   - Docker Desktop: dùng cài đặt mặc định (WSL 2). Lần đầu mở, chấp nhận điều khoản; không cần đăng nhập.
 2. Trước khi chạy Postgres hoặc test, kiểm tra:
    ```bash
    docker info
    ```
-3. Nếu lệnh trên báo lỗi không kết nối được, bật Rancher Desktop (hoặc mở ứng dụng Rancher Desktop từ menu Start), rồi chờ đến khi `docker info` chạy được (thường dưới 3 phút):
+3. Nếu lệnh trên báo lỗi không kết nối được, bật ứng dụng (hoặc mở nó từ menu Start), rồi chờ đến khi `docker info` chạy được (thường dưới 3 phút). Docker Desktop:
+   ```bash
+   docker desktop start
+   ```
+   Rancher Desktop:
    ```bash
    rdctl start
    ```
    Nếu `rdctl` không có trong PATH, dùng đường dẫn đầy đủ `"C:\Program Files\Rancher Desktop\resources\resources\win32\bin\rdctl.exe"`.
 
-Agent tự bật Rancher Desktop theo cách trên khi cần. Nếu máy chưa cài, agent dừng lại và nhờ bạn cài; agent không tự cài.
+   Nếu `docker` chưa có trong PATH ngay sau khi cài Docker Desktop, mở lại terminal, hoặc dùng `"C:\Program Files\Docker\Docker\resources\bin\docker.exe"`.
+
+Agent tự bật Docker Desktop hoặc Rancher Desktop theo cách trên khi cần. Nếu máy chưa cài cái nào, agent dừng lại và nhờ bạn cài; agent không tự cài.
 
 Không có `psql` trên máy thì vẫn chạy câu SQL được qua container Postgres đang chạy:
 ```bash

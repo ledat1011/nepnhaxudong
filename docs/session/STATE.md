@@ -29,7 +29,7 @@ Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop` (chạy thử web)
 
 ## Đang làm
 - Không có nhánh nào đang làm. Bản xem thử local: web http://localhost:3011 và API cổng 8090, chạy `main` mới nhất trên database `nepnha_b3` (đã chạy migration V3, V4; tài khoản admin là "Chủ"). Hai server chạy trong cửa sổ PowerShell thu nhỏ; script ở thư mục scratchpad của session, không nằm trong repo.
-- Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ liệu mẫu ở http://localhost:3000 (`npm run dev`, cấu hình `web-mock` trong `.claude/launch.json`). Máy này không có Docker và đang dùng Java 17, nên chưa chạy được API và trang quản trị. Node trên máy là 24 (tài liệu ghi 22); web vẫn chạy được.
+- Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ liệu mẫu ở http://localhost:3000 (`npm run dev`, cấu hình `web-mock` trong `.claude/launch.json`). Node trên máy là 24 (tài liệu ghi 22); web vẫn chạy được. Đã cài thêm (2026-11-05): 7 plugin của dự án (`--scope project`), `uv` 0.13.7, JDK 21 (Temurin 21.0.13, `JAVA_HOME` trỏ tới nó), Docker Desktop 29.9.2 (WSL 2). Phải thoát hẳn ứng dụng Claude rồi mở lại thì session mới thấy các biến môi trường mới. Chưa chạy thử API và trang quản trị trên máy này.
 
 ## Việc tiếp theo
 1. Rà trang công khai bằng các skill giao diện (taste-skill, Delivery Gate của antislop, `web-interface-guidelines`) trên `main` hiện tại, gộp với báo cáo trang quản trị thành một danh sách đề xuất cho chủ dự án. Làm ở máy (cần plugin và trình duyệt).
@@ -47,7 +47,7 @@ Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop` (chạy thử web)
 - Chưa đặt `GEMINI_API_KEY`.
 - 4 MCP của dự án chưa được duyệt trong Claude Code.
 - Chưa đăng nhập Recraft.
-- Máy `C:\Users\Admin\Desktop`: cần cài Docker Desktop và JDK 21 (`JAVA_HOME` trỏ tới JDK 21) thì mới chạy được API, trang quản trị và `npm run test:fullstack`.
+- Máy `C:\Users\Admin\Desktop\nepnhaxudong`: MCP của dự án đã chạy trong ứng dụng Claude desktop, kể cả `nanobanana`; `recraft` còn chờ đăng nhập (chạy `claude` trong PowerShell mới, rồi `/mcp`).
 
 ## Ghi chú cho phần D
 Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, Docker, máy chủ).
