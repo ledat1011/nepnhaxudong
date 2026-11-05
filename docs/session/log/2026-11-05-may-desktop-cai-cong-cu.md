@@ -10,7 +10,7 @@
 - Máy này dùng Docker Desktop.
 
 ## Còn mở
-- Đăng nhập Recraft: mở PowerShell mới, vào thư mục repo, chạy `claude`, duyệt các MCP của `.mcp.json`, rồi `/mcp` → `recraft` → Authenticate.
+- Không còn việc cài đặt nào trên máy này.
 
 ## Đã làm
 - Cài 7 plugin bằng `claude plugin install <tên>@<marketplace> --scope project` (antislop 3.2.25 và taste-skill 2.1.5 đúng bản ghim). `claude plugin list` báo cả 7 đã bật.
@@ -21,3 +21,5 @@
 - Sửa `docs/setup.md` (lệnh `winget`, WSL, `UV_PYTHON_INSTALL_DIR`, cài plugin bằng dòng lệnh, Docker Desktop hoặc Rancher Desktop) và luật Docker trong `CLAUDE.md` (PR #27).
 - Chủ dự án đã đặt `GEMINI_API_KEY` và mở lại ứng dụng; MCP `nanobanana` đã kết nối trong session.
 - Cài Claude Code CLI 2.1.302 bằng `winget`. `claude mcp list` thấy plugin và 4 MCP của dự án (đang chờ duyệt lần đầu trong terminal).
+- Cài thêm `superpowers` 7.0.0 cho lệnh `claude` (ứng dụng desktop đã tự nạp nó): cả 8 plugin trong `.claude/settings.json` đều đã bật.
+- Chủ dự án đã duyệt MCP và đăng nhập Recraft trong terminal. `claude mcp list`: `recraft`, `nanobanana`, `next-devtools`, `shadcn` đều kết nối được.
