@@ -41,7 +41,7 @@ type Props = {
  */
 export function FeatureList({ rows, onChange, error }: Props) {
   const errorId = useId();
-  const remove = useRemoveWithUndo(rows, onChange);
+  const remove = useRemoveWithUndo(rows, onChange, { keyOf: (row) => row.key });
   function update(index: number, patch: Partial<FeatureRow>) {
     onChange(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }

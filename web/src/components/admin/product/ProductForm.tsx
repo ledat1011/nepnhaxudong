@@ -19,7 +19,7 @@ import { productPublicHref } from "@/lib/admin/public-links";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
 import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
-import { useRemoveWithUndo } from "@/lib/admin/use-remove-with-undo";
+import { UndoGroupContext, useRemoveWithUndo, useUndoGroup } from "@/lib/admin/use-remove-with-undo";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
@@ -158,6 +158,9 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   useUnsavedChanges(dirty && !leaving);
   const leavePage = useLeavePage();
   const fields = useFieldErrors();
+  // The "Hoàn tác" messages of the lists below. They close on "Bỏ thay đổi" and when a save starts: after that,
+  // a row put back would come on top of a list that was reset or saved (or locked while a new product is created).
+  const undo = useUndoGroup();
 
   // The form as it was when the running save was sent, to tell later whether the user typed something else meanwhile.
   const sent = useRef<string | null>(null);
@@ -194,6 +197,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
       return;
     }
     fields.reset();
+    undo.dismissAll();
     const saved = await saving.save();
     if (saved === undefined) return;
     if (baseline === undefined) {
@@ -216,6 +220,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   }
 
   function cancel() {
+    undo.dismissAll();
     const original = stateFrom(baseline);
     setState(original);
     setBaselineSnapshot(snapshot(original));
@@ -249,6 +254,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const saveError = [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   return (
+    <UndoGroupContext.Provider value={undo}>
     <fieldset {...fields.rootProps} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
       <RequiredNote />
       <BilingualField
@@ -319,12 +325,13 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
         notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}
       />
     </fieldset>
+    </UndoGroupContext.Provider>
   );
 }
 
 function ImageSection({ ids, onChange }: { ids: number[]; onChange(ids: number[]): void }) {
   const { items } = useMediaByIds(ids);
-  const remove = useRemoveWithUndo(ids, onChange);
+  const remove = useRemoveWithUndo(ids, onChange, { keyOf: (id) => id, max: MAX_IMAGES });
   return (
     <fieldset className="flex min-w-0 flex-col gap-3">
       <legend className="mb-2 text-base font-semibold">Ảnh</legend>

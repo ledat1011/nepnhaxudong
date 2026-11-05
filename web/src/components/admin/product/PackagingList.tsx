@@ -39,7 +39,7 @@ function removedMessage(n: number, row: PackagingRow): string {
 
 /** Pack sizes in order. The price box is shown only while the product shows its price. */
 export function PackagingList({ rows, showPrice, onChange, errors = {} }: Props) {
-  const remove = useRemoveWithUndo(rows, onChange);
+  const remove = useRemoveWithUndo(rows, onChange, { keyOf: (row) => row.key, max: MAX_PACKAGINGS });
   function update(index: number, patch: Partial<PackagingRow>) {
     onChange(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
