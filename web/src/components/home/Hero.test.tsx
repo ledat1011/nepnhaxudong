@@ -27,6 +27,14 @@ describe("Hero", () => {
     );
   });
 
+  it("opens the Zalo contact dialog from the Zalo button", () => {
+    renderHero("0000 000 000");
+    expect(screen.getByRole("link", { name: dict.hero.zaloCta })).toHaveAttribute(
+      "aria-haspopup",
+      "dialog",
+    );
+  });
+
   it("has no Zalo button when there is no Zalo number", () => {
     renderHero(null);
     expect(screen.queryByRole("link", { name: dict.hero.zaloCta })).not.toBeInTheDocument();

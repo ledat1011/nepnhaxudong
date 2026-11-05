@@ -214,13 +214,26 @@ test.describe("loading state of links to pages rendered on request", () => {
 
       const status = page.getByRole("status").filter({ hasText: vi.loading.page });
       await expect(status).toBeVisible();
-      const shown = await status.evaluate((el) => ({
-        position: getComputedStyle(el).position,
-        animations: document.getAnimations().length,
-      }));
-      // Fixed: showing it moves nothing on the page. No animation, also with motion on.
+      const shown = await status.evaluate((el) => {
+        const targets = document
+          .getAnimations()
+          .map((animation) => (animation.effect as KeyframeEffect | null)?.target ?? null);
+        return {
+          position: getComputedStyle(el).position,
+          noteAnimations: targets.filter((target) => target === el).length,
+          otherAnimations: targets.filter(
+            (target) => target !== el && !target?.closest("[data-navigation-progress]"),
+          ).length,
+          barAnimations: targets.filter((target) => target?.closest("[data-navigation-progress]"))
+            .length,
+        };
+      });
+      // Fixed: showing it moves nothing on the page. The note never animates. The only motion
+      // is the top loading bar growing, and only when motion is allowed.
       expect(shown.position).toBe("fixed");
-      expect(shown.animations).toBe(0);
+      expect(shown.noteAnimations).toBe(0);
+      expect(shown.otherAnimations).toBe(0);
+      expect(shown.barAnimations).toBe(reducedMotion === "reduce" ? 0 : 1);
       await expect(page).toHaveURL(/\/vi$/);
 
       release();

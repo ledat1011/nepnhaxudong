@@ -1,0 +1,103 @@
+/*
+ * Styles of the admin area only. The admin layout imports this file instead of globals.css,
+ * so the public site never loads the shadcn variables below.
+ * globals.css is imported here so Tailwind compiles one stylesheet with the brand tokens.
+ */
+@import "./../globals.css";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* shadcn variables, mapped to the brand tokens of globals.css. */
+:root {
+  --radius: 0.75rem;
+  --background: var(--color-rice);
+  --foreground: var(--color-earth);
+  --card: #ffffff;
+  --card-foreground: var(--color-earth);
+  --popover: #ffffff;
+  --popover-foreground: var(--color-earth);
+  --primary: var(--color-earth);
+  --primary-foreground: var(--color-rice);
+  --secondary: var(--color-straw);
+  --secondary-foreground: var(--color-earth);
+  --muted: #f6eed8;
+  /* coat on rice is 5.5:1 and on straw 4.6:1, both above WCAG AA for text. */
+  --muted-foreground: var(--color-coat);
+  --accent: var(--color-straw);
+  --accent-foreground: var(--color-earth);
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  /* Borders of inputs are 3.6:1 against rice; plain dividers use the lighter --border. */
+  --border: #e3d4ad;
+  --input: #a07a4a;
+  --ring: var(--color-coat);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  /*
+   * When the browser moves to a box (Tab, "Tiếp" on the phone keyboard), the box stops below the sticky header
+   * (56 px) and above the bottom menu (56 px) plus the Lưu bar (about 68 px), not behind them.
+   */
+  html {
+    scroll-padding-top: 4rem;
+    scroll-padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /* Tailwind's reset gives buttons the arrow cursor. Every enabled control shows the hand instead. */
+  a[href],
+  button,
+  summary,
+  select,
+  label[for],
+  [role="button"],
+  [role="tab"],
+  [role="switch"],
+  [role="checkbox"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"] {
+    cursor: pointer;
+  }
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+/* The field a dashboard link opened (FieldFocus). A plain ring, no motion: a tapped button shows no focus ring. */
+[data-field-target] {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}

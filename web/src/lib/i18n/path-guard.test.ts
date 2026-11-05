@@ -52,7 +52,7 @@ describe("classifyPath", () => {
   });
 
   it("answers 404 for a first segment that is not a language", () => {
-    for (const path of ["/fr", "/fr/x", "/wp-login.php", "/favicon.ico", "/admin", "/VI", "/vi.php", "/a/b/c/d"]) {
+    for (const path of ["/fr", "/fr/x", "/wp-login.php", "/favicon.ico", "/VI", "/vi.php", "/a/b/c/d"]) {
       expect(classifyPath(path), path).toBe("not-found");
     }
   });
@@ -67,5 +67,15 @@ describe("classifyPath", () => {
     expect(classifyPath("/apix")).toBe("not-found");
     expect(classifyPath("/_nextx/a")).toBe("not-found");
     expect(classifyPath("/robots.txt/x")).toBe("not-found");
+    expect(classifyPath("/administrator")).toBe("not-found");
+    expect(classifyPath("/mediax/a.jpg")).toBe("not-found");
+  });
+});
+
+describe("classifyPath for the admin area and local media", () => {
+  it("lets /admin pages and /media files through", () => {
+    for (const path of ["/admin", "/admin/", "/admin/cau-chuyen/3", "/media/2026/11/a.jpg"]) {
+      expect(classifyPath(path), path).toBe("pass");
+    }
   });
 });

@@ -501,9 +501,9 @@ class UserAdminTest extends AuthTestSupport {
 
   // ---- helpers ---------------------------------------------------------------------------
 
-  /** A user with an ordinary password, logged in, with a CSRF token ready. */
+  /** An owner with an ordinary password, logged in, with a CSRF token ready. */
   private ApiClient loggedIn(String email, String password) {
-    createUser(email, password, false);
+    createOwner(email, password, false);
     var client = newClient();
     assertThat(login(client, email, password).getStatusCode().value()).isEqualTo(200);
     client.fetchCsrf();

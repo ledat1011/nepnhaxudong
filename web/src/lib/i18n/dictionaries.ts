@@ -84,6 +84,21 @@ const vi = {
     viewMap: "Xem bản đồ",
     hours: "Giờ liên hệ",
   },
+  zalo: {
+    title: "Nhắn Nếp Nhà qua Zalo",
+    scan: "Quét mã này bằng ứng dụng Zalo hoặc camera điện thoại để mở cuộc trò chuyện.",
+    phoneHint: "Mở ứng dụng Zalo để nhắn tin, hoặc chép số để tìm Nếp Nhà trong Zalo.",
+    qrAlt: "Mã QR mở cuộc trò chuyện Zalo với Nếp Nhà",
+    qrLoading: "Đang tạo mã QR…",
+    qrError: "Không tạo được mã QR. Bạn hãy bấm Mở Zalo.",
+    number: "Số Zalo",
+    copy: "Sao chép số",
+    copied: "Đã chép số.",
+    copyFailed: "Không chép được. Bạn hãy tự chép số ở trên.",
+    open: "Mở Zalo",
+    newTab: "(mở trong tab mới)",
+    close: "Đóng",
+  },
   footer: {
     copyright: "Bản quyền",
   },
@@ -108,6 +123,7 @@ const vi = {
   },
   loading: {
     page: "Đang tải trang…",
+    stories: "Đang tải các câu chuyện…",
   },
   error: {
     title: "Có lỗi xảy ra",
@@ -208,6 +224,21 @@ const en: Dictionary = {
     viewMap: "View map",
     hours: "Contact hours",
   },
+  zalo: {
+    title: "Message Nếp Nhà on Zalo",
+    scan: "Scan this code with the Zalo app or your phone camera to open the chat.",
+    phoneHint: "Open the Zalo app to send a message, or copy the number to find Nếp Nhà in Zalo.",
+    qrAlt: "QR code that opens a Zalo chat with Nếp Nhà",
+    qrLoading: "Making the QR code…",
+    qrError: "The QR code could not be made. Please use Open Zalo.",
+    number: "Zalo number",
+    copy: "Copy number",
+    copied: "Number copied.",
+    copyFailed: "Could not copy. Please copy the number above by hand.",
+    open: "Open Zalo",
+    newTab: "(opens in a new tab)",
+    close: "Close",
+  },
   footer: {
     copyright: "Copyright",
   },
@@ -232,6 +263,7 @@ const en: Dictionary = {
   },
   loading: {
     page: "Loading the page…",
+    stories: "Loading the stories…",
   },
   error: {
     title: "Something went wrong",

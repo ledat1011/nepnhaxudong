@@ -55,12 +55,14 @@ public class LoginService {
     if (lockedUntil != null && now.isBefore(lockedUntil)) {
       throw new AccountLockedException();
     }
-    return attempts.record(
-        user.getId(), CredentialSnapshot.of(user), check(user, password, totpCode, now));
+    long[] step = {Totp.NO_STEP};
+    CredentialCheck check = check(user, password, totpCode, now, step);
+    return attempts.record(user.getId(), CredentialSnapshot.of(user), check, step[0]);
   }
 
-  /** The slow part: no transaction is open here. */
-  private CredentialCheck check(AppUser user, String password, String totpCode, Instant now) {
+  /** The slow part: no transaction is open here. {@code step[0]} receives the matched TOTP step. */
+  private CredentialCheck check(
+      AppUser user, String password, String totpCode, Instant now, long[] step) {
     if (!encoder.matches(password, user.getPasswordHash())) {
       return CredentialCheck.WRONG_PASSWORD;
     }
@@ -68,7 +70,8 @@ public class LoginService {
       if (totpCode == null || totpCode.isBlank()) {
         return CredentialCheck.CODE_MISSING;
       }
-      if (!Totp.verify(user.getTotpSecret(), totpCode.trim(), now.getEpochSecond())) {
+      step[0] = Totp.matchedStep(user.getTotpSecret(), totpCode.trim(), now.getEpochSecond());
+      if (step[0] == Totp.NO_STEP) {
         return CredentialCheck.WRONG_CODE;
       }
     }

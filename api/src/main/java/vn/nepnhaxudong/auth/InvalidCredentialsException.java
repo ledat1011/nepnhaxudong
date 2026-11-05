@@ -7,6 +7,6 @@ import vn.nepnhaxudong.common.ApiException;
 public class InvalidCredentialsException extends ApiException {
 
   public InvalidCredentialsException() {
-    super(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không đúng.");
+    super(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không đúng.", ProblemCodes.INVALID_CREDENTIALS);
   }
 }

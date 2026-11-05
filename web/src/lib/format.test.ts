@@ -5,6 +5,7 @@ import {
   formatWeight,
   telHref,
   zaloHref,
+  zaloNumber,
 } from "./format";
 
 describe("formatWeight", () => {
@@ -50,5 +51,37 @@ describe("zaloHref", () => {
 
   it("keeps a full URL unchanged", () => {
     expect(zaloHref("https://zalo.me/abc")).toBe("https://zalo.me/abc");
+  });
+
+  it("uses the local form with a leading 0 for a +84 number", () => {
+    expect(zaloHref("+84 912 345 678")).toBe("https://zalo.me/0912345678");
+    expect(zaloHref("0084 912 345 678")).toBe("https://zalo.me/0912345678");
+  });
+
+  it("keeps a zalo.me link typed without http, and adds https", () => {
+    expect(zaloHref("zalo.me/g/abc")).toBe("https://zalo.me/g/abc");
+    expect(zaloHref("http://zalo.me/g/abc")).toBe("http://zalo.me/g/abc");
+  });
+});
+
+describe("zaloNumber", () => {
+  it("keeps only the digits of a number, ready to paste into Zalo search", () => {
+    expect(zaloNumber("0912 345 678")).toBe("0912345678");
+  });
+
+  it("has no number when the setting is a full URL", () => {
+    expect(zaloNumber("https://zalo.me/abc")).toBeNull();
+  });
+
+  it("uses the local form with a leading 0 for a +84 number", () => {
+    expect(zaloNumber("+84 912 345 678")).toBe("0912345678");
+  });
+
+  it("has no number when the setting is a zalo.me link without http", () => {
+    expect(zaloNumber("zalo.me/g/abc")).toBeNull();
+  });
+
+  it("has no number when the setting has no digits", () => {
+    expect(zaloNumber("  ")).toBeNull();
   });
 });

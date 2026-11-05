@@ -3,6 +3,7 @@
 import { useLinkStatus } from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { markNavigationPending } from "./navigation-pending";
 
 /**
  * How long a navigation may wait before the note shows. A prefetched or fast page arrives
@@ -21,7 +22,8 @@ const noSubscription = () => () => {};
  * pages). Put it inside a next/link `Link`: when the next page is still loading after
  * `PENDING_NOTE_DELAY_MS`, it shows the label until the page arrives. The status region is
  * always present (empty when idle), so screen readers announce the text. It is rendered into
- * the body, outside the link and its moving ancestors.
+ * the body, outside the link and its moving ancestors. While the label shows, the top loading
+ * bar (`NavigationProgress`) shows too: both use this one delay.
  */
 export function LinkPendingStatus({ label }: { label: string }) {
   const { pending } = useLinkStatus();
@@ -42,8 +44,13 @@ export function LinkPendingStatus({ label }: { label: string }) {
     };
   }, [pending]);
 
-  if (!inBrowser) return null;
   const shown = pending && waitedLong;
+  useEffect(() => {
+    if (!shown) return;
+    return markNavigationPending();
+  }, [shown]);
+
+  if (!inBrowser) return null;
   return createPortal(
     <p role="status" className={shown ? VISIBLE_CLASS : "sr-only"}>
       {shown ? label : ""}

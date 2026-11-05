@@ -450,8 +450,8 @@ test("turning reduced motion on while the page is open reverts the motion", asyn
   await page.waitForSelector(MOTION_ON);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForSelector("html:not([data-motion])");
-  // With reduced motion, globals.css gives every property a 0.01 ms CSS transition, so the
-  // reverted opacity shows from the next rendered frame on. Poll for it.
+  // The attribute goes before GSAP has put every inline style back, and with reduced motion globals.css gives
+  // every property a 0.01 ms CSS transition, so the first read can still see a block mid-revert. Poll for the end state.
   await expect
     .poll(async () => (await revealOpacities(page)).every((opacity) => opacity === "1"))
     .toBe(true);

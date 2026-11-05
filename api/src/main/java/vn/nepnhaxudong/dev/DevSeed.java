@@ -111,23 +111,26 @@ public class DevSeed implements ApplicationRunner {
     }
   }
 
+  /** The sample product is created, then shown: a new product is hidden until it is shown. */
   private void seedProduct() {
-    products.create(
-        new ProductRequest(
-            0,
-            false,
-            text("Gạo nếp cái hoa vàng", "Yellow-flower sticky rice"),
-            text(
-                "Hạt nếp tròn, dẻo và thơm, trồng ở vùng quê Hải Dương.",
-                "Round, soft and fragrant sticky rice grown in Hai Duong."),
-            new LocalizedList(
-                List.of(MARK + " Dẻo", MARK + " Thơm", MARK + " Hạt tròn đều"),
-                List.of(MARK + " Soft", MARK + " Fragrant", MARK + " Even round grains")),
-            text(
-                "Ngâm gạo 6 tiếng rồi đồ chín.",
-                "Soak the rice for 6 hours, then steam it."),
-            List.of(new PackagingDto(2000, null, null)),
-            List.of()));
+    var created =
+        products.create(
+            new ProductRequest(
+                0,
+                false,
+                text("Gạo nếp cái hoa vàng", "Yellow-flower sticky rice"),
+                text(
+                    "Hạt nếp tròn, dẻo và thơm, trồng ở vùng quê Hải Dương.",
+                    "Round, soft and fragrant sticky rice grown in Hai Duong."),
+                new LocalizedList(
+                    List.of(MARK + " Dẻo", MARK + " Thơm", MARK + " Hạt tròn đều"),
+                    List.of(MARK + " Soft", MARK + " Fragrant", MARK + " Even round grains")),
+                text(
+                    "Ngâm gạo 6 tiếng rồi đồ chín.",
+                    "Soak the rice for 6 hours, then steam it."),
+                List.of(new PackagingDto(2000, null, null)),
+                List.of()));
+    products.show(created.id());
   }
 
   private void seedTimeline() {

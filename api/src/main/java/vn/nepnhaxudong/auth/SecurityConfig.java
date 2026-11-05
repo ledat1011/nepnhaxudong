@@ -87,7 +87,7 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
-        .addFilterAfter(new MustChangePasswordFilter(loginService), AuthorizationFilter.class)
+        .addFilterAfter(new AdminAccessFilter(loginService), AuthorizationFilter.class)
         .build();
   }
 }

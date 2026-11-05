@@ -8,7 +8,7 @@ Chủ dự án muốn dùng 4 bộ skill trên GitHub cho phần giao diện: an
   - anti-slop ghim theo tag `v3.2.25`, taste-skill ghim theo tag `v2.1.5`. gsap-skills không có tag nên theo nhánh `main`.
 - web-design-guidelines: repo `vercel-labs/agent-skills` không có plugin, không có file giấy phép, và skill đó tải luật từ internet mỗi lần chạy. Thay bằng skill `web-interface-guidelines` của dự án trong `.claude/skills/`, dùng bản luật chép từ `vercel-labs/web-interface-guidelines` (MIT), ghim theo commit.
 - AI không tự cài plugin. Nếu thiếu skill, AI báo chủ dự án cài.
-- Hướng thiết kế vẫn là bộ nhận diện đã duyệt (`brand/README.md`, spec mục 2 và 3). anti-slop là bộ lọc; taste-skill chỉ dùng phần đánh giá và trình kiểm tra trên trình duyệt, không dùng để chọn hướng thiết kế mới.
+- Hướng thiết kế vẫn là bộ nhận diện đã duyệt (`brand/README.md`, spec mục 2 và 3). anti-slop là bộ lọc; taste-skill dùng phần đánh giá và trình kiểm tra trên trình duyệt. (Đã đổi ở `0009`: được dùng `draw.mjs` để chọn bố cục, giữ màu và font.)
 
 ## Lý do
 - Lúc đầu đã chép cả 15 skill vào repo (khoảng 42.000 dòng). Chủ dự án thấy quá nặng; plugin giữ repo gọn, cập nhật dễ, và giống cách các plugin khác đang được khai báo.

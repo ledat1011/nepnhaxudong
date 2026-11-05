@@ -1,7 +1,7 @@
+import { ZaloLink } from "@/components/contact/ZaloLink";
 import { RiceGrain } from "@/components/home/RicePlant";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { BRAND } from "@/lib/brand/colors";
-import { zaloHref } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { roadBend, roadPath } from "@/lib/story/road";
 import { STORY_SCENES, type SceneSlug } from "@/lib/story/scenes";
@@ -173,9 +173,9 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                     </p>
                     {isLast && zalo !== null && (
                       <p className="mt-6">
-                        <a href={zaloHref(zalo)} className={BUTTON_CLASS}>
+                        <ZaloLink zalo={zalo} labels={dict.zalo} className={BUTTON_CLASS}>
                           {dict.hero.zaloCta}
-                        </a>
+                        </ZaloLink>
                       </p>
                     )}
                   </div>

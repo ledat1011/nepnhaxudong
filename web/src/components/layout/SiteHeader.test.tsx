@@ -51,6 +51,11 @@ describe("SiteHeader", () => {
     );
   });
 
+  it("opens the Zalo contact dialog from the Zalo link", () => {
+    renderHeader("0000 000 000");
+    expect(screen.getByRole("link", { name: "Zalo" })).toHaveAttribute("aria-haspopup", "dialog");
+  });
+
   it("has no Zalo link when zalo is null", () => {
     renderHeader(null);
     expect(screen.queryByRole("link", { name: "Zalo" })).not.toBeInTheDocument();

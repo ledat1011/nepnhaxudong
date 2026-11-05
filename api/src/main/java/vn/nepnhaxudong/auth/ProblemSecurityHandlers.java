@@ -20,17 +20,23 @@ public class ProblemSecurityHandlers implements AuthenticationEntryPoint, Access
   public void commence(
       HttpServletRequest request, HttpServletResponse response, AuthenticationException e)
       throws IOException {
-    ProblemJsonWriter.write(response, HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập.");
+    ProblemJsonWriter.write(
+        response, HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập.", ProblemCodes.SESSION_EXPIRED);
   }
 
   @Override
   public void handle(
       HttpServletRequest request, HttpServletResponse response, AccessDeniedException e)
       throws IOException {
-    String detail =
-        e instanceof CsrfException
-            ? "Mã bảo vệ CSRF thiếu hoặc không đúng. Hãy tải lại trang và thử lại."
-            : "Bạn không có quyền thực hiện thao tác này.";
-    ProblemJsonWriter.write(response, HttpStatus.FORBIDDEN, detail);
+    if (e instanceof CsrfException) {
+      ProblemJsonWriter.write(
+          response,
+          HttpStatus.FORBIDDEN,
+          "Mã bảo vệ CSRF thiếu hoặc không đúng. Hãy tải lại trang và thử lại.",
+          ProblemCodes.CSRF_INVALID);
+      return;
+    }
+    ProblemJsonWriter.write(
+        response, HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện thao tác này.");
   }
 }

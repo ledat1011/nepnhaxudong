@@ -12,7 +12,9 @@ import vn.nepnhaxudong.common.ApiException;
 
 /**
  * Switches two-factor login (TOTP) on and off for the logged-in user. Switching it on or off is
- * written to the audit log as {@code app_user} (a {@link UserSummary}, never the secret).
+ * written to the audit log as {@code app_user} (a {@link UserSummary}, never the secret). Each call
+ * locks the user's row, so it cannot overwrite an owner's change of the same account (see {@link
+ * UserAdminService#disableTotp}) that runs at the same time.
  */
 @Service
 public class TotpService {
@@ -42,7 +44,7 @@ public class TotpService {
       throw new ApiException(HttpStatus.CONFLICT, "Xác thực 2 lớp đã được bật. Hãy tắt trước khi tạo mã mới.");
     }
     String secret = Totp.generateSecret();
-    user.setTotpSecret(secret);
+    user.replaceTotpSecret(secret);
     return new TotpSetupResponse(secret, otpauthUri(user.getEmail(), secret));
   }
 
@@ -58,6 +60,8 @@ public class TotpService {
     requireValid(user, code);
     var before = UserSummary.of(user);
     user.setTotpEnabled(true);
+    // The setup that an owner asked for (after switching it off) is done.
+    user.setMustSetupTotp(false);
     recordUpdate(before, user);
   }
 
@@ -67,10 +71,15 @@ public class TotpService {
     if (!user.isTotpEnabled()) {
       throw new ApiException(HttpStatus.CONFLICT, "Xác thực 2 lớp chưa được bật.");
     }
+    // An owner switched it off once (a lost phone) and asked for a new setup: from then on only an
+    // owner may switch it off, so whoever holds the account cannot drop it again with a code.
+    if (user.isTotpRequired()) {
+      throw new ApiException(HttpStatus.CONFLICT, "Chỉ Chủ được tắt xác thực 2 lớp của bạn.");
+    }
     requireValid(user, code);
     var before = UserSummary.of(user);
     user.setTotpEnabled(false);
-    user.setTotpSecret(null);
+    user.replaceTotpSecret(null);
     recordUpdate(before, user);
   }
 
@@ -90,7 +99,7 @@ public class TotpService {
   }
 
   private AppUser find(long userId) {
-    return users.findById(userId).orElseThrow(SessionExpiredException::new);
+    return users.findByIdForUpdate(userId).orElseThrow(SessionExpiredException::new);
   }
 
   private static String otpauthUri(String email, String secret) {

@@ -10,6 +10,41 @@
   --color-sprout: #6e8b3d;
   --color-sky: #cfe4ee;
   --color-sky-light: #e9f2f1;
+
+  /*
+   * Short entrances for the Zalo dialog and sheet: they show where the panel comes from.
+   * Used only with `motion-safe:`, so reduced motion shows the panel at once.
+   */
+  --animate-overlay-in: overlay-in 150ms ease-out;
+  --animate-dialog-in: dialog-in 180ms ease-out;
+  --animate-sheet-in: sheet-in 220ms ease-out;
+  /* The page loading bar grows and then holds at 90%: it shows that the wait goes on. */
+  --animate-nav-progress: nav-progress 4s cubic-bezier(0.1, 0.6, 0.3, 1) forwards;
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes nav-progress {
+    from {
+      transform: scaleX(0.1);
+    }
+    to {
+      transform: scaleX(0.9);
+    }
+  }
 }
 
 /* Font variables are attached to <html> by next/font in the root layout. */

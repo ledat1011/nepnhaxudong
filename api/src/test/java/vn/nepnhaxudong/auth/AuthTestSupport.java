@@ -66,14 +66,22 @@ public abstract class AuthTestSupport {
     return new ApiClient(rest);
   }
 
+  /** Creates a user with the default role "Người nhà" (family member). */
   protected AppUser createUser(String email, String password, boolean mustChangePassword) {
     return users.save(
         AppUser.create(email, "Tester", encoder.encode(password), mustChangePassword));
   }
 
-  /** Creates a user (email owner@example.com), logs in and fetches the CSRF token. */
+  /** Creates a user with the role "Chủ" (owner), who may manage accounts. */
+  protected AppUser createOwner(String email, String password, boolean mustChangePassword) {
+    var user = AppUser.create(email, "Tester", encoder.encode(password), mustChangePassword);
+    user.setRole(UserRole.OWNER);
+    return users.save(user);
+  }
+
+  /** Creates an owner (email owner@example.com), logs in and fetches the CSRF token. */
   protected ApiClient loggedInClient() {
-    createUser("owner@example.com", "correct-password-1", false);
+    createOwner("owner@example.com", "correct-password-1", false);
     var client = newClient();
     assertThat(login(client, "owner@example.com", "correct-password-1").getStatusCode().value())
         .isEqualTo(200);

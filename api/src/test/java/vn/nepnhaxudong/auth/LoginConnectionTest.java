@@ -131,6 +131,7 @@ class LoginConnectionTest extends AuthTestSupport {
   @Test
   void aLoginWithTheOldPasswordIsRefusedWhenAnAdminResetsItDuringTheHash() throws Exception {
     var user = createUser("owner@example.com", "correct-password-1", false);
+    var admin = createOwner("admin@example.com", "admin-password-1", false);
     int sessionsBefore = sessions();
     blocking.close();
     ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -140,7 +141,7 @@ class LoginConnectionTest extends AuthTestSupport {
               () -> login(newClient(), "owner@example.com", "correct-password-1"), executor);
       awaitWaiting(1);
 
-      userAdminService.resetPassword(user.getId(), "temporary-password-1");
+      userAdminService.resetPassword(admin.getId(), user.getId(), "temporary-password-1");
       blocking.open();
 
       var response = login.get();

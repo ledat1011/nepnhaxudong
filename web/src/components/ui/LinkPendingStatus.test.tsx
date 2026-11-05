@@ -1,6 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LinkPendingStatus, PENDING_NOTE_DELAY_MS } from "./LinkPendingStatus";
+import { isNavigationPending } from "./navigation-pending";
 
 const linkStatus = vi.hoisted(() => ({ pending: false }));
 
@@ -80,6 +81,26 @@ describe("LinkPendingStatus", () => {
     act(() => vi.advanceTimersByTime(PENDING_NOTE_DELAY_MS));
     expect(container.querySelector("a")).toHaveTextContent(/^Xem tất cả$/);
     expect(screen.getByRole("status").parentElement).toBe(document.body);
+  });
+
+  it("tells the top loading bar only after the same delay, and until the wait ends", () => {
+    linkStatus.pending = true;
+    const { rerender } = render(<LinkPendingStatus label={LABEL} />);
+    act(() => vi.advanceTimersByTime(PENDING_NOTE_DELAY_MS - 1));
+    expect(isNavigationPending()).toBe(false);
+    act(() => vi.advanceTimersByTime(1));
+    expect(isNavigationPending()).toBe(true);
+    linkStatus.pending = false;
+    rerender(<LinkPendingStatus label={LABEL} />);
+    expect(isNavigationPending()).toBe(false);
+  });
+
+  it("stops telling the loading bar when the link goes away", () => {
+    linkStatus.pending = true;
+    const { unmount } = render(<LinkPendingStatus label={LABEL} />);
+    act(() => vi.advanceTimersByTime(PENDING_NOTE_DELAY_MS));
+    unmount();
+    expect(isNavigationPending()).toBe(false);
   });
 
   it("has no animation class, so reduced motion has nothing to stop", () => {

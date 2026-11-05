@@ -3,8 +3,9 @@ import { isStorySection } from "./routes";
 
 export type PathDecision = "redirect-root" | "pass" | "not-found";
 
-// Next's own routes (`_not-found` is the 404 page the proxy rewrites to) and the API.
-const INTERNAL_PREFIXES = ["_next", "_not-found", "api"];
+// Next internals (`_not-found` is the 404 page the proxy rewrites to), the API, the admin area
+// (its own root layout, outside the language segment) and the local /media route.
+const INTERNAL_PREFIXES = ["_next", "_not-found", "api", "admin", "media"];
 // Files the app serves itself.
 const OWN_FILES = new Set(["robots.txt", "sitemap.xml", "icon.svg"]);
 // Folder of the story scene drawings in `public/`: one level of `.svg` files.

@@ -26,6 +26,23 @@ public interface AuditedHandler {
   void restore(long entityId, String snapshotJson);
 
   /**
+   * The restore that the restore service calls. {@code lineAfterJson} is the "after" of the line
+   * that is restored (null for a delete line), so a kind can tell which fields the line changed. By
+   * default it is not needed.
+   */
+  default void restore(long entityId, String snapshotJson, String lineAfterJson) {
+    restore(entityId, snapshotJson);
+  }
+
+  /**
+   * Whether a line of this kind can be restored. A kind that exists only to refuse a restore (an
+   * image, an account) answers false, so the admin does not offer a button that always fails.
+   */
+  default boolean canRestore() {
+    return true;
+  }
+
+  /**
    * What the website must refresh after a successful restore; {@code before} and {@code after} are
    * the snapshots from {@link #currentSnapshot} taken before and after the restore (either can be
    * null). Most kinds only show up on the home page, so that is the default; a kind with pages of

@@ -1,35 +1,39 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-05 — máy công ty
+Cập nhật: 2026-11-04 — máy công ty
 
 ## Giai đoạn hiện tại
-`main` đã có API (B1, PR #3), web công khai (B2, PR #4) và logo, mascot (phần A, PR #5). Hiệu ứng GSAP (B4) đã xong trên nhánh `feat/phan-b4-gsap`, đã push, đang chờ PR. Trang quản trị (B3) làm song song trên nhánh `feat/phan-b3-admin`.
+`main` đã có API (B1, PR #3), web công khai (B2, PR #4), logo và mascot (phần A, PR #5), và hiệu ứng GSAP (B4, PR #8). Trang quản trị (B3) đã xong trên nhánh `feat/phan-b3-admin`, đã gộp `main`, sẵn sàng mở PR. Phần tiếp theo là phần D (hạ tầng).
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
 - Phần C (nền tảng làm việc) đã merge vào `main` (PR #1).
 - Phần B1 (API và cơ sở dữ liệu) đã merge vào `main` (PR #3): 11 task đã review, 492 test, API đã chạy thật ở local và đã thử bằng `curl` (xem "Thử API" trong `docs/setup.md`).
 - Phần B2 (web công khai) đã merge vào `main` (PR #4): plan `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`, cả 11 task xong và đã sửa theo review cuối của cả nhánh: web `vi` + `en`, blog, SEO, route revalidate, test đơn vị và test đầu-cuối.
+- Phần B3 (trang quản trị) đã xong trên nhánh `feat/phan-b3-admin`, sẵn sàng mở PR: 9 màn hình (Tổng quan, Sản phẩm, Hành trình, Báo chí, Câu chuyện, Ảnh, Liên hệ & cài đặt, Tài khoản, Lịch sử), đã review từng task và review cuối cả nhánh. Form có thay đổi chưa lưu thì hỏi trước khi rời trang, kể cả khi bấm nút quay lại của trình duyệt. Có bộ test đầu-cuối với API thật (`npm run test:fullstack`) và workflow CI `fullstack`. Cách chạy ở local và cách chạy test nằm trong `docs/setup.md`. Review lại vòng sửa cuối tìm ra 2 lỗi nút Back (bấm Back khi đang lưu; sau khi tải lại trang) và 3 lỗi nhỏ; đã sửa (`90dcb0b`), 808 unit test và 26 test đầu-cuối qua. Còn một lần thử tay trên điện thoại Android thật: Back, "Ở lại", Back lần nữa phải hỏi lại.
+- Các skill giao diện đã merge vào `main` (PR #6): anti-slop, taste-skill, gsap-skills dạng plugin trong `.claude/settings.json`, và `web-interface-guidelines` trong `.claude/skills/` (quyết định `0006`).
 - Phần A (logo, mascot, icon) đã merge vào `main` (PR #5).
 - Đã chạy bản production của web với dữ liệu mẫu và đo Lighthouse mobile: cả `/vi` và `/en` đều từ 94 điểm trở lên ở cả ba mục, LCP từ 0,9 đến 1,1 giây. Bảng điểm và lệnh chạy lại nằm trong `docs/setup.md`.
-- Phần B4 (hiệu ứng GSAP) xong trên nhánh `feat/phan-b4-gsap`, 5 task đã review và đã sửa theo review cuối của cả nhánh: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 nằm trong `docs/setup.md`. Đã chạy Delivery Gate của antislop trên trang công khai và sửa các mục FAIL (vùng bấm 44 px, dòng chữ "đang tải", con trỏ và trạng thái khi bấm, trang 404 có header và footer, ảnh bìa câu chuyện tải trước, icon đặc điểm theo đúng thứ tự).
+- Phần B4 (hiệu ứng GSAP) đã merge vào `main` (PR #8), 5 task đã review và đã sửa theo review cuối của cả nhánh: mascot, logo và favicon thật; GSAP 3.15.0 tải muộn, tắt khi "giảm chuyển động"; các khối trượt vào; đầu và bó lúa nghiêng theo tốc độ cuộn; cây lúa mọc dọc hành trình. Đo Lighthouse sau B4 nằm trong `docs/setup.md`. Đã chạy Delivery Gate của antislop trên trang công khai và sửa các mục FAIL (vùng bấm 44 px, dòng chữ "đang tải", con trỏ và trạng thái khi bấm, trang 404 có header và footer, ảnh bìa câu chuyện tải trước, icon đặc điểm theo đúng thứ tự).
 - Kết quả xem bằng mắt sau B4. Chromium có cửa sổ không mở được trên máy, nên đã xem bằng Chromium không cửa sổ (headless), cùng bộ máy vẽ:
   - Đầu và bó lúa xoay đúng tâm, không có mảnh nào bị tách ra. Góc lớn nhất đo được khi cuộn nhanh: đầu 2,7°, bó lúa 4,2°.
   - Mascot nằm gọn trong hero. Logo ở header rõ ở cỡ 36 px.
   - Chưa xem favicon thật trên tab trình duyệt. Chỉ mới mở file `/icon.svg`: file này hiện đúng.
 - Rà soát prompt các file hướng dẫn Claude (nhánh `hacka/workspace-prompt-audit-1ff3bc`): báo cáo `docs/session/prompt-audit-2026-11-04.md`. Đã sửa 5 lỗi trong skill `call-chain` và `visual-deck`; 4 mục chỉ ghi nhận (6–9 trong báo cáo) chờ chủ dự án quyết định.
+- Review trang quản trị B3 về độ dễ dùng (nhánh `hacka/admin-ux-review-d606fa`): báo cáo `docs/reviews/2026-11-04-admin-ux.md`, ảnh chụp trong `docs/reviews/2026-11-04-admin-ux/`. Chỉ review, chưa sửa mã.
 
 ## Đang làm
-- Cảnh minh hoạ (nền Hero, hình túi gạo, khối "Từ hạt lúa tới người dùng" 8 cảnh): spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md` và plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md` đã duyệt; đang làm theo plan (subagent-driven) trên nhánh `feat/canh-minh-hoa`. Ngày 2026-11-05 đã xong Task 1–11 và Task 7 (6 tư thế người, đã duyệt biểu cảm); nền mỗi cảnh đã kéo rộng ra hai bên và mờ dần (chủ dự án đã duyệt). Nhánh đã có: nền Hero trải hết bề ngang, mờ dần về mép trái, vòng lặp 60 giây và nút tạm dừng tròn; hình túi hút chân không là ảnh đầu tiên của bộ ảnh, kèm 3 chú thích; khối "Từ hạt lúa tới người dùng" dạng con đường dọc uốn với 8 cảnh (tải SVG khi gần tới, chuyển động riêng mỗi cảnh, hạt gạo đi theo cuộn, nền cảnh mờ dần ra hai bên) và 6 tư thế người. Task 12 (kiểm tra cuối) dừng giữa chừng ngày 2026-11-05 vì chủ dự án muốn gộp vào `main` ngay: chưa đo được Lighthouse (Chromium không chạy được từ công cụ dòng lệnh của agent, lỗi `spawn UNKNOWN`), chưa chạy Delivery Gate, `inspect.mjs` và review `web-interface-guidelines`. Còn: đo Lighthouse `/vi`, `/en` (3 lần mỗi trang, gồm cả Best Practices) và ghi vào `docs/setup.md`; Delivery Gate, `inspect.mjs` ở 375 px và 1280 px, review `web-interface-guidelines`; review cả nhánh; PR; bản cuối 6 tư thế người bằng Recraft gói trả phí hoặc Nano Banana trả phí trước khi lên web thật. Góp ý của chủ dự án: `docs/session/log/2026-11-04-may-cong-ty-canh-minh-hoa.md`.
-- Phần B4: nhánh `feat/phan-b4-gsap` đã push. Chủ dự án đồng ý mở PR; chủ dự án quyết định merge. Các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec (mục 2.2, 3.0, 3.3) chờ chủ dự án đọc và xác nhận.
+- Phần B3 (trang quản trị): nhánh `feat/phan-b3-admin` đã gộp `main`, chờ chủ dự án đồng ý mở PR.
+- Cảnh minh hoạ (nhánh `feat/canh-minh-hoa`, spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md`, plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md`): đang gộp vào `main` theo yêu cầu của chủ dự án (2026-11-05). Đã có: nền Hero trải hết bề ngang, mờ dần về mép trái, vòng lặp 60 giây và nút tạm dừng tròn; hình túi hút chân không là ảnh đầu tiên của bộ ảnh, kèm 3 chú thích; khối "Từ hạt lúa tới người dùng" dạng con đường dọc uốn với 8 cảnh (tải SVG khi gần tới, chuyển động riêng mỗi cảnh, hạt gạo đi theo cuộn, nền cảnh mờ dần ra hai bên) và 6 tư thế người. Còn làm sau khi merge, bằng PR riêng: đo Lighthouse `/vi`, `/en` (Chromium không chạy được từ công cụ dòng lệnh của agent) và ghi vào `docs/setup.md`; Delivery Gate, `inspect.mjs` ở 375 px và 1280 px, review `web-interface-guidelines`; review cả nhánh; bản cuối 6 tư thế người bằng Nano Banana trả phí trên nhánh riêng, trước khi lên web thật. Góp ý của chủ dự án: `docs/session/log/2026-11-04-may-cong-ty-canh-minh-hoa.md`.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
-2. Viết plan B3 (trang quản trị).
-3. B4: chủ dự án xem nhánh `feat/phan-b4-gsap`, rồi quyết định push, PR và merge. Ghi chú cho người merge sau cùng giữa B3 và B4: trước khi mở PR, merge `origin/main` vào nhánh của mình, rồi chạy `npm install` trong `web/` để tạo lại `web/package-lock.json` (cả B3 và B4 đều thêm thư viện, nên file này sẽ xung đột).
-4. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới.
-5. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
-6. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
+2. Mở PR cho B3, chờ CI (có workflow `fullstack` mới), rồi merge vào `main`.
+3. Sau khi B3 merge, trên nhánh mới từ `main`: popup Zalo và thanh "đang tải" (thiết kế đã duyệt, ghi trong `docs/session/log/2026-11-04-may-cong-ty-phan-b3-admin.md`), rồi 5 việc ưu tiên của trang quản trị (`docs/decisions/0008-uu-tien-sua-admin.md`).
+4. Chủ dự án đọc và xác nhận các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec: mục 2.2 (lý do chọn font), 3.0 (Design Read), 3.3 (mục đích từng hiệu ứng), 4.1 (thứ tự đặc điểm sản phẩm).
+5. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới.
+6. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
+7. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
 
 ## Vướng mắc
 - Chưa đặt `GEMINI_API_KEY`.
@@ -52,7 +56,7 @@ Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, 
 - Sự kiện làm mới trang (revalidate) chỉ nằm trong bộ nhớ: nếu mất một sự kiện thì trang cũ còn đến lần sửa sau (web dùng `force-cache` với tag, không có thời gian dự phòng). Cách bổ sung sau này: nút "làm mới trang web" trong trang quản trị (trang chủ và các bài viết), hoặc đặt thời gian `revalidate` dài ở phía web.
 - Sửa chữ thay thế hoặc xoá ảnh chỉ làm mới trang chủ; các trang bài viết có ảnh đó chưa được làm mới.
 - Trước khi lên production, chạy thử một lệnh revalidate thật từ API sang server web (bản `node .next/standalone/server.js`).
-- Ảnh tải lên chưa hiện ở web local vì chưa ai phục vụ `/media/*`; Caddy làm việc này (có thể dùng cả cho compose local).
+- Ở local, web phục vụ ảnh tải lên từ `MEDIA_DEV_DIR` (chỉ ngoài production). Ở production, Caddy phục vụ `/media/*`.
 
 Các việc phát sinh khi làm B2 (web công khai):
 - Cloudflare không được cache HTML (chỉ cache `/_next/static/*` và `/media/*`). Caddy không được cache, và phải chuyển tiếp header `rsc` và tham số `_rsc`. Các trang gửi `Cache-Control: s-maxage=31536000`, nên nếu cache ở rìa thì khách không thấy thay đổi từ admin. Trang 404 chung (đường dẫn lạ) cũng gửi header này.

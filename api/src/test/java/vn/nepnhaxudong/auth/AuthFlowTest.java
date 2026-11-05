@@ -29,6 +29,8 @@ class AuthFlowTest extends AuthTestSupport {
     AppUser admin = users.findByEmail(ADMIN_EMAIL).orElseThrow();
     assertThat(admin.isMustChangePassword()).isTrue();
     assertThat(encoder.matches(ADMIN_PASSWORD, admin.getPasswordHash())).isTrue();
+    // The first admin manages the family accounts.
+    assertThat(admin.getRole()).isEqualTo(UserRole.OWNER);
   }
 
   @Test

@@ -7,7 +7,10 @@ public record UserSummary(
     String displayName,
     boolean enabled,
     boolean totpEnabled,
-    boolean mustChangePassword) {
+    boolean mustChangePassword,
+    UserRole role,
+    boolean mustSetupTotp,
+    boolean totpRequired) {
 
   static UserSummary of(AppUser user) {
     return new UserSummary(
@@ -16,6 +19,9 @@ public record UserSummary(
         user.getDisplayName(),
         user.isEnabled(),
         user.isTotpEnabled(),
-        user.isMustChangePassword());
+        user.isMustChangePassword(),
+        user.getRole(),
+        user.isMustSetupTotp(),
+        user.isTotpRequired());
   }
 }

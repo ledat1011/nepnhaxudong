@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component;
 /**
  * Creates the first admin at startup when the app_user table is empty. The email and password come
  * from the environment variables BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD. The admin must
- * change the password at the first login. The password is never logged.
+ * change the password at the first login. The first admin is an owner ("Chủ"), who manages the
+ * family accounts. The password is never logged.
  */
 @Component
 public class BootstrapAdmin implements ApplicationRunner {
@@ -56,7 +57,9 @@ public class BootstrapAdmin implements ApplicationRunner {
       return;
     }
     try {
-      users.save(AppUser.create(email, DISPLAY_NAME, encoder.encode(password), true));
+      var admin = AppUser.create(email, DISPLAY_NAME, encoder.encode(password), true);
+      admin.setRole(UserRole.OWNER);
+      users.save(admin);
     } catch (DataIntegrityViolationException e) {
       LOG.warn(
           "The first admin {} already exists: another instance created it first.",
