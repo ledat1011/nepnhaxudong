@@ -286,7 +286,7 @@ test("an expired session opens the sign-in dialog over the edit dialog and the s
   await expect(form).toBeVisible();
   await expect(titleVi(form)).toHaveValue(EDITED_TITLE);
 
-  await reLogin.getByLabel("Mật khẩu").fill(env("E2E_ADMIN_NEW_PASSWORD"));
+  await reLogin.getByLabel("Mật khẩu", { exact: true }).fill(env("E2E_ADMIN_NEW_PASSWORD"));
   await reLogin.getByRole("button", { name: "Đăng nhập" }).click();
   await expect(reLogin).toBeHidden();
   await expect(form).toBeHidden();

@@ -49,7 +49,7 @@ function totp(secret: string): string {
 async function signInAs(page: Page, email: string, password: string) {
   await page.goto(ADMIN_ROUTES.login);
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Mật khẩu").fill(password);
+  await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Đăng nhập" }).click();
 }
 
@@ -124,7 +124,7 @@ test("after a lost phone the owner switches off the member's 2FA, and the member
   // Both happen in one step: 2FA off and a new temporary password, shown once to the owner.
   const lostPhone = owner.getByRole("dialog", { name: "Tắt xác thực 2 lớp" });
   await lostPhone.getByRole("button", { name: "Tắt 2 lớp và đặt mật khẩu tạm" }).click();
-  const temporary = (await lostPhone.getByText(/^[A-Za-z2-9]{16}$/).textContent())!.trim();
+  const temporary = (await lostPhone.getByText(/^[a-z]+(-[a-z]+){3}-[1-9][0-9]$/).textContent())!.trim();
   await lostPhone.getByRole("button", { name: "Xong" }).click();
   await expect(memberRow().getByText("Cần bật lại 2 lớp")).toBeVisible();
 

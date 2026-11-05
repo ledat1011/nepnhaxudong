@@ -24,6 +24,6 @@ export async function expectPublicText(page: Page, url: string, text: string, pr
 
 export async function signIn(page: Page, password: string): Promise<void> {
   await page.getByLabel("Email").fill(env("E2E_ADMIN_EMAIL"));
-  await page.getByLabel("Mật khẩu").fill(password);
+  await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Đăng nhập" }).click();
 }

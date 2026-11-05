@@ -57,7 +57,10 @@ for (const [name, route] of Object.entries(ADMIN_ROUTES)) {
 
 test("a wrong Zalo number is shown under the Zalo box, and the screen moves there", async ({ page }) => {
   await page.goto(ADMIN_ROUTES.settings);
-  const zalo = page.getByLabel("Zalo (chỉ số)");
+  // When Zalo is the phone number there is no Zalo box: take the tick off first.
+  const same = page.getByRole("checkbox", { name: "Zalo dùng số điện thoại ở trên" });
+  if (await same.isChecked()) await same.uncheck();
+  const zalo = page.getByLabel("Số Zalo");
   await zalo.fill("0912 345 67a");
   // Lưu sits at the bottom of the screen, below the address and the hours.
   await page.getByRole("button", { name: "Lưu", exact: true }).click();
@@ -69,7 +72,8 @@ test("a wrong Zalo number is shown under the Zalo box, and the screen moves ther
   // Nothing was stored: dropping the change brings the saved number back.
   await page.getByRole("button", { name: "Bỏ thay đổi", exact: true }).click();
   await page.getByRole("alertdialog", { name: "Bỏ thay đổi chưa lưu?" }).getByRole("button", { name: "Bỏ thay đổi" }).click();
-  await expect(zalo).not.toHaveValue("0912 345 67a");
+  await expect(page.getByRole("button", { name: "Lưu", exact: true })).toBeDisabled();
+  if (await zalo.count()) await expect(zalo).not.toHaveValue("0912 345 67a");
 });
 
 test("the save bar of the product form does not overlap the bottom navigation", async ({ page }) => {
