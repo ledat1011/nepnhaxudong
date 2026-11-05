@@ -131,31 +131,34 @@ public class UserAdminService {
   }
 
   /**
-   * Sets a temporary password: the user must change it at the next login, the lock is cleared,
-   * two-factor login is switched off and every session of the user ends. As with {@link
+   * Sets a temporary password for another user: the user must change it at the next login, the lock
+   * is cleared, two-factor login is switched off and every session of the user ends. As with {@link
    * #disableTotp}, a user who had two-factor login must set it up again (after the password change).
+   * Owners change their own password with the current one (and cannot drop their own two-factor
+   * login this way).
    */
   @Transactional
   public void resetPassword(long actorId, long targetId, String temporaryPassword) {
-    AppUser user = target(lockForOwner(actorId), targetId);
+    var accounts = lockForOwner(actorId);
+    if (actorId == targetId) {
+      throw new ApiException(HttpStatus.CONFLICT, "Hãy đổi mật khẩu của bạn ở mục Đổi mật khẩu.");
+    }
+    AppUser user = target(accounts, targetId);
     var before = UserSummary.of(user);
-    user.setPasswordHash(encoder.encode(temporaryPassword));
-    user.setMustChangePassword(true);
-    user.setFailedAttempts(0);
-    user.setLockedUntil(null);
-    switchOffTotp(user);
+    resetCredentials(user, temporaryPassword);
     recordUpdate(before, user);
     userSessions.endAll(targetId);
   }
 
   /**
-   * Switches off the two-factor login of another user (who lost the phone, for example). The secret
-   * is removed, the user must set up two-factor login again after the next sign-in, and every
-   * session of the user ends (a lost phone may still hold one). Owners switch off their own with a
-   * code, in {@link TotpService#disable}.
+   * Switches off the two-factor login of another user who lost the phone. In the same step the
+   * password becomes a temporary one: someone who has the phone and its saved password must not get
+   * in and set up their own authenticator first. The user changes the password, then sets up
+   * two-factor login again; every session ends (the lost phone may still hold one). Owners switch off
+   * their own with a code, in {@link TotpService#disable}.
    */
   @Transactional
-  public void disableTotp(long actorId, long targetId) {
+  public void disableTotp(long actorId, long targetId, String temporaryPassword) {
     var accounts = lockForOwner(actorId);
     if (actorId == targetId) {
       throw new ApiException(HttpStatus.CONFLICT, "Hãy tắt xác thực 2 lớp của chính bạn bằng mã 6 số.");
@@ -165,18 +168,23 @@ public class UserAdminService {
       throw new ApiException(HttpStatus.CONFLICT, "Xác thực 2 lớp chưa được bật.");
     }
     var before = UserSummary.of(user);
-    switchOffTotp(user);
+    resetCredentials(user, temporaryPassword);
     recordUpdate(before, user);
     userSessions.endAll(targetId);
   }
 
-  /** Removes the secret; a user who had two-factor login on must set it up again. */
-  private static void switchOffTotp(AppUser user) {
+  /** A temporary password, no lock, and two-factor login off (to be set up again when it was on). */
+  private void resetCredentials(AppUser user, String temporaryPassword) {
+    user.setPasswordHash(encoder.encode(temporaryPassword));
+    user.setMustChangePassword(true);
+    user.setFailedAttempts(0);
+    user.setLockedUntil(null);
     if (user.isTotpEnabled()) {
       user.setMustSetupTotp(true);
+      user.setTotpRequired(true);
     }
     user.setTotpEnabled(false);
-    user.setTotpSecret(null);
+    user.replaceTotpSecret(null);
   }
 
   /**

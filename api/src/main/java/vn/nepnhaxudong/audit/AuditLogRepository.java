@@ -10,8 +10,9 @@ import org.springframework.data.repository.query.Param;
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
   /**
-   * The audit list, newest first. A null filter means "any". The user name is null when the user
-   * does not exist any more (the left join finds nothing).
+   * The audit list, newest first. A null filter means "any". Lines of {@code hiddenType} are left
+   * out (null hides nothing). The user name is null when the user does not exist any more (the left
+   * join finds nothing).
    */
   @Query(
       """
@@ -21,11 +22,13 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
       from AuditLog a left join vn.nepnhaxudong.auth.AppUser u on u.id = a.userId
       where (:entityType is null or a.entityType = :entityType)
         and (:entityId is null or a.entityId = :entityId)
+        and (:hiddenType is null or a.entityType <> :hiddenType)
       order by a.createdAt desc, a.id desc
       """)
   List<AuditRow> search(
       @Param("entityType") String entityType,
       @Param("entityId") Long entityId,
+      @Param("hiddenType") String hiddenType,
       Pageable pageable);
 
   /** One line with the user name, or empty when the id does not exist. */

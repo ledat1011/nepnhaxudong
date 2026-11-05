@@ -65,7 +65,8 @@ class AccountRoleTest extends AuthTestSupport {
             member.post(
                 "/admin/users/" + ownerId + "/reset-password", Map.of("temporaryPassword", TEMP_PASSWORD)),
             member.post("/admin/users/" + ownerId + "/role", Map.of("role", "MEMBER")),
-            member.post("/admin/users/" + ownerId + "/disable-totp", null),
+            member.post(
+                "/admin/users/" + ownerId + "/disable-totp", Map.of("temporaryPassword", TEMP_PASSWORD)),
             // A path with no controller is refused too: the check runs before Spring MVC.
             member.get("/admin/users/" + ownerId + "/unknown"));
 
@@ -87,8 +88,58 @@ class AccountRoleTest extends AuthTestSupport {
     var member = loggedInMember();
 
     assertThat(member.get("/admin/products").getStatusCode().value()).isEqualTo(200);
-    assertThat(member.get("/admin/audit").getStatusCode().value()).isEqualTo(200);
     assertThat(member.post("/admin/me/totp/setup", null).getStatusCode().value()).isEqualTo(200);
+  }
+
+  // ---- the history keeps account lines away from a member --------------------------------------
+
+  @Test
+  void aMemberDoesNotSeeAccountLinesInTheHistory() {
+    var owner = loggedInOwner();
+    owner.post(
+        "/admin/users",
+        Map.of("email", "new@example.com", "displayName", "Bác Hai", "temporaryPassword", TEMP_PASSWORD));
+    var content =
+        owner.post("/admin/timeline", Map.of("year", 2001, "title", Map.of("vi", "Mốc thử", "en", "Test")));
+    assertThat(content.getStatusCode().value()).isEqualTo(201);
+    var member = loggedInMember();
+
+    var list = member.get("/admin/audit");
+    JsonNode all = ApiClient.json(list);
+    assertThat(all).hasSize(1);
+    assertThat(all.get(0).path("entityType").asString()).isEqualTo("timeline_event");
+    assertThat(list.getBody()).doesNotContain("new@example.com").doesNotContain("Bác Hai");
+    var filtered = member.get("/admin/audit?entityType=app_user");
+    assertThat(filtered.getStatusCode().value()).isEqualTo(200);
+    assertThat(ApiClient.json(filtered)).isEmpty();
+
+    // The owner still sees both.
+    assertThat(ApiClient.json(owner.get("/admin/audit"))).hasSize(2);
+  }
+
+  @Test
+  void aMemberGetsForbiddenOnTheDetailAndTheRestoreOfAnAccountLine() {
+    var owner = loggedInOwner();
+    owner.post(
+        "/admin/users",
+        Map.of("email", "new@example.com", "displayName", "Bác Hai", "temporaryPassword", TEMP_PASSWORD));
+    owner.post("/admin/timeline", Map.of("year", 2001, "title", Map.of("vi", "Mốc thử", "en", "Test")));
+    long accountLine =
+        jdbc.queryForObject("select id from audit_log where entity_type = 'app_user'", Long.class);
+    long productLine =
+        jdbc.queryForObject("select id from audit_log where entity_type = 'timeline_event'", Long.class);
+    var member = loggedInMember();
+
+    for (var answer :
+        List.of(
+            member.get("/admin/audit/" + accountLine),
+            member.post("/admin/audit/" + accountLine + "/restore", Map.of()))) {
+      assertThat(answer.getStatusCode().value()).isEqualTo(403);
+      assertThat(ApiClient.json(answer).path("code").asString()).isEqualTo("owner-required");
+      assertThat(answer.getBody()).doesNotContain("new@example.com");
+    }
+    assertThat(member.get("/admin/audit/" + productLine).getStatusCode().value()).isEqualTo(200);
+    assertThat(owner.get("/admin/audit/" + accountLine).getStatusCode().value()).isEqualTo(200);
   }
 
   @Test
@@ -98,15 +149,23 @@ class AccountRoleTest extends AuthTestSupport {
 
     assertThatThrownBy(() -> userAdminService.list(memberId))
         .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus().value()).isEqualTo(403));
+    assertThatThrownBy(
+            () ->
+                userAdminService.create(
+                    memberId, new CreateUserRequest("x@example.com", "X", TEMP_PASSWORD)))
+        .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus().value()).isEqualTo(403));
+    assertThatThrownBy(() -> userAdminService.enable(memberId, ownerId))
+        .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus().value()).isEqualTo(403));
     assertThatThrownBy(() -> userAdminService.disable(memberId, ownerId))
         .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus().value()).isEqualTo(403));
     assertThatThrownBy(() -> userAdminService.changeRole(memberId, ownerId, UserRole.MEMBER, null))
         .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus().value()).isEqualTo(403));
-    assertThatThrownBy(() -> userAdminService.disableTotp(memberId, ownerId))
+    assertThatThrownBy(() -> userAdminService.disableTotp(memberId, ownerId, TEMP_PASSWORD))
         .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus().value()).isEqualTo(403));
     assertThatThrownBy(() -> userAdminService.resetPassword(memberId, ownerId, TEMP_PASSWORD))
         .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus().value()).isEqualTo(403));
     assertThat(users.findById(ownerId).orElseThrow().isEnabled()).isTrue();
+    assertThat(users.findByEmail("x@example.com")).isEmpty();
   }
 
   // ---- roles in the answers --------------------------------------------------------------------
@@ -289,13 +348,18 @@ class AccountRoleTest extends AuthTestSupport {
     assertThat(loginWithCode(oldSession, MEMBER_EMAIL, MEMBER_PASSWORD, code()).getStatusCode().value())
         .isEqualTo(200);
 
-    var off = owner.post("/admin/users/" + memberId + "/disable-totp", null);
+    var off =
+        owner.post("/admin/users/" + memberId + "/disable-totp", Map.of("temporaryPassword", TEMP_PASSWORD));
 
     assertThat(off.getStatusCode().value()).isEqualTo(204);
     var member = users.findById(memberId).orElseThrow();
     assertThat(member.isTotpEnabled()).isFalse();
     assertThat(member.getTotpSecret()).isNull();
     assertThat(member.isMustSetupTotp()).isTrue();
+    // A thief with the phone and a saved password must not get in: the password changes in the same step.
+    assertThat(member.isMustChangePassword()).isTrue();
+    assertThat(encoder.matches(TEMP_PASSWORD, member.getPasswordHash())).isTrue();
+    assertThat(login(newClient(), MEMBER_EMAIL, MEMBER_PASSWORD).getStatusCode().value()).isEqualTo(401);
     // The lost phone may still hold an open session: it ends.
     assertThat(oldSession.get("/auth/me").getStatusCode().value()).isEqualTo(401);
     // The action is in the history, without secrets.
@@ -305,15 +369,25 @@ class AccountRoleTest extends AuthTestSupport {
     assertThat(json(line.get("before_json")).path("totpEnabled").asBoolean()).isTrue();
     assertThat(json(line.get("after_json")).path("totpEnabled").asBoolean()).isFalse();
     assertThat(json(line.get("after_json")).path("mustSetupTotp").asBoolean()).isTrue();
-    assertThat(String.valueOf(line.get("after_json"))).doesNotContain(SECRET);
+    assertThat(json(line.get("after_json")).path("mustChangePassword").asBoolean()).isTrue();
+    assertThat(String.valueOf(line.get("after_json"))).doesNotContain(SECRET).doesNotContain(TEMP_PASSWORD);
 
-    // The next sign-in needs no code, and only the two-factor setup is open until it is done.
+    // The next sign-in needs no code; first the password, then the two-factor setup.
     var client = newClient();
-    var login = login(client, MEMBER_EMAIL, MEMBER_PASSWORD);
+    var login = login(client, MEMBER_EMAIL, TEMP_PASSWORD);
     assertThat(login.getStatusCode().value()).isEqualTo(200);
+    assertThat(ApiClient.json(login).path("mustChangePassword").asBoolean()).isTrue();
     assertThat(ApiClient.json(login).path("mustSetupTotp").asBoolean()).isTrue();
     assertThat(ApiClient.json(login).path("totpEnabled").asBoolean()).isFalse();
     client.fetchCsrf();
+    assertThat(ApiClient.json(client.post("/admin/me/totp/setup", null)).path("code").asString())
+        .isEqualTo("must-change-password");
+    assertThat(
+            client
+                .post("/auth/password", Map.of("currentPassword", TEMP_PASSWORD, "newPassword", NEW_PASSWORD))
+                .getStatusCode()
+                .value())
+        .isEqualTo(204);
     var blocked = client.get("/admin/products");
     assertThat(blocked.getStatusCode().value()).isEqualTo(403);
     assertThat(ApiClient.json(blocked).path("code").asString()).isEqualTo("must-setup-totp");
@@ -328,6 +402,14 @@ class AccountRoleTest extends AuthTestSupport {
     assertThat(me.path("mustSetupTotp").asBoolean()).isFalse();
     assertThat(me.path("totpEnabled").asBoolean()).isTrue();
     assertThat(users.findById(memberId).orElseThrow().isMustSetupTotp()).isFalse();
+
+    // Only an owner may switch it off from now on.
+    assertThat(me.path("totpRequired").asBoolean()).isTrue();
+    var selfOff = client.post("/admin/me/totp/disable", Map.of("code", Totp.code(secret, now())));
+    assertThat(selfOff.getStatusCode().value()).isEqualTo(409);
+    assertThat(ApiClient.json(selfOff).path("detail").asString())
+        .isEqualTo("Chỉ Chủ được tắt xác thực 2 lớp của bạn.");
+    assertThat(users.findById(memberId).orElseThrow().isTotpEnabled()).isTrue();
   }
 
   @Test
@@ -336,16 +418,18 @@ class AccountRoleTest extends AuthTestSupport {
     long ownerId = users.findByEmail(OWNER_EMAIL).orElseThrow().getId();
     long plainId = createUser(MEMBER_EMAIL, MEMBER_PASSWORD, false).getId();
 
-    var self = owner.post("/admin/users/" + ownerId + "/disable-totp", null);
+    var self = owner.post("/admin/users/" + ownerId + "/disable-totp", Map.of("temporaryPassword", TEMP_PASSWORD));
     assertThat(self.getStatusCode().value()).isEqualTo(409);
     assertThat(ApiClient.json(self).path("detail").asString())
         .isEqualTo("Hãy tắt xác thực 2 lớp của chính bạn bằng mã 6 số.");
 
-    var notOn = owner.post("/admin/users/" + plainId + "/disable-totp", null);
+    var notOn = owner.post("/admin/users/" + plainId + "/disable-totp", Map.of("temporaryPassword", TEMP_PASSWORD));
     assertThat(notOn.getStatusCode().value()).isEqualTo(409);
     assertThat(ApiClient.json(notOn).path("detail").asString()).isEqualTo("Xác thực 2 lớp chưa được bật.");
 
-    assertThat(owner.post("/admin/users/999999/disable-totp", null).getStatusCode().value()).isEqualTo(404);
+    assertThat(owner.post("/admin/users/999999/disable-totp", Map.of("temporaryPassword", TEMP_PASSWORD)).getStatusCode().value()).isEqualTo(404);
+    var noPassword = owner.post("/admin/users/" + plainId + "/disable-totp", Map.of());
+    assertThat(noPassword.getStatusCode().value()).isEqualTo(400);
     assertThat(users.findById(plainId).orElseThrow().isMustSetupTotp()).isFalse();
     assertThat(auditCount()).isZero();
   }

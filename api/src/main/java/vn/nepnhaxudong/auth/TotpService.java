@@ -44,7 +44,7 @@ public class TotpService {
       throw new ApiException(HttpStatus.CONFLICT, "Xác thực 2 lớp đã được bật. Hãy tắt trước khi tạo mã mới.");
     }
     String secret = Totp.generateSecret();
-    user.setTotpSecret(secret);
+    user.replaceTotpSecret(secret);
     return new TotpSetupResponse(secret, otpauthUri(user.getEmail(), secret));
   }
 
@@ -71,10 +71,15 @@ public class TotpService {
     if (!user.isTotpEnabled()) {
       throw new ApiException(HttpStatus.CONFLICT, "Xác thực 2 lớp chưa được bật.");
     }
+    // An owner switched it off once (a lost phone) and asked for a new setup: from then on only an
+    // owner may switch it off, so whoever holds the account cannot drop it again with a code.
+    if (user.isTotpRequired()) {
+      throw new ApiException(HttpStatus.CONFLICT, "Chỉ Chủ được tắt xác thực 2 lớp của bạn.");
+    }
     requireValid(user, code);
     var before = UserSummary.of(user);
     user.setTotpEnabled(false);
-    user.setTotpSecret(null);
+    user.replaceTotpSecret(null);
     recordUpdate(before, user);
   }
 

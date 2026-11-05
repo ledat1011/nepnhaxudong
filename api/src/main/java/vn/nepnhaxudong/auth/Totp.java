@@ -41,19 +41,32 @@ public final class Totp {
 
   /** True when the code is valid for the current step or one step before or after. */
   public static boolean verify(String base32Secret, String code, long epochSeconds) {
+    return matchedStep(base32Secret, code, epochSeconds) != NO_STEP;
+  }
+
+  /** {@link #matchedStep} when the code is not valid. */
+  public static final long NO_STEP = Long.MIN_VALUE;
+
+  /**
+   * The time step whose code equals {@code code} (the current step or one step before or after), or
+   * {@link #NO_STEP}. The caller keeps the step to refuse a second use of the same code.
+   */
+  public static long matchedStep(String base32Secret, String code, long epochSeconds) {
     if (code == null || code.length() != DIGITS || !code.chars().allMatch(c -> c >= '0' && c <= '9')) {
-      return false;
+      return NO_STEP;
     }
     byte[] key = Base32.decode(base32Secret);
     byte[] given = code.getBytes(StandardCharsets.US_ASCII);
     long step = Math.floorDiv(epochSeconds, STEP_SECONDS);
-    boolean valid = false;
-    // Every step is computed and compared in constant time, so the answer does not leak which step matched.
+    long matched = NO_STEP;
+    // Every step is computed and compared in constant time; the loop never stops early.
     for (long candidate = step - ALLOWED_DRIFT_STEPS; candidate <= step + ALLOWED_DRIFT_STEPS; candidate++) {
       byte[] expected = codeOfStep(key, candidate).getBytes(StandardCharsets.US_ASCII);
-      valid |= MessageDigest.isEqual(expected, given);
+      if (MessageDigest.isEqual(expected, given)) {
+        matched = candidate;
+      }
     }
-    return valid;
+    return matched;
   }
 
   private static String codeOfStep(byte[] key, long step) {

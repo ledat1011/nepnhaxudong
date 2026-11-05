@@ -28,9 +28,10 @@ class LoginAttempts {
    * transaction back: the counter and the lock have to be saved when the login fails.
    *
    * @param checked the credentials that {@code check} was computed from (read without a lock)
+   * @param totpStep the TOTP step the code matched, or {@link Totp#NO_STEP} without a code
    */
   @Transactional(noRollbackFor = ApiException.class)
-  AppUser record(long userId, CredentialSnapshot checked, CredentialCheck check) {
+  AppUser record(long userId, CredentialSnapshot checked, CredentialCheck check, long totpStep) {
     AppUser user = users.findByIdForUpdate(userId).orElse(null);
     if (user == null || !user.isEnabled()) {
       throw new InvalidCredentialsException();
@@ -51,6 +52,14 @@ class LoginAttempts {
       user.setLockedUntil(null);
       user.setFailedAttempts(0);
     }
+    // A code works once: a code of the step used last time, or of an earlier step, is a replay. The
+    // check runs under the row lock, so two parallel logins with the same code cannot both pass.
+    if (check == CredentialCheck.PASSED
+        && user.isTotpEnabled()
+        && user.getTotpLastStep() != null
+        && totpStep <= user.getTotpLastStep()) {
+      check = CredentialCheck.WRONG_CODE;
+    }
     switch (check) {
       case WRONG_PASSWORD:
         throw registerFailure(user, now) ? new AccountLockedException() : new InvalidCredentialsException();
@@ -61,6 +70,9 @@ class LoginAttempts {
       case PASSED:
         user.setFailedAttempts(0);
         user.setLockedUntil(null);
+        if (user.isTotpEnabled()) {
+          user.setTotpLastStep(totpStep);
+        }
         return user;
       default:
         throw new IllegalStateException("Unknown check " + check);

@@ -74,10 +74,16 @@ public class UserAdminController {
     service.changeRole(principal.userId(), id, body.role(), session == null ? null : session.getId());
   }
 
-  /** Switches off the two-factor login of another user, who must set it up again. */
+  /**
+   * Switches off the two-factor login of another user and sets the temporary password of the body:
+   * the user changes the password, then sets up two-factor login again.
+   */
   @PostMapping("/{id}/disable-totp")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void disableTotp(@AuthenticationPrincipal SessionPrincipal principal, @PathVariable long id) {
-    service.disableTotp(principal.userId(), id);
+  public void disableTotp(
+      @AuthenticationPrincipal SessionPrincipal principal,
+      @PathVariable long id,
+      @Valid @RequestBody ResetPasswordRequest body) {
+    service.disableTotp(principal.userId(), id, body.temporaryPassword());
   }
 }
