@@ -27,7 +27,8 @@ FIXES.json keys (coordinates in source pixels, as the PNG shows them, before any
 - "map": {"#RRGGBB": "token"}: the source color nearest to #RRGGBB becomes that palette token.
 - "recolor": [{"to": "token", "at": [x, y]} or {"to": "token", "box": [x0, y0, x1, y1], "from": ...}]:
   "at" recolors the 4-connected region of one source color under that point; "box" recolors the
-  drawn pixels in the box (only those that are now "from", a token or a list, when it is given).
+  drawn pixels in the box, or in "polygon": [[x, y], ...] (only those that are now "from", a token or
+  a list, when it is given).
 - "clear": the same items without "to", run after every recolor: makes those pixels transparent.
 - "overlay" / "underlay": "file.svg": hand-drawn elements (inside an <svg> root, in source pixels)
   drawn over / under the trace with the same mirror, crop and scale. The fit (step 6) does not see them.
@@ -129,7 +130,7 @@ def token_of(name, what):
 
 
 def fix_region(item, anchor, mask, colors, what):
-    """The drawn pixels a recolor or clear item names: the region under "at", or the box."""
+    """The drawn pixels a recolor or clear item names: the region under "at", the box or the polygon."""
     if 'at' in item:
         x, y = item['at']
         seed = np.zeros_like(mask)
@@ -138,7 +139,10 @@ def fix_region(item, anchor, mask, colors, what):
         if not region.any():
             raise SystemExit(f'{what}: nothing drawn at {item["at"]}')
         return region
-    region = box_mask(mask.shape, item['box']) & mask
+    if 'polygon' in item:
+        region = vm.polygon_mask([tuple(point) for point in item['polygon']]) & mask
+    else:
+        region = box_mask(mask.shape, item['box']) & mask
     if 'from' in item:
         names = [item['from']] if isinstance(item['from'], str) else item['from']
         region &= np.isin(colors, [token_of(name, what) for name in names])
