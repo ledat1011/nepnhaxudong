@@ -502,7 +502,7 @@ function UploadItem({ item, copyCount, onAlt, onLeave, onTouch, onUpload, onCopy
       {!item.blocked ? (
         // Locked while the photo goes up: the text that is being sent must not change under it.
         <fieldset disabled={sendingNow} className="min-w-0">
-          <BilingualField label="Mô tả ảnh" value={item.alt} onChange={onAlt} maxLength={MAX_ALT_LENGTH} viRequired enRequired />
+          <BilingualField label="Mô tả ảnh" value={item.alt} onChange={onAlt} maxLength={MAX_ALT_LENGTH} viRequired enRequired micHint />
         </fieldset>
       ) : null}
       <div className="flex flex-wrap gap-2">

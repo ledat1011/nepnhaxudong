@@ -8,6 +8,7 @@ import { invalidProps } from "@/lib/admin/field-errors";
 import { isMissingEn } from "@/lib/admin/localized";
 import type { LocalizedText } from "@/lib/admin/types";
 import { FieldError, RequiredMark } from "./FieldError";
+import { MicHint } from "./MicHint";
 import { MissingEnBadge } from "./MissingEnBadge";
 
 type Props = {
@@ -20,6 +21,8 @@ type Props = {
   enRequired?: boolean;
   /** The error of each box, shown right under it. */
   errors?: { vi?: string | null; en?: string | null };
+  /** Shows the tip about the keyboard microphone above the boxes (once per screen). On by default for long text. */
+  micHint?: boolean;
 };
 
 type BoxProps = {
@@ -72,6 +75,7 @@ export function BilingualField({
   viRequired = false,
   enRequired = false,
   errors,
+  micHint = multiline,
 }: Props) {
   const id = useId();
   return (
@@ -80,6 +84,7 @@ export function BilingualField({
         {label}
         {isMissingEn(value) ? <MissingEnBadge /> : null}
       </legend>
+      {micHint ? <MicHint /> : null}
       <div className="grid gap-3 md:grid-cols-2">
         <Box
           id={`${id}-vi`}

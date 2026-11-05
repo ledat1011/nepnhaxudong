@@ -72,7 +72,7 @@ function EditForm({ media, onChanged, onDeleted }: FormProps) {
       </DialogHeader>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={media.url} alt="Ảnh đang sửa" width={media.width} height={media.height} className="max-h-60 w-full rounded-md border object-contain" />
-      <BilingualField label="Mô tả ảnh" value={alt} onChange={setAlt} maxLength={MAX_ALT_LENGTH} viRequired enRequired />
+      <BilingualField label="Mô tả ảnh" value={alt} onChange={setAlt} maxLength={MAX_ALT_LENGTH} viRequired enRequired micHint />
       <ProblemMessage error={update.error} />
       <ProblemMessage error={remove.error} />
       <DialogFooter>

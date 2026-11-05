@@ -1,9 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LocalizedText } from "@/lib/admin/types";
 import { BilingualField } from "./BilingualField";
+import { resetMicHintForTest } from "./MicHint";
 
 describe("BilingualField", () => {
   it("shows a Vietnamese and an English box inside a group with the label", () => {
@@ -70,3 +71,23 @@ describe("BilingualField", () => {
   });
 });
 
+
+describe("BilingualField microphone tip", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("shows the tip above long text boxes on a phone, and not above one-line boxes", () => {
+    resetMicHintForTest();
+    window.localStorage.clear();
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn((query: string) => ({ matches: query === "(pointer: coarse)", addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+    );
+    const { unmount } = render(<BilingualField label="Tên" value={{ vi: null, en: null }} onChange={() => {}} />);
+    expect(screen.queryByText(/micro trên bàn phím/)).not.toBeInTheDocument();
+    unmount();
+    render(<BilingualField label="Mô tả" multiline value={{ vi: null, en: null }} onChange={() => {}} />);
+    expect(screen.getByRole("group", { name: "Mô tả" })).toHaveTextContent(/micro trên bàn phím/);
+  });
+});
