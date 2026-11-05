@@ -1,4 +1,4 @@
-# 0011 — Hạ tầng: VPS nhỏ, deploy qua GHCR, cảnh báo không cài agent
+# 0012 — Hạ tầng: VPS nhỏ, deploy qua GHCR, cảnh báo không cài agent
 
 Ngày: 2026-11-05. Người quyết định: chủ dự án (theo đề xuất của agent).
 

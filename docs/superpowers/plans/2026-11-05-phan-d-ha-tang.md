@@ -8,7 +8,7 @@
 
 **Công nghệ:** Docker Compose v2, Caddy 2 (build kèm `caddy-ratelimit` và `caddy-dns/cloudflare`), Node 22 (Next.js 16 standalone), Temurin 21 JRE, Postgres 16, restic, systemd timer, GitHub Actions.
 
-**Spec:** `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md` mục 4.2, 4.5 và 5; các điểm đổi so với spec ở `docs/decisions/0011-ha-tang-vps-nho.md`; ràng buộc ở mục "Ghi chú cho phần D" của `docs/session/STATE.md`.
+**Spec:** `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md` mục 4.2, 4.5 và 5; các điểm đổi so với spec ở `docs/decisions/0012-ha-tang-vps-nho.md`; ràng buộc ở mục "Ghi chú cho phần D" của `docs/session/STATE.md`.
 
 ## Ràng buộc chung
 - VPS: 2 vCPU / 2 GB RAM, Ubuntu 24.04, 2 GB swap. Không build trên VPS.

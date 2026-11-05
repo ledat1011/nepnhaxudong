@@ -1,5 +1,5 @@
 # Production stack of Nếp Nhà. On the VPS this file lives in /opt/nepnha next to .env (see infra/prod.env.example).
-# Sized for a 2 vCPU / 2 GB VPS with 2 GB swap (docs/decisions/0011-ha-tang-vps-nho.md).
+# Sized for a 2 vCPU / 2 GB VPS with 2 GB swap (docs/decisions/0012-ha-tang-vps-nho.md).
 name: nepnha
 
 x-logging: &logging
