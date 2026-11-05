@@ -1,4 +1,4 @@
-import type { AuditAction } from "./types";
+import type { AuditAction, AuditEntryDto } from "./types";
 
 export type DiffRow = { path: string; before: string | null; after: string | null };
 
@@ -33,6 +33,15 @@ export function entityTypeLabel(entityType: string): string {
 
 export function actionLabel(action: AuditAction): string {
   return ACTION_LABELS[action] ?? action;
+}
+
+/** Shown for a line whose user no longer exists (the API sends no name then). */
+export const DELETED_USER_LABEL = "Tài khoản đã xóa";
+
+/** The second line of a history row: when, who, what kind, which action. */
+export function entryMeta(entry: Pick<AuditEntryDto, "createdAt" | "userDisplayName" | "entityType" | "action">): string {
+  const user = entry.userDisplayName?.trim() ? entry.userDisplayName : DELETED_USER_LABEL;
+  return [formatVnTime(entry.createdAt), user, entityTypeLabel(entry.entityType), actionLabel(entry.action)].join(" · ");
 }
 
 const VN_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -104,34 +113,158 @@ function shorten(text: string): string {
 
 const COLLATOR = new Intl.Collator("en", { numeric: true });
 
-type FieldLabel = { label: string; value(text: string): string };
+type FieldLabel = { label: string; value?(text: string): string };
 
-const YES_NO: FieldLabel["value"] = (text) => (text === "true" ? "Có" : text === "false" ? "Không" : text);
+const YES_NO = (text: string) => (text === "true" ? "Có" : text === "false" ? "Không" : text);
+const ON_OFF = (text: string) => (text === "true" ? "Bật" : text === "false" ? "Tắt" : text);
+const words = (map: Record<string, string>) => (text: string) => (Object.hasOwn(map, text) ? map[text] : text);
+const ROLE = words({ OWNER: "Chủ", MEMBER: "Người nhà" });
+const STORY_STATUS = words({ DRAFT: "Nháp", PUBLISHED: "Đã đăng" });
+const SETTING_KEY = words({ contact: "Liên hệ", social: "Mạng xã hội", brand: "Thương hiệu" });
 
-/**
- * Paths shown with a name and a value a family member reads, by entity type. Every other path keeps its raw name,
- * as before. A product's "visible" is the "Hiện trên web" switch.
- */
-const FIELD_LABELS: Record<string, Record<string, FieldLabel>> = {
-  product: { visible: { label: "Hiện trên web", value: YES_NO } },
+/** "150000" as "150.000", the way a Vietnamese reader groups the thousands. Other text is left as it is. */
+function grouped(text: string): string {
+  return /^\d+$/.test(text) ? text.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : text;
+}
+const MONEY = (text: string) => (/^\d+$/.test(text) ? `${grouped(text)} đ` : text);
+const GRAMS = (text: string) => (/^\d+$/.test(text) ? `${grouped(text)} g` : text);
+/** "2024-05-01" as "01/05/2024". */
+const DAY = (text: string) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  return match === null ? text : `${match[3]}/${match[2]}/${match[1]}`;
 };
 
-function labelled(row: DiffRow, entityType: string | undefined): DiffRow {
-  const labels = entityType !== undefined && Object.hasOwn(FIELD_LABELS, entityType) ? FIELD_LABELS[entityType] : null;
-  const field = labels !== null && Object.hasOwn(labels, row.path) ? labels[row.path] : null;
+/** Fields every kind has. */
+const COMMON_LABELS: Record<string, FieldLabel> = {
+  id: { label: "Mã số" },
+  sortOrder: { label: "Thứ tự" },
+  missingEn: { label: "Còn thiếu tiếng Anh", value: YES_NO },
+};
+
+/**
+ * The name of each field, by kind of content, as the edit screens call it. A key is the path with every list
+ * position written "#" and the language ("vi", "en") left out; "{1}" in a label is the first position, counted from 1.
+ */
+const FIELD_LABELS: Record<string, Record<string, FieldLabel>> = {
+  product: {
+    visible: { label: "Hiện trên web", value: YES_NO },
+    showPrice: { label: "Hiện giá", value: YES_NO },
+    name: { label: "Tên sản phẩm" },
+    description: { label: "Mô tả" },
+    features: { label: "Đặc điểm" },
+    "features.#": { label: "Đặc điểm {1}" },
+    cookingTips: { label: "Mẹo nấu" },
+    packagings: { label: "Quy cách" },
+    "packagings.#.weightGrams": { label: "Quy cách {1}: khối lượng", value: GRAMS },
+    "packagings.#.priceVnd": { label: "Quy cách {1}: giá", value: MONEY },
+    "packagings.#.sortOrder": { label: "Quy cách {1}: thứ tự" },
+    mediaIds: { label: "Ảnh" },
+    "mediaIds.#": { label: "Ảnh {1} (mã ảnh)" },
+  },
+  timeline_event: {
+    year: { label: "Năm" },
+    title: { label: "Tiêu đề" },
+    description: { label: "Mô tả" },
+    mediaId: { label: "Ảnh (mã ảnh)" },
+  },
+  press_mention: {
+    url: { label: "Đường dẫn bài báo" },
+    sourceName: { label: "Tên báo" },
+    publishedOn: { label: "Ngày đăng", value: DAY },
+    title: { label: "Tiêu đề" },
+    mediaId: { label: "Ảnh (mã ảnh)" },
+  },
+  story: {
+    status: { label: "Trạng thái", value: STORY_STATUS },
+    publishedAt: { label: "Thời điểm đăng", value: formatVnTime },
+    coverMediaId: { label: "Ảnh bìa (mã ảnh)" },
+    slug: { label: "Đường dẫn" },
+    title: { label: "Tiêu đề" },
+    excerpt: { label: "Tóm tắt" },
+    bodyHtml: { label: "Nội dung" },
+  },
+  media: {
+    url: { label: "Đường dẫn ảnh" },
+    width: { label: "Chiều rộng (điểm ảnh)" },
+    height: { label: "Chiều cao (điểm ảnh)" },
+    mime: { label: "Loại tệp" },
+    altVi: { label: "Mô tả ảnh (tiếng Việt)" },
+    altEn: { label: "Mô tả ảnh (tiếng Anh)" },
+  },
+  site_setting: {
+    key: { label: "Loại cài đặt", value: SETTING_KEY },
+    value: { label: "Nội dung cài đặt" },
+    "value.phone": { label: "Điện thoại" },
+    "value.zalo": { label: "Số Zalo" },
+    "value.messenger": { label: "Messenger" },
+    "value.address": { label: "Địa chỉ" },
+    "value.mapUrl": { label: "Đường dẫn bản đồ" },
+    "value.hours": { label: "Giờ liên hệ" },
+    "value.facebook": { label: "Facebook" },
+    "value.youtube": { label: "YouTube" },
+    "value.tiktok": { label: "TikTok" },
+    "value.tagline": { label: "Khẩu hiệu" },
+  },
+  app_user: {
+    email: { label: "Email" },
+    displayName: { label: "Tên hiển thị" },
+    enabled: { label: "Được đăng nhập", value: YES_NO },
+    role: { label: "Vai trò", value: ROLE },
+    totpEnabled: { label: "Xác thực 2 lớp", value: ON_OFF },
+    mustChangePassword: { label: "Phải đổi mật khẩu", value: YES_NO },
+    mustSetupTotp: { label: "Phải bật lại xác thực 2 lớp", value: YES_NO },
+    totpRequired: { label: "Bắt buộc xác thực 2 lớp", value: YES_NO },
+  },
+};
+
+const LANGUAGES: Record<string, string> = { vi: "tiếng Việt", en: "tiếng Anh" };
+
+/** The readable name of a raw path such as "packagings.1.priceVnd", or `null` when the path is not known. */
+function fieldOf(path: string, entityType: string): { label: string; value?(text: string): string } | null {
+  const shape: string[] = [];
+  const positions: number[] = [];
+  let language: string | null = null;
+  for (const segment of path.split(".")) {
+    if (/^\d+$/.test(segment)) {
+      positions.push(Number(segment) + 1);
+      shape.push("#");
+    } else if (language === null && shape.length > 0 && Object.hasOwn(LANGUAGES, segment)) {
+      language = segment;
+    } else {
+      shape.push(segment);
+    }
+  }
+  const key = shape.join(".");
+  const labels = Object.hasOwn(FIELD_LABELS, entityType) ? FIELD_LABELS[entityType] : {};
+  const field = Object.hasOwn(labels, key) ? labels[key] : Object.hasOwn(COMMON_LABELS, key) ? COMMON_LABELS[key] : null;
+  if (field === null) return null;
+  const label = field.label.replace(/\{(\d)\}/g, (_, n: string) => String(positions[Number(n) - 1] ?? ""));
+  return { label: language === null ? label : `${label} (${LANGUAGES[language]})`, value: field.value };
+}
+
+/** JSON null and an empty list or object mean "nothing typed": the detail shows them as empty. */
+const EMPTY_TEXTS = new Set(["null", "[]", "{}"]);
+
+function labelled(row: DiffRow, entityType: string | undefined): DiffRow | null {
+  const field = entityType === undefined ? null : fieldOf(row.path, entityType);
   if (field === null) return row;
-  return {
-    path: field.label,
-    before: row.before === null ? null : field.value(row.before),
-    after: row.after === null ? null : field.value(row.after),
+  const text = (value: string | null) => {
+    if (value === null || EMPTY_TEXTS.has(value)) return null;
+    return field.value === undefined ? value : field.value(value);
   };
+  const before = text(row.before);
+  const after = text(row.after);
+  // Empty on both sides (an English text never typed, on a create line) says nothing.
+  if (before === null && after === null) return null;
+  return { path: field.label, before, after };
 }
 
 /**
  * Compares two stored copies of one entity and lists the paths whose value differs, sorted by path.
  * A path that exists on one side only has `null` on the other side; a JSON `null` is the text "null".
  * Values are text only. A text longer than 200 characters is cut and ends with "…".
- * With `entityType`, a path listed in FIELD_LABELS gets its readable name and values (sorted by the raw path still).
+ * With `entityType`, a known path gets its readable name and values (sorted by the raw path still), and a known
+ * field that is empty on both sides is left out. An unknown path keeps its raw name.
  */
 export function diffSnapshots(before: unknown, after: unknown, entityType?: string): DiffRow[] {
   const left = flatten(before);
@@ -144,7 +277,7 @@ export function diffSnapshots(before: unknown, after: unknown, entityType?: stri
     rows.push({ path, before: a === undefined ? null : shorten(a), after: b === undefined ? null : shorten(b) });
   }
   rows.sort((x, y) => COLLATOR.compare(x.path, y.path));
-  const named = rows.map((row) => labelled(row, entityType));
+  const named = rows.map((row) => labelled(row, entityType)).filter((row): row is DiffRow => row !== null);
   if (left.truncated || right.truncated) {
     named.push({ path: TRUNCATED_PATH, before: TRUNCATED_NOTE, after: TRUNCATED_NOTE });
   }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { actionLabel, diffSnapshots, entityTypeLabel, formatVnTime } from "./audit-diff";
+import { actionLabel, diffSnapshots, entityTypeLabel, entryMeta, formatVnTime } from "./audit-diff";
 
 describe("diffSnapshots", () => {
   it("names the Hiện trên web switch of a product and says Có or Không", () => {
@@ -115,6 +115,136 @@ describe("diffSnapshots", () => {
   it("keeps markup as plain text", () => {
     const [row] = diffSnapshots({ t: "<img src=x onerror=alert(1)>" }, { t: "ok" });
     expect(row.before).toBe("<img src=x onerror=alert(1)>");
+  });
+});
+
+describe("diffSnapshots field names", () => {
+  const names = (rows: { path: string }[]) => rows.map((row) => row.path);
+
+  it("names every field of a product in Vietnamese, with the language and the place in a list", () => {
+    const before = {
+      id: 4,
+      sortOrder: 1,
+      showPrice: false,
+      name: { vi: "Gạo", en: null },
+      features: { vi: ["Dẻo"], en: [] },
+      packagings: [{ weightGrams: 500, priceVnd: 50000, sortOrder: 0 }],
+      mediaIds: [],
+    };
+    const after = {
+      id: 4,
+      sortOrder: 2,
+      showPrice: true,
+      name: { vi: "Gạo nếp", en: "Rice" },
+      features: { vi: ["Dẻo", "Thơm"], en: ["Soft"] },
+      packagings: [
+        { weightGrams: 500, priceVnd: 50000, sortOrder: 0 },
+        { weightGrams: 2000, priceVnd: 150000, sortOrder: 1 },
+      ],
+      mediaIds: [7],
+    };
+    // An empty list on one side and a filled one on the other shows only the filled items.
+    expect(diffSnapshots(before, after, "product")).toEqual([
+      { path: "Đặc điểm 1 (tiếng Anh)", before: null, after: "Soft" },
+      { path: "Đặc điểm 2 (tiếng Việt)", before: null, after: "Thơm" },
+      { path: "Ảnh 1 (mã ảnh)", before: null, after: "7" },
+      { path: "Tên sản phẩm (tiếng Anh)", before: null, after: "Rice" },
+      { path: "Tên sản phẩm (tiếng Việt)", before: "Gạo", after: "Gạo nếp" },
+      { path: "Quy cách 2: giá", before: null, after: "150.000 đ" },
+      { path: "Quy cách 2: thứ tự", before: null, after: "1" },
+      { path: "Quy cách 2: khối lượng", before: null, after: "2.000 g" },
+      { path: "Hiện giá", before: "Không", after: "Có" },
+      { path: "Thứ tự", before: "1", after: "2" },
+    ]);
+  });
+
+  it("names the fields of the contact settings, as the settings screen does", () => {
+    const rows = diffSnapshots(
+      { id: 1, key: "contact", value: { zalo: "0912", address: { vi: "Hải Dương", en: null } } },
+      { id: 1, key: "contact", value: { zalo: "0913", address: { vi: "Hải Dương", en: "Hai Duong" } } },
+      "site_setting",
+    );
+    expect(rows).toEqual([
+      { path: "Địa chỉ (tiếng Anh)", before: null, after: "Hai Duong" },
+      { path: "Số Zalo", before: "0912", after: "0913" },
+    ]);
+    expect(diffSnapshots(null, { key: "social" }, "site_setting")).toEqual([
+      { path: "Loại cài đặt", before: null, after: "Mạng xã hội" },
+    ]);
+  });
+
+  it("shows the state of a story, its dates and its texts in words", () => {
+    const rows = diffSnapshots(
+      { status: "DRAFT", publishedAt: null, bodyHtml: { vi: "<p>A</p>", en: null } },
+      { status: "PUBLISHED", publishedAt: "2026-11-04T01:00:00Z", bodyHtml: { vi: "<p>B</p>", en: null } },
+      "story",
+    );
+    expect(rows).toEqual([
+      { path: "Nội dung (tiếng Việt)", before: "<p>A</p>", after: "<p>B</p>" },
+      { path: "Thời điểm đăng", before: null, after: "08:00 04/11/2026" },
+      { path: "Trạng thái", before: "Nháp", after: "Đã đăng" },
+    ]);
+  });
+
+  it("names the fields of a timeline event, a press mention, an image and an account", () => {
+    expect(names(diffSnapshots({ year: 1990, mediaId: 1 }, { year: 1991, mediaId: 2 }, "timeline_event"))).toEqual([
+      "Ảnh (mã ảnh)",
+      "Năm",
+    ]);
+    const press = diffSnapshots(
+      { sourceName: "A", publishedOn: "2024-05-01" },
+      { sourceName: "B", publishedOn: "2024-06-02" },
+      "press_mention",
+    );
+    expect(press).toEqual([
+      { path: "Ngày đăng", before: "01/05/2024", after: "02/06/2024" },
+      { path: "Tên báo", before: "A", after: "B" },
+    ]);
+    expect(names(diffSnapshots({ altVi: "a", altEn: "b" }, { altVi: "c", altEn: "d" }, "media"))).toEqual([
+      "Mô tả ảnh (tiếng Anh)",
+      "Mô tả ảnh (tiếng Việt)",
+    ]);
+    const account = diffSnapshots({ role: "MEMBER", totpEnabled: false }, { role: "OWNER", totpEnabled: true }, "app_user");
+    expect(account).toEqual([
+      { path: "Vai trò", before: "Người nhà", after: "Chủ" },
+      { path: "Xác thực 2 lớp", before: "Tắt", after: "Bật" },
+    ]);
+  });
+
+  it("shows an empty value as empty and leaves out a field that is empty on both sides", () => {
+    // A create line: the English name was never typed. There is nothing to show for it.
+    expect(diffSnapshots(null, { name: { vi: "Gạo", en: null } }, "product")).toEqual([
+      { path: "Tên sản phẩm (tiếng Việt)", before: null, after: "Gạo" },
+    ]);
+    expect(diffSnapshots({ name: { vi: "Gạo", en: "Rice" } }, { name: { vi: "Gạo", en: null } }, "product")).toEqual([
+      { path: "Tên sản phẩm (tiếng Anh)", before: "Rice", after: null },
+    ]);
+  });
+
+  it("keeps the raw name of a field it does not know", () => {
+    expect(diffSnapshots({ extra: 1 }, { extra: 2 }, "product")).toEqual([{ path: "extra", before: "1", after: "2" }]);
+  });
+});
+
+describe("entryMeta", () => {
+  const line = {
+    id: 1,
+    userDisplayName: "Mẹ" as string | null,
+    entityType: "product",
+    entityId: 1,
+    action: "UPDATE" as const,
+    createdAt: "2026-11-04T01:00:00Z",
+    label: "Gạo",
+    restorable: true,
+  };
+
+  it("joins time, user, kind and action", () => {
+    expect(entryMeta(line)).toBe("08:00 04/11/2026 · Mẹ · Sản phẩm · Sửa");
+  });
+
+  it("says the account was deleted when the line has no user name", () => {
+    expect(entryMeta({ ...line, userDisplayName: null })).toBe("08:00 04/11/2026 · Tài khoản đã xóa · Sản phẩm · Sửa");
+    expect(entryMeta({ ...line, userDisplayName: "  " })).toBe("08:00 04/11/2026 · Tài khoản đã xóa · Sản phẩm · Sửa");
   });
 });
 

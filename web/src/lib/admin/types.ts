@@ -216,7 +216,8 @@ export type AuditAction = "CREATE" | "UPDATE" | "DELETE" | "RESTORE";
 
 export type AuditEntryDto = {
   id: number;
-  userDisplayName: string;
+  /** `null` when the user who made the change has been deleted. */
+  userDisplayName: string | null;
   entityType: string;
   entityId: number;
   action: AuditAction;
