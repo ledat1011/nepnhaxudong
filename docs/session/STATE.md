@@ -45,6 +45,8 @@ Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ l
 
 Link xem thử tạm trên internet (máy `C:\Users\Admin\Desktop`, 2026-11-05): Cloudflare quick tunnel tới bản production dữ liệu mẫu ở cổng 3300. Tunnel đã tắt, link cũ không còn dùng được; server cổng 3300 vẫn chạy. Mở lại tunnel sẽ ra địa chỉ mới, phải build lại web với `SITE_URL` là địa chỉ đó.
 
+Mascot mới (nhánh `feat/mascot-moi`, 2026-11-05, máy desktop): chủ dự án đã chọn ảnh gốc mới (vẽ lại nét của mascot cũ, giữ nhân vật), xem quyết định `docs/decisions/0013-mascot-moi.md` và log `docs/session/log/2026-11-05-may-desktop-mascot-moi.md`. Ảnh gốc ngoài repo: `C:\Users\Admin\Documents\nepnha-logo\nepnha-mascot-source-v2-dong-ho.png`. Chủ dự án hoãn bước tiếp theo: chuyển SVG (đổi cách trace, vtracer làm nét thành bậc thang), dựng lại logo và favicon, cập nhật web, mở PR.
+
 ## Việc tiếp theo
 1. Làm tiếp 4 nhánh ở mục "Đang làm" cho tới khi merge.
 2. Việc sau của cảnh minh họa (PR riêng): Lighthouse `/vi`, `/en`; `inspect.mjs` 375 px và 1280 px; review cả nhánh; bản cuối 6 tư thế người bằng Nano Banana trả phí.
