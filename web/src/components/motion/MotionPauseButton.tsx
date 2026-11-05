@@ -14,7 +14,7 @@ type MotionPauseButtonProps = { dict: Dictionary; controller?: LoopController };
  *
  * It is a toggle button: the name (`aria-label`) is always "pause motion" and `aria-pressed`
  * carries the state, so a screen reader says "pause motion, pressed" when the motion is paused.
- * Only the glyph and the `title` (for mouse users) follow the state.
+ * Only the glyph follows the state; the `title` (for mouse users) is the same as the name.
  *
  * The focus ring is two-tone, because the button can sit on any part of the scene (sky, field,
  * stems, outlines): a 2 px Nâu đất outline with Trắng gạo on both sides of it (a 6 px Trắng gạo
@@ -36,7 +36,7 @@ export function MotionPauseButton({ dict, controller }: MotionPauseButtonProps) 
       type="button"
       aria-pressed={paused}
       aria-label={dict.motion.pause}
-      title={paused ? dict.motion.resume : dict.motion.pause}
+      title={dict.motion.pause}
       onClick={() => (controller ?? getLoopController()).setPaused(!paused)}
       className="hidden size-11 items-center justify-center rounded-full border-2 border-coat bg-rice text-earth hover:bg-straw focus-visible:shadow-[0_0_0_6px_var(--color-rice)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-earth [html[data-motion=on]_&]:inline-flex"
     >

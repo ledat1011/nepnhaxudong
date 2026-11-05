@@ -68,9 +68,10 @@ Dùng khi cần xem web đúng như khi chạy thật (ví dụ để đo Lighth
    ```bash
    SITE_URL=http://127.0.0.1:3300 npx next build
    ```
-2. Chép file tĩnh cạnh server (server standalone chỉ phục vụ file tĩnh khi chúng nằm cạnh nó):
+2. Chép file tĩnh và thư mục `public/` cạnh server (server standalone chỉ phục vụ file tĩnh khi chúng nằm cạnh nó; thiếu `public/` thì các hình câu chuyện `/story/*.svg` báo lỗi 404):
    ```bash
    mkdir -p .next/standalone/.next/static && cp -r .next/static/. .next/standalone/.next/static
+   cp -r public .next/standalone/public
    ```
 3. Chạy server:
    ```bash
@@ -83,7 +84,7 @@ Dùng khi cần xem web đúng như khi chạy thật (ví dụ để đo Lighth
 ### Đo Lighthouse (mobile)
 Khi server ở mục trên đang chạy, mở một terminal khác trong `web/`:
 ```bash
-npx lighthouse@13.6.0 http://127.0.0.1:3300/vi --form-factor=mobile --only-categories=performance,accessibility,seo --output=json --output-path="$HOME/lh-vi.json" --chrome-flags="--headless=new"
+npx lighthouse@13.6.0 http://127.0.0.1:3300/vi --form-factor=mobile --only-categories=performance,accessibility,best-practices,seo --output=json --output-path="$HOME/lh-vi.json" --chrome-flags="--headless=new"
 ```
 Báo cáo được ghi vào thư mục home, ngoài repo, nên không bị commit nhầm. Làm tương tự cho `/en` (ghi ra `"$HOME/lh-en.json"`). Cần Chrome trên máy. Nếu không tìm thấy, đặt `CHROME_PATH` trỏ tới Chromium của Playwright (trong thư mục `ms-playwright` của cache Playwright). Không commit file báo cáo.
 

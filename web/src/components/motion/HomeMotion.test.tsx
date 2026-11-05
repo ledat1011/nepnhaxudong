@@ -303,6 +303,34 @@ describe("HomeMotion", () => {
     expect(cleanup).toHaveBeenCalledTimes(1);
   });
 
+  it("runs the other setups and turns the motion on when one setup throws", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const error = new Error("broken setup");
+    const cleanup = vi.fn();
+    const later = vi.fn(() => cleanup);
+    try {
+      const { unmount } = render(
+        <HomeMotion
+          setups={[
+            () => {
+              throw error;
+            },
+            later,
+          ]}
+        />,
+      );
+      await vi.runAllTimersAsync();
+      expect(later).toHaveBeenCalledTimes(1);
+      expect(refresh).toHaveBeenCalledTimes(1);
+      expect(document.documentElement.dataset.motion).toBe("on");
+      expect(warn).toHaveBeenCalledWith(expect.any(String), error);
+      unmount();
+      expect(cleanup).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it("renders nothing", () => {
     const { container } = render(<HomeMotion setups={[]} />);
     expect(container).toBeEmptyDOMElement();
