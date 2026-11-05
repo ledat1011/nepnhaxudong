@@ -97,7 +97,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                 <li
                   key={scene.slug}
                   data-story-scene={scene.slug}
-                  className={`relative pb-12 pl-14 last:pb-0 md:w-1/2 md:pb-16 ${
+                  className={`relative pb-12 pl-14 last:pb-0 md:w-1/2 md:pb-8 ${
                     onLeft ? "md:pl-0 md:pr-16" : "md:ml-auto md:pl-16"
                   }`}
                 >
@@ -140,30 +140,35 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                   >
                     <span className="absolute inset-0.5 rounded-full bg-coat opacity-0 transition-opacity duration-300 group-data-[active]:opacity-100" />
                   </span>
-                  <p data-story-step className="font-bold leading-7 text-coat">
-                    {`${dict.story.step} ${i + 1}`}
-                  </p>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- the scenes are SVG files served as they are */}
-                  <img
-                    src={scene.src}
-                    width={scene.width}
-                    height={scene.height}
-                    loading="lazy"
-                    decoding="async"
-                    alt=""
-                    className="mt-3 aspect-[4/3] h-auto w-full rounded-2xl border-2 border-grain bg-rice"
-                  />
-                  <h3 className="mt-4 text-xl font-bold text-earth">{title}</h3>
-                  <p data-story-text className="mt-2 leading-relaxed">
-                    {text}
-                  </p>
-                  {isLast && zalo !== null && (
-                    <p className="mt-6">
-                      <a href={zaloHref(zalo)} className={BUTTON_CLASS}>
-                        {dict.hero.zaloCta}
-                      </a>
+                  <div
+                    data-story-content
+                    className={`md:max-w-[21rem] ${onLeft ? "md:ml-auto" : ""}`.trim()}
+                  >
+                    <p data-story-step className="font-bold leading-7 text-coat">
+                      {`${dict.story.step} ${i + 1}`}
                     </p>
-                  )}
+                    {/* eslint-disable-next-line @next/next/no-img-element -- the scenes are SVG files served as they are */}
+                    <img
+                      src={scene.src}
+                      width={scene.width}
+                      height={scene.height}
+                      loading="lazy"
+                      decoding="async"
+                      alt=""
+                      className="mt-3 aspect-[4/3] h-auto w-full rounded-2xl border-2 border-grain bg-rice"
+                    />
+                    <h3 className="mt-4 text-xl font-bold text-earth">{title}</h3>
+                    <p data-story-text className="mt-2 leading-relaxed">
+                      {text}
+                    </p>
+                    {isLast && zalo !== null && (
+                      <p className="mt-6">
+                        <a href={zaloHref(zalo)} className={BUTTON_CLASS}>
+                          {dict.hero.zaloCta}
+                        </a>
+                      </p>
+                    )}
+                  </div>
                 </li>
               );
             })}

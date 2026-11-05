@@ -897,7 +897,7 @@ test.describe("the rice story road", () => {
     await openStory(page, PHONE);
     await scrollThroughStory(page);
     expect(await page.locator(".pin-spacer").count()).toBe(0);
-    const labels = await boxes(page, `${SCENES} > [data-story-step]`);
+    const labels = await boxes(page, `${SCENES} [data-story-step]`);
     const stops = await boxes(page, `${SCENES} > [data-story-stop]`);
     expect(labels).toHaveLength(8);
     for (let i = 0; i < 8; i++) {
@@ -924,6 +924,16 @@ test.describe("the rice story road", () => {
       if (i % 2 === 0) expect(scene.center).toBeLessThan(DESKTOP.width / 2);
       else expect(scene.center).toBeGreaterThan(DESKTOP.width / 2);
     });
+    // Each scene stands next to the road, on its own side, 64 px from the middle.
+    const contents = await boxes(page, `${SCENES} [data-story-content]`);
+    contents.forEach((content, i) => {
+      const gap = i % 2 === 0 ? DESKTOP.width / 2 - content.right : content.left - DESKTOP.width / 2;
+      expect(gap).toBeGreaterThan(40);
+      expect(gap).toBeLessThan(90);
+    });
+    // The owner asked for a shorter section (it was about 4800 px at 1280).
+    const height = await page.$eval("[data-rice-story]", (el) => el.getBoundingClientRect().height);
+    expect(height).toBeLessThan(4000);
   });
 
   test("desktop: the grain moves down the road and the stop in view fills", async ({ page }) => {
@@ -972,7 +982,7 @@ test.describe("the rice story road", () => {
     await page.setViewportSize(PHONE);
     await page.waitForTimeout(800);
     expect(await page.locator(".pin-spacer").count()).toBe(0);
-    const labels = await boxes(page, `${SCENES} > [data-story-step]`);
+    const labels = await boxes(page, `${SCENES} [data-story-step]`);
     labels.forEach((label) => expect(label.left).toBeCloseTo(labels[0].left, 0));
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(PHONE.width);
     await page.evaluate(() =>

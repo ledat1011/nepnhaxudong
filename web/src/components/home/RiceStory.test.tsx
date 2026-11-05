@@ -77,6 +77,23 @@ describe("RiceStory", () => {
     });
   });
 
+  it("keeps each scene narrow and close to the road from 768 px, with a small gap below", () => {
+    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
+    const items = [...container.querySelectorAll("li[data-story-scene]")];
+    items.forEach((li, i) => {
+      expect(li.getAttribute("class")).toContain("md:pb-8");
+      const content = li.querySelector(":scope > [data-story-content]") as HTMLElement;
+      expect(content).not.toBeNull();
+      expect(content.querySelector("img")).not.toBeNull();
+      expect(content.querySelector("[data-story-step]")).not.toBeNull();
+      const classes = content.getAttribute("class") ?? "";
+      expect(classes).toMatch(/md:max-w-\[\d+rem\]/);
+      // A scene on the left is pushed to the right edge of its half, next to the road.
+      if (i % 2 === 0) expect(classes).toContain("md:ml-auto");
+      else expect(classes).not.toContain("md:ml-auto");
+    });
+  });
+
   it.each(["vi", "en"] as const)("labels each %s scene with its step number", (lang) => {
     const dict = getDictionary(lang);
     const { container } = render(<RiceStory dict={dict} zalo={null} />);
