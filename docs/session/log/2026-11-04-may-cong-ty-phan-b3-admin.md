@@ -30,6 +30,7 @@
 - (2026-11-05) "Merge tất cả vào main và chạy 1 lần" → nhánh minh họa (`feat/canh-minh-hoa`) merge ngay khi bước kiểm tra đang chạy xong; review cả nhánh nếu chưa xong thì làm sau bằng PR riêng. Sau đó đưa bản xem thử 3011 lên `main` để chủ dự án chạy toàn bộ một lần.
 - (2026-11-05) Chủ dự án định chuyển session lên cloud, rồi đổi ý: "không xài plugin giao diện (antislop, taste-skill, gsap-skills) thì migrate lên đâu làm gì" → giữ session ở máy. Chỉ dùng cloud cho việc chỉ cần code và CI (ví dụ phần D), bằng session riêng.
 - (2026-11-05) "Rà ngay" trang công khai bằng các skill UI, rồi gộp với báo cáo trang quản trị thành một danh sách đề xuất.
+- (2026-11-05) Chủ dự án duyệt "Nhóm A và B" của danh sách đề xuất (`docs/reviews/2026-11-05-tong-hop-de-xuat.md`) → quyết định 0011; 3 nhánh làm song song, việc 9 giao session minh họa; gia đình chụp ảnh thật.
 - PR #11 (B3): "merge luôn nếu nó không phức tạp" → merge khi CI đạt hết và không có xung đột (repo không cho bật auto-merge của GitHub).
 - "Commit push hết đi, tôi muốn coi sản phẩm để feedback" → commit và push nhánh B3 và B4 ngay khi vòng sửa cuối commit xong; mở server local để chủ dự án xem cả trang quản trị (B3) và hiệu ứng (B4). Mở PR / merge: vẫn hỏi trước.
 - Góp ý sau khi xem web (hướng chung: mộc mạc, thôn quê nhưng hiện đại, bắt mắt, chuyển động mượt; dùng các skill giao diện mới để đề xuất):
