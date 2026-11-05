@@ -8,15 +8,18 @@ import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
+import { useScreenDetail } from "@/components/admin/shell/screen-detail";
 import { MediaPicker } from "@/components/admin/media/MediaPicker";
 import { Button } from "@/components/admin/ui/button";
 import { Switch } from "@/components/admin/ui/switch";
 import { adminFetch } from "@/lib/admin/api";
 import { apiRest, langOfDetail, NOT_SAVED_NOTICE, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
+import { productPublicHref } from "@/lib/admin/public-links";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
 import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
+import { UndoGroupContext, useRemoveWithUndo, useUndoGroup } from "@/lib/admin/use-remove-with-undo";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
@@ -141,6 +144,11 @@ function toRequest(state: FormState, sortOrder: number | undefined): ProductRequ
 export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const router = useRouter();
   const [baseline, setBaseline] = useState<ProductAdminDto | undefined>(initial);
+  // The header names the product as it is saved, and links to where it shows on the public site.
+  useScreenDetail({
+    name: baseline === undefined ? "Sản phẩm mới" : (baseline.name.vi ?? "Sản phẩm chưa có tên"),
+    publicHref: productPublicHref(baseline),
+  });
   const [state, setState] = useState<FormState>(() => stateFrom(initial));
   const [baselineSnapshot, setBaselineSnapshot] = useState(() => snapshot(stateFrom(initial)));
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -150,6 +158,9 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   useUnsavedChanges(dirty && !leaving);
   const leavePage = useLeavePage();
   const fields = useFieldErrors();
+  // The "Hoàn tác" messages of the lists below. They close on "Bỏ thay đổi" and when a save starts: after that,
+  // a row put back would come on top of a list that was reset or saved (or locked while a new product is created).
+  const undo = useUndoGroup();
 
   // The form as it was when the running save was sent, to tell later whether the user typed something else meanwhile.
   const sent = useRef<string | null>(null);
@@ -186,6 +197,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
       return;
     }
     fields.reset();
+    undo.dismissAll();
     const saved = await saving.save();
     if (saved === undefined) return;
     if (baseline === undefined) {
@@ -208,6 +220,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   }
 
   function cancel() {
+    undo.dismissAll();
     const original = stateFrom(baseline);
     setState(original);
     setBaselineSnapshot(snapshot(original));
@@ -241,6 +254,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const saveError = [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   return (
+    <UndoGroupContext.Provider value={undo}>
     <fieldset {...fields.rootProps} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
       <RequiredNote />
       <BilingualField
@@ -311,11 +325,13 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
         notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}
       />
     </fieldset>
+    </UndoGroupContext.Provider>
   );
 }
 
 function ImageSection({ ids, onChange }: { ids: number[]; onChange(ids: number[]): void }) {
   const { items } = useMediaByIds(ids);
+  const remove = useRemoveWithUndo(ids, onChange, { keyOf: (id) => id, max: MAX_IMAGES });
   return (
     <fieldset className="flex min-w-0 flex-col gap-3">
       <legend className="mb-2 text-base font-semibold">Ảnh</legend>
@@ -363,7 +379,8 @@ function ImageSection({ ids, onChange }: { ids: number[]; onChange(ids: number[]
                 variant="outline"
                 size="icon"
                 aria-label={`Bỏ ảnh ${name}`}
-                onClick={() => onChange(ids.filter((other) => other !== id))}
+                className="ml-2"
+                onClick={() => remove(index, `Đã bỏ ảnh ${index + 1} khỏi sản phẩm.`)}
               >
                 <X />
               </Button>

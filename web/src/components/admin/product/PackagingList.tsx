@@ -6,6 +6,7 @@ import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { invalidProps, type FieldErrors } from "@/lib/admin/field-errors";
+import { useRemoveWithUndo } from "@/lib/admin/use-remove-with-undo";
 import { moved, nextRowKey } from "./rows";
 
 /** Most pack sizes one product can have (the API refuses more). */
@@ -31,8 +32,14 @@ export function packagingErrorKey(row: PackagingRow, box: "weight" | "price"): s
   return `packagings.${row.key}.${box}`;
 }
 
+function removedMessage(n: number, row: PackagingRow): string {
+  const weight = row.weight.trim();
+  return weight === "" ? `Đã xóa quy cách ${n}.` : `Đã xóa quy cách ${n} (${weight} g).`;
+}
+
 /** Pack sizes in order. The price box is shown only while the product shows its price. */
 export function PackagingList({ rows, showPrice, onChange, errors = {} }: Props) {
+  const remove = useRemoveWithUndo(rows, onChange, { keyOf: (row) => row.key, max: MAX_PACKAGINGS });
   function update(index: number, patch: Partial<PackagingRow>) {
     onChange(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
@@ -102,12 +109,14 @@ export function PackagingList({ rows, showPrice, onChange, errors = {} }: Props)
                 >
                   <ArrowDown />
                 </Button>
+                {/* At the far end of the row, away from the arrows: a slip of the finger moves a row, it does not delete it. */}
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
                   aria-label={`Xóa quy cách ${n}`}
-                  onClick={() => onChange(rows.filter((_, i) => i !== index))}
+                  className="ml-auto"
+                  onClick={() => remove(index, removedMessage(n, row))}
                 >
                   <Trash2 />
                 </Button>

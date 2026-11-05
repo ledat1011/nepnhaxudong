@@ -47,10 +47,27 @@ function DialogOverlay({
   )
 }
 
+/**
+ * On open, Radix puts the cursor in the first box and selects its text. On a phone that opens the keyboard over
+ * half the dialog, and one key press replaces the selected text. The dialog itself takes the focus instead: a
+ * screen reader still reads its title, Tab goes to the first box, and the keyboard opens only when the user taps
+ * a box. A dialog that passes its own `onOpenAutoFocus` and calls `preventDefault()` keeps its own choice.
+ */
+function focusDialogItself(onOpenAutoFocus: ((event: Event) => void) | undefined) {
+  return (event: Event) => {
+    onOpenAutoFocus?.(event)
+    if (event.defaultPrevented) return
+    event.preventDefault()
+    // Radix sends this event to the dialog element, which can take the focus (tabindex -1).
+    if (event.target instanceof HTMLElement) event.target.focus({ preventScroll: true })
+  }
+}
+
 function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
@@ -59,6 +76,7 @@ function DialogContent({
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
+        onOpenAutoFocus={focusDialogItself(onOpenAutoFocus)}
         data-slot="dialog-content"
         className={cn(
           "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",

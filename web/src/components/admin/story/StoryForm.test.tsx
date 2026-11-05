@@ -18,6 +18,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
 import { allowDraftWrites, draftKey } from "@/lib/admin/story-draft";
+import { ScreenDetailContext } from "@/components/admin/shell/screen-detail";
 import { StoryForm } from "./StoryForm";
 
 function media(id: number): MediaAdminDto {
@@ -457,6 +458,34 @@ describe("StoryForm preview", () => {
     expect(within(dialog).getByText("Mùa gặt!")).toBeInTheDocument();
     await events.click(within(dialog).getByRole("tab", { name: "English" }));
     expect(within(dialog).getByText("Cleaned")).toBeInTheDocument();
+  });
+});
+
+describe("StoryForm header", () => {
+  it("names a new story and has no public page", async () => {
+    const setDetail = vi.fn();
+    render(
+      <ScreenDetailContext.Provider value={setDetail}>
+        <StoryForm />
+      </ScreenDetailContext.Provider>,
+    );
+    await ready();
+    expect(setDetail).toHaveBeenLastCalledWith({ name: "Bài viết mới", publicHref: null });
+  });
+
+  it("gets Xem trên web once the story is published", async () => {
+    const setDetail = vi.fn();
+    const events = userEvent.setup();
+    render(
+      <ScreenDetailContext.Provider value={setDetail}>
+        <StoryForm initial={story()} />
+      </ScreenDetailContext.Provider>,
+    );
+    await ready();
+    expect(setDetail).toHaveBeenLastCalledWith({ name: "Mùa gặt", publicHref: null });
+    await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    await confirmPublish(events);
+    await waitFor(() => expect(setDetail).toHaveBeenLastCalledWith({ name: "Mùa gặt", publicHref: "/vi/cau-chuyen/mua-gat" }));
   });
 });
 

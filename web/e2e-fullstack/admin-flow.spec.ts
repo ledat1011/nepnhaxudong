@@ -125,7 +125,10 @@ test("a story typed but not saved is offered back after a reload", async () => {
   await page.reload();
   const offer = page.getByRole("alertdialog", { name: "Có bài đang viết dở" });
   await expect(offer).toBeVisible();
-  await offer.getByRole("button", { name: "Khôi phục" }).click();
+  // "Khôi phục" is the chosen button: Enter (or a quick tap on the chosen button) brings the text back.
+  await expect(offer.getByRole("button", { name: "Khôi phục" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(offer).toBeHidden();
   await expect(title).toHaveValue(`${STORY_TITLE} viết dở`);
 
   // "Bỏ thay đổi" asks first, then drops the text and the draft.
