@@ -187,12 +187,12 @@ describe("RiceStory", () => {
   it("shows the Zalo link in the last scene only when there is a number", () => {
     const dict = getDictionary("vi");
     const { container, rerender } = render(<RiceStory dict={dict} zalo="0912 345 678" />);
-    const link = screen.getByRole("link", { name: dict.hero.zaloCta });
+    const link = screen.getByRole("link", { name: dict.story.zaloCta });
     expect(link.getAttribute("href")).toContain("zalo.me/");
     const last = container.querySelectorAll("li[data-story-scene]")[7];
     expect(last.contains(link)).toBe(true);
     rerender(<RiceStory dict={dict} zalo={null} />);
-    expect(screen.queryByRole("link", { name: dict.hero.zaloCta })).toBeNull();
+    expect(screen.queryByRole("link", { name: dict.story.zaloCta })).toBeNull();
   });
 
   it("has its own pause button at the top, away from the road and the pictures", () => {

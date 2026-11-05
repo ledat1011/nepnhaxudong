@@ -184,7 +184,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                     {isLast && zalo !== null && (
                       <p className="mt-6">
                         <ZaloLink zalo={zalo} labels={dict.zalo} className={BUTTON_CLASS}>
-                          {dict.hero.zaloCta}
+                          {dict.story.zaloCta}
                         </ZaloLink>
                       </p>
                     )}

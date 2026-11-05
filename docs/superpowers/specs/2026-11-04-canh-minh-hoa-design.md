@@ -24,7 +24,7 @@ Trang chủ có thêm ba phần minh hoạ có chuyển động, theo hướng "
 
 ### Tiêu chí thành công
 - Chủ dự án duyệt storyboard, mỗi tư thế người và bản cuối của từng cảnh.
-- Lighthouse mobile của `/vi` và `/en` giữ từ 94 điểm trở lên ở cả ba mục; CLS = 0; LCP vẫn là chữ "Nếp Nhà".
+- Lighthouse mobile của `/vi` và `/en` giữ từ 94 điểm trở lên ở cả ba mục; CLS = 0; LCP vẫn là chữ "Nếp Nhà" trên điện thoại. Trên máy tính 1280 × 800, đoạn chữ của khối Sản phẩm cũng nằm trong màn đầu và lớn hơn, nên LCP có thể là đoạn chữ đó; điều cần giữ là LCP luôn là chữ có sẵn trong HTML, không phải hình (sửa 2026-11-05).
 - Khi `prefers-reduced-motion: reduce` bật, không tải GSAP, mọi nội dung vẫn hiện đầy đủ ở dạng tĩnh.
 - Mọi vòng lặp dừng khi ra khỏi màn hình, và dừng hẳn khi người xem bấm nút "Tạm dừng chuyển động".
 - Antislop Delivery Gate PASS (chế độ `during`) và trình kiểm tra của taste-skill không báo lỗi trước khi mở PR.
