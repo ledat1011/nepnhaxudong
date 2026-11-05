@@ -1,6 +1,7 @@
 import { MASCOT_PIVOTS } from "@/components/brand/generated/mascot";
 import type { MotionSetup } from "./load-gsap";
 import { getLoopController } from "./loops";
+import { LOOP_MIN_GAP_S, type Setter } from "./throttle";
 
 /** One cycle of the hero loop. Every motion in it repeats a whole number of times in this time. */
 export const HERO_CYCLE_S = 60;
@@ -14,14 +15,6 @@ export const GUST_PHASE_STEP = 0.12;
 export const SUN_BOBS = 6;
 export const SUN_BOB_PX = 4;
 export const MASCOT_RICE_SKEW_DEG = 2;
-/**
- * The loop draws at most this many frames per second. Its motion is slow (rays 6 deg/s, clouds
- * under about 40 px/s, a 4 s sway), so 30 frames look the same as 60 and cost half the paint.
- * The throttle lives in this loop only; GSAP's ticker keeps 60/s for every other animation.
- */
-export const HERO_UPDATES_PER_S = 30;
-/** Less than one 30/s frame, so a frame that a 60 Hz screen shows a little early still draws. */
-const HERO_MIN_GAP_S = 1 / HERO_UPDATES_PER_S - 0.004;
 
 export type HeroFrame = {
   rays: number;
@@ -58,10 +51,8 @@ export function heroFrame(t: number, starts: readonly number[], gustCount: numbe
 export function heroFrameDue(time: number, last: number | null): boolean {
   if (last === null) return true;
   const passed = (((time - last) % HERO_CYCLE_S) + HERO_CYCLE_S) % HERO_CYCLE_S;
-  return passed >= HERO_MIN_GAP_S;
+  return passed >= LOOP_MIN_GAP_S;
 }
-
-type Setter = (value: number) => void;
 
 /**
  * The pivot of a gust: the bottom middle of its stalks, as GSAP's "50% 100%" of the group's
@@ -145,7 +136,6 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
     lastDrawn = null;
   };
   measure();
-  ScrollTrigger.addEventListener("refresh", measure);
 
   const apply = (frame: HeroFrame) => {
     frame.clouds.forEach((offset, i) => cloudX[i]?.(offset * spans[i]));
@@ -156,6 +146,12 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   };
 
   const proxy = { t: 0 };
+  let drawn = false;
+  const draw = () => {
+    lastDrawn = proxy.t * HERO_CYCLE_S;
+    drawn = true;
+    apply(heroFrame(proxy.t, starts, gusts.length));
+  };
   const tween = gsap.to(proxy, {
     t: 1,
     duration: HERO_CYCLE_S,
@@ -163,12 +159,16 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
     repeat: -1,
     paused: true,
     onUpdate: () => {
-      const time = proxy.t * HERO_CYCLE_S;
-      if (!heroFrameDue(time, lastDrawn)) return;
-      lastDrawn = time;
-      apply(heroFrame(proxy.t, starts, gusts.length));
+      if (heroFrameDue(proxy.t * HERO_CYCLE_S, lastDrawn)) draw();
     },
   });
+
+  const onRefresh = () => {
+    measure();
+    // A paused loop gets no update, so its frame is drawn here with the new sizes.
+    if (drawn && tween.paused()) draw();
+  };
+  ScrollTrigger.addEventListener("refresh", onRefresh);
 
   const entry = getLoopController().add(tween);
   const trigger = ScrollTrigger.create({
@@ -181,7 +181,7 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   return () => {
     entry.remove();
     trigger.kill();
-    ScrollTrigger.removeEventListener("refresh", measure);
+    ScrollTrigger.removeEventListener("refresh", onRefresh);
     tween.kill();
     // Put everything back at its static place.
     spans = spans.map(() => 0);

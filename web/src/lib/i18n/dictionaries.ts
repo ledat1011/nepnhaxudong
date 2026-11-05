@@ -33,7 +33,6 @@ const vi = {
   },
   motion: {
     pause: "Tạm dừng chuyển động",
-    resume: "Chạy lại chuyển động",
   },
   sections: {
     product: "Sản phẩm",
@@ -46,6 +45,7 @@ const vi = {
     title: "Từ hạt lúa tới người dùng",
     skip: "Bỏ qua câu chuyện",
     step: "Bước",
+    zaloCta: "Nhắn Zalo cho nhà",
     cayMaTitle: "Cấy mạ",
     cayMaText: "Cấy từng khóm mạ nếp cái hoa vàng xuống ruộng nước.",
     nangMuaGioTitle: "Nắng, mưa, gió",
@@ -169,7 +169,6 @@ const en: Dictionary = {
   },
   motion: {
     pause: "Pause motion",
-    resume: "Play motion",
   },
   sections: {
     product: "Product",
@@ -182,6 +181,7 @@ const en: Dictionary = {
     title: "From the rice seed to your table",
     skip: "Skip the story",
     step: "Step",
+    zaloCta: "Message us on Zalo",
     cayMaTitle: "Planting seedlings",
     cayMaText:
       "Bunch by bunch, the yellow-flower sticky rice seedlings go into the flooded field.",

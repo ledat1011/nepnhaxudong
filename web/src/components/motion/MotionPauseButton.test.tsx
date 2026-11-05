@@ -26,7 +26,7 @@ describe("MotionPauseButton", () => {
     expect(svg).toHaveAttribute("focusable", "false");
   });
 
-  it("keeps one name and lets aria-pressed and the title carry the state", () => {
+  it("keeps one name and title and lets aria-pressed carry the state", () => {
     const controller = createLoopController(null);
     render(<MotionPauseButton dict={dict} controller={controller} />);
     fireEvent.click(screen.getByRole("button", { hidden: true }));
@@ -34,7 +34,8 @@ describe("MotionPauseButton", () => {
     // A toggle button keeps its name; a screen reader says "Pause motion, pressed".
     const button = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
     expect(button).toHaveAttribute("aria-pressed", "true");
-    expect(button).toHaveAttribute("title", dict.motion.resume);
+    // The title for mouse users says the same as the name, so the two never contradict.
+    expect(button).toHaveAttribute("title", dict.motion.pause);
     expect(button.querySelector("svg")).toHaveAttribute("data-glyph", "play");
     fireEvent.click(button);
     expect(controller.isPaused()).toBe(false);
@@ -49,7 +50,7 @@ describe("MotionPauseButton", () => {
     render(<MotionPauseButton dict={dict} controller={controller} />);
     const button = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
     expect(button).toHaveAttribute("aria-pressed", "true");
-    expect(button).toHaveAttribute("title", dict.motion.resume);
+    expect(button).toHaveAttribute("title", dict.motion.pause);
   });
 
   it("follows changes made elsewhere", () => {

@@ -82,11 +82,16 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
           media.add(MOTION_OK_QUERY, () => {
             const cleanups: Array<() => void> = [];
             for (const setup of setups) {
-              const cleanup = setup(modules, document);
-              if (typeof cleanup === "function") cleanups.push(cleanup);
+              // One broken setup must not stop the others or keep the pause button hidden.
+              try {
+                const cleanup = setup(modules, document);
+                if (typeof cleanup === "function") cleanups.push(cleanup);
+              } catch (error) {
+                console.warn("Home motion: one setup failed.", error);
+              }
             }
-            // The setups do not create their triggers in page order (and the story adds some
-            // later). Sorted, the refresh measures them top to bottom, as ScrollTrigger expects.
+            // Page order for the refresh. Without a pin the order changes no result; it keeps the
+            // measures right if a pin is added again.
             modules.ScrollTrigger.sort();
             // A clamped start is applied only by a refresh, and the page load refresh is over.
             modules.ScrollTrigger.refresh();

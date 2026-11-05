@@ -1,7 +1,9 @@
 import { roadPoint } from "@/lib/story/road";
 import type { SceneSlug } from "@/lib/story/scenes";
 import type { GsapModules, MotionSetup } from "../load-gsap";
+import { pendingHashScroll, shouldHideElement } from "../reveal";
 import { getLoopController, type Loop, type LoopEntry } from "../loops";
+import { LOOP_MIN_GAP_S, type Setter } from "../throttle";
 import { inlineSvg } from "./inline-svg";
 import { SCENE_MOTIONS } from "./scene-motions";
 
@@ -18,22 +20,14 @@ export const STORY_INTRO_LINE = 0.75;
 export const STORY_ROAD_LINE = 0.5;
 /** The grain follows the scroll this many seconds late, so it glides instead of jumping. */
 export const STORY_ROAD_SCRUB_S = 0.6;
-/**
- * The scene loops draw at most this many frames per second, like the hero loop: their motion is
- * slow, and every frame repaints the scene's svg. GSAP's own ticker keeps 60/s for the rest.
- */
-export const STORY_LOOP_UPDATES_PER_S = 30;
-
-/** Less than one frame of 30/s, so a frame that a 60 Hz screen shows a little early still draws. */
-const LOOP_MIN_GAP_S = 1 / STORY_LOOP_UPDATES_PER_S - 0.004;
 /** After a long gap (a background tab), the loop goes on from where it was, not far ahead. */
 const LOOP_MAX_STEP_S = 0.1;
 
 type Scene = { li: HTMLElement; slug: SceneSlug; svg: SVGSVGElement | null; played: boolean };
 
 /**
- * Plays a paused GSAP loop by stepping it from GSAP's ticker, at most STORY_LOOP_UPDATES_PER_S
- * times a second. The time while it is paused does not count.
+ * Plays a paused GSAP loop by stepping it from GSAP's ticker, at most LOOP_UPDATES_PER_S times a
+ * second, because every frame repaints the scene's svg. The time while it is paused does not count.
  */
 export function throttledLoop(gsap: Gsap, loop: Pick<gsap.core.Timeline, "totalTime">): Loop {
   let last: number | null = null;
@@ -63,7 +57,6 @@ export function throttledLoop(gsap: Gsap, loop: Pick<gsap.core.Timeline, "totalT
   };
 }
 
-type Setter = (value: number) => void;
 type Stretch = {
   el: HTMLElement;
   bend: number;
@@ -201,7 +194,7 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
 
   /** Builds the scene's motion and connects its intro and loop to the scroll. */
   const attach = (scene: Scene) => {
-    const motion = scene.svg ? SCENE_MOTIONS[scene.slug](gsap, scene.svg) : null;
+    const motion = scene.svg ? (SCENE_MOTIONS[scene.slug]?.(gsap, scene.svg) ?? null) : null;
     if (!motion) return;
     const { intro, loop } = motion;
     const entry = loop ? controller.add(throttledLoop(gsap, loop)) : null;
@@ -215,7 +208,7 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
     });
     // A scene that is already past its line (a `#hash` link, a restored scroll, a file that
     // came late) shows its final frame at once: nothing on screen disappears.
-    if (scene.li.getBoundingClientRect().top < window.innerHeight * STORY_INTRO_LINE) {
+    if (!shouldHideElement(scene.li, pendingHashScroll(root), STORY_INTRO_LINE)) {
       intro.progress(1);
       scene.played = true;
     } else {
@@ -264,9 +257,10 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
           once: true,
           onEnter: () => {
             void inlineSvg(img).then((svg) => {
-              if (!svg || disposed) return;
-              scene.svg = svg;
-              ctx.add(() => attach(scene));
+              if (disposed) return;
+              // A run before a restart may have swapped this img while the file loaded here.
+              scene.svg = svg ?? scene.li.querySelector<SVGSVGElement>("svg[data-scene]");
+              if (scene.svg) ctx.add(() => attach(scene));
             });
           },
         }),
@@ -274,8 +268,8 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
     }
 
     const line = `${STORY_ROAD_LINE * 100}%`;
-    scenes.forEach(({ li }, i) => {
-      const stop = stops[i];
+    scenes.forEach(({ li }) => {
+      const stop = li.querySelector<HTMLElement>("[data-story-stop]");
       if (!stop) return;
       ScrollTrigger.create({
         trigger: li,

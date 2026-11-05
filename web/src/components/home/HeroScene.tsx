@@ -467,8 +467,9 @@ function StaticField() {
 
         <path d="M0 244Q360 236 720 244T1440 244V260H0Z" fill={grain} />
       </g>
-      <use href="#nn-hero-field-tile" x={-FIELD_W} />
-      <use href="#nn-hero-field-tile" x={FIELD_W} />
+      {/* Below md the middle tile (--hero-m * 4.73 = 832 px) is wider than the screen. */}
+      <use href="#nn-hero-field-tile" x={-FIELD_W} className="max-md:hidden" />
+      <use href="#nn-hero-field-tile" x={FIELD_W} className="max-md:hidden" />
     </svg>
   );
 }
