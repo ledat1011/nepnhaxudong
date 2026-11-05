@@ -1,4 +1,8 @@
 {
   "mirror": true,
-  "map": {"#35231C": "nau-dat"}
+  "map": {"#35231C": "nau-dat"},
+  "recolor": [
+    {"to": "da", "box": [450, 198, 492, 224], "from": "nau-dat"}
+  ],
+  "overlay": "ba-canh-lo-face.svg"
 }

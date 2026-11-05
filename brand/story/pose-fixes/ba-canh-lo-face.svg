@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Squinting from the heat of the furnace, with a drop of sweat on the temple (source pixels,
+       before the mirror). The old closed eye is cleared in ba-canh-lo.json. -->
+  <path d="M454 214Q470 207 487 211M491 216L500 221" fill="none" stroke="#4A2C1A" stroke-width="9" stroke-linecap="round"/>
+  <path d="M516 166Q530 186 530 196A14 14 0 0 1 502 196Q502 186 516 166Z" fill="#E9F2F1" stroke="#4A2C1A" stroke-width="6" stroke-linejoin="round"/>
+</svg>

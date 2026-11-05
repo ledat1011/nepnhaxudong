@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Open eyes looking down and a straight mouth (source pixels, before the mirror).
+       The old dot eyes and smile are cleared in nong-dan-cay.json. -->
+  <g fill="#4A2C1A">
+    <ellipse cx="312" cy="364" rx="11" ry="10"/>
+    <ellipse cx="414" cy="352" rx="11" ry="10"/>
+  </g>
+  <path d="M298 356Q312 347 327 355M400 344Q414 335 429 343M360 425L400 422" fill="none" stroke="#4A2C1A" stroke-width="10" stroke-linecap="round"/>
+</svg>

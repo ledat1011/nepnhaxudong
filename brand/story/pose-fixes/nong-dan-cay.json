@@ -8,6 +8,10 @@
     {"to": "da", "at": [420, 820]},
     {"to": "da", "box": [170, 690, 298, 830], "from": "vang-rom"},
     {"to": "da", "box": [425, 935, 595, 1010], "from": "vang-rom"},
-    {"to": "da", "box": [595, 935, 765, 1015], "from": "vang-rom"}
-  ]
+    {"to": "da", "box": [595, 935, 765, 1015], "from": "vang-rom"},
+    {"to": "da", "at": [313, 358]},
+    {"to": "da", "at": [415, 346]},
+    {"to": "da", "box": [345, 408, 415, 440], "from": "nau-dat"}
+  ],
+  "overlay": "nong-dan-cay-face.svg"
 }
