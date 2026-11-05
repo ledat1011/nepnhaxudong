@@ -55,7 +55,7 @@ function DetailHeader({ back, detail }: { back: { href: string; label: string };
       <div className="px-4 pb-3">
         {detail ? <p className="text-sm text-muted-foreground">{back.label}</p> : null}
         {/* Long names wrap: the user must see which item is open. */}
-        <h1 className="text-xl leading-snug font-bold [overflow-wrap:anywhere]">{detail?.name ?? back.label}</h1>
+        <h1 className="text-xl leading-snug font-bold text-pretty [overflow-wrap:anywhere]">{detail?.name ?? back.label}</h1>
       </div>
     </header>
   );
