@@ -1,0 +1,10 @@
+{
+  "mirror": true,
+  "map": {"#E7BD77": "vang-rom", "#C9944E": "vang-lua", "#F3DFBB": "da"},
+  "recolor": [
+    {"to": "nau-dat", "box": [360, 610, 680, 940], "from": "toc"}
+  ],
+  "clear": [
+    {"at": [510, 850]}
+  ]
+}

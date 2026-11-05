@@ -1,0 +1,13 @@
+{
+  "mirror": true,
+  "map": {"#EDD4B0": "vang-rom", "#B09A41": "xanh-ma", "#623B21": "nau-ao"},
+  "recolor": [
+    {"to": "da", "at": [400, 400]},
+    {"to": "da", "at": [540, 330]},
+    {"to": "da", "at": [290, 740]},
+    {"to": "da", "at": [420, 820]},
+    {"to": "da", "box": [170, 690, 298, 830], "from": "vang-rom"},
+    {"to": "da", "box": [425, 935, 595, 1010], "from": "vang-rom"},
+    {"to": "da", "box": [595, 935, 765, 1015], "from": "vang-rom"}
+  ]
+}
