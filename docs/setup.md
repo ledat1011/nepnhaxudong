@@ -1,7 +1,7 @@
 # Cài đặt
 
 ## Cài đặt một máy mới (Windows)
-1. Cài Git for Windows, Node 22, uv và Python 3 (Python 3 cần cho hai skill `state-diagram` và `call-chain`).
+1. Cài Git for Windows, Node 22, JDK 21, Rancher Desktop (xem mục "Docker trên máy"), uv và Python 3 (Python 3 cần cho hai skill `state-diagram` và `call-chain`).
 2. Lấy code:
    ```bash
    git clone https://github.com/ledat1011/nepnhaxudong.git
@@ -111,8 +111,29 @@ Sẽ điền sau khi kiểm tra trên claude.ai/code.
 
 Lưu ý: `scripts/cloud-setup.sh` có thể in `java=unknown` khi máy có java nhưng script không đọc được số phiên bản.
 
+## Docker trên máy (Rancher Desktop)
+Dự án dùng Rancher Desktop để có lệnh `docker`, không dùng Docker Desktop. Postgres local, test của API (Testcontainers) và kiểm thử đầu-cuối đầy đủ đều cần nó.
+
+1. Cài Rancher Desktop một lần mỗi máy. Trong Preferences, chọn Container Engine là `dockerd (moby)`. Không cần bật Kubernetes cho dự án này.
+2. Trước khi chạy Postgres hoặc test, kiểm tra:
+   ```bash
+   docker info
+   ```
+3. Nếu lệnh trên báo lỗi không kết nối được, bật Rancher Desktop (hoặc mở ứng dụng Rancher Desktop từ menu Start), rồi chờ đến khi `docker info` chạy được (thường dưới 3 phút):
+   ```bash
+   rdctl start
+   ```
+   Nếu `rdctl` không có trong PATH, dùng đường dẫn đầy đủ `"C:\Program Files\Rancher Desktop\resources\resources\win32\bin\rdctl.exe"`.
+
+Agent tự bật Rancher Desktop theo cách trên khi cần. Nếu máy chưa cài, agent dừng lại và nhờ bạn cài; agent không tự cài.
+
+Không có `psql` trên máy thì vẫn chạy câu SQL được qua container Postgres đang chạy:
+```bash
+docker compose -f infra/compose.dev.yml exec postgres psql -U nepnha -d nepnha -c "select 1"
+```
+
 ## Chạy API ở local
-API nằm trong thư mục `api/` (Spring Boot 4, Java 21, Postgres 16). Cần Docker và JDK 21; JDK 21 phải là JDK đang dùng (`JAVA_HOME` trỏ tới JDK 21, kiểm tra bằng `java -version`).
+API nằm trong thư mục `api/` (Spring Boot 4, Java 21, Postgres 16). Cần Docker (xem mục "Docker trên máy") và JDK 21; JDK 21 phải là JDK đang dùng (`JAVA_HOME` trỏ tới JDK 21, kiểm tra bằng `java -version`).
 
 1. Chạy Postgres local (cổng 5433, DB và user `nepnha`, mật khẩu mặc định `nepnha-local` chỉ dùng cho local):
    ```bash
