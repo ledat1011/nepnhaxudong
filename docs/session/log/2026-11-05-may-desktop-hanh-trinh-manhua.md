@@ -16,6 +16,7 @@
 - Chủ dự án duyệt 9 bản phác; hẹn dựng SVG và thay vào web vào tuần sau ("Để tuần sau").
 - Chủ dự án: đưa ảnh lên web ở `main` rồi deploy lại lên cloud (link xem thử); ảnh động để tuần sau; nền trắng hiện tại hơi trống, nhờ gợi ý; thanh menu chưa có nút tới khối hành trình này → thêm mục menu; "làm luôn merge vào main".
 - Chủ dự án: nút "Xem hành trình" ở hero trỏ tới khối quy trình, với chữ đẹp hơn. Báo lỗi: bấm link tới `#tu-hat-lua`, kéo lên đầu trang, bấm lại thì không cuộn tới nữa.
+- Xem chữ "Từ đồng tới mâm cơm", chủ dự án: "từ cánh đồng tới mâm cơm ỏ ngắn hơn i" → chủ dự án gợi ý thêm "câu chuyện ..." → chữ nút hero: "Chuyện hạt nếp" (tiếng Anh "A grain's story"); không dùng "Câu chuyện" ở đầu vì trùng tên mục blog "Câu chuyện" trên menu.
 
 ## Quyết định
 - Cảnh hành trình: màu phẳng, nét mực manhua, 9 bản phác đã duyệt — `docs/decisions/0014-hanh-trinh-net-muc.md`.
@@ -25,7 +26,7 @@
 - Nối tranh vào web và làm chuyển động: làm sau.
 
 ## Đã làm
-- Nút thứ hai ở hero đổi thành "Từ đồng tới mâm cơm" (tiếng Anh "From field to table"), trỏ tới `#tu-hat-lua`, luôn hiện. Sửa lỗi bấm lại link cùng `#`: Next.js coi đó là không đổi địa chỉ nên không cuộn; thêm `SectionLink` tự cuộn tới khối trong đúng trường hợp đó (menu và nút hero).
+- Nút thứ hai ở hero đổi thành "Chuyện hạt nếp" (tiếng Anh "A grain's story"), trỏ tới `#tu-hat-lua`, luôn hiện. Sửa lỗi bấm lại link cùng `#`: Next.js coi đó là không đổi địa chỉ nên không cuộn; thêm `SectionLink` tự cuộn tới khối trong đúng trường hợp đó (menu và nút hero).
 - Web dùng 8 bản phác (WebP 1200 × 675), thêm mục menu "Quy trình" tới `#tu-hat-lua`, proxy cho qua `/story/*.webp`; PR #34. Repo không cho bật auto-merge, nên merge tay khi CI đạt. Mở Cloudflare tunnel bị chặn bởi bộ lọc quyền của Claude: chủ dự án tự mở tunnel hoặc cho phép.
 - Vẽ 9 tranh (8 bước, bước 2 có ngày và đêm), vẽ lại tranh gặt một lần vì tranh đầu có chữ "BA", "ANH HAI" và chữ trên máy gặt. Tổng 10 ảnh Pro, khoảng 1,35 USD.
 - Phác phong cách phẳng (sửa từ cảnh hiện tại) cho bước 2 (ngày) và bước 4, lưu `brand/story/phac/` (commit `1ceed66`). Mẹ ở bước 2 trông như bé gái, ba trông già hơn ảnh (khoảng 80 tuổi). Thêm 2 ảnh Pro, khoảng 0,27 USD.

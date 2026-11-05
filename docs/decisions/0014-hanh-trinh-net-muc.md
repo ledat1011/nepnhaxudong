@@ -25,7 +25,7 @@ và giữ kiểu phẳng "để sau này còn làm chuyển động".
 
 ## Trên web
 Chủ dự án muốn đưa ảnh lên web ngay, chuyển động làm sau. Trang chủ hiện dùng 8 bản phác (bước 2 dùng cảnh ngày) dạng WebP 1200 × 675 trong `web/public/story/`. Các cảnh SVG tách lớp và mã chuyển động của từng cảnh vẫn giữ trong repo, nhưng trang không dùng tới, vì tuần sau sẽ dựng lại cảnh SVG từ các bản phác này. Hai test đầu-cuối về cảnh SVG đang tạm tắt, ghi rõ lý do.
-Menu có thêm mục "Quy trình" (tiếng Anh "Process") dẫn tới khối "Từ hạt lúa tới người dùng" (`#tu-hat-lua`). Nút thứ hai ở hero đổi thành "Từ đồng tới mâm cơm" ("From field to table") và cũng dẫn tới khối này.
+Menu có thêm mục "Quy trình" (tiếng Anh "Process") dẫn tới khối "Từ hạt lúa tới người dùng" (`#tu-hat-lua`). Nút thứ hai ở hero đổi thành "Chuyện hạt nếp" ("A grain's story") và cũng dẫn tới khối này.
 
 ## Còn phải làm
 Chủ dự án chọn làm tuần sau:
