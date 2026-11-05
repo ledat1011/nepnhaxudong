@@ -40,6 +40,10 @@
   5. Rà trang quản trị để dễ dùng, thông minh hơn.
   6. Câu chuyện có hình động từ cánh đồng đến bữa ăn: gieo mạ → nắng gió mưa → thu hoạch → sấy thóc bằng dàn sấy than (lò than, quạt công suất lớn thổi hơi nóng quanh dàn, thóc đặt trên dàn) → máy xát tách vỏ (ảnh máy xát nhà đã gửi) → máy hút chân không đóng bịch vuông (ảnh sản phẩm đã gửi) → tới tay khách (làm quà, nấu ăn, trên kệ siêu thị) → các món nấu từ gạo nếp. Chủ dự án gợi ý vẽ trước bằng Figma hoặc Canva.
   - Tạo session song song cho các phần làm song song được.
+- (2026-11-05) Máy dùng Rancher Desktop để có `docker`, không phải Docker Desktop. Khi `docker` không chạy: bật Rancher Desktop (`rdctl start`) rồi chờ; nếu máy chưa cài thì nhờ chủ dự án cài, vì dự án làm trên nhiều máy. Đã ghi vào `CLAUDE.md` và `docs/setup.md`.
+- (2026-11-05) "Tìm trong các ghi chú cũ trên máy coi còn cái nào hữu ích rồi dùng đi" → lấy các luật dùng chung (không có nội dung công ty): chạy server trong cửa sổ riêng, hỏi trước khi dừng tiến trình đang giữ cổng, lỗi môi trường thì báo và dừng, xóa đường code cũ khi thay, tự xem giao diện bằng trình duyệt trước khi báo xong, mô tả PR tự đứng được. Đã ghi vào `CLAUDE.md`.
+- (2026-11-05) Ngôn ngữ: chủ dự án chọn "Code, commit, PR only" → code, comment, test, commit, tiêu đề và mô tả PR viết tiếng Anh; file cho Claude vẫn tiếng Anh; tài liệu trong `docs/` vẫn tiếng Việt; nội dung web vẫn song ngữ. Đã ghi vào `CLAUDE.md`.
+- (2026-11-05) Chủ dự án hỏi luật "hỏi trung lập" đã có chưa → đã có trong `CLAUDE.md` (mục "Reply and language rules", dòng "Independent assessment").
 
 ## Quyết định
 - Chủ dự án duyệt thiết kế popup Zalo và trạng thái đang tải (làm trên nhánh mới sau khi B4 merge, vì B4 đang sửa header và cơ chế chuyển trang):

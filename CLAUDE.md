@@ -32,6 +32,9 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
 ## Reply and language rules
 - Reply to the owner in Vietnamese.
 - Write files that instruct Claude in English: `CLAUDE.md`, `.claude/**` (skills, hooks, agents, settings), and hook messages. Documents for the owner in `docs/` (spec, plans, setup, `STATE.md`, session logs, decisions) stay in Vietnamese.
+- Write code in English (owner, 2026-11-05): identifiers, code comments, tests, commit messages, PR titles and
+  PR descriptions. Exceptions: the site's user-facing text stays bilingual (Vietnamese and English), and test data
+  or assertions may use Vietnamese where they check Vietnamese text.
 - When you write English: short sentences, simple words, no idioms, no figurative language.
 - Independent assessment: when the question already contains a conclusion, assess it as if the question were neutral. Give the reasons for and against
   before the conclusion. If your conclusion is different, say so in the first sentence. Change your mind only when there is new information or a new argument.
@@ -72,6 +75,50 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
 - After you merge two branches together (or `main` into a branch with conflicts): run the full `npm test`, `npm run typecheck`
   and `npm run lint` once. Leave the full-stack e2e to CI. Check the exit code, not only the pass count.
 - Before you merge a PR: if that full run did not happen on the final code, wait for CI to pass.
+- Maven tests in `api/` that fail with many `ClassNotFoundException` lines but 0 failures usually mean the VS Code
+  Java language server is rewriting `api/target` during the run. Run the tests again in a temporary worktree
+  outside the repo folder (for example in the scratchpad) before you treat it as a real failure.
+
+## Local containers: Docker through Rancher Desktop (owner, 2026-11-05)
+The project runs on several machines. On these machines the `docker` command comes from Rancher Desktop, not
+from Docker Desktop. Postgres for local work (`infra/compose.dev.yml`), Testcontainers and the full-stack e2e
+all need it.
+1. Before you start anything that needs containers, run `docker info`.
+2. If it fails, look for Rancher Desktop: `rdctl` on PATH, or
+   `C:\Program Files\Rancher Desktop\resources\resources\win32\bin\rdctl.exe`.
+   - Installed: start it with `rdctl start`, then check `docker info` again every few seconds, for up to about
+     3 minutes. Do not change its settings. If it starts but `docker` still cannot connect, tell the owner to set
+     the container engine to `dockerd (moby)` in Rancher Desktop's Preferences.
+   - Not installed: stop and ask the owner to install Rancher Desktop on this machine (container engine
+     `dockerd (moby)`). Do not install it yourself, and do not install or start Docker Desktop.
+3. If a container, a database connection or a port still fails after that: report the exact command and the
+   error, then stop and let the owner decide. Do not work around it (for example with another database, mock
+   data, or a different port) without the owner's yes.
+
+## Running servers and processes
+- Run long-lived processes (web dev server, API, port listeners) in a separate PowerShell window from a `.ps1`
+  script, for example `Start-Process powershell -ArgumentList '-NoExit','-File','<script>.ps1'`, so the owner
+  can see them and stop them. Put environment variables in the script, not in an inline `-Command`. This also
+  avoids the Turbopack error `0xc0000142` that happens when `next dev` runs in a background tool shell.
+- A one-shot job in its own window (a build, `docker compose up -d`) closes its window by itself when it
+  succeeds, and keeps it open when it fails, so the owner can read the error.
+- When a port is already in use: show the process ID and the process name, and ask before you stop it.
+  Never stop the owner's own servers silently.
+
+## Code and pull requests
+- When new code replaces an old code path, delete the old path, its config and its tests in the same change.
+  Do not keep both behind a flag, unless the owner asks for a step-by-step rollout.
+- When code on purpose leaves out something that the code around it has (a check, a retry, a cleanup, a list
+  entry), add a one- or two-line comment that says what would go wrong if it were added.
+- Do not give results, states or enum values names that mean almost the same thing (`DONE` next to
+  `COMPLETED`). Put the scope in the name.
+- Prefer the fix for the root cause over a fix that only moves a limit further away. If a limit remains, say so.
+- Before you tell the owner that UI work is ready: open every state you changed in a real browser, at phone
+  width (375 px) and at desktop width, take screenshots and look at them yourself. In the report, list what you
+  could not check.
+- A PR description must make sense on its own: what changed, why, and the final test result. Do not put local
+  paths (scratchpad, `.superpowers/`), agent IDs, or the story of bugs found and fixed while testing the branch
+  in it.
 
 ## Tools
 - Test the tools: `npm run test:tools`.
