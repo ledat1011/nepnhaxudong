@@ -6,7 +6,9 @@
 NEPNHA_DIR=${NEPNHA_DIR:-/opt/nepnha}
 ENV_FILE=${ENV_FILE:-$NEPNHA_DIR/.env}
 # The database dump waits here before restic reads it. A fixed path keeps every snapshot in one restic group.
-STAGE_DIR=${STAGE_DIR:-/var/tmp/nepnha-backup}
+STAGE_DIR=${STAGE_DIR:-/srv/nepnha/backup/stage}
+# Restores unpack here (on the data disk, not in /tmp; root only).
+WORK_BASE=${WORK_BASE:-/srv/nepnha/backup/work}
 
 # Reads KEY=value from .env without running it as shell code (values may hold spaces or quotes).
 env_get() {
@@ -16,7 +18,7 @@ env_get() {
 
 load_env() {
   local key
-  for key in RESTIC_REPOSITORY RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY HEALTHCHECK_URL MEDIA_HOST_DIR; do
+  for key in RESTIC_REPOSITORY RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY HEALTHCHECK_URL RESTORE_HEALTHCHECK_URL MEDIA_HOST_DIR; do
     if [ -z "${!key:-}" ]; then
       printf -v "$key" '%s' "$(env_get "$key")"
     fi
@@ -36,3 +38,10 @@ ping_hc() {
 }
 
 compose() { (cd "$NEPNHA_DIR" && docker compose "$@"); }
+
+# A new empty folder under WORK_BASE (mode 700).
+work_dir() {
+  mkdir -p "$WORK_BASE"
+  chmod 700 "$WORK_BASE"
+  mktemp -d -p "$WORK_BASE"
+}

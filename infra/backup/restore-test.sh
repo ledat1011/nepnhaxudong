@@ -6,8 +6,10 @@ set -euo pipefail
 # shellcheck source=infra/backup/lib.sh
 . "$(dirname "$0")/lib.sh"
 load_env
+# The monthly test has its own check, so its result never hides or fakes the result of the nightly backup.
+HEALTHCHECK_URL=${RESTORE_HEALTHCHECK_URL:-}
 
-WORK=$(mktemp -d)
+WORK=$(work_dir)
 NAME="nepnha-restore-test-$$"
 on_exit() {
   local rc=$?
@@ -31,15 +33,16 @@ echo "loading the dump into a throwaway Postgres"
 docker run -d --name "$NAME" --network none -e POSTGRES_PASSWORD=restore-test -e POSTGRES_USER=nepnha \
   -e POSTGRES_DB=nepnha postgres:16-alpine >/dev/null
 for _ in $(seq 1 60); do
-  # pg_isready also answers while the init scripts still run; a query on the final server is the real check.
-  if docker exec "$NAME" psql -U nepnha -d nepnha -tAc 'select 1' >/dev/null 2>&1; then break; fi
+  # Over TCP (-h 127.0.0.1): the temporary server of the image entrypoint listens only on the unix socket,
+  # so a TCP answer comes from the final server.
+  if docker exec "$NAME" psql -h 127.0.0.1 -U nepnha -d nepnha -tAc 'select 1' >/dev/null 2>&1; then break; fi
   sleep 1
 done
-docker exec -i "$NAME" pg_restore -U nepnha -d nepnha --no-owner --exit-on-error < "$DUMP"
+docker exec -i "$NAME" pg_restore -h 127.0.0.1 -U nepnha -d nepnha --no-owner --exit-on-error < "$DUMP"
 
-tables=$(docker exec "$NAME" psql -U nepnha -d nepnha -tAc \
+tables=$(docker exec "$NAME" psql -h 127.0.0.1 -U nepnha -d nepnha -tAc \
   "select count(*) from information_schema.tables where table_schema = 'public'")
-migrations=$(docker exec "$NAME" psql -U nepnha -d nepnha -tAc \
+migrations=$(docker exec "$NAME" psql -h 127.0.0.1 -U nepnha -d nepnha -tAc \
   "select count(*) from flyway_schema_history where success")
 echo "tables: $tables, applied migrations: $migrations"
 if [ "$tables" -eq 0 ] || [ "$migrations" -eq 0 ]; then

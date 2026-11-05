@@ -37,7 +37,8 @@ for name in api web caddy; do docker push -q "$REG/nepnha-$name:bad" >/dev/null;
 
 mkdir -p "$D/media"
 chmod 777 "$D/media"
-cp "$ROOT/infra/compose.prod.yml" "$D/compose.yml"
+# Like deploy.yml: the release brings its compose file as compose.next.yml.
+cp "$ROOT/infra/compose.prod.yml" "$D/compose.next.yml"
 cp "$ROOT/infra/vps/deploy.sh" "$D/deploy.sh"
 cat > "$D/compose.override.yml" <<'EOF'
 services:
@@ -62,11 +63,17 @@ printf '\n== deploy the good release\n'
 bash "$D/deploy.sh" good localhost || fail "the good release did not deploy"
 [ "$(tag_now)" = good ] || fail "IMAGE_TAG is '$(tag_now)' after the good deploy"
 
-printf '\n== deploy a broken release: it must fail and go back to the good one\n'
+printf '\n== deploy a broken release: it must fail and go back to the good one, with the old compose file\n'
+{ cat "$ROOT/infra/compose.prod.yml"; echo "# marker of the broken release"; } > "$D/compose.next.yml"
 if HEALTH_WAIT_SECONDS=60 bash "$D/deploy.sh" bad localhost; then fail "the broken release was reported as healthy"; fi
 [ "$(tag_now)" = good ] || fail "IMAGE_TAG is '$(tag_now)' after the rollback, want good"
 curl -fsS -k -m 10 --resolve localhost:443:127.0.0.1 https://localhost/api/actuator/health | grep -q '"status":"UP"' \
   || fail "the site is not healthy after the rollback"
 [ ! -e "$D/.previous-tag" ] || fail ".previous-tag was written although no release replaced another one successfully"
+if grep -q "marker of the broken release" "$D/compose.yml"; then fail "compose.yml of the broken release is still in use"; fi
+# deploy.sh removes only its own images of other tags; the images of this machine stay.
+for name in api web caddy; do
+  docker image inspect "$SRC_PREFIX/nepnha-$name:$SRC_TAG" >/dev/null 2>&1 || fail "deploy.sh removed $SRC_PREFIX/nepnha-$name:$SRC_TAG"
+done
 
 printf '\nDeploy test passed.\n'

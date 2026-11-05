@@ -36,7 +36,8 @@ export DEBIAN_FRONTEND=noninteractive
 log "time zone and packages"
 timedatectl set-timezone Asia/Ho_Chi_Minh
 apt-get update -q
-apt-get upgrade -yq
+# Keep the provider's changed config files instead of stopping at a question.
+apt-get upgrade -yq -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold
 apt-get install -yq ca-certificates curl gnupg ufw fail2ban python3-systemd unattended-upgrades restic openssl
 
 log "users"
@@ -68,6 +69,14 @@ AllowUsers nepnha deploy
 EOF
 sshd -t || die "the new SSH config is invalid; fix /etc/ssh/sshd_config.d/10-nepnha.conf"
 systemctl reload-or-restart ssh
+# "sshd -t" checks only the syntax. Check the values sshd really uses: a provider image may lack the
+# "Include sshd_config.d/*.conf" line, or ship a drop-in that sorts before ours (the first value wins).
+effective=$(sshd -T 2>/dev/null)
+for want in "passwordauthentication no" "kbdinteractiveauthentication no" "permitrootlogin no"; do
+  if ! grep -qx "$want" <<<"$effective"; then
+    die "sshd does not use '$want'. Check /etc/ssh/sshd_config (it must include sshd_config.d/*.conf) and the other files in /etc/ssh/sshd_config.d/, then run this script again."
+  fi
+done
 
 log "firewall"
 ufw default deny incoming
@@ -130,7 +139,7 @@ log "folders"
 install -d -m 750 -o deploy -g deploy /opt/nepnha
 install -d -m 755 -o 10001 -g 10001 /srv/nepnha/media
 install -d -m 700 -o root -g root /srv/nepnha/backup
-# nepnha may read the deploy files and .env (for maintenance with sudo it does not need to).
+# nepnha may read the deploy files (not .env, which is mode 600; use sudo -u deploy for that).
 usermod -aG deploy nepnha
 
 log "backup timers"

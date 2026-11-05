@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 # One deploy at a time; a newer push waits instead of stopping a deploy in the middle.
 concurrency:
@@ -26,11 +25,14 @@ env:
   SOURCE_LABEL: org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
 jobs:
-  deploy:
+  build:
     if: vars.VPS_HOST != ''
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    environment: production
+    # Only this job may write packages; its token never leaves the runner.
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Check the variables
@@ -80,6 +82,18 @@ jobs:
           for name in api web caddy; do
             docker push --quiet "$IMAGE_PREFIX/nepnha-$name:$IMAGE_TAG"
           done
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    # The VPS gets this job's token to pull the images, so it can only read packages.
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
       - name: Prepare SSH
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
@@ -94,7 +108,8 @@ jobs:
             "${{ vars.VPS_HOST }}" > ~/.ssh/config
       - name: Copy the deploy files
         run: |
-          scp -q infra/compose.prod.yml vps:/opt/nepnha/compose.yml
+          # deploy.sh swaps compose.next.yml in and keeps the old file for a rollback.
+          scp -q infra/compose.prod.yml vps:/opt/nepnha/compose.next.yml
           scp -q infra/vps/deploy.sh infra/vps/init-env.sh vps:/opt/nepnha/
           scp -q -r infra/backup infra/systemd vps:/opt/nepnha/
       - name: Deploy on the VPS

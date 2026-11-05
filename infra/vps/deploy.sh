@@ -53,20 +53,45 @@ healthy() {
   return 1
 }
 
+# Removes Nếp Nhà images of other tags. Keeps the current tag and the previous one, so a manual rollback needs
+# no pull (the GHCR packages are private). Never touches other images on the machine.
+prune_old_images() {
+  local prefix keep_prev ref tag
+  prefix=$(env_get IMAGE_PREFIX)
+  keep_prev=$(cat "$NEPNHA_DIR/.previous-tag" 2>/dev/null || true)
+  docker image ls --format '{{.Repository}}:{{.Tag}}' | while read -r ref; do
+    case "$ref" in "$prefix"/nepnha-*:*) ;; *) continue ;; esac
+    tag=${ref##*:}
+    if [ "$tag" = "$TAG" ] || [ "$tag" = "$keep_prev" ]; then continue; fi
+    docker image rm "$ref" >/dev/null 2>&1 || true
+  done
+}
+
+# deploy.yml uploads the compose file of the new release as compose.next.yml. The file in use is kept as
+# compose.prev.yml, so a rollback starts the old images with the compose file they were tested with.
+NEXT_COMPOSE=compose.yml
+[ ! -f compose.next.yml ] || NEXT_COMPOSE=compose.next.yml
+
 echo "pulling images for tag $TAG"
-IMAGE_TAG=$TAG docker compose pull --quiet
+IMAGE_TAG=$TAG docker compose -f "$NEXT_COMPOSE" pull --quiet
+
+if [ "$NEXT_COMPOSE" = compose.next.yml ]; then
+  if [ -f compose.yml ]; then cp compose.yml compose.prev.yml; fi
+  mv compose.next.yml compose.yml
+fi
 
 echo "starting tag $TAG (previous: ${PREVIOUS:-none})"
 set_tag "$TAG"
-docker compose up -d --remove-orphans
+# No "set -e" stop here: when "up" fails (a container cannot start, postgres is unhealthy), the health check
+# below fails too, and the rollback still runs.
+docker compose up -d --remove-orphans || echo "docker compose up failed for $TAG" >&2
 
 if healthy; then
   echo "release $TAG is healthy"
   if [ -n "$PREVIOUS" ] && [ "$PREVIOUS" != "$TAG" ]; then
     echo "$PREVIOUS" > "$NEPNHA_DIR/.previous-tag"
   fi
-  # Keeps the images of the last week, so a manual rollback to the previous tag needs no pull.
-  docker image prune -af --filter "until=168h" >/dev/null || true
+  prune_old_images
   exit 0
 fi
 
@@ -78,8 +103,9 @@ if [ -z "$PREVIOUS" ] || [ "$PREVIOUS" = "$TAG" ]; then
   exit 1
 fi
 echo "going back to $PREVIOUS" >&2
+if [ -f compose.prev.yml ]; then cp compose.prev.yml compose.yml; fi
 set_tag "$PREVIOUS"
-docker compose up -d --remove-orphans
+docker compose up -d --remove-orphans || echo "docker compose up failed for $PREVIOUS" >&2
 if healthy; then
   echo "rolled back to $PREVIOUS" >&2
 else

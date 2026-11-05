@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Starts the production stack from already built images in a throwaway folder laid out like /opt/nepnha on the
-# VPS, runs smoke.sh, then (when restic is installed) a backup and a restore test. Removes everything at the end.
+# VPS, runs smoke.sh, then (when restic is installed) a backup, the restore test and a real restore.
+# Removes everything at the end.
 # Usage: infra/test/run-smoke.sh
 # Env: IMAGE_PREFIX, IMAGE_TAG (default nepnha-local / smoke), KEEP=1 to leave the stack running.
 # Build the images first, for example:
@@ -53,9 +54,18 @@ env_value() { grep -E "^$1=" "$D/.env" | cut -d= -f2-; }
 
 if command -v restic >/dev/null; then
   printf '\n== backup and restore test\n'
-  export RESTIC_REPOSITORY="$D/restic" RESTIC_PASSWORD=smoke-restic-password STAGE_DIR="$D/stage" MEDIA_HOST_DIR="$D/media"
+  export RESTIC_REPOSITORY="$D/restic" RESTIC_PASSWORD=smoke-restic-password STAGE_DIR="$D/stage" \
+    WORK_BASE="$D/work" MEDIA_HOST_DIR="$D/media"
   bash "$ROOT/infra/backup/backup.sh"
   bash "$ROOT/infra/backup/restore-test.sh"
+  printf '\n== real restore of the latest snapshot, then the site must be healthy again\n'
+  echo "KHOI PHUC" | bash "$ROOT/infra/backup/restore.sh" latest
+  ok=no
+  for _ in $(seq 1 60); do
+    if curl -ksS -m 10 https://localhost:8443/api/actuator/health 2>/dev/null | grep -q '"status":"UP"'; then ok=yes; break; fi
+    sleep 3
+  done
+  [ "$ok" = yes ] || { echo "FAIL: the API is not healthy after restore.sh" >&2; exit 1; }
 else
   echo "restic is not installed: skipped the backup and restore test"
 fi
