@@ -8,12 +8,23 @@ import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { invalidProps } from "@/lib/admin/field-errors";
+import { useRemoveWithUndo } from "@/lib/admin/use-remove-with-undo";
 import { moved, nextRowKey } from "./rows";
 
 export type FeatureRow = { key: string; vi: string; en: string };
 
 export function newFeatureRow(vi = "", en = ""): FeatureRow {
   return { key: nextRowKey(), vi, en };
+}
+
+/** Longest piece of the feature text quoted in the "Đã xóa" message. */
+const QUOTE_LENGTH = 40;
+
+function removedMessage(n: number, row: FeatureRow): string {
+  const text = row.vi.trim();
+  if (text === "") return `Đã xóa đặc điểm ${n}.`;
+  const quote = text.length > QUOTE_LENGTH ? `${text.slice(0, QUOTE_LENGTH).trimEnd()}…` : text;
+  return `Đã xóa đặc điểm ${n} (${quote}).`;
 }
 
 type Props = {
@@ -30,6 +41,7 @@ type Props = {
  */
 export function FeatureList({ rows, onChange, error }: Props) {
   const errorId = useId();
+  const remove = useRemoveWithUndo(rows, onChange);
   function update(index: number, patch: Partial<FeatureRow>) {
     onChange(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
@@ -83,16 +95,18 @@ export function FeatureList({ rows, onChange, error }: Props) {
                 >
                   <ArrowDown />
                 </Button>
+                {missingEn ? <MissingEnBadge /> : null}
+                {/* At the far end of the row, away from the arrows: a slip of the finger moves a row, it does not delete it. */}
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
                   aria-label={`Xóa đặc điểm ${n}`}
-                  onClick={() => onChange(rows.filter((_, i) => i !== index))}
+                  className="ml-auto"
+                  onClick={() => remove(index, removedMessage(n, row))}
                 >
                   <Trash2 />
                 </Button>
-                {missingEn ? <MissingEnBadge /> : null}
               </div>
             </li>
           );

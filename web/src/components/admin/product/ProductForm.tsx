@@ -17,6 +17,7 @@ import { toRequestText } from "@/lib/admin/localized";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
 import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
+import { useRemoveWithUndo } from "@/lib/admin/use-remove-with-undo";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
@@ -316,6 +317,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
 
 function ImageSection({ ids, onChange }: { ids: number[]; onChange(ids: number[]): void }) {
   const { items } = useMediaByIds(ids);
+  const remove = useRemoveWithUndo(ids, onChange);
   return (
     <fieldset className="flex min-w-0 flex-col gap-3">
       <legend className="mb-2 text-base font-semibold">Ảnh</legend>
@@ -363,7 +365,8 @@ function ImageSection({ ids, onChange }: { ids: number[]; onChange(ids: number[]
                 variant="outline"
                 size="icon"
                 aria-label={`Bỏ ảnh ${name}`}
-                onClick={() => onChange(ids.filter((other) => other !== id))}
+                className="ml-2"
+                onClick={() => remove(index, `Đã bỏ ảnh ${index + 1} khỏi sản phẩm.`)}
               >
                 <X />
               </Button>
