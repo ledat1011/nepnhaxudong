@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMetadata, getSiteUrl, withSiteName } from "./metadata";
+import { buildMetadata, getSiteUrl, isIndexingOff, withSiteName } from "./metadata";
 
 const PATHS = { vi: "/vi", en: "/en" };
 
@@ -68,5 +68,13 @@ describe("buildMetadata", () => {
     const metadata = buildMetadata({ lang: "vi", title: "Tiêu đề", description: "Mô tả", paths: PATHS });
     expect(metadata.title).toBe("Tiêu đề");
     expect(metadata.description).toBe("Mô tả");
+  });
+});
+
+describe("isIndexingOff", () => {
+  it("is false unless SITE_NOINDEX is 1", () => {
+    expect(isIndexingOff({})).toBe(false);
+    expect(isIndexingOff({ SITE_NOINDEX: "0" })).toBe(false);
+    expect(isIndexingOff({ SITE_NOINDEX: "1" })).toBe(true);
   });
 });

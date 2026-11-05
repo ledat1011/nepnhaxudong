@@ -6,10 +6,15 @@
 
 ## Quyết định
 - VPS ở Việt Nam, 2 vCPU / 2 GB RAM (không phải 4 GB như spec), thêm 2 GB swap, giới hạn bộ nhớ từng container, bỏ Grafana Alloy lúc đầu — chủ dự án ưu tiên chi phí.
+- Nhà cung cấp VPS: Vietnix, gói "VPS SSD LINUX 1" (2 vCPU E5 v4, 2 GB RAM, 40 GB SSD, khoảng 662.400đ cho 3 tháng). Agent đề xuất gói 4 GB (chỉ thêm khoảng 38.000đ/tháng); chủ dự án chọn 2 GB vì backend không dùng nhiều.
 - Sao lưu: chủ dự án để agent chọn ("landing page, chỉ show sản phẩm và bài báo"). Agent chọn: restic chạy được ngay với kho trên VPS; khi chủ dự án tạo Backblaze B2 (miễn phí 10 GB, không cần thẻ) thì điền biến môi trường để gửi ra ngoài. Code nhận mọi kho restic (R2 cũng được).
 - Chủ dự án duyệt thiết kế phần D, gồm hai điểm khác spec: deploy qua GHCR (không dùng `docker save | ssh docker load`), chưa chạy Grafana Alloy; cảnh báo bằng UptimeRobot và healthchecks.io. Duyệt luôn: viết plan rồi làm và mở PR.
 
+- Chủ dự án hoãn thuê VPS: "để làm sau, khi nào web ổn thì đẩy lên". Trước mắt muốn đưa phần giao diện lên một chỗ miễn phí, chạy 24/24, không phụ thuộc máy đang bật (thay cho tunnel tạm từ máy này).
+- Chủ dự án hỏi dùng "GitHub server" được không; agent giải thích GitHub Pages chỉ chứa file tĩnh, web cần máy chủ Node. Chủ dự án chọn **Vercel** (gói Hobby, dữ liệu mẫu, không cho Google index). Quyết định `docs/decisions/0015-xem-thu-vercel.md`.
+
 ## Còn mở
+- Chủ dự án tạo tài khoản Vercel và import repo theo `docs/xem-thu-vercel.md`; sau đó agent kiểm tra link.
 - Chủ dự án làm checklist `docs/deploy.md`: thuê VPS, key SSH, `setup.sh`, `init-env.sh`, GitHub Variables và Secrets, UptimeRobot, healthchecks.io, Backblaze B2; tên miền và Cloudflare sau cùng.
 
 ## Đã làm
