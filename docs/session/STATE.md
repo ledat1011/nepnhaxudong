@@ -1,6 +1,6 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-04 — máy công ty
+Cập nhật: 2026-11-05 — cloud
 
 ## Giai đoạn hiện tại
 `main` đã có API (B1, PR #3), web công khai (B2, PR #4), logo và mascot (phần A, PR #5), và hiệu ứng GSAP (B4, PR #8). Trang quản trị (B3) đã xong trên nhánh `feat/phan-b3-admin`, đã gộp `main`, sẵn sàng mở PR. Phần tiếp theo là phần D (hạ tầng).
@@ -27,7 +27,7 @@ Cập nhật: 2026-11-04 — máy công ty
 - Minh họa và hiệu ứng mới (nền đồng lúa ở hero, hình bịch gạo, câu chuyện "từ đồng tới mâm cơm"): spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md`, đang làm trên nhánh `feat/canh-minh-hoa` ở một session riêng.
 
 ## Việc tiếp theo
-0. Tranh minh họa Câu chuyện kiểu manhua (quyết định `0011`): đặt `GEMINI_API_KEY`, vẽ thử 3 tranh bìa 16:9, chủ dự án chọn rồi mới vẽ cho mọi bài. Mascot giữ nguyên.
+0. Tranh minh họa Câu chuyện kiểu manhua (quyết định `0011`): đặt `GEMINI_API_KEY` trong cài đặt môi trường cloud, mở session mới, chạy `node scripts/ve-tranh-cau-chuyen.mjs` để vẽ 3 tranh bìa thử 16:9, chủ dự án chọn rồi mới vẽ cho mọi bài. Mascot giữ nguyên.
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
 2. Mở PR cho B3, chờ CI (có workflow `fullstack` mới), rồi merge vào `main`.
 3. Sau khi B3 merge, trên nhánh mới từ `main`: popup Zalo và thanh "đang tải" (thiết kế đã duyệt, ghi trong `docs/session/log/2026-11-04-may-cong-ty-phan-b3-admin.md`), rồi 5 việc ưu tiên của trang quản trị (`docs/decisions/0008-uu-tien-sua-admin.md`).

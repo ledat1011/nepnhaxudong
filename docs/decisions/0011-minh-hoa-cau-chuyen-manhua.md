@@ -9,7 +9,7 @@ Chủ dự án muốn tranh vẽ theo phong cách manhua kiếm hiệp bán th�
 - **Chỉ dùng cho tranh của phần Câu chuyện**: ảnh bìa và ảnh trong bài.
 - **Giữ nguyên** mascot cô bé nón lá, logo, font (Pacifico, Quicksand) và bảng màu trong `brand/README.md`.
 - Chỉ lấy **phong cách vẽ** của ảnh mẫu. Không chép nhân vật, trang phục, vũ khí hay bố cục của game trong ảnh mẫu. Nhân vật trong tranh là người nông dân Hải Dương, áo nâu, nón lá.
-- Vẽ bằng Nano Banana qua MCP `nanobanana` đã khai báo trong `.mcp.json` (đọc `GEMINI_API_KEY`).
+- Vẽ bằng Nano Banana qua MCP `nanobanana` đã khai báo trong `.mcp.json` (đọc `GEMINI_API_KEY`), hoặc bằng script `scripts/ve-tranh-cau-chuyen.mjs` (gọi thẳng API Gemini, không cần duyệt MCP). Script dùng đúng mẫu prompt bên dưới, lưu ảnh vào `data/tranh-cau-chuyen/` (git bỏ qua) và cắt sẵn WebP 1600×900.
 - Ảnh bìa câu chuyện có tỉ lệ 16:9 (`web/src/components/story/StoryCard.tsx`). Xuất WebP, rộng 1600 px, rồi tải lên bằng trang quản trị (mục Câu chuyện → ảnh bìa). Ảnh không vào repo.
 
 ## Lý do
