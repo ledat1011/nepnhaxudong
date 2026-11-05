@@ -20,7 +20,7 @@ Cập nhật: 2026-11-04 — máy công ty
 - Rà soát prompt các file hướng dẫn Claude (nhánh `hacka/workspace-prompt-audit-1ff3bc`): báo cáo `docs/session/prompt-audit-2026-11-04.md`. Đã sửa 5 lỗi trong skill `call-chain` và `visual-deck`; 4 mục chỉ ghi nhận (6–9 trong báo cáo) chờ chủ dự án quyết định.
 
 ## Đang làm
-- Cảnh minh hoạ (nền Hero, hình túi gạo, khối "Từ hạt lúa tới người dùng" 8 cảnh): spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md` và plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md` đã duyệt; đang làm theo plan (subagent-driven) trên nhánh `feat/canh-minh-hoa`. Ngày 2026-11-05 đã xong Task 1–11 và Task 7 (6 tư thế người, đã duyệt biểu cảm); chuyển sang cloud session. Còn: kéo nền mỗi cảnh rộng ra hai bên và mờ dần (chủ dự án yêu cầu), Task 12 (kiểm tra cuối), review cả nhánh, PR. Góp ý của chủ dự án: `docs/session/log/2026-11-04-may-cong-ty-canh-minh-hoa.md`.
+- Cảnh minh hoạ (nền Hero, hình túi gạo, khối "Từ hạt lúa tới người dùng" 8 cảnh): spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md` và plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md` đã duyệt; đang làm theo plan (subagent-driven) trên nhánh `feat/canh-minh-hoa`. Ngày 2026-11-05 đã xong Task 1–11 và Task 7 (6 tư thế người, đã duyệt biểu cảm); nền mỗi cảnh đã kéo rộng ra hai bên và mờ dần (chờ chủ dự án duyệt). Còn: Task 12 (kiểm tra cuối), review cả nhánh, PR. Góp ý của chủ dự án: `docs/session/log/2026-11-04-may-cong-ty-canh-minh-hoa.md`.
 - Phần B4: nhánh `feat/phan-b4-gsap` đã push. Chủ dự án đồng ý mở PR; chủ dự án quyết định merge. Các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec (mục 2.2, 3.0, 3.3) chờ chủ dự án đọc và xác nhận.
 
 ## Việc tiếp theo
