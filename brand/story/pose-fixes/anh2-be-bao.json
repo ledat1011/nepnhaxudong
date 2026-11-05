@@ -2,9 +2,17 @@
   "mirror": true,
   "map": {"#E7BD77": "vang-rom", "#C9944E": "vang-lua", "#F3DFBB": "da"},
   "recolor": [
-    {"to": "nau-dat", "box": [360, 610, 680, 940], "from": "toc"}
+    {"to": "nau-dat", "box": [360, 610, 680, 940], "from": "toc"},
+    {"to": "da", "box": [326, 236, 382, 268], "from": "nau-dat"},
+    {"to": "da", "box": [418, 215, 474, 248], "from": "nau-dat"},
+    {"to": "da", "box": [378, 268, 438, 298], "from": "nau-dat"}
   ],
   "clear": [
-    {"at": [510, 850]}
-  ]
+    {"at": [510, 850]},
+    {"box": [230, 25, 890, 320], "from": ["vang-rom", "vang-lua"]},
+    {"polygon": [[336, 25], [895, 25], [895, 330], [650, 330], [565, 292], [552, 262], [550, 200], [540, 150], [505, 100], [420, 82], [336, 78]]}
+  ],
+  "underlay": "anh2-be-bao-sack.svg",
+  "overlay": "anh2-be-bao-face.svg",
+  "fit": [250, 55, 690, 320]
 }
