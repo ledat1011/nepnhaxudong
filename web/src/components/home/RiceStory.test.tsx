@@ -94,6 +94,32 @@ describe("RiceStory", () => {
     });
   });
 
+  it("lets each picture's background run past the text column and fade, never past the page", () => {
+    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
+    // The bleed overflows the column; the section clips it, so the page never scrolls sideways.
+    expect(container.querySelector("section[data-rice-story]")?.getAttribute("class")).toContain("overflow-x-clip");
+    const items = [...container.querySelectorAll("li[data-story-scene]")];
+    items.forEach((li, i) => {
+      const img = li.querySelector("img") as HTMLImageElement;
+      const classes = img.getAttribute("class") ?? "";
+      // 1200 x 600: the 800-unit drawing fills the column, 200 units of background on each side.
+      for (const name of ["story-scene-fade", "aspect-[2/1]", "w-[150%]", "max-w-none", "-ml-[25%]"]) {
+        expect(classes, name).toContain(name);
+      }
+      // How far the background shows past the drawing: little on the road side, more outside.
+      const vars = li.getAttribute("class") ?? "";
+      expect(vars).toContain("[--bleed-left:8px]");
+      expect(vars).toContain("[--bleed-right:16px]");
+      if (i % 2 === 0) {
+        expect(vars).toContain("md:[--bleed-left:16.6667%]");
+        expect(vars).toContain("md:[--bleed-right:28px]");
+      } else {
+        expect(vars).toContain("md:[--bleed-left:28px]");
+        expect(vars).toContain("md:[--bleed-right:16.6667%]");
+      }
+    });
+  });
+
   it("darkens almost the whole road surface, leaving the brown edges", () => {
     const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
     const road = container.querySelector("[data-story-road]") as HTMLElement;

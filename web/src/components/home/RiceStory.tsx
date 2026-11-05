@@ -32,6 +32,16 @@ function sceneText(dict: Dictionary, slug: SceneSlug): { title: string; text: st
   return { title: story[`${key}Title`], text: story[`${key}Text`] };
 }
 
+/*
+ * How far each picture's background shows past the drawing (`.story-scene-fade`). Below 768 px
+ * the road is on the left, 26 px from the drawing: the background comes 8 px toward it (a soft
+ * edge, 18 px stay clear) and goes on to the screen edge on the right. From 768 px the drawing stands 49 px from the road's edge: the background
+ * comes 28 px toward it (about 20 px stay clear) and shows its whole 200 units on the outer side.
+ */
+const BLEED_PHONE = "[--bleed-left:8px] [--bleed-right:16px]";
+const BLEED_LEFT_SCENE = "md:[--bleed-left:16.6667%] md:[--bleed-right:28px]";
+const BLEED_RIGHT_SCENE = "md:[--bleed-left:28px] md:[--bleed-right:16.6667%]";
+
 /** Where the road runs: 20 px from the left below 768 px, the middle of the list from 768 px. */
 const ON_ROAD_LEFT = "md:left-auto md:right-0 md:translate-x-1/2";
 const ON_ROAD_RIGHT = "md:left-0";
@@ -68,7 +78,7 @@ function Stretch({ bend, edge, middle }: StretchProps) {
  */
 export function RiceStory({ dict, zalo }: RiceStoryProps) {
   return (
-    <section aria-labelledby="tu-hat-lua" data-rice-story className="bg-rice">
+    <section aria-labelledby="tu-hat-lua" data-rice-story className="overflow-x-clip bg-rice">
       <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
         <SectionHeading id="tu-hat-lua" title={dict.story.title} />
         <a
@@ -97,8 +107,8 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                 <li
                   key={scene.slug}
                   data-story-scene={scene.slug}
-                  className={`relative pb-12 pl-14 last:pb-0 md:w-1/2 md:pb-8 ${
-                    onLeft ? "md:pl-0 md:pr-16" : "md:ml-auto md:pl-16"
+                  className={`relative pb-12 pl-14 last:pb-0 md:w-1/2 md:pb-8 ${BLEED_PHONE} ${
+                    onLeft ? `md:pl-0 md:pr-16 ${BLEED_LEFT_SCENE}` : `md:ml-auto md:pl-16 ${BLEED_RIGHT_SCENE}`
                   }`}
                 >
                   <span
@@ -155,7 +165,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                       loading="lazy"
                       decoding="async"
                       alt=""
-                      className="story-scene-fade mt-3 aspect-[4/3] h-auto w-full"
+                      className="story-scene-fade mt-3 -ml-[25%] aspect-[2/1] h-auto w-[150%] max-w-none"
                     />
                     <h3 className="mt-4 text-xl font-bold text-earth">{title}</h3>
                     <p data-story-text className="mt-2 leading-relaxed">

@@ -112,20 +112,31 @@ body {
 }
 
 /*
- * Story scenes (RiceStory.tsx): no frame. Each picture fades to transparent in a thin band (4 %)
- * at all four edges, the same way the hero scene fades: the drawing inside stays whole and the
- * picture sits on the Trắng gạo section without a cut line. The two
- * gradients are intersected, so a corner fades from both sides. The inline svg that replaces the
- * img copies its class, so the fade stays after the swap.
+ * Story scenes (RiceStory.tsx): a picture is 1200 x 600, the 800-unit drawing in the middle
+ * (16.6667 % to 83.3333 %) and 200 units of its background on each side. The drawing is shown
+ * whole; the background past it fades to transparent over --bleed-left / --bleed-right (0 shows
+ * none of it), so it goes away into the Trắng gạo section like the hero scene. A short fade at
+ * the top and bottom (sky and road) removes the cut lines there. The two gradients are
+ * intersected. The inline svg that replaces the img copies its class, so the fade stays.
  */
 .story-scene-fade {
-  -webkit-mask-image:
-    linear-gradient(to right, transparent, var(--color-earth) 4%, var(--color-earth) 96%, transparent),
-    linear-gradient(to bottom, transparent, var(--color-earth) 4%, var(--color-earth) 96%, transparent);
+  --story-scene-x: linear-gradient(
+    to right,
+    transparent calc(16.6667% - var(--bleed-left, 0px)),
+    var(--color-earth) 16.6667%,
+    var(--color-earth) 83.3333%,
+    transparent calc(83.3333% + var(--bleed-right, 0px))
+  );
+  --story-scene-y: linear-gradient(
+    to bottom,
+    transparent,
+    var(--color-earth) 3%,
+    var(--color-earth) 97%,
+    transparent
+  );
+  -webkit-mask-image: var(--story-scene-x), var(--story-scene-y);
   -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to right, transparent, var(--color-earth) 4%, var(--color-earth) 96%, transparent),
-    linear-gradient(to bottom, transparent, var(--color-earth) 4%, var(--color-earth) 96%, transparent);
+  mask-image: var(--story-scene-x), var(--story-scene-y);
   mask-composite: intersect;
 }
 
