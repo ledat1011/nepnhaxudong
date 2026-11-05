@@ -1063,6 +1063,41 @@ test.describe("the rice story road", () => {
     expect(await fan()).toBe(stopped);
   });
 
+  for (const viewport of [{ width: 320, height: 640 }, PHONE, DESKTOP]) {
+    test(`has its own pause button clear of the heading, road and pictures at ${viewport.width} px`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(viewport);
+      await page.goto("/en");
+      await page.waitForSelector(MOTION_ON);
+      const story = page.locator("[data-story-pause] button");
+      await story.scrollIntoViewIfNeeded();
+      await expect(story).toBeVisible();
+      const hits = await story.evaluate((button) => {
+        const box = button.getBoundingClientRect();
+        const meets = (r: DOMRect) =>
+          r.width > 0 && r.right > box.left && r.left < box.right && r.bottom > box.top && r.top < box.bottom;
+        const range = document.createRange();
+        range.selectNodeContents(document.getElementById("tu-hat-lua") as HTMLElement);
+        const section = (document.querySelector("[data-rice-story]") as HTMLElement).getBoundingClientRect();
+        return {
+          heading: [...range.getClientRects()].some(meets),
+          road: meets((document.querySelector("[data-story-road-wrap]") as HTMLElement).getBoundingClientRect()),
+          inSection: box.top >= section.top && box.right <= section.right,
+        };
+      });
+      expect(hits).toEqual({ heading: false, road: false, inSection: true });
+
+      // Both buttons drive the same loops.
+      await story.click();
+      const hero = page.locator("[data-hero-pause] button");
+      await expect(hero).toHaveAttribute("aria-pressed", "true");
+      await expect(story).toHaveAttribute("aria-pressed", "true");
+      await story.click();
+      await expect(hero).toHaveAttribute("aria-pressed", "false");
+    });
+  }
+
   test.describe("with reduced motion", () => {
     test.use({ reducedMotion: "reduce" });
 
@@ -1074,6 +1109,7 @@ test.describe("the rice story road", () => {
       await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(0);
       await expect(page.locator(`${SCENES} img`)).toHaveCount(8);
       await expect(page.locator("[data-story-road]")).toHaveCount(8);
+      await expect(page.locator("[data-story-pause] button")).toBeHidden();
       expect(await page.$eval("[data-story-grain]", (el) => getComputedStyle(el).opacity)).toBe("0");
       const titles = await page.$$eval(`${SCENES} h3`, (els) =>
         els.map((el) => getComputedStyle(el).opacity),

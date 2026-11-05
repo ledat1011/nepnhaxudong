@@ -1,5 +1,6 @@
 import { ZaloLink } from "@/components/contact/ZaloLink";
 import { RiceGrain } from "@/components/home/RicePlant";
+import { MotionPauseButton } from "@/components/motion/MotionPauseButton";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { BRAND } from "@/lib/brand/colors";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -80,14 +81,23 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
   return (
     <section aria-labelledby="tu-hat-lua" data-rice-story className="overflow-x-clip bg-rice">
       <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-        <SectionHeading id="tu-hat-lua" title={dict.story.title} />
-        <a
-          href="#sau-cau-chuyen"
-          data-story-skip
-          className="sr-only focus:not-sr-only focus:mb-6 focus:inline-flex focus:min-h-11 focus:items-center focus:rounded-full focus:bg-coat focus:px-6 focus:text-rice focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-earth"
-        >
-          {dict.story.skip}
-        </a>
+        <div className="relative">
+          <SectionHeading id="tu-hat-lua" title={dict.story.title} />
+          <a
+            href="#sau-cau-chuyen"
+            data-story-skip
+            className="sr-only focus:not-sr-only focus:mb-6 focus:inline-flex focus:min-h-11 focus:items-center focus:rounded-full focus:bg-coat focus:px-6 focus:text-rice focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-earth"
+          >
+            {dict.story.skip}
+          </a>
+          {/*
+            Out of the flow, so it moves nothing when it shows. Below md the heading can reach the
+            right edge, so the button sits in the section's top padding; from md, on the heading line.
+          */}
+          <div data-story-pause="" className="absolute -top-13 right-0 md:-top-0.5">
+            <MotionPauseButton dict={dict} />
+          </div>
+        </div>
         <div data-story-road-wrap className="relative">
           <span
             data-story-grain
