@@ -28,6 +28,7 @@ Cập nhật: 2026-11-05 — máy công ty (dừng session, ghi lại việc đa
 - Cảnh minh hoạ đã merge vào `main` (PR #21; spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md`, plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md`). Có: nền Hero trải hết bề ngang, mờ dần về mép trái, vòng lặp 60 giây và nút tạm dừng tròn; hình túi hút chân không là ảnh đầu tiên của bộ ảnh, kèm 3 chú thích; khối "Từ hạt lúa tới người dùng" dạng con đường dọc uốn với 8 cảnh (tải SVG khi gần tới, chuyển động riêng mỗi cảnh, hạt gạo đi theo cuộn, nền cảnh mờ dần ra hai bên) và 6 tư thế người. Còn làm sau khi merge, bằng PR riêng: đo Lighthouse `/vi`, `/en` (Chromium không chạy được từ công cụ dòng lệnh của agent) và ghi vào `docs/setup.md`; Delivery Gate, `inspect.mjs` ở 375 px và 1280 px, review `web-interface-guidelines`; review cả nhánh; bản cuối 6 tư thế người bằng Nano Banana trả phí trên nhánh riêng, trước khi lên web thật. Góp ý của chủ dự án: `docs/session/log/2026-11-04-may-cong-ty-canh-minh-hoa.md`.
 
 ## Đang làm
+<<<<<<< HEAD
 Chủ dự án duyệt nhóm A và B (việc 1 đến 16) của danh sách `docs/reviews/2026-11-05-tong-hop-de-xuat.md`. File quyết định `docs/decisions/0011-nhom-a-b.md` hiện chỉ nằm trên nhánh `feat/cong-khai-nhom-ab`, sẽ vào `main` khi nhánh đó merge. Cả 4 nhánh dưới đây đã commit hết và đã push; không có thay đổi nào chỉ nằm ở máy. Để làm tiếp: tạo worktree mới từ nhánh trên GitHub (`git worktree add .claude/worktrees/<ten> <nhanh>`), hoặc mở session mới và bảo nó làm tiếp nhánh đó.
 
 | Nhánh | Phần việc (theo quyết định 0011) | Đã làm | Còn lại |
@@ -39,9 +40,9 @@ Chủ dự án duyệt nhóm A và B (việc 1 đến 16) của danh sách `docs
 
 Các bước chung còn lại cho mỗi nhánh nhóm A, B: chạy đủ `npm test`, `npm run typecheck`, `npm run lint` sau khi gộp `main`; chạy Delivery Gate của antislop và tự xem bằng trình duyệt ở 375 px và 1280 px; review cả nhánh; mở PR; merge khi CI (gồm test đầu-cuối) đạt. Ba nhánh có thể chạm chung vài file của trang quản trị (ví dụ test full-stack, nhãn chung): merge từng nhánh một và gộp lại `main` trước nhánh tiếp theo.
 
-Bản xem thử ở local đang tắt. Muốn chạy lại cần Rancher Desktop đang chạy (database Postgres cổng 5433), xem `docs/setup.md`.
+Máy công ty: bản xem thử ở local đang tắt (web cổng 3011, API cổng 8090, database `nepnha_b3`). Muốn chạy lại cần Rancher Desktop đang chạy (Postgres cổng 5433), xem `docs/setup.md`.
 
-Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ liệu mẫu ở http://localhost:3000 (`npm run dev`, cấu hình `web-mock` trong `.claude/launch.json`). Máy này chưa có Rancher Desktop và đang dùng Java 17, nên chưa chạy được API và trang quản trị. Node trên máy là 24 (tài liệu ghi 22); web vẫn chạy được.
+Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ liệu mẫu ở http://localhost:3000 (`npm run dev`, cấu hình `web-mock` trong `.claude/launch.json`). Node trên máy là 24 (tài liệu ghi 22); web vẫn chạy được. Đã cài thêm (2026-11-05): 7 plugin của dự án (`--scope project`), `uv` 0.13.7, JDK 21 (Temurin 21.0.13, `JAVA_HOME` trỏ tới nó), Docker Desktop 29.9.2 (WSL 2). Phải thoát hẳn ứng dụng Claude rồi mở lại thì session mới thấy các biến môi trường mới. Chưa chạy thử API và trang quản trị trên máy này.
 
 ## Việc tiếp theo
 1. Làm tiếp 4 nhánh ở mục "Đang làm" cho tới khi merge.
@@ -58,7 +59,8 @@ Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ l
 ## Vướng mắc
 - Chưa đặt `GEMINI_API_KEY`.
 - 4 MCP của dự án chưa được duyệt trong Claude Code.
-- Máy `C:\Users\Admin\Desktop`: cần cài Rancher Desktop và JDK 21 (`JAVA_HOME` trỏ tới JDK 21) thì mới chạy được API, trang quản trị và `npm run test:fullstack`.
+- Chưa đăng nhập Recraft.
+- Ba dòng trên không còn đúng với máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): máy này đã đặt `GEMINI_API_KEY`, đã duyệt 4 MCP của dự án và đã đăng nhập Recraft; `claude mcp list` báo cả 4 kết nối được. Máy công ty đã đăng nhập Recraft (2026-11-04). Các máy khác chưa kiểm tra.
 
 ## Ghi chú cho phần D
 Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, Docker, máy chủ).

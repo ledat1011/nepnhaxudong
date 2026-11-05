@@ -79,18 +79,20 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
   Java language server is rewriting `api/target` during the run. Run the tests again in a temporary worktree
   outside the repo folder (for example in the scratchpad) before you treat it as a real failure.
 
-## Local containers: Docker through Rancher Desktop (owner, 2026-11-05)
-The project runs on several machines. On these machines the `docker` command comes from Rancher Desktop, not
-from Docker Desktop. Postgres for local work (`infra/compose.dev.yml`), Testcontainers and the full-stack e2e
-all need it.
+## Local containers: Docker Desktop or Rancher Desktop (owner, 2026-11-05)
+The project runs on several machines. The `docker` command comes from Rancher Desktop on some machines and from
+Docker Desktop on others. Use the one that the machine has. Postgres for local work (`infra/compose.dev.yml`),
+Testcontainers and the full-stack e2e all need it.
 1. Before you start anything that needs containers, run `docker info`.
-2. If it fails, look for Rancher Desktop: `rdctl` on PATH, or
-   `C:\Program Files\Rancher Desktop\resources\resources\win32\bin\rdctl.exe`.
-   - Installed: start it with `rdctl start`, then check `docker info` again every few seconds, for up to about
-     3 minutes. Do not change its settings. If it starts but `docker` still cannot connect, tell the owner to set
-     the container engine to `dockerd (moby)` in Rancher Desktop's Preferences.
-   - Not installed: stop and ask the owner to install Rancher Desktop on this machine (container engine
-     `dockerd (moby)`). Do not install it yourself, and do not install or start Docker Desktop.
+2. If it fails, find which one the machine has and start it. Do not change its settings.
+   - Rancher Desktop: `rdctl` on PATH, or
+     `C:\Program Files\Rancher Desktop\resources\resources\win32\bin\rdctl.exe`. Start it with `rdctl start`.
+     If it starts but `docker` still cannot connect, tell the owner to set the container engine to
+     `dockerd (moby)` in Rancher Desktop's Preferences.
+   - Docker Desktop: `C:\Program Files\Docker\Docker\Docker Desktop.exe`. Start it with `docker desktop start`,
+     or open that file.
+   - Then check `docker info` again every few seconds, for up to about 3 minutes.
+   - Neither is installed: stop and ask the owner to install one of them. Do not install it yourself.
 3. If a container, a database connection or a port still fails after that: report the exact command and the
    error, then stop and let the owner decide. Do not work around it (for example with another database, mock
    data, or a different port) without the owner's yes.
