@@ -1,7 +1,7 @@
 {
   "lang": "vi",
   "brand": {
-    "tagline": "[MẪU] Gạo nếp cái hoa vàng từ một gia đình ở xứ Đông"
+    "tagline": "Gạo nếp cái hoa vàng từ vùng quê Hải Dương"
   },
   "products": [
     {
@@ -58,10 +58,10 @@
     }
   ],
   "contact": {
-    "phone": "0000 000 000",
-    "zalo": "0000 000 000",
-    "messenger": "https://example.com/messenger",
-    "address": "[MẪU] Xứ Đông, tỉnh Hải Dương",
+    "phone": "0967 598 629",
+    "zalo": "0967 598 629",
+    "messenger": null,
+    "address": "Duy Tân, Kinh Môn, Hải Dương (nay thuộc Hải Phòng)",
     "mapUrl": "https://example.com/ban-do",
     "hours": "[MẪU] Mỗi ngày, 8:00 đến 20:00"
   },

@@ -19,12 +19,12 @@ const TEXT_FIELDS = new Set([
   "title",
   "excerpt",
   "bodyHtml",
-  "tagline",
   "sourceName",
-  "address",
   "hours",
 ]);
 
+// The owner gave the real tagline, address and phone number (2026-11-05), so these are not
+// sample text any more and are left out of the [MẪU] check.
 type Visit = (s: string, key: string | null, inText: boolean) => void;
 
 function walk(value: unknown, key: string | null, inText: boolean, visit: Visit): void {
@@ -85,7 +85,10 @@ describe("home fixtures", () => {
     ["vi", homeVi],
     ["en", homeEn],
   ])("has the agreed shape in %s", (lang, home) => {
-    expect(home.contact.phone).toBe("0000 000 000");
+    expect(home.contact.phone).toBe("0967 598 629");
+    expect(home.contact.zalo).toBe("0967 598 629");
+    // The family does not use Messenger, so the site shows no Messenger link.
+    expect(home.contact.messenger).toBeNull();
     expect(home.social.tiktok).toBeNull();
     expect(home.products).toHaveLength(1);
     const product = home.products[0];
@@ -101,7 +104,8 @@ describe("home fixtures", () => {
     expect(home.timeline.every((t) => t.image === null)).toBe(true);
     expect(home.press).toHaveLength(2);
     expect(home.press.every((p) => p.image === null)).toBe(true);
-    for (const v of Object.values(home.contact)) expect(v).not.toBeNull();
+    const { messenger: _messenger, ...rest } = home.contact;
+    for (const v of Object.values(rest)) expect(v).not.toBeNull();
   });
 });
 
