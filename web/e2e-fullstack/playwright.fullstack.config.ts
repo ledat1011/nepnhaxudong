@@ -26,7 +26,7 @@ export default defineConfig({
     { name: "flow", testMatch: /admin-flow\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
     {
       name: "checks",
-      testMatch: /admin-(mobile|a11y)\.spec\.ts/,
+      testMatch: /admin-(mobile|a11y|wide)\.spec\.ts/,
       dependencies: ["flow"],
       use: { ...devices["Desktop Chrome"], storageState: process.env.E2E_STATE_FILE },
     },

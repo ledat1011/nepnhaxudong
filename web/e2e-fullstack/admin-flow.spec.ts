@@ -58,7 +58,8 @@ test("first sign-in forces a password change, then the dashboard opens", async (
   await page.getByLabel("Nhập lại mật khẩu mới").fill(newPassword);
   await page.getByRole("button", { name: "Đổi mật khẩu" }).click();
   await expect(page).toHaveURL(new RegExp(`${ADMIN_ROUTES.home}$`));
-  await expect(page.getByRole("navigation", { name: "Menu chính" })).toBeVisible();
+  // A desktop browser: the menu is on the left from 1024 px.
+  await expect(page.getByRole("navigation", { name: "Menu bên" })).toBeVisible();
 });
 
 test("a new timeline event shows on the public home page", async () => {
@@ -299,7 +300,7 @@ test("the browser back button asks before it leaves a form with unsaved changes"
   const homeUrl = new RegExp(`${ADMIN_ROUTES.home}$`);
   const question = page.getByRole("alertdialog", { name: "Bạn có thay đổi chưa lưu. Rời trang?" });
   await page.goto(ADMIN_ROUTES.home);
-  await page.getByRole("link", { name: "Liên hệ & cài đặt" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Liên hệ & cài đặt" }).click();
   await expect(page).toHaveURL(settingsUrl);
   const phone = page.getByLabel("Điện thoại");
   await phone.fill("0912 345 678");
@@ -315,7 +316,7 @@ test("the browser back button asks before it leaves a form with unsaved changes"
   await expect(page).toHaveURL(homeUrl);
 
   // A form that is clean again has removed its extra history entry, so one press of back leaves at once.
-  await page.getByRole("link", { name: "Liên hệ & cài đặt" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Liên hệ & cài đặt" }).click();
   await page.getByLabel("Điện thoại").fill("0912 345 678");
   await page.getByRole("button", { name: "Bỏ thay đổi", exact: true }).click();
   await page.getByRole("alertdialog", { name: "Bỏ thay đổi chưa lưu?" }).getByRole("button", { name: "Bỏ thay đổi" }).click();

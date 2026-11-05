@@ -21,7 +21,7 @@ test("the sign-in page has no serious accessibility problem", async ({ browser, 
 
 test("the dashboard has no serious accessibility problem", async ({ page }) => {
   await page.goto(ADMIN_ROUTES.home);
-  await expect(page.getByRole("navigation", { name: "Menu chính" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Menu bên" })).toBeVisible();
   await page.waitForLoadState("networkidle");
   await expect(page.getByText("Đang tải")).toHaveCount(0);
   expect(await seriousViolations(page)).toEqual([]);
