@@ -86,10 +86,10 @@ describe("EditorToolbar formatting", () => {
     const events = userEvent.setup();
     editor.commands.setTextSelection({ from: 1, to: 5 });
     render(<EditorToolbar editor={editor} lang="vi" />);
-    const bold = screen.getByRole("button", { name: "In đậm" });
+    const bold = screen.getByRole("button", { name: "Đậm" });
     expect(bold).toHaveAttribute("aria-pressed", "false");
     await events.click(bold);
     expect(editor.getHTML()).toBe("<p><strong>Xem </strong>trang</p>");
-    expect(screen.getByRole("button", { name: "In đậm" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Đậm" })).toHaveAttribute("aria-pressed", "true");
   });
 });

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { FieldError, RequiredMark, RequiredNote } from "@/components/admin/form/FieldError";
 import { MissingEnBadge } from "@/components/admin/form/MissingEnBadge";
@@ -11,7 +11,7 @@ import { SaveBar } from "@/components/admin/form/SaveBar";
 import { SingleImageSection } from "@/components/admin/media/SingleImageSection";
 import { useScreenDetail } from "@/components/admin/shell/screen-detail";
 import { Badge } from "@/components/admin/ui/badge";
-import { Button } from "@/components/admin/ui/button";
+import { Button, buttonVariants } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/admin/ui/tabs";
@@ -24,6 +24,7 @@ import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
 import { publishChecks, type PublishCheckKey } from "@/lib/admin/publish-checks";
 import { storyPublicHref } from "@/lib/admin/public-links";
+import { shareOrCopy } from "@/lib/admin/share";
 import { slugify } from "@/lib/admin/slugify";
 import type { StoryAdminDto, StoryRequest } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
@@ -188,6 +189,10 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [checking, setChecking] = useState(false);
   const [askUnpublish, setAskUnpublish] = useState(false);
+  const [askDelete, setAskDelete] = useState(false);
+  // True right after "Đăng bài" succeeded here: the form then offers "Xem trên web" and "Chia sẻ".
+  const [justPublished, setJustPublished] = useState(false);
+  const [shareNote, setShareNote] = useState<string | null>(null);
   // The box "Quay lại sửa" moves to, once its tab is shown. A ref plus a counter: the effect reads it without a state update.
   const fix = useRef<FixTarget | null>(null);
   const [fixRequests, setFixRequests] = useState(0);
@@ -252,7 +257,14 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
     () => adminFetch<StoryAdminDto>(`/admin/stories/${baseline?.id}/unpublish`, { method: "POST" }),
     { successMessage: "Đã gỡ bài." },
   );
-  const busy = saving.pending || publishing.pending || unpublishing.pending || leaving;
+  const deleting = useSave(
+    async () => {
+      await adminFetch<void>(`/admin/stories/${baseline?.id}`, { method: "DELETE" });
+      return true;
+    },
+    { successMessage: "Đã xóa bài." },
+  );
+  const busy = saving.pending || publishing.pending || unpublishing.pending || deleting.pending || leaving;
 
   async function save() {
     setConflicts(NO_CONFLICTS);
@@ -286,10 +298,30 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   async function changeStatus(action: typeof publishing) {
     const result = await action.save();
     if (result === undefined) return;
+    setJustPublished(action === publishing);
+    setShareNote(null);
     // Only the status changes here. The form text is left as it is: the user may have typed meanwhile.
     setBaseline((current) =>
       current === undefined ? current : { ...current, status: result.status, publishedAt: result.publishedAt },
     );
+  }
+
+  /** "Xóa bài" after the yes: the story and its draft on this phone go, and the page goes back to the list. */
+  async function remove() {
+    const done = await deleting.save();
+    if (done === undefined) return;
+    draft.clear();
+    setLeaving(true);
+    leavePage(() => router.replace(ADMIN_ROUTES.stories));
+  }
+
+  /** "Chia sẻ": the share sheet of the phone with the public link, or a copy of it on a computer. */
+  async function share(href: string) {
+    setShareNote(null);
+    const title = baseline?.title.vi ?? "Nếp Nhà";
+    const result = await shareOrCopy({ title, text: title, url: `${window.location.origin}${href}` });
+    if (result === "copied") setShareNote("Đã sao chép đường dẫn. Mở Zalo và dán vào nhóm gia đình.");
+    else if (result === "failed") setShareNote("Không chia sẻ được. Hãy mở bài bằng Xem trên web rồi chép đường dẫn.");
   }
 
   function cancel() {
@@ -411,8 +443,54 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
     return () => clearTimeout(retry);
   }, [fixRequests, tab]);
 
+  const publicHref = storyPublicHref(baseline);
+  const saveFirst = !saved
+    ? "Hãy lưu bài trước khi đăng hoặc xem trước."
+    : dirty
+      ? "Hãy lưu thay đổi trước khi đăng, gỡ bài hoặc xem trước."
+      : null;
+  const cover = (
+    <fieldset ref={coverRef} disabled={locked} className="min-w-0">
+      <SingleImageSection
+        label="Ảnh bìa"
+        mediaId={state.coverMediaId}
+        onChange={(coverMediaId) => setState((current) => ({ ...current, coverMediaId }))}
+      />
+    </fieldset>
+  );
+
   return (
     <div className="flex flex-col gap-6 p-4 pb-44">
+      <RequiredNote />
+
+      {/* Title, cover and text first: what the writer came to do. Publishing comes after, under the text. */}
+      <Tabs {...fields.rootProps} value={tab} onValueChange={(next) => setTab(next as Lang)}>
+        <TabsList className="w-full">
+          <TabsTrigger value="vi">Tiếng Việt</TabsTrigger>
+          <TabsTrigger value="en">English</TabsTrigger>
+        </TabsList>
+        {LANGS.map((lang) => (
+          <TabsContent key={lang} value={lang} className="flex flex-col gap-5 pt-3">
+            <LangPanel
+              lang={lang}
+              fields={state[lang]}
+              cover={cover}
+              slugError={conflicts[lang]}
+              titleError={fields.errors[`title.${lang}`]}
+              readOnly={locked}
+              lostImages={lostImages[lang]}
+              onNormalized={(html, from) => bodyNormalized(lang, html, from)}
+              onTitle={(title) => changeTitle(lang, title)}
+              onSlug={(slug) => changeSlug(lang, slug)}
+              onExcerpt={(excerpt) => patchLang(lang, { excerpt })}
+              onBody={(bodyHtml) => patchLang(lang, { bodyHtml })}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      <ProblemMessage message={saveError} />
+
       <section aria-label="Trạng thái" className="flex flex-col gap-3 rounded-md border p-3">
         <div className="flex flex-wrap items-center gap-2">
           {saved ? (
@@ -445,52 +523,43 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
             Xem trước
           </Button>
         </div>
-        {!saved ? <p className="text-sm text-muted-foreground">Hãy lưu bài trước khi đăng.</p> : null}
-        {saved && dirty ? (
-          <p className="text-sm text-muted-foreground">Hãy lưu thay đổi trước khi đăng hoặc gỡ bài.</p>
-        ) : null}
-        {!saved || dirty ? <p className="text-sm text-muted-foreground">Hãy lưu trước khi xem trước.</p> : null}
+        {saveFirst !== null ? <p className="text-sm text-muted-foreground">{saveFirst}</p> : null}
         {draft.failed ? (
           <p className="text-sm text-muted-foreground">Máy này không lưu tạm được bài đang viết. Hãy bấm Lưu thường xuyên.</p>
         ) : null}
-        <ProblemMessage error={publishing.error ?? unpublishing.error} />
+        <ProblemMessage error={publishing.error ?? unpublishing.error ?? deleting.error} />
+        {justPublished && publicHref !== null ? (
+          <div className="flex flex-col gap-2 rounded-md bg-muted p-3">
+            <p className="text-sm font-semibold">Bài đã lên trang web. Gửi cho cả nhà xem nhé.</p>
+            <div className="flex flex-wrap gap-2">
+              <a href={publicHref} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline" })}>
+                Xem trên web
+                <span className="sr-only"> (mở thẻ mới)</span>
+              </a>
+              <Button type="button" onClick={() => void share(publicHref)}>
+                Chia sẻ
+              </Button>
+            </div>
+            {shareNote !== null ? (
+              <p role="status" className="text-sm">
+                {shareNote}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        {saved ? (
+          // Away from Đăng bài and Lưu, at the end of the part: a slip of the finger does not reach it.
+          <Button
+            type="button"
+            variant="outline"
+            className="self-start text-destructive"
+            disabled={busy}
+            onClick={() => setAskDelete(true)}
+          >
+            Xóa bài
+          </Button>
+        ) : null}
       </section>
-
-      <RequiredNote />
-
-      <fieldset ref={coverRef} disabled={locked} className="min-w-0">
-        <SingleImageSection
-          label="Ảnh bìa"
-          mediaId={state.coverMediaId}
-          onChange={(coverMediaId) => setState((current) => ({ ...current, coverMediaId }))}
-        />
-      </fieldset>
-
-      <Tabs {...fields.rootProps} value={tab} onValueChange={(next) => setTab(next as Lang)}>
-        <TabsList className="w-full">
-          <TabsTrigger value="vi">Tiếng Việt</TabsTrigger>
-          <TabsTrigger value="en">English</TabsTrigger>
-        </TabsList>
-        {LANGS.map((lang) => (
-          <TabsContent key={lang} value={lang} className="flex flex-col gap-5 pt-3">
-            <LangPanel
-              lang={lang}
-              fields={state[lang]}
-              slugError={conflicts[lang]}
-              titleError={fields.errors[`title.${lang}`]}
-              readOnly={locked}
-              lostImages={lostImages[lang]}
-              onNormalized={(html, from) => bodyNormalized(lang, html, from)}
-              onTitle={(title) => changeTitle(lang, title)}
-              onSlug={(slug) => changeSlug(lang, slug)}
-              onExcerpt={(excerpt) => patchLang(lang, { excerpt })}
-              onBody={(bodyHtml) => patchLang(lang, { bodyHtml })}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      <ProblemMessage message={saveError} />
 
       <SaveBar
         dirty={dirty}
@@ -528,6 +597,20 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
             destructive
             onConfirm={() => void changeStatus(unpublishing)}
           />
+          <ConfirmDialog
+            open={askDelete}
+            onOpenChange={setAskDelete}
+            title="Xóa bài này?"
+            description={
+              published
+                ? "Bài sẽ bị xóa hẳn và không lấy lại được. Bài cũng biến mất khỏi trang web."
+                : "Bài sẽ bị xóa hẳn và không lấy lại được."
+            }
+            confirmLabel="Xóa bài"
+            cancelLabel="Không xóa"
+            destructive
+            onConfirm={() => void remove()}
+          />
         </>
       ) : null}
     </div>
@@ -537,6 +620,8 @@ export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
 type PanelProps = {
   lang: Lang;
   fields: LangFields;
+  /** The cover picker. One cover serves both languages; it sits between the title and the text. */
+  cover: ReactNode;
   slugError: string | null;
   titleError?: string | null;
   readOnly: boolean;
@@ -551,6 +636,7 @@ type PanelProps = {
 function LangPanel({
   lang,
   fields,
+  cover,
   slugError,
   titleError,
   readOnly,
@@ -562,6 +648,9 @@ function LangPanel({
   onBody,
 }: PanelProps) {
   const id = useId();
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  // A slug that is already used must be seen: the options open by themselves then.
+  const showOptions = optionsOpen || slugError !== null;
   // Only the Vietnamese title is required. The English one is needed once English text exists; the API says so.
   const required = lang === "vi";
   return (
@@ -583,28 +672,8 @@ function LangPanel({
         <FieldError id={`${id}-title`} message={titleError} />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor={`${id}-slug`}>Đường dẫn</Label>
-        <Input
-          id={`${id}-slug`}
-          value={fields.slug}
-          readOnly={readOnly}
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          placeholder="tu-dong-tao-tu-tieu-de"
-          aria-invalid={slugError !== null}
-          aria-describedby={slugError === null ? undefined : `${id}-slug-error`}
-          onChange={(event) => onSlug(event.target.value)}
-        />
-        {slugError !== null ? (
-          <p id={`${id}-slug-error`} role="alert" className="text-sm text-destructive">
-            {slugError}
-          </p>
-        ) : null}
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor={`${id}-excerpt`}>Tóm tắt</Label>
-        <Textarea id={`${id}-excerpt`} data-fix={`${lang}-excerpt`} rows={3} readOnly={readOnly} value={fields.excerpt} onChange={(event) => onExcerpt(event.target.value)} />
+        {cover}
+        {lang === "en" ? <p className="text-sm text-muted-foreground">Ảnh bìa dùng chung cho tiếng Việt và English.</p> : null}
       </div>
       <div data-fix={`${lang}-body`} className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Nội dung</span>
@@ -621,6 +690,35 @@ function LangPanel({
           readOnly={readOnly}
         />
       </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={`${id}-excerpt`}>Tóm tắt</Label>
+        <Textarea id={`${id}-excerpt`} data-fix={`${lang}-excerpt`} rows={3} readOnly={readOnly} value={fields.excerpt} onChange={(event) => onExcerpt(event.target.value)} />
+      </div>
+      <details open={showOptions} onToggle={(event) => setOptionsOpen(event.currentTarget.open)} className="rounded-md border">
+        <summary className="px-3 py-3 font-medium">Thêm tùy chọn</summary>
+        <div className="flex flex-col gap-1.5 border-t p-3">
+          <Label htmlFor={`${id}-slug`}>Đường dẫn</Label>
+          <Input
+            id={`${id}-slug`}
+            value={fields.slug}
+            readOnly={readOnly}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            aria-invalid={slugError !== null}
+            aria-describedby={slugError === null ? `${id}-slug-hint` : `${id}-slug-error ${id}-slug-hint`}
+            onChange={(event) => onSlug(event.target.value)}
+          />
+          {slugError !== null ? (
+            <p id={`${id}-slug-error`} role="alert" className="text-sm text-destructive">
+              {slugError}
+            </p>
+          ) : null}
+          <p id={`${id}-slug-hint`} className="text-sm text-muted-foreground">
+            Phần cuối của địa chỉ bài trên web. Để trống thì tự tạo từ tiêu đề.
+          </p>
+        </div>
+      </details>
     </>
   );
 }

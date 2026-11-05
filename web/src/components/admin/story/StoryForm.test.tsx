@@ -251,7 +251,7 @@ describe("StoryForm slug conflict", () => {
     await events.click(screen.getByRole("tab", { name: "Tiếng Việt" }));
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(screen.getByRole("tab", { name: "English" })).toHaveAttribute("aria-selected", "true"));
-    expect(screen.getByLabelText("Đường dẫn")).toHaveAccessibleDescription("Đường dẫn bài viết đã tồn tại.");
+    expect(screen.getByLabelText("Đường dẫn")).toHaveAccessibleDescription(/^Đường dẫn bài viết đã tồn tại./);
     expect(screen.getAllByRole("alert")).toHaveLength(1);
   });
 
@@ -271,7 +271,7 @@ describe("StoryForm slug conflict", () => {
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     // Both slugs changed, so only the list of other stories can tell that the English one is taken.
     await waitFor(() => expect(screen.getByRole("tab", { name: "English" })).toHaveAttribute("aria-selected", "true"));
-    expect(screen.getByLabelText("Đường dẫn")).toHaveAccessibleDescription("Đường dẫn bài viết đã tồn tại.");
+    expect(screen.getByLabelText("Đường dẫn")).toHaveAccessibleDescription(/^Đường dẫn bài viết đã tồn tại./);
     await events.click(screen.getByRole("tab", { name: "Tiếng Việt" }));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
@@ -287,7 +287,7 @@ describe("StoryForm slug conflict", () => {
     await events.click(screen.getByRole("tab", { name: "English" }));
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(screen.getByRole("tab", { name: "Tiếng Việt" })).toHaveAttribute("aria-selected", "true"));
-    expect(screen.getByLabelText("Đường dẫn")).toHaveAccessibleDescription("Đường dẫn bài viết đã tồn tại.");
+    expect(screen.getByLabelText("Đường dẫn")).toHaveAccessibleDescription(/^Đường dẫn bài viết đã tồn tại./);
   });
 
   it("falls back to the language whose slug was changed when the list cannot be read", async () => {
@@ -306,7 +306,7 @@ describe("StoryForm slug conflict", () => {
     await events.click(screen.getByRole("tab", { name: "Tiếng Việt" }));
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(screen.getByRole("tab", { name: "English" })).toHaveAttribute("aria-selected", "true"));
-    expect(screen.getByLabelText("Đường dẫn")).toHaveAccessibleDescription("Đường dẫn bài viết đã tồn tại.");
+    expect(screen.getByLabelText("Đường dẫn")).toHaveAccessibleDescription(/^Đường dẫn bài viết đã tồn tại./);
   });
 
   it("removes the message when that slug is edited", async () => {
@@ -434,7 +434,7 @@ describe("StoryForm preview", () => {
     expect(screen.getByRole("button", { name: "Xem trước" })).toBeEnabled();
     await events.type(screen.getByLabelText(TITLE_LABEL), "!");
     expect(screen.getByRole("button", { name: "Xem trước" })).toBeDisabled();
-    expect(screen.getByText("Hãy lưu trước khi xem trước.")).toBeInTheDocument();
+    expect(screen.getByText("Hãy lưu thay đổi trước khi đăng, gỡ bài hoặc xem trước.")).toBeInTheDocument();
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Xem trước" })).toBeEnabled());
   });
@@ -508,7 +508,7 @@ describe("StoryForm publish", () => {
     await ready();
     await events.type(screen.getByLabelText(TITLE_LABEL), "!");
     expect(screen.getByRole("button", { name: "Đăng bài" })).toBeDisabled();
-    expect(screen.getByText("Hãy lưu thay đổi trước khi đăng hoặc gỡ bài.")).toBeInTheDocument();
+    expect(screen.getByText("Hãy lưu thay đổi trước khi đăng, gỡ bài hoặc xem trước.")).toBeInTheDocument();
     await events.click(screen.getByRole("button", { name: "Đăng bài" }));
     expect(calls("/admin/stories/5/publish")).toHaveLength(0);
   });
@@ -517,7 +517,7 @@ describe("StoryForm publish", () => {
     render(<StoryForm />);
     await ready();
     expect(screen.queryByRole("button", { name: "Đăng bài" })).not.toBeInTheDocument();
-    expect(screen.getByText("Hãy lưu bài trước khi đăng.")).toBeInTheDocument();
+    expect(screen.getByText("Hãy lưu bài trước khi đăng hoặc xem trước.")).toBeInTheDocument();
   });
 
   it("signs in again after a 401 and runs the same publish once more", async () => {
@@ -970,3 +970,150 @@ describe("StoryForm draft in the browser", () => {
   });
 });
 
+describe("StoryForm layout", () => {
+  it("puts Tiêu đề, Ảnh bìa and Nội dung first, and the status part after the text", async () => {
+    render(<StoryForm initial={story()} />);
+    await ready();
+    const order = [
+      screen.getByLabelText(TITLE_LABEL),
+      screen.getByRole("group", { name: /Ảnh bìa/ }),
+      screen.getByRole("textbox", { name: "Nội dung" }),
+      screen.getByLabelText("Tóm tắt"),
+      screen.getByRole("region", { name: "Trạng thái" }),
+    ];
+    for (let i = 0; i + 1 < order.length; i += 1) {
+      expect(order[i].compareDocumentPosition(order[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
+  it("shows one line, not two, about saving first for a new story", async () => {
+    render(<StoryForm />);
+    await ready();
+    expect(screen.getAllByText(/^Hãy lưu/)).toHaveLength(1);
+  });
+
+  it("keeps Đường dẫn closed under Thêm tùy chọn until it is opened", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    const options = screen.getByText("Thêm tùy chọn").closest("details")!;
+    expect(options).not.toHaveAttribute("open");
+    expect(within(options).getByLabelText("Đường dẫn")).toHaveValue("mua-gat");
+    await events.click(screen.getByText("Thêm tùy chọn"));
+    expect(options).toHaveAttribute("open");
+  });
+
+  it("opens Thêm tùy chọn by itself when the slug is already used", async () => {
+    const events = userEvent.setup();
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "PUT") throw new AdminApiError(409, "Đường dẫn bài viết đã tồn tại.");
+      return [];
+    });
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.type(screen.getByLabelText(TITLE_LABEL), "!");
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    const slug = await screen.findByLabelText("Đường dẫn");
+    await waitFor(() => expect(slug).toHaveAccessibleDescription(/^Đường dẫn bài viết đã tồn tại./));
+    expect(slug.closest("details")).toHaveAttribute("open");
+  });
+});
+
+describe("StoryForm delete", () => {
+  it("is not offered for a story that is not saved yet", async () => {
+    render(<StoryForm />);
+    await ready();
+    expect(screen.queryByRole("button", { name: "Xóa bài" })).toBeNull();
+  });
+
+  it("asks first, and Không xóa keeps the story", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Xóa bài" }));
+    const question = await screen.findByRole("alertdialog", { name: "Xóa bài này?" });
+    expect(question).toHaveTextContent("Bài sẽ bị xóa hẳn và không lấy lại được.");
+    await events.click(within(question).getByRole("button", { name: "Không xóa" }));
+    expect(calls("/admin/stories/5").filter(([, init]) => init?.method === "DELETE")).toHaveLength(0);
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("deletes after a yes and goes back to the list of stories", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story({ status: "PUBLISHED", publishedAt: "2026-11-04T01:00:00Z" })} />);
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Xóa bài" }));
+    const question = await screen.findByRole("alertdialog", { name: "Xóa bài này?" });
+    expect(question).toHaveTextContent("Bài cũng biến mất khỏi trang web.");
+    await events.click(within(question).getByRole("button", { name: "Xóa bài" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/cau-chuyen"));
+    expect(calls("/admin/stories/5")).toContainEqual(["/admin/stories/5", { method: "DELETE" }]);
+  });
+
+  it("stays on the story and shows the API text when the delete fails", async () => {
+    const events = userEvent.setup();
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [];
+      if (init?.method === "DELETE") throw new AdminApiError(404, "Không tìm thấy bài viết.");
+      return undefined;
+    });
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Xóa bài" }));
+    const question = await screen.findByRole("alertdialog", { name: "Xóa bài này?" });
+    await events.click(within(question).getByRole("button", { name: "Xóa bài" }));
+    expect(await screen.findByText("Không tìm thấy bài viết.")).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+  });
+});
+
+describe("StoryForm after publishing", () => {
+  function setShare(share: ((value: ShareData) => Promise<void>) | undefined) {
+    Object.defineProperty(navigator, "share", { value: share, configurable: true, writable: true });
+  }
+
+  afterEach(() => setShare(undefined));
+
+  it("offers Xem trên web and Chia sẻ right after Đăng bài", async () => {
+    const events = userEvent.setup();
+    const share = vi.fn().mockResolvedValue(undefined);
+    setShare(share);
+    render(<StoryForm initial={story()} />);
+    await ready();
+    expect(screen.queryByRole("button", { name: "Chia sẻ" })).toBeNull();
+    await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    await confirmPublish(events);
+    const view = await screen.findByRole("link", { name: /Xem trên web/ });
+    expect(view).toHaveAttribute("href", "/vi/cau-chuyen/mua-gat");
+    expect(view).toHaveAttribute("target", "_blank");
+    await events.click(screen.getByRole("button", { name: "Chia sẻ" }));
+    expect(share).toHaveBeenCalledWith({
+      title: "Mùa gặt",
+      text: "Mùa gặt",
+      url: `${window.location.origin}/vi/cau-chuyen/mua-gat`,
+    });
+  });
+
+  it("copies the link and says so when the device has no share sheet", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    await confirmPublish(events);
+    await events.click(await screen.findByRole("button", { name: "Chia sẻ" }));
+    expect(await navigator.clipboard.readText()).toBe(`Mùa gặt\n${window.location.origin}/vi/cau-chuyen/mua-gat`);
+    expect(await screen.findByText("Đã sao chép đường dẫn. Mở Zalo và dán vào nhóm gia đình.")).toBeInTheDocument();
+  });
+
+  it("takes the offer away when the story is unpublished", async () => {
+    const events = userEvent.setup();
+    render(<StoryForm initial={story()} />);
+    await ready();
+    await events.click(screen.getByRole("button", { name: "Đăng bài" }));
+    await confirmPublish(events);
+    await events.click(await screen.findByRole("button", { name: "Gỡ bài" }));
+    await confirmUnpublish(events);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Chia sẻ" })).toBeNull());
+  });
+});

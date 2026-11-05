@@ -2,7 +2,6 @@
 
 import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
-import { Bold, Heading2, Heading3, Italic, Link2, List, ListOrdered, Quote, type LucideIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { MediaPicker } from "@/components/admin/media/MediaPicker";
 import { Button } from "@/components/admin/ui/button";
@@ -27,7 +26,8 @@ type Props = {
 
 type Tool = {
   label: string;
-  icon: LucideIcon;
+  /** The look of the word on the button, when it can show what the tool does (bold, italic). */
+  textClass?: string;
   active: boolean;
   run(editor: Editor): void;
 };
@@ -41,7 +41,10 @@ function withScheme(address: string): string {
   return LOOKS_LIKE_DOMAIN.test(address) ? `https://${address}` : address;
 }
 
-/** The tools of the editor: headings, bold, italic, lists, quote, link and image. Each one is at least 44 px. */
+/**
+ * The tools of the editor: headings, bold, italic, lists, quote, link and image. Each button says what it does in
+ * words (older family members do not read H2 or B), and each one is at least 44 px high.
+ */
 export function EditorToolbar({ editor, lang }: Props) {
   const active = useEditorState({
     editor,
@@ -61,54 +64,49 @@ export function EditorToolbar({ editor, lang }: Props) {
   const tools: Tool[] = [
     {
       label: "Tiêu đề lớn",
-      icon: Heading2,
       active: active.h2,
       run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
     },
     {
       label: "Tiêu đề nhỏ",
-      icon: Heading3,
       active: active.h3,
       run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
     },
-    { label: "In đậm", icon: Bold, active: active.bold, run: (e) => e.chain().focus().toggleBold().run() },
-    { label: "In nghiêng", icon: Italic, active: active.italic, run: (e) => e.chain().focus().toggleItalic().run() },
-    { label: "Danh sách chấm", icon: List, active: active.bullet, run: (e) => e.chain().focus().toggleBulletList().run() },
+    { label: "Đậm", textClass: "font-bold", active: active.bold, run: (e) => e.chain().focus().toggleBold().run() },
+    { label: "Nghiêng", textClass: "italic", active: active.italic, run: (e) => e.chain().focus().toggleItalic().run() },
+    { label: "Danh sách", active: active.bullet, run: (e) => e.chain().focus().toggleBulletList().run() },
     {
-      label: "Danh sách số",
-      icon: ListOrdered,
+      label: "Đánh số",
       active: active.ordered,
       run: (e) => e.chain().focus().toggleOrderedList().run(),
     },
-    { label: "Trích dẫn", icon: Quote, active: active.quote, run: (e) => e.chain().focus().toggleBlockquote().run() },
+    { label: "Trích dẫn", active: active.quote, run: (e) => e.chain().focus().toggleBlockquote().run() },
   ];
 
   return (
     <div role="toolbar" aria-label="Định dạng bài viết" className="flex flex-wrap items-center gap-1 border-b bg-muted/50 p-1">
-      {tools.map(({ label, icon: Icon, active: on, run }) => (
+      {tools.map(({ label, textClass, active: on, run }) => (
         <Button
           key={label}
           type="button"
           variant={on ? "default" : "outline"}
-          size="icon"
-          aria-label={label}
+          className={`px-3 ${textClass ?? ""}`}
           aria-pressed={on}
           // Keep the selection in the editor when the button is pressed.
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => run(editor)}
         >
-          <Icon />
+          {label}
         </Button>
       ))}
       <Button
         type="button"
         variant={active.link ? "default" : "outline"}
-        size="icon"
-        aria-label="Liên kết"
+        className="px-3"
         aria-pressed={active.link}
         onClick={() => setLinkOpen(true)}
       >
-        <Link2 />
+        Liên kết
       </Button>
       <ImageInserter editor={editor} lang={lang} />
       {linkOpen ? <LinkDialog editor={editor} onClose={() => setLinkOpen(false)} /> : null}

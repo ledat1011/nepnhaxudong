@@ -58,18 +58,20 @@ describe("RichTextEditor", () => {
   it("has the nine tools and no strike-through or code button", async () => {
     render(<RichTextEditor lang="vi" value="" onChange={vi.fn()} />);
     await screen.findByRole("textbox", { name: "Nội dung" });
-    const names = screen.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent);
-    expect(names).toEqual([
+    // Each tool says what it does in words on the button: no icon-only button to guess.
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.map((button) => button.textContent)).toEqual([
       "Tiêu đề lớn",
       "Tiêu đề nhỏ",
-      "In đậm",
-      "In nghiêng",
-      "Danh sách chấm",
-      "Danh sách số",
+      "Đậm",
+      "Nghiêng",
+      "Danh sách",
+      "Đánh số",
       "Trích dẫn",
       "Liên kết",
       "Chèn ảnh",
     ]);
+    expect(buttons.every((button) => !button.hasAttribute("aria-label"))).toBe(true);
   });
 
   it("emits html without h1, script or style after a paste", async () => {
