@@ -20,11 +20,13 @@ export function isSafe(root: Element): boolean {
  * Replaces the <img> with the same file as inline svg, so the motion code can move its groups.
  * The file is the page's own (same origin) and is usually in the cache already. Returns null and
  * keeps the <img> on any failure: a network error, a bad status, broken or unsafe markup, or an
- * <img> that left the page while the file loaded.
+ * <img> that left the page while the file loaded. The page work (parse, check, swap) waits for
+ * `ready`, so the caller can run it when the browser is idle; a rejected `ready` keeps the <img>.
  */
 export async function inlineSvg(
   img: HTMLImageElement,
   fetcher: typeof fetch = fetch,
+  ready: () => Promise<void> = () => Promise.resolve(),
 ): Promise<SVGSVGElement | null> {
   try {
     const src = img.currentSrc || img.src;
@@ -32,6 +34,7 @@ export async function inlineSvg(
     const response = await fetcher(src);
     if (!response.ok) return null;
     const text = await response.text();
+    await ready();
     const doc = new DOMParser().parseFromString(text, "image/svg+xml");
     const source = doc.documentElement;
     if (doc.getElementsByTagName("parsererror").length > 0) return null;

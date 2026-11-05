@@ -136,6 +136,34 @@ function place(top: number) {
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+/** Lets the swaps and the idle waits after them (a timer without requestIdleCallback) finish. */
+const settle = async () => {
+  for (let i = 0; i < 4; i++) await flush();
+};
+
+/** A requestIdleCallback that runs only when the test calls `run`. */
+function stubIdle() {
+  const queue = new Map<number, () => void>();
+  let next = 1;
+  const cancel = vi.fn((id: number) => queue.delete(id));
+  window.requestIdleCallback = ((callback: () => void) => {
+    queue.set(next, callback);
+    return next++;
+  }) as unknown as typeof window.requestIdleCallback;
+  window.cancelIdleCallback = cancel as unknown as typeof window.cancelIdleCallback;
+  return {
+    cancel,
+    size: () => queue.size,
+    run: () => {
+      const callbacks = [...queue.values()];
+      queue.clear();
+      callbacks.forEach((callback) => callback());
+    },
+  };
+}
+
+const onScreenTriggers = (fake: ReturnType<typeof fakeModules>) =>
+  fake.triggers.filter((t) => t.vars.start === "top bottom" && t.vars.once === true);
 
 function svgFor(slug: string) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -149,7 +177,7 @@ const loadTriggers = (fake: ReturnType<typeof fakeModules>) =>
 /** Runs every scene's load trigger and waits for the (mocked) inline swaps. */
 async function load(fake: ReturnType<typeof fakeModules>) {
   loadTriggers(fake).forEach((t) => t.vars.onEnter?.());
-  await flush();
+  await settle();
 }
 
 const introStart = () => `clamp(top ${STORY_INTRO_LINE * 100}%)`;
@@ -179,6 +207,8 @@ beforeEach(() => {
 afterEach(() => {
   document.body.innerHTML = "";
   vi.restoreAllMocks();
+  delete (window as Partial<Window>).requestIdleCallback;
+  delete (window as Partial<Window>).cancelIdleCallback;
 });
 
 describe("setupRiceStory", () => {
@@ -200,12 +230,12 @@ describe("setupRiceStory", () => {
     expect(mocks.inlineSvg).not.toHaveBeenCalled();
     // Only the scene that comes near loads; the others wait for their own trigger.
     triggers[0].vars.onEnter?.();
-    await flush();
+    await settle();
     expect(mocks.inlineSvg).toHaveBeenCalledTimes(1);
-    expect(mocks.inlineSvg).toHaveBeenCalledWith(items()[0].querySelector("img"));
+    expect(mocks.inlineSvg.mock.calls[0][0]).toBe(items()[0].querySelector("img"));
     expect(mocks.build).toHaveBeenCalledTimes(1);
     triggers.slice(1).forEach((t) => t.vars.onEnter?.());
-    await flush();
+    await settle();
     expect(mocks.inlineSvg).toHaveBeenCalledTimes(8);
   });
 
@@ -275,7 +305,7 @@ describe("setupRiceStory", () => {
     expect(mocks.add).toHaveBeenCalledTimes(8);
     const entry = mocks.add.mock.results[0].value as { setVisible: ReturnType<typeof vi.fn> };
     const loopTrigger = fake.triggers.find(
-      (t) => t.vars.trigger === items()[0] && t.vars.start === "top bottom",
+      (t) => t.vars.trigger === items()[0] && t.vars.start === "top bottom" && !t.vars.once,
     );
     expect(loopTrigger?.vars.end).toBe("bottom top");
     loopTrigger?.vars.onToggle?.({ isActive: true });
@@ -296,7 +326,7 @@ describe("setupRiceStory", () => {
     setupRiceStory(fake.modules, document);
     await load(fake);
     expect(mocks.add).not.toHaveBeenCalled();
-    expect(fake.triggers.filter((t) => t.vars.start === "top bottom")).toHaveLength(0);
+    expect(fake.triggers.filter((t) => t.vars.start === "top bottom" && !t.vars.once)).toHaveLength(0);
   });
 
   it("fills the stop of the scene in the middle of the screen", () => {
@@ -460,7 +490,7 @@ describe("setupRiceStory", () => {
     // Run 1's file swaps the img, so run 2's file finds no img and returns null.
     pending[0](svgFor(STORY_SCENES[0].slug));
     pending[1](svgFor(STORY_SCENES[0].slug));
-    await flush();
+    await settle();
     const inline = items()[0].querySelector("svg[data-scene]");
     expect(inline).not.toBeNull();
     expect(mocks.build).toHaveBeenCalledTimes(1);
@@ -514,6 +544,64 @@ describe("setupRiceStory", () => {
     } finally {
       window.history.replaceState(null, "", "/");
     }
+  });
+
+  describe("the swap waits for an idle moment", () => {
+    it("parses the file and builds the motion only when the browser is idle", async () => {
+      const idle = stubIdle();
+      let swapped = 0;
+      // Like the real swap: it fetches, then waits for `ready` before the page work.
+      mocks.inlineSvg.mockImplementation(async (img: HTMLImageElement, _fetch: unknown, ready: () => Promise<void>) => {
+        await ready();
+        swapped++;
+        return svgFor(img.closest("li")?.getAttribute("data-story-scene") ?? "");
+      });
+      const fake = fakeModules();
+      setupRiceStory(fake.modules, document);
+      loadTriggers(fake)[0].vars.onEnter?.();
+      await settle();
+      expect(swapped).toBe(0);
+      expect(mocks.build).not.toHaveBeenCalled();
+      idle.run();
+      await settle();
+      expect(swapped).toBe(1);
+      // Building the motion is a second idle step.
+      expect(mocks.build).not.toHaveBeenCalled();
+      idle.run();
+      await settle();
+      expect(mocks.build).toHaveBeenCalledTimes(1);
+    });
+
+    it("does the work at once when the scene comes on screen first", async () => {
+      stubIdle();
+      const fake = fakeModules();
+      setupRiceStory(fake.modules, document);
+      const onScreen = onScreenTriggers(fake);
+      expect(onScreen.map((t) => t.vars.trigger)).toEqual(items());
+      loadTriggers(fake)[0].vars.onEnter?.();
+      await settle();
+      expect(mocks.build).not.toHaveBeenCalled();
+      // The scene's top reaches the bottom of the screen, before its intro line.
+      onScreen[0].vars.onEnter?.();
+      await settle();
+      expect(mocks.build).toHaveBeenCalledTimes(1);
+      expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(1);
+    });
+
+    it("cancels the idle waits on cleanup", async () => {
+      const idle = stubIdle();
+      const fake = fakeModules();
+      const cleanup = setupRiceStory(fake.modules, document);
+      loadTriggers(fake).forEach((t) => t.vars.onEnter?.());
+      await settle();
+      expect(idle.size()).toBe(8);
+      (cleanup as () => void)();
+      expect(idle.cancel).toHaveBeenCalledTimes(8);
+      onScreenTriggers(fake).forEach((t) => expect(t.kill).toHaveBeenCalled());
+      idle.run();
+      await settle();
+      expect(mocks.build).not.toHaveBeenCalled();
+    });
   });
 
   it("does not move the drawings that arrive after cleanup", async () => {

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { loadGsap, type GsapModules, type MotionSetup } from "@/lib/motion/load-gsap";
+import { whenIdle } from "@/lib/motion/idle";
 import { whenScrollingStops } from "@/lib/motion/scroll-wait";
 import { setupJourney } from "@/lib/motion/journey";
 import { setupHeroScene } from "@/lib/motion/hero-scene";
@@ -29,17 +30,6 @@ const IDLE_FALLBACK_MS = 200;
 
 type MatchMediaHandle = { revert: () => void };
 
-/** Waits until the browser is idle. Returns a function that cancels the wait. */
-function whenIdle(callback: () => void): () => void {
-  if (typeof window.requestIdleCallback === "function") {
-    const id = window.requestIdleCallback(callback, {
-      timeout: IDLE_TIMEOUT_MS,
-    });
-    return () => window.cancelIdleCallback(id);
-  }
-  const id = window.setTimeout(callback, IDLE_FALLBACK_MS);
-  return () => window.clearTimeout(id);
-}
 
 /** Calls `callback` at the window `load` event. Returns a function that cancels the wait. */
 function whenLoaded(callback: () => void): () => void {
@@ -102,7 +92,7 @@ export function HomeMotion({ setups = HOME_SETUPS }: HomeMotionProps) {
             };
           });
         });
-      });
+      }, IDLE_TIMEOUT_MS, IDLE_FALLBACK_MS);
     };
 
     const start = () => {

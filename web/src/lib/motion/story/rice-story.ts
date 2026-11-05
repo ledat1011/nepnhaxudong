@@ -1,5 +1,6 @@
 import { roadPoint } from "@/lib/story/road";
 import type { SceneSlug } from "@/lib/story/scenes";
+import { whenIdle } from "../idle";
 import type { GsapModules, MotionSetup } from "../load-gsap";
 import { pendingHashScroll, shouldHideElement } from "../reveal";
 import { getLoopController, type Loop, type LoopEntry } from "../loops";
@@ -18,12 +19,27 @@ export const STORY_INTRO_LINE = 0.75;
  * stop of the scene on this line is filled.
  */
 export const STORY_ROAD_LINE = 0.5;
+/**
+ * The page work of a drawing (parse and swap, then build its motion) waits for an idle moment, at
+ * most this long per step, so it does not land in a frame of the scroll. Two steps stay well
+ * inside the screen and a quarter between the load trigger and the intro line.
+ */
+export const STORY_IDLE_TIMEOUT_MS = 300;
 /** The grain follows the scroll this many seconds late, so it glides instead of jumping. */
 export const STORY_ROAD_SCRUB_S = 0.6;
 /** After a long gap (a background tab), the loop goes on from where it was, not far ahead. */
 const LOOP_MAX_STEP_S = 0.1;
 
-type Scene = { li: HTMLElement; slug: SceneSlug; svg: SVGSVGElement | null; played: boolean };
+type Scene = {
+  li: HTMLElement;
+  slug: SceneSlug;
+  svg: SVGSVGElement | null;
+  played: boolean;
+  /** The scene has come on screen: its waits end at once. */
+  urgent: boolean;
+  /** Ends the scene's current wait. */
+  wake: (() => void) | null;
+};
 
 /**
  * Plays a paused GSAP loop by stepping it from GSAP's ticker, at most LOOP_UPDATES_PER_S times a
@@ -182,7 +198,7 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
 
   const scenes: Scene[] = Array.from(
     wrap.querySelectorAll<HTMLElement>("li[data-story-scene]"),
-    (li) => ({ li, slug: li.dataset.storyScene as SceneSlug, svg: null, played: false }),
+    (li) => ({ li, slug: li.dataset.storyScene as SceneSlug, svg: null, played: false, urgent: false, wake: null }),
   );
   const stops = scenes.flatMap(({ li }) => li.querySelector<HTMLElement>("[data-story-stop]") ?? []);
   const grain = wrap.querySelector<HTMLElement>("[data-story-grain]");
@@ -191,6 +207,39 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
   let disposed = false;
   let undoRoad: () => void = () => undefined;
   const loads: ScrollTrigger[] = [];
+  const waits = new Set<() => void>();
+
+  /**
+   * A wait that ends when the browser is idle, or at once when the scene is on screen. It is
+   * rejected on cleanup, so a pending swap keeps its img.
+   */
+  const idle = (scene: Scene) => (): Promise<void> =>
+    new Promise((resolve, reject) => {
+      if (disposed) return reject(new Error("stopped"));
+      if (scene.urgent) return resolve();
+      const end = () => {
+        cancel();
+        waits.delete(stop);
+        scene.wake = null;
+      };
+      const cancel = whenIdle(
+        () => {
+          end();
+          resolve();
+        },
+        STORY_IDLE_TIMEOUT_MS,
+        0,
+      );
+      const stop = () => {
+        end();
+        reject(new Error("stopped"));
+      };
+      waits.add(stop);
+      scene.wake = () => {
+        end();
+        resolve();
+      };
+    });
 
   /** Builds the scene's motion and connects its intro and loop to the scroll. */
   const attach = (scene: Scene) => {
@@ -250,18 +299,34 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
       const img = scene.li.querySelector("img");
       if (!img) continue;
       // Each drawing loads about one screen before its own scene, not with the whole section.
+      const ready = idle(scene);
       loads.push(
         ScrollTrigger.create({
           trigger: scene.li,
           start: STORY_LOAD_AHEAD,
           once: true,
           onEnter: () => {
-            void inlineSvg(img).then((svg) => {
+            void inlineSvg(img, undefined, ready).then(async (svg) => {
               if (disposed) return;
               // A run before a restart may have swapped this img while the file loaded here.
               scene.svg = svg ?? scene.li.querySelector<SVGSVGElement>("svg[data-scene]");
-              if (scene.svg) ctx.add(() => attach(scene));
+              if (!scene.svg) return;
+              try {
+                await ready();
+              } catch {
+                return;
+              }
+              ctx.add(() => attach(scene));
             });
+          },
+        }),
+        ScrollTrigger.create({
+          trigger: scene.li,
+          start: "top bottom",
+          once: true,
+          onEnter: () => {
+            scene.urgent = true;
+            scene.wake?.();
           },
         }),
       );
@@ -284,6 +349,7 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
 
   return () => {
     disposed = true;
+    waits.forEach((stop) => stop());
     loads.splice(0).forEach((trigger) => trigger.kill());
     entries.splice(0).forEach((entry) => entry.remove());
     undoRoad();

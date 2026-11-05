@@ -99,6 +99,27 @@ describe("inlineSvg", () => {
     expect(document.querySelector("img")).toBe(img);
   });
 
+  it("parses and swaps only after `ready` resolves", async () => {
+    const { img, fetcher, calls } = setup(GOOD);
+    let go: () => void = () => undefined;
+    const ready = vi.fn(() => new Promise<void>((resolve) => (go = resolve)));
+    const pending = inlineSvg(img, fetcher, ready);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // The file is already fetched, but the page work waits.
+    expect(calls).toHaveBeenCalledTimes(1);
+    expect(ready).toHaveBeenCalledTimes(1);
+    expect(document.querySelector("img")).toBe(img);
+    go();
+    expect(await pending).not.toBeNull();
+    expect(document.querySelector("img")).toBeNull();
+  });
+
+  it("keeps the img when `ready` rejects", async () => {
+    const { img, fetcher } = setup(GOOD);
+    expect(await inlineSvg(img, fetcher, () => Promise.reject(new Error("stopped")))).toBeNull();
+    expect(document.querySelector("img")).toBe(img);
+  });
+
   it("does nothing when the img left the page while the file loaded", async () => {
     const { img, fetcher } = setup(GOOD);
     const pending = inlineSvg(img, fetcher);
