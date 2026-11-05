@@ -37,6 +37,7 @@ function product(overrides: Partial<ProductAdminDto> = {}): ProductAdminDto {
     id: 7,
     sortOrder: 3,
     showPrice: true,
+    visible: true,
     name: { vi: "Gạo ST25", en: "ST25 rice" },
     description: { vi: null, en: null },
     features: { vi: ["Thơm"], en: ["Fragrant"] },
@@ -554,5 +555,61 @@ describe("ProductForm field errors", () => {
     await events.click(screen.getByRole("button", { name: "Lưu" }));
     await waitFor(() => expect(nameVi).toHaveAccessibleDescription("Tên sản phẩm (tiếng Việt) không được để trống."));
     expect(screen.getAllByRole("alert").map((node) => node.textContent)).toContain("Một sản phẩm có tối đa 30 ảnh.");
+  });
+});
+
+describe("ProductForm Hiện trên web", () => {
+  it("shows the switch off and locked on a new product, with what to do first", () => {
+    render(<ProductForm />);
+    expect(screen.getByRole("switch", { name: "Hiện trên web" })).toBeDisabled();
+    expect(screen.getByText("Sản phẩm mới chưa hiện trên web. Hãy lưu sản phẩm, rồi bật Hiện trên web.")).toBeInTheDocument();
+  });
+
+  it("says whether visitors see the saved product", () => {
+    const { unmount } = render(<ProductForm initial={product({ visible: false })} />);
+    expect(screen.getByRole("switch", { name: "Hiện trên web" })).not.toBeChecked();
+    expect(screen.getByText("Khách chưa thấy sản phẩm này trên website.")).toBeInTheDocument();
+    unmount();
+    render(<ProductForm initial={product({ visible: true })} />);
+    expect(screen.getByRole("switch", { name: "Hiện trên web" })).toBeChecked();
+    expect(screen.getByText("Khách đang thấy sản phẩm này trên website.")).toBeInTheDocument();
+  });
+
+  it("locks the switch while there are unsaved changes", async () => {
+    const events = userEvent.setup();
+    render(<ProductForm initial={product({ visible: false })} />);
+    const toggle = screen.getByRole("switch", { name: "Hiện trên web" });
+    expect(toggle).toBeEnabled();
+    await events.click(screen.getByRole("switch", { name: "Hiện giá" }));
+    expect(toggle).toBeDisabled();
+    expect(screen.getByText("Hãy lưu thay đổi trước khi bật hoặc tắt Hiện trên web.")).toBeInTheDocument();
+  });
+
+  it("shows the product after the check panel and leaves the form unchanged", async () => {
+    const events = userEvent.setup();
+    adminFetch.mockImplementation(async (path: string) => {
+      if (path.startsWith("/admin/media")) return [media(1)];
+      if (path === "/admin/products/7/show") return product({ visible: true, mediaIds: [1] });
+      return undefined;
+    });
+    render(<ProductForm initial={product({ visible: false, mediaIds: [1] })} />);
+    await events.click(screen.getByRole("switch", { name: "Hiện trên web" }));
+    await events.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Hiện trên web" }));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Hiện trên web" })).toBeChecked());
+    expect(screen.getByText("Khách đang thấy sản phẩm này trên website.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
+    // Only the switch was sent: no save of the form.
+    expect(adminFetch.mock.calls.filter(([, init]) => init?.method === "PUT")).toEqual([]);
+  });
+
+  it("moves the cursor to the first gap on Quay lại sửa", async () => {
+    const events = userEvent.setup();
+    render(<ProductForm initial={product({ visible: false, mediaIds: [] })} />);
+    await events.click(screen.getByRole("switch", { name: "Hiện trên web" }));
+    expect(within(screen.getByRole("alertdialog")).getByText("Chưa có ảnh")).toBeInTheDocument();
+    await events.click(screen.getByRole("button", { name: "Quay lại sửa" }));
+    const pick = within(screen.getByRole("group", { name: "Ảnh" })).getByRole("button", { name: "Chọn ảnh" });
+    await waitFor(() => expect(pick).toHaveFocus());
+    expect(adminFetch).not.toHaveBeenCalledWith("/admin/products/7/show", expect.anything());
   });
 });

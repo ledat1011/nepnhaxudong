@@ -25,6 +25,8 @@ export type ProductAdminDto = {
   id: number;
   sortOrder: number;
   showPrice: boolean;
+  /** "Hiện trên web". A new product is hidden; it changes only through `/show` and `/hide`, never through a save. */
+  visible: boolean;
   name: LocalizedText;
   description: LocalizedText;
   features: LocalizedList;

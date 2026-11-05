@@ -2,17 +2,19 @@
 
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
 import { MediaPicker } from "@/components/admin/media/MediaPicker";
+import { focusWhenReady } from "@/components/admin/shell/FieldFocus";
 import { Button } from "@/components/admin/ui/button";
 import { Switch } from "@/components/admin/ui/switch";
 import { adminFetch } from "@/lib/admin/api";
 import { apiRest, langOfDetail, NOT_SAVED_NOTICE, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
+import { FIELD_TARGETS, type FieldKey } from "@/lib/admin/field-targets";
 import { toRequestText } from "@/lib/admin/localized";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
@@ -23,6 +25,7 @@ import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes
 import { FeatureList, newFeatureRow, type FeatureRow } from "./FeatureList";
 import { PackagingList, newPackagingRow, packagingErrorKey, type PackagingRow } from "./PackagingList";
 import { moved } from "./rows";
+import { VisibilitySwitch } from "./VisibilitySwitch";
 
 /** Most images one product can have (the API refuses more). */
 const MAX_IMAGES = 30;
@@ -150,6 +153,10 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   useUnsavedChanges(dirty && !leaving);
   const leavePage = useLeavePage();
   const fields = useFieldErrors();
+  const rootRef = useRef<HTMLFieldSetElement>(null);
+  // Stops the search for the field that "Quay lại sửa" goes to (a newer request or leaving the page).
+  const stopFix = useRef<(() => void) | null>(null);
+  useEffect(() => () => stopFix.current?.(), []);
 
   // The form as it was when the running save was sent, to tell later whether the user typed something else meanwhile.
   const sent = useRef<string | null>(null);
@@ -207,6 +214,17 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
     }
   }
 
+  /** "Quay lại sửa" in the check panel: the cursor goes to the field of the first gap, as a to-do link does. */
+  function fixGap(key: FieldKey) {
+    stopFix.current?.();
+    stopFix.current = rootRef.current === null ? null : focusWhenReady(rootRef.current, FIELD_TARGETS[key]);
+  }
+
+  /** Only the switch changed. The form text is left as it is: the user may have typed meanwhile. */
+  function visibilityChanged(result: ProductAdminDto) {
+    setBaseline((current) => (current === undefined ? current : { ...current, visible: result.visible }));
+  }
+
   function cancel() {
     const original = stateFrom(baseline);
     setState(original);
@@ -241,7 +259,24 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const saveError = [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   return (
-    <fieldset {...fields.rootProps} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
+    <fieldset ref={rootRef} {...fields.rootProps} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
+      <section aria-label="Trạng thái" className="flex flex-col gap-1 rounded-md border p-3">
+        <VisibilitySwitch
+          product={baseline}
+          disabled={dirty || saving.pending || deleting.pending || leaving}
+          onChanged={visibilityChanged}
+          onFix={fixGap}
+        />
+        <p className="text-sm text-muted-foreground">
+          {baseline === undefined
+            ? "Sản phẩm mới chưa hiện trên web. Hãy lưu sản phẩm, rồi bật Hiện trên web."
+            : dirty
+              ? "Hãy lưu thay đổi trước khi bật hoặc tắt Hiện trên web."
+              : baseline.visible
+                ? "Khách đang thấy sản phẩm này trên website."
+                : "Khách chưa thấy sản phẩm này trên website."}
+        </p>
+      </section>
       <RequiredNote />
       <BilingualField
         label="Tên sản phẩm"
