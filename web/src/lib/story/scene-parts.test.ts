@@ -10,7 +10,7 @@ const SCENE_PARTS: Record<string, readonly string[]> = {
   say: ["air", "paddy", "father", "fan-blades", "coals"],
   "xay-xat": ["brother", "pour-sack", "husk", "rice-flow", "elevator-grain"],
   "dong-goi": ["mother", "lid", "stack-bag"],
-  "den-tay-khach": ["truck", "shelf-bag", "mother", "customer", "handover-bag", "gift", "wheel"],
+  "den-tay-khach": ["truck", "shelf-bag", "mother", "customer", "gift", "wheel"],
   "mam-com": ["dish", "steam"],
 };
 

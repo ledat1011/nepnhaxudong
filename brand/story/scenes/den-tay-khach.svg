@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
-  <!-- Scene 7, to the customer. Left: a customer comes to the house and mother hands over a bag, with a gift box.
+  <!-- Scene 7, to the customer. Left: a customer comes to the house and mother holds out a bag (in her pose) and the customer reaches for it, with a gift box.
        Right: a distributor's small truck in front of a supermarket shelf full of bags. Final frame: shelf full, truck parked. -->
   <defs>
     <pattern id="gq" width="10" height="8" patternUnits="userSpaceOnUse">
@@ -110,7 +110,6 @@
     <path d="M312 360q4 -5 8 0M326 360q4 -5 8 0M318 370q5 4 10 0" fill="none" stroke-width="3"/>
     <circle cx="312" cy="368" r="4.5" fill="#E59A84" stroke="none"/>
   </g>
-  <g data-part="handover-bag" transform="translate(246 412) rotate(-6)"><use href="#ub" transform="scale(1.25)"/></g>
   <g data-part="gift" stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
     <path d="M376 506H440V552H376Z" fill="#E59A84"/>
     <path d="M370 492H446V508H370Z" fill="#E59A84"/>

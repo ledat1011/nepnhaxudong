@@ -19,7 +19,7 @@ const REQUIRED: Record<SceneSlug, readonly string[]> = {
   say: ["air", "paddy", "father", "fan-blades", "coals"],
   "xay-xat": ["brother", "pour-sack", "husk", "rice-flow", "elevator-grain"],
   "dong-goi": ["mother", "lid", "stack-bag"],
-  "den-tay-khach": ["truck", "shelf-bag", "mother", "customer", "handover-bag", "gift", "wheel"],
+  "den-tay-khach": ["truck", "shelf-bag", "mother", "customer", "gift", "wheel"],
   "mam-com": ["dish", "steam"],
 };
 
@@ -115,15 +115,13 @@ function nangMuaGio(gsap: Gsap, p: Parts): SceneMotion {
   return { intro: tl, loop: lp };
 }
 
-/** Scene 3: the harvester drives in, the rice in front bends, the sacks fill and go to anh 2. */
+/** Scene 3: the harvester drives in, the rice in front bends, the sacks fill, anh 2 carries one. */
 function gat(gsap: Gsap, p: Parts): SceneMotion {
   const [harvester] = p.harvester;
   const [brother] = p.brother;
-  // The sack on the harvester moves with it; the sack after anh 2 in the file is in his hands.
+  // The sack on the harvester moves with it. Anh 2's own sack is part of his pose.
   const onMachine = p.sack.filter((s) => harvester.contains(s));
-  const loose = p.sack.filter((s) => !harvester.contains(s));
-  const held = loose.filter((s) => brother.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING);
-  const ground = loose.filter((s) => !held.includes(s));
+  const ground = p.sack.filter((s) => !harvester.contains(s));
 
   const tl = intro(gsap);
   tl.from(harvester, { x: "-=360", duration: 1.3 }, 0);
@@ -134,7 +132,6 @@ function gat(gsap: Gsap, p: Parts): SceneMotion {
     tl.from(onMachine, { scaleY: 0.15, transformOrigin: "50% 100%", duration: 0.6 }, 0.9);
   }
   tl.from(brother, { x: "-=24", opacity: 0, duration: 0.5 }, 1.2);
-  if (held.length > 0) tl.from(held, { x: "+=70", y: "-=70", opacity: 0, duration: 0.6 }, 1.5);
 
   const lp = loop(gsap);
   lp.to(p.reel, { rotation: "+=360", transformOrigin: "50% 50%", duration: 3 }, 0);
@@ -213,7 +210,6 @@ function denTayKhach(gsap: Gsap, p: Parts): SceneMotion {
   tl.from(p.mother, { x: "-=20", opacity: 0, duration: 0.5 }, 0);
   tl.from(p.customer, { x: "+=30", opacity: 0, duration: 0.5 }, 0.2);
   tl.from(p["shelf-bag"], { y: "-=10", opacity: 0, duration: 0.3, stagger: 0.035 }, 0.6);
-  tl.from(p["handover-bag"], { x: "-=36", opacity: 0, duration: 0.5 }, 1.2);
   tl.from(p.gift, { scale: 0, transformOrigin: "50% 100%", duration: 0.45, ease: "back.out(2)" }, 1.7);
   return { intro: tl, loop: null };
 }
