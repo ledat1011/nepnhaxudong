@@ -68,7 +68,7 @@ export default async function StoryListPage({ params, searchParams }: StoryListP
       />
       <main id="noi-dung">
         <div className="mx-auto max-w-6xl px-4 py-12 md:py-20">
-          <h1 className="mb-10 font-display text-4xl leading-[1.3] text-earth md:text-5xl">
+          <h1 className="mb-10 font-display text-4xl leading-[1.3] text-balance text-earth md:text-5xl">
             {dict.sections.story}
           </h1>
           <Suspense fallback={<StoryListSkeleton label={dict.loading.stories} />}>

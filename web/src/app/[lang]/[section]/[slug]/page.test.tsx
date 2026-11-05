@@ -57,6 +57,7 @@ describe("StoryPage", () => {
     expect(container.querySelector("article b")).toBeNull();
     expect(h1).toHaveClass("font-sans", "font-bold");
     expect(h1).not.toHaveClass("font-display");
+    expect(h1).toHaveClass("text-balance");
   });
 
   it("draws no image box when the story has no cover", async () => {

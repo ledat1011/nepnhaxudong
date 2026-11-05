@@ -22,7 +22,7 @@ export const STORY_CARD_CLASS =
 /** Text classes of the card. The skeleton draws its lines with the same classes and line heights. */
 export const STORY_CARD_TEXT = {
   date: "text-sm font-bold text-coat",
-  title: "text-xl font-bold leading-snug",
+  title: "text-xl font-bold leading-snug text-balance",
   excerpt: "leading-relaxed",
   readMore: "mt-auto pt-2 font-bold text-coat",
 } as const;

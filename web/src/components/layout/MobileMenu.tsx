@@ -15,6 +15,7 @@ type MobileMenuProps = {
  */
 export function MobileMenu({ label, closeLabel, children }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 
@@ -25,8 +26,17 @@ export function MobileMenu({ label, closeLabel, children }: MobileMenuProps) {
       setOpen(false);
       buttonRef.current?.focus();
     }
+    // A tap outside the button and the panel closes the menu, as people expect on a phone.
+    function onPointerDown(event: PointerEvent) {
+      if (event.target instanceof Node && rootRef.current?.contains(event.target)) return;
+      setOpen(false);
+    }
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
   }, [open]);
 
   function closeOnLinkClick(event: MouseEvent<HTMLDivElement>) {
@@ -36,7 +46,7 @@ export function MobileMenu({ label, closeLabel, children }: MobileMenuProps) {
   }
 
   return (
-    <div className="md:hidden">
+    <div ref={rootRef} className="md:hidden">
       <button
         ref={buttonRef}
         type="button"

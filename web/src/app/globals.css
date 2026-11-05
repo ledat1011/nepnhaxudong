@@ -74,6 +74,9 @@ body {
   [role="tab"],
   [role="switch"] {
     cursor: pointer;
+    /* No double-tap zoom delay on a tap, and a soft Vàng rơm flash instead of the grey default. */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: color-mix(in srgb, var(--color-straw) 60%, transparent);
   }
 
   /* Same elements as above, so this rule is more specific and wins for every one of them. */

@@ -50,3 +50,14 @@ describe("navigation pending store", () => {
     expect(listener).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("navigation pending label", () => {
+  it("is the label of the link that waits, or null", async () => {
+    const { markNavigationPending, pendingLabel } = await import("./navigation-pending");
+    expect(pendingLabel()).toBeNull();
+    const release = markNavigationPending("Đang tải trang…");
+    expect(pendingLabel()).toBe("Đang tải trang…");
+    release();
+    expect(pendingLabel()).toBeNull();
+  });
+});

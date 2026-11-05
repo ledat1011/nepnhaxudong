@@ -5,13 +5,16 @@ import { MobileMenu } from "./MobileMenu";
 
 function renderMenu() {
   return render(
-    <MobileMenu label="Mở menu" closeLabel="Đóng menu">
+    <>
+      <p>Nội dung trang</p>
+      <MobileMenu label="Mở menu" closeLabel="Đóng menu">
       <ul>
         <li>
           <a href="#san-pham">Sản phẩm</a>
         </li>
       </ul>
-    </MobileMenu>,
+      </MobileMenu>
+    </>,
   );
 }
 
@@ -68,5 +71,27 @@ describe("MobileMenu", () => {
     renderMenu();
     await user.keyboard("{Escape}");
     expect(screen.getByRole("button", { name: "Mở menu" })).not.toHaveFocus();
+  });
+  it("closes on a tap outside the menu, without taking focus", async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await user.click(screen.getByRole("button", { name: "Mở menu" }));
+    await user.click(screen.getByText("Nội dung trang"));
+    expect(screen.getByRole("button", { name: "Mở menu" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.queryByRole("link", { name: "Sản phẩm" })).not.toBeInTheDocument();
+  });
+
+  it("stays open on a tap inside the menu panel", async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await user.click(screen.getByRole("button", { name: "Mở menu" }));
+    await user.pointer({ keys: "[MouseLeft]", target: screen.getByRole("list") });
+    expect(screen.getByRole("button", { name: "Đóng menu" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
   });
 });

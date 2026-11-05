@@ -228,6 +228,8 @@ describe("ZaloLink", () => {
       await userEvent.click(trigger());
       const sheet = await screen.findByRole("dialog", { name: labels.title });
       expect(sheet).toHaveAttribute("data-layout", "sheet");
+      // Scrolling inside the sheet never scrolls the page behind it.
+      expect(sheet).toHaveClass("overscroll-contain");
       expect(sheet).toHaveTextContent(labels.phoneHint);
       expect(openLink()).toHaveAttribute("href", HREF);
       // Same tab: the zalo.me link hands the chat to the Zalo app.

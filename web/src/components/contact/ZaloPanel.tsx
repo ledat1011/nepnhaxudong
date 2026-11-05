@@ -41,7 +41,9 @@ const BUTTON_CLASS = `inline-flex min-h-11 items-center justify-center rounded-f
 const PRIMARY_CLASS = `${BUTTON_CLASS} bg-coat text-rice hover:bg-earth`;
 const SECONDARY_CLASS = `${BUTTON_CLASS} border-2 border-coat text-earth hover:bg-straw`;
 // The panel sits above a dimmed page, so it is the one element with a shadow.
-const PANEL_CLASS = "fixed z-50 border-grain bg-rice text-earth shadow-xl focus:outline-none";
+// overscroll-contain: scrolling to the end of the panel does not scroll the page behind it.
+const PANEL_CLASS =
+  "fixed z-50 overscroll-contain border-grain bg-rice text-earth shadow-xl focus:outline-none";
 const DIALOG_CLASS = `${PANEL_CLASS} left-1/2 top-1/2 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border-2 p-6 motion-safe:animate-dialog-in`;
 const SHEET_CLASS = `${PANEL_CLASS} inset-x-0 bottom-0 mx-auto max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-t-2xl border-x-2 border-t-2 px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] motion-safe:animate-sheet-in`;
 

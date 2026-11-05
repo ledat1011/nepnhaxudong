@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { NavigationProgress } from "@/components/ui/NavigationProgress";
+import { NavigationStatus } from "@/components/ui/NavigationStatus";
+import { BRAND } from "@/lib/brand/colors";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { DEFAULT_LANG, isLang } from "@/lib/i18n/langs";
 import { getSiteUrl } from "@/lib/seo/metadata";
@@ -16,6 +18,9 @@ type LangLayoutProps = {
 export function generateMetadata(): Metadata {
   return { metadataBase: getSiteUrl() };
 }
+
+// Trắng gạo, the page background: the phone's browser bar takes the colour of the page.
+export const viewport: Viewport = { themeColor: BRAND.rice };
 
 /** Root layout. Each page renders its own header and footer, because only it has the home data. */
 export default async function LangLayout({ children, params }: LangLayoutProps) {
@@ -34,6 +39,7 @@ export default async function LangLayout({ children, params }: LangLayoutProps) 
           {dict.nav.skipToContent}
         </a>
         {children}
+        <NavigationStatus />
       </body>
     </html>
   );

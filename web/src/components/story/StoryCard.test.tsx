@@ -22,6 +22,7 @@ describe("StoryCard heading level", () => {
   it("uses h3 by default (under the home page h2)", () => {
     render(<StoryCard lang="vi" dict={dict} story={story} />);
     expect(screen.getByRole("heading", { level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3 })).toHaveClass("text-balance");
     expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
   });
 
