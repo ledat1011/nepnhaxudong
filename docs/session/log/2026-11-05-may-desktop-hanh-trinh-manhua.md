@@ -18,6 +18,7 @@
 - Chủ dự án: nút "Xem hành trình" ở hero trỏ tới khối quy trình, với chữ đẹp hơn. Báo lỗi: bấm link tới `#tu-hat-lua`, kéo lên đầu trang, bấm lại thì không cuộn tới nữa.
 - Xem chữ "Từ đồng tới mâm cơm", chủ dự án: "từ cánh đồng tới mâm cơm ỏ ngắn hơn i" → chủ dự án gợi ý thêm "câu chuyện ..." → chữ nút hero: "Chuyện hạt nếp" (tiếng Anh "A grain's story"); không dùng "Câu chuyện" ở đầu vì trùng tên mục blog "Câu chuyện" trên menu.
 
+- Chủ dự án: vẽ lại cảnh bước 7 (Đến tay khách): ngôi nhà trong tranh phải là xưởng sản xuất gạo của gia đình, theo ảnh chủ dự án gửi (nhà một tầng tường xi măng xám, cửa sổ trắng, cổng sắt xanh hai cánh, biển hiệu xanh trắng trên cổng, xưởng mái tôn xanh phía sau, đồi cây sau lưng). Ảnh có tên hợp tác xã và số điện thoại: không vẽ chữ, không đưa ảnh vào repo, không gửi ảnh lên dịch vụ vẽ.
 ## Quyết định
 - Cảnh hành trình: màu phẳng, nét mực manhua, 9 bản phác đã duyệt — `docs/decisions/0014-hanh-trinh-net-muc.md`.
 
@@ -26,6 +27,7 @@
 - Nối tranh vào web và làm chuyển động: làm sau.
 
 ## Đã làm
+- Vẽ lại cảnh bước 7 với xưởng sản xuất gạo theo ảnh (biển hiệu không có chữ); thay ảnh trên web và trong bản phác, chép luôn vào bản xem thử đang chạy. Thêm 1 ảnh Pro, khoảng 0,13 USD.
 - Chủ dự án cho phép mở tunnel và tắt server cũ cổng 3300. Link xem thử mới: https://gods-corresponding-opened-solid.trycloudflare.com/vi (bản build từ PR #34, dữ liệu mẫu); đã mở ở 375 px qua link, 8 ảnh tải đủ, không tràn ngang.
 - Nút thứ hai ở hero đổi thành "Chuyện hạt nếp" (tiếng Anh "A grain's story"), trỏ tới `#tu-hat-lua`, luôn hiện. Sửa lỗi bấm lại link cùng `#`: Next.js coi đó là không đổi địa chỉ nên không cuộn; thêm `SectionLink` tự cuộn tới khối trong đúng trường hợp đó (menu và nút hero).
 - Web dùng 8 bản phác (WebP 1200 × 675), thêm mục menu "Quy trình" tới `#tu-hat-lua`, proxy cho qua `/story/*.webp`; PR #34. Repo không cho bật auto-merge, nên merge tay khi CI đạt. Mở Cloudflare tunnel bị chặn bởi bộ lọc quyền của Claude: chủ dự án tự mở tunnel hoặc cho phép.
