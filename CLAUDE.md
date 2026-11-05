@@ -65,6 +65,14 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
 - Review UI code against the pinned rules with the `web-interface-guidelines` skill (in `.claude/skills/`).
 - Sources and licenses: `.claude/skills/THIRD_PARTY.md`. Why plugins: `docs/decisions/0006-skill-frontend.md`.
 
+## Running tests (owner, 2026-11-05)
+- While you build or fix: run only the tests related to what you changed. In `web/`: `npx vitest run --related <changed files>`
+  (or the test files you touched). In `api/`: only the test classes of the changed area. Do not run the whole suite
+  after every small fix.
+- After you merge two branches together (or `main` into a branch with conflicts): run the full `npm test`, `npm run typecheck`
+  and `npm run lint` once. Leave the full-stack e2e to CI. Check the exit code, not only the pass count.
+- Before you merge a PR: if that full run did not happen on the final code, wait for CI to pass.
+
 ## Tools
 - Test the tools: `npm run test:tools`.
 - Scan a skill before you copy it into `.claude/skills/`: `node scripts/scan-skill.mjs <thu-muc-skill>`.
