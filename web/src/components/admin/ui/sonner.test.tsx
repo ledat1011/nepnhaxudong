@@ -27,4 +27,16 @@ describe("Toaster", () => {
     const undo = await screen.findByRole("button", { name: "Hoàn tác" });
     expect(undo.className).toContain("min-h-11");
   });
+
+  it("starts below the header row, so Quay lại and Xem trên web stay visible", async () => {
+    const { container } = render(<Toaster />);
+    act(() => {
+      toast.success("Đã lưu.");
+    });
+    await screen.findByText("Đã lưu.");
+    const list = container.ownerDocument.querySelector<HTMLElement>("[data-sonner-toaster]")!;
+    // The header row is 56 px high (sticky list header) or 52 px (detail page); 4rem is 64 px.
+    expect(list.style.getPropertyValue("--mobile-offset-top")).toBe("4rem");
+    expect(list.style.getPropertyValue("--offset-top")).toBe("4rem");
+  });
 });

@@ -18,6 +18,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme="light"
       position="top-center"
+      // Below the header row (56 px), so "Quay lại" and "Xem trên web" stay visible and tappable.
+      offset={{ top: "4rem" }}
+      mobileOffset={{ top: "4rem" }}
       className="toaster group"
       toastOptions={{
         classNames: {
