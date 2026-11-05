@@ -20,7 +20,15 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
 
 import { AdminSessionProvider, useAdminSession } from "./session";
 
-const user: UserResponse = { id: 1, email: "an@example.com", displayName: "An", mustChangePassword: false };
+const user: UserResponse = {
+  id: 1,
+  email: "an@example.com",
+  displayName: "An",
+  mustChangePassword: false,
+  role: "OWNER",
+  totpEnabled: false,
+  mustSetupTotp: false,
+};
 
 type Session = ReturnType<typeof useAdminSession>;
 const latest = {} as { current: Session };
@@ -66,6 +74,18 @@ describe("AdminSessionProvider status", () => {
 
   it("is must-change-password when the user has a temporary password", async () => {
     meReturns({ ...user, mustChangePassword: true });
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("must-change-password"));
+  });
+
+  it("is must-setup-totp when an owner switched off the two-factor login", async () => {
+    meReturns({ ...user, mustSetupTotp: true });
+    renderProvider();
+    await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("must-setup-totp"));
+  });
+
+  it("asks for the password change before the two-factor setup", async () => {
+    meReturns({ ...user, mustChangePassword: true, mustSetupTotp: true });
     renderProvider();
     await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("must-change-password"));
   });
@@ -291,6 +311,28 @@ describe("requireReLogin", () => {
     expect(error).toMatchObject({
       status: 401,
       detail: "Bạn cần đổi mật khẩu trước. Hãy lưu nội dung ra chỗ khác rồi tải lại trang.",
+    });
+    expect(screen.getByTestId("status")).toHaveTextContent("ready");
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("rejects, without changing the session or the page, when the user must set up two-factor login again", async () => {
+    await renderReady();
+    adminFetch.mockImplementation((path: string) =>
+      path === "/auth/login" ? Promise.resolve({ ...user, mustSetupTotp: true }) : Promise.resolve(undefined),
+    );
+    const events = userEvent.setup();
+    let promise!: Promise<void>;
+    act(() => {
+      promise = latest.current.requireReLogin();
+    });
+    const settled = promise.catch((e: unknown) => e);
+    await events.type(await screen.findByLabelText("Mật khẩu"), "secret-password");
+    await events.click(screen.getByRole("button", { name: "Đăng nhập" }));
+    const error = await settled;
+    expect(error).toMatchObject({
+      status: 401,
+      detail: "Bạn cần bật lại xác thực 2 lớp trước. Hãy lưu nội dung ra chỗ khác rồi tải lại trang.",
     });
     expect(screen.getByTestId("status")).toHaveTextContent("ready");
     expect(replace).not.toHaveBeenCalled();

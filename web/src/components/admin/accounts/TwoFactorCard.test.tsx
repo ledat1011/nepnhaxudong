@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { TotpSetupResponse } from "@/lib/admin/types";
 
@@ -171,5 +171,79 @@ describe("TwoFactorCard link", () => {
   it("links to the change-password page", () => {
     render(<TwoFactorCard enabled={false} onChanged={vi.fn()} />);
     expect(screen.getByRole("link", { name: "Đổi mật khẩu" })).toHaveAttribute("href", "/admin/doi-mat-khau");
+  });
+
+  it("can leave the change-password link out", () => {
+    render(<TwoFactorCard enabled={false} onChanged={vi.fn()} passwordLink={false} />);
+    expect(screen.queryByRole("link", { name: "Đổi mật khẩu" })).not.toBeInTheDocument();
+  });
+});
+
+function touchScreen(touch: boolean) {
+  window.matchMedia = vi.fn((query: string) => ({
+    matches: query === "(pointer: coarse)" ? touch : false,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })) as unknown as typeof window.matchMedia;
+}
+
+describe("TwoFactorCard on a phone", () => {
+  const originalMatchMedia = window.matchMedia;
+  const originalClipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+    if (originalClipboard) Object.defineProperty(navigator, "clipboard", originalClipboard);
+    else Reflect.deleteProperty(navigator, "clipboard");
+  });
+
+  function clipboard(writeText: (text: string) => Promise<void>) {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+  }
+
+  it("offers a link that opens the authenticator app with the new secret on a touch screen", async () => {
+    touchScreen(true);
+    const user = userEvent.setup();
+    render(<TwoFactorCard enabled={false} onChanged={vi.fn()} />);
+    expect(screen.queryByRole("link", { name: "Mở ứng dụng xác thực" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Bật xác thực 2 lớp" }));
+    const open = await screen.findByRole("link", { name: "Mở ứng dụng xác thực" });
+    expect(open).toHaveAttribute("href", setup.otpauthUri);
+  });
+
+  it("shows no app link on a computer, where the QR code is scanned with the phone", async () => {
+    touchScreen(false);
+    const user = userEvent.setup();
+    render(<TwoFactorCard enabled={false} onChanged={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Bật xác thực 2 lớp" }));
+    await screen.findByText(setup.secret);
+    expect(screen.queryByRole("link", { name: "Mở ứng dụng xác thực" })).not.toBeInTheDocument();
+  });
+
+  it("copies the secret and says so", async () => {
+    touchScreen(true);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    clipboard(writeText);
+    const user = userEvent.setup();
+    render(<TwoFactorCard enabled={false} onChanged={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Bật xác thực 2 lớp" }));
+    // user-event installs its own clipboard on setup, so the test one is put back here.
+    clipboard(writeText);
+    await user.click(await screen.findByRole("button", { name: "Sao chép mã" }));
+    expect(writeText).toHaveBeenCalledWith(setup.secret);
+    expect(await screen.findByText("Đã sao chép mã.")).toBeInTheDocument();
+  });
+
+  it("tells the user to select the secret by hand when copying fails", async () => {
+    touchScreen(false);
+    const user = userEvent.setup();
+    render(<TwoFactorCard enabled={false} onChanged={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Bật xác thực 2 lớp" }));
+    clipboard(vi.fn().mockRejectedValue(new Error("denied")));
+    await user.click(await screen.findByRole("button", { name: "Sao chép mã" }));
+    expect(
+      await screen.findByText("Không sao chép được. Hãy tự chọn mã ở trên rồi sao chép."),
+    ).toBeInTheDocument();
   });
 });

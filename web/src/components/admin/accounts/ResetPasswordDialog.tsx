@@ -65,9 +65,13 @@ function ResetPasswordForm({ user, onClose, onDone }: Omit<Props, "user"> & { us
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <p className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-              Thao tác này cũng tắt xác thực 2 lớp của người này.
-            </p>
+            {user.totpEnabled ? (
+              // The API also asks this person to set up two-factor login again (as "Tắt 2 lớp" does).
+              <div className="flex flex-col gap-1 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                <p>Thao tác này cũng tắt xác thực 2 lớp của người này.</p>
+                <p>Sau khi đổi mật khẩu, người này phải bật lại xác thực 2 lớp.</p>
+              </div>
+            ) : null}
             <p className="text-sm text-muted-foreground">
               Một mật khẩu tạm thời mới sẽ hiện ra một lần. Người này phải đổi mật khẩu ở lần đăng nhập tiếp theo.
             </p>

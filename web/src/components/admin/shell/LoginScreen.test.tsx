@@ -20,7 +20,15 @@ vi.mock("next/navigation", () => ({
 
 import { LoginScreen } from "./LoginScreen";
 
-const user: UserResponse = { id: 1, email: "an@example.com", displayName: "An", mustChangePassword: false };
+const user: UserResponse = {
+  id: 1,
+  email: "an@example.com",
+  displayName: "An",
+  mustChangePassword: false,
+  role: "OWNER",
+  totpEnabled: false,
+  mustSetupTotp: false,
+};
 
 async function signIn(result: UserResponse = user) {
   adminFetch.mockResolvedValueOnce(result);
@@ -66,5 +74,11 @@ describe("LoginScreen", () => {
     search.value = "next=%2Fadmin%2Fanh";
     await signIn({ ...user, mustChangePassword: true });
     expect(replace).toHaveBeenCalledWith("/admin/doi-mat-khau");
+  });
+
+  it("goes to the two-factor setup when an owner switched it off", async () => {
+    search.value = "next=%2Fadmin%2Fanh";
+    await signIn({ ...user, mustSetupTotp: true });
+    expect(replace).toHaveBeenCalledWith("/admin/bat-xac-thuc");
   });
 });

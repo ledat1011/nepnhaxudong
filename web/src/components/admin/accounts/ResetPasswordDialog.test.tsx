@@ -21,6 +21,8 @@ const target: UserSummary = {
   enabled: true,
   totpEnabled: true,
   mustChangePassword: false,
+  role: "MEMBER",
+  mustSetupTotp: false,
 };
 
 const PASSWORD_TEXT = /^[A-Za-z2-9]{16}$/;
@@ -41,7 +43,15 @@ describe("ResetPasswordDialog", () => {
   it("warns that two-factor login is switched off, and shows no password before the reset", () => {
     render(<ResetPasswordDialog user={target} onClose={vi.fn()} onDone={vi.fn()} />);
     expect(screen.getByText("Thao tác này cũng tắt xác thực 2 lớp của người này.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Sau khi đổi mật khẩu, người này phải bật lại xác thực 2 lớp."),
+    ).toBeInTheDocument();
     expect(screen.queryByText(PASSWORD_TEXT)).not.toBeInTheDocument();
+  });
+
+  it("says nothing about two-factor login for a person who does not use it", () => {
+    render(<ResetPasswordDialog user={{ ...target, totpEnabled: false }} onClose={vi.fn()} onDone={vi.fn()} />);
+    expect(screen.queryByText(/xác thực 2 lớp/)).not.toBeInTheDocument();
   });
 
   it("posts a new 16-character password for that user and then shows it once", async () => {

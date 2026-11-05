@@ -11,7 +11,15 @@ vi.mock("@/lib/admin/csrf", () => ({ resetCsrfToken }));
 
 import { LoginForm } from "./LoginForm";
 
-const user: UserResponse = { id: 1, email: "an@example.com", displayName: "An", mustChangePassword: false };
+const user: UserResponse = {
+  id: 1,
+  email: "an@example.com",
+  displayName: "An",
+  mustChangePassword: false,
+  role: "OWNER",
+  totpEnabled: false,
+  mustSetupTotp: false,
+};
 
 beforeEach(() => {
   adminFetch.mockReset();

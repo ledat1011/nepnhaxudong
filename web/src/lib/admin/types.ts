@@ -161,11 +161,18 @@ export type SiteSettingAdminDto = {
 
 // --- auth and accounts ---
 
+/** "Chủ" manages the accounts; "Người nhà" edits content only. */
+export type UserRole = "OWNER" | "MEMBER";
+
 export type UserResponse = {
   id: number;
   email: string;
   displayName: string;
   mustChangePassword: boolean;
+  role: UserRole;
+  totpEnabled: boolean;
+  /** An owner switched off this user's two-factor login: it must be set up again before anything else. */
+  mustSetupTotp: boolean;
 };
 
 export type UserSummary = {
@@ -175,6 +182,12 @@ export type UserSummary = {
   enabled: boolean;
   totpEnabled: boolean;
   mustChangePassword: boolean;
+  role: UserRole;
+  mustSetupTotp: boolean;
+};
+
+export type ChangeRoleRequest = {
+  role: UserRole;
 };
 
 export type CreateUserRequest = {

@@ -21,6 +21,8 @@ const created: UserSummary = {
   enabled: true,
   totpEnabled: false,
   mustChangePassword: true,
+  role: "MEMBER",
+  mustSetupTotp: false,
 };
 
 const PASSWORD_TEXT = /^[A-Za-z2-9]{16}$/;

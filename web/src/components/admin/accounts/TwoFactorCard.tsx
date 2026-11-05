@@ -11,8 +11,17 @@ import { adminFetch } from "@/lib/admin/api";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { TotpSetupResponse } from "@/lib/admin/types";
 import { useSave } from "@/lib/admin/use-save";
+import { useTouchScreen } from "@/lib/admin/use-touch-screen";
 
 const CODE_PATTERN = /^\d{6}$/;
+
+type CopyState = "idle" | "copied" | "failed";
+
+const COPY_MESSAGES: Record<CopyState, string> = {
+  idle: "",
+  copied: "Đã sao chép mã.",
+  failed: "Không sao chép được. Hãy tự chọn mã ở trên rồi sao chép.",
+};
 
 /** Empty squares around the code, in modules. Scanners need this quiet zone. */
 const QUIET_ZONE = 4;
@@ -48,14 +57,18 @@ type Props = {
   enabled: boolean;
   /** Called after it was switched on or off, so the account list can load again. */
   onChanged(): void;
+  /** Shows the "Đổi mật khẩu" link. The forced two-factor setup page leaves it out. */
+  passwordLink?: boolean;
 };
 
 /**
  * Two-factor login of the signed-in user. The secret and the QR code live only in this component's state:
  * they are dropped on Hủy, after the code was accepted and when the card unmounts.
  */
-export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
+export function TwoFactorCard({ enabled: enabledNow, onChanged, passwordLink = true }: Props) {
   const codeId = useId();
+  const touch = useTouchScreen();
+  const [copy, setCopy] = useState<CopyState>("idle");
   // Shows the new state at once; the parent gives the card a new key when the loaded state changes.
   const [override, setOverride] = useState<boolean | null>(null);
   const enabled = override ?? enabledNow;
@@ -86,7 +99,20 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
 
   async function start() {
     const result = await starting.save();
-    if (result !== undefined) setSetup(result);
+    if (result !== undefined) {
+      setCopy("idle");
+      setSetup(result);
+    }
+  }
+
+  async function copySecret(secret: string) {
+    try {
+      // Missing on plain HTTP and in some in-app browsers; that counts as a failure.
+      await navigator.clipboard.writeText(secret);
+      setCopy("copied");
+    } catch {
+      setCopy("failed");
+    }
   }
 
   function cancel() {
@@ -129,11 +155,42 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
 
       {setup !== null ? (
         <div className="flex flex-col gap-3">
-          <p className="text-sm">Quét mã QR bằng ứng dụng xác thực, hoặc gõ mã bí mật dưới đây vào ứng dụng.</p>
-          <QrCodeSvg text={setup.otpauthUri} />
-          <code className="block select-all break-all rounded-md border bg-muted p-3 font-mono text-base">
+          {touch ? (
+            // A phone cannot scan the QR code on its own screen; the otpauth link hands the secret to the app.
+            <>
+              <p className="text-sm">
+                Bấm nút dưới đây để thêm Nếp Nhà vào ứng dụng xác thực trên máy này, rồi quay lại đây nhập mã 6 số.
+              </p>
+              <Button asChild>
+                <a href={setup.otpauthUri}>Mở ứng dụng xác thực</a>
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Nút không mở được ứng dụng? Hãy sao chép mã bí mật và dán vào ứng dụng.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm">Quét mã QR bằng ứng dụng xác thực, hoặc gõ mã bí mật dưới đây vào ứng dụng.</p>
+              <QrCodeSvg text={setup.otpauthUri} />
+            </>
+          )}
+          <code
+            id={`${codeId}-secret`}
+            className="block select-all break-all rounded-md border bg-muted p-3 font-mono text-base"
+          >
             {setup.secret}
           </code>
+          <Button
+            type="button"
+            variant="outline"
+            aria-describedby={`${codeId}-secret`}
+            onClick={() => void copySecret(setup.secret)}
+          >
+            Sao chép mã
+          </Button>
+          <p role="status" className="text-sm empty:hidden">
+            {COPY_MESSAGES[copy]}
+          </p>
         </div>
       ) : null}
 
@@ -174,9 +231,11 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
         </div>
       )}
 
-      <Button asChild variant="outline">
-        <Link href={ADMIN_ROUTES.changePassword}>Đổi mật khẩu</Link>
-      </Button>
+      {passwordLink ? (
+        <Button asChild variant="outline">
+          <Link href={ADMIN_ROUTES.changePassword}>Đổi mật khẩu</Link>
+        </Button>
+      ) : null}
     </section>
   );
 }

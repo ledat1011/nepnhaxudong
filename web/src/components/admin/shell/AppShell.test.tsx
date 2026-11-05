@@ -21,7 +21,15 @@ vi.mock("next/navigation", () => ({
 import { AdminSessionProvider } from "@/lib/admin/session";
 import { AppShell } from "./AppShell";
 
-const user: UserResponse = { id: 1, email: "an@example.com", displayName: "Nguyễn An", mustChangePassword: false };
+const user: UserResponse = {
+  id: 1,
+  email: "an@example.com",
+  displayName: "Nguyễn An",
+  mustChangePassword: false,
+  role: "OWNER",
+  totpEnabled: false,
+  mustSetupTotp: false,
+};
 
 function renderShell() {
   return render(
@@ -51,6 +59,14 @@ describe("AppShell", () => {
     adminFetch.mockResolvedValue({ ...user, mustChangePassword: true });
     renderShell();
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/doi-mat-khau"));
+    expect(screen.queryByText("Nội dung riêng tư")).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Menu chính" })).not.toBeInTheDocument();
+  });
+
+  it("redirects a user whose two-factor login was switched off to the two-factor setup", async () => {
+    adminFetch.mockResolvedValue({ ...user, mustSetupTotp: true });
+    renderShell();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/bat-xac-thuc"));
     expect(screen.queryByText("Nội dung riêng tư")).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Menu chính" })).not.toBeInTheDocument();
   });

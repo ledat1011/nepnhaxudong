@@ -25,6 +25,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       );
     } else if (status === "must-change-password") {
       router.replace(ADMIN_ROUTES.changePassword);
+    } else if (status === "must-setup-totp") {
+      router.replace(ADMIN_ROUTES.setupTotp);
     }
   }, [status, pathname, router, signedOutOnPurpose]);
 

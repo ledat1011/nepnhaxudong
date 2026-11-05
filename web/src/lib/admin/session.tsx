@@ -10,8 +10,12 @@ import { ADMIN_ROUTES } from "./routes";
 import { allowDraftWrites, clearAllDrafts } from "./story-draft";
 import type { UserResponse } from "./types";
 
-/** `error`: the server could not be reached or failed, so it is not known whether the user is signed in. */
-export type SessionStatus = "loading" | "signed-out" | "must-change-password" | "ready" | "error";
+/**
+ * `error`: the server could not be reached or failed, so it is not known whether the user is signed in.
+ * `must-setup-totp`: an owner switched off this user's two-factor login; the API refuses the admin area
+ * until it is set up again (after any forced password change).
+ */
+export type SessionStatus = "loading" | "signed-out" | "must-change-password" | "must-setup-totp" | "ready" | "error";
 
 export type AdminSession = {
   status: SessionStatus;
@@ -39,6 +43,7 @@ type PendingReLogin = {
 const CANCELLED_MESSAGE = "Bạn chưa đăng nhập lại.";
 const OTHER_ACCOUNT_MESSAGE = "Hãy đăng nhập bằng đúng tài khoản đang dùng.";
 const MUST_CHANGE_PASSWORD_MESSAGE = "Bạn cần đổi mật khẩu trước. Hãy lưu nội dung ra chỗ khác rồi tải lại trang.";
+const MUST_SETUP_TOTP_MESSAGE = "Bạn cần bật lại xác thực 2 lớp trước. Hãy lưu nội dung ra chỗ khác rồi tải lại trang.";
 
 const SessionContext = createContext<AdminSession | null>(null);
 
@@ -46,7 +51,9 @@ const ERROR_STATE: State = { status: "error", user: null, onPurpose: false };
 
 function stateOf(user: UserResponse | null): State {
   if (user === null) return { status: "signed-out", user: null, onPurpose: false };
-  return { status: user.mustChangePassword ? "must-change-password" : "ready", user, onPurpose: false };
+  if (user.mustChangePassword) return { status: "must-change-password", user, onPurpose: false };
+  if (user.mustSetupTotp) return { status: "must-setup-totp", user, onPurpose: false };
+  return { status: "ready", user, onPurpose: false };
 }
 
 /** The user, `null` for a 401 (nobody is signed in), or the error state when the answer is unknown. */
@@ -130,6 +137,9 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
       } else if (user.mustChangePassword) {
         // Going to the change-password page would drop the form the user is editing.
         current.reject(new AdminApiError(401, MUST_CHANGE_PASSWORD_MESSAGE));
+      } else if (user.mustSetupTotp) {
+        // The same for the two-factor setup page.
+        current.reject(new AdminApiError(401, MUST_SETUP_TOTP_MESSAGE));
       } else {
         setState(stateOf(user));
         current.resolve();

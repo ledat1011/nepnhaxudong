@@ -25,6 +25,8 @@ function account(id: number, name: string, overrides: Partial<UserSummary> = {})
     enabled: true,
     totpEnabled: false,
     mustChangePassword: false,
+    role: "MEMBER",
+    mustSetupTotp: false,
     ...overrides,
   };
 }
