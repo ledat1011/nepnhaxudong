@@ -52,10 +52,8 @@ export function BottomNav() {
                     <Icon aria-hidden className="size-5" />
                     {home ? <TodoBadge count={todoCount} className="absolute -top-2 left-3.5" /> : null}
                   </span>
-                  <span>
-                    {label}
-                    {home && todoCountLabel(todoCount) ? <span className="sr-only">{todoCountLabel(todoCount)}</span> : null}
-                  </span>
+                  <span data-nav-label>{label}</span>
+                  {home && todoCountLabel(todoCount) ? <span className="sr-only">{todoCountLabel(todoCount)}</span> : null}
                 </Link>
               </li>
             );
@@ -69,7 +67,7 @@ export function BottomNav() {
               className={cn(ITEM_CLASS, moreActive ? ACTIVE_CLASS : IDLE_CLASS)}
             >
               <Menu aria-hidden className="size-5" />
-              <span>Thêm</span>
+              <span data-nav-label>Thêm</span>
             </button>
           </li>
         </ul>

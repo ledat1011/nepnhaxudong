@@ -90,7 +90,8 @@ test("the bottom menu has Sản phẩm, with 13 px labels at least 12 px from th
   await page.goto(ADMIN_ROUTES.home);
   const nav = page.getByRole("navigation", { name: "Menu chính" });
   await expect(nav.getByRole("link", { name: "Sản phẩm" })).toBeVisible();
-  const labels = await nav.locator("li span").evaluateAll((spans) =>
+  // The visible labels only: the icon box, the to-do badge and the screen-reader text are other spans.
+  const labels = await nav.locator("li [data-nav-label]").evaluateAll((spans) =>
     spans.map((span) => {
       const box = span.getBoundingClientRect();
       return { text: span.textContent, left: box.left, right: box.right, size: getComputedStyle(span).fontSize };

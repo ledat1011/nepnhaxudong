@@ -25,7 +25,8 @@ export function SaveBar({ dirty, pending, waiting = false, onSave, onDiscard, no
   const [asking, setAsking] = useState(false);
   return (
     <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t bg-card p-3 lg:bottom-0 lg:left-60">
-      <div className="mx-auto flex w-full max-w-[60rem] flex-col gap-2">
+      {/* lg:px-1 adds to p-3 the 16 px inset of the form, so the buttons line up with the boxes above. */}
+      <div className="mx-auto flex w-full max-w-[60rem] flex-col gap-2 lg:px-1">
         {notice ? (
           <p role="alert" className="text-sm font-medium text-destructive">
             {notice}
