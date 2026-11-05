@@ -2,8 +2,8 @@
   <!-- Face edits so ba reads older and like ba-canh-lo (source pixels, before the mirror): open round eyes
        with a small light dot, set a little toward the side of travel (left here, right after the mirror), no
        lids over them; the brows stay from the trace; a calm slight smile, a narrower jaw line (the round jaw is
-       cleared in ba-lai-may.json), smile lines, and a silver temple under the cap. The hair behind it is
-       salt-and-pepper: tóc with silver bands, recolored in ba-lai-may.json. -->
+       cleared in ba-lai-may.json), smile lines, and a sideburn under the cap. Salt-and-pepper hair: the hair is
+       tóc (ba-lai-may.json), with a silver temple and a few thin silver strands drawn here. -->
   <g fill="#4A2C1A">
     <ellipse cx="480" cy="314" rx="12" ry="15"/>
     <ellipse cx="601" cy="320" rx="12" ry="15"/>
@@ -16,7 +16,9 @@
     <path d="M518 393Q540 401 562 393"/>
     <path d="M431 312Q438 400 500 452Q548 478 612 468"/>
     <path d="M478 366q-8 12 0 24M604 368q8 12 0 24" stroke-width="7"/>
-    <path d="M640 258L700 244H740V286Q716 286 704 300L690 318Q658 290 640 258Z" fill="#FBF7EE" stroke="none"/>
+    <path d="M640 258L700 244H740V286Q716 286 704 300L690 318Q658 290 640 258Z" fill="#222222" stroke="none"/>
+    <path d="M640 258L684 248Q690 284 702 302L690 318Q658 290 640 258Z" fill="#FBF7EE" stroke="none"/>
+    <path d="M726 250Q744 264 748 286M764 248Q790 266 800 304M802 278Q806 300 800 326" stroke="#FBF7EE" stroke-width="9"/>
     <path d="M640 254Q656 292 690 318" stroke-width="9"/>
   </g>
 </svg>
