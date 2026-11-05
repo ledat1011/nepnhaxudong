@@ -36,8 +36,12 @@ public class Product extends TimestampedEntity {
   @Column(name = "show_price", nullable = false)
   private boolean showPrice;
 
-  /** "Hiện trên web": only a visible product is on the public website. A new product is hidden. */
-  @Column(nullable = false)
+  /**
+   * "Hiện trên web": only a visible product is on the public website. A new product is hidden. The
+   * column is never part of an UPDATE of the entity, so a save that read an older copy cannot write
+   * it back; only {@link ProductRepository#writeVisible} changes it.
+   */
+  @Column(nullable = false, updatable = false)
   private boolean visible;
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -81,6 +85,7 @@ public class Product extends TimestampedEntity {
     return visible;
   }
 
+  /** Changes the value in memory only, after {@link ProductRepository#writeVisible} stored it. */
   void setVisible(boolean visible) {
     this.visible = visible;
   }

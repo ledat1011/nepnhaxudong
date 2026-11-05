@@ -2,16 +2,24 @@ package vn.nepnhaxudong.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.JsonNode;
 import vn.nepnhaxudong.auth.ApiClient;
 import vn.nepnhaxudong.auth.AuthTestSupport;
+import vn.nepnhaxudong.common.LocalizedList;
+import vn.nepnhaxudong.common.LocalizedText;
 
 /**
  * The "Hiện trên web" switch of a product: a new product is hidden, show and hide change only the
@@ -22,6 +30,9 @@ class ProductVisibilityTest extends AuthTestSupport {
   private static final String NOT_FOUND = "Không tìm thấy sản phẩm.";
 
   @Autowired JdbcTemplate jdbc;
+  @Autowired ProductService products;
+  @Autowired ProductRepository repository;
+  @Autowired TransactionTemplate transaction;
 
   @BeforeEach
   void emptyTables() {
@@ -69,6 +80,7 @@ class ProductVisibilityTest extends AuthTestSupport {
         .isEqualTo("Nếp cái hoa vàng");
     assertThat(stored(id)).isTrue();
     assertThat(publicNames()).containsExactly("Nếp cái hoa vàng");
+    assertThat(publicNames("en")).containsExactly("Sticky rice");
 
     var hidden = client.post("/admin/products/" + id + "/hide", Map.of());
 
@@ -76,20 +88,21 @@ class ProductVisibilityTest extends AuthTestSupport {
     assertThat(ApiClient.json(hidden).path("visible").asBoolean()).isFalse();
     assertThat(stored(id)).isFalse();
     assertThat(publicNames()).isEmpty();
+    assertThat(publicNames("en")).isEmpty();
   }
 
   @Test
   void theHomePageListsOnlyTheShownProductsInTheirOrder() {
     var client = loggedInClient();
-    long hidden = create(client, "Ẩn");
-    long second = create(client, "Hai");
-    long first = create(client, "Một");
+    long hidden = create(client, "Ẩn", "Hidden");
+    long second = create(client, "Hai", "Two");
+    long first = create(client, "Một", "One");
     client.post("/admin/products/" + second + "/show", Map.of());
     client.post("/admin/products/" + first + "/show", Map.of());
     jdbc.update("update product set sort_order = 1 where id = ?", second);
 
     assertThat(publicNames()).containsExactly("Một", "Hai");
-    assertThat(publicNames("en")).hasSize(2);
+    assertThat(publicNames("en")).containsExactly("One", "Two");
     assertThat(hidden).isPositive();
   }
 
@@ -178,14 +191,53 @@ class ProductVisibilityTest extends AuthTestSupport {
   // ---- restore -------------------------------------------------------------------------------
 
   @Test
-  void restoringADeletedHiddenProductKeepsItHidden() {
+  void restoringAnOlderEditKeepsTheProductHiddenWhenItIsHiddenNow() {
     var client = loggedInClient();
-    long id = create(client, "Nếp ẩn");
-    client.delete("/admin/products/" + id);
+    long id = create(client, "Tên cũ");
+    client.post("/admin/products/" + id + "/show", Map.of());
+    client.put("/admin/products/" + id, body("Tên mới"));
+    long edit = lastLine(id);
+    client.post("/admin/products/" + id + "/hide", Map.of());
 
-    var response = client.post("/admin/audit/" + auditId(id, "DELETE") + "/restore", Map.of());
+    var response = client.post("/admin/audit/" + edit + "/restore", Map.of());
 
     assertThat(response.getStatusCode().value()).isEqualTo(204);
+    assertThat(adminName(client, id)).isEqualTo("Tên cũ");
+    assertThat(stored(id)).isFalse();
+    assertThat(publicNames()).isEmpty();
+  }
+
+  @Test
+  void restoringAnOlderEditKeepsTheProductShownWhenItIsShownNow() {
+    var client = loggedInClient();
+    long id = create(client, "Tên cũ");
+    client.put("/admin/products/" + id, body("Tên mới"));
+    long edit = lastLine(id);
+    client.post("/admin/products/" + id + "/show", Map.of());
+
+    var response = client.post("/admin/audit/" + edit + "/restore", Map.of());
+
+    assertThat(response.getStatusCode().value()).isEqualTo(204);
+    assertThat(stored(id)).isTrue();
+    assertThat(publicNames()).containsExactly("Tên cũ");
+  }
+
+  @Test
+  void restoringAnEditFromBeforeTheSwitchExistedKeepsTheCurrentValue() {
+    var client = loggedInClient();
+    long id = create(client, "Tên cũ");
+    client.put("/admin/products/" + id, body("Tên mới"));
+    long edit = lastLine(id);
+    // Lines written before migration V3 have no "visible" on either side.
+    jdbc.update(
+        "update audit_log set before_json = before_json - 'visible',"
+            + " after_json = after_json - 'visible' where id = ?",
+        edit);
+
+    var response = client.post("/admin/audit/" + edit + "/restore", Map.of());
+
+    assertThat(response.getStatusCode().value()).isEqualTo(204);
+    assertThat(adminName(client, id)).isEqualTo("Tên cũ");
     assertThat(stored(id)).isFalse();
   }
 
@@ -195,13 +247,8 @@ class ProductVisibilityTest extends AuthTestSupport {
     long id = create(client, "Nếp");
     client.post("/admin/products/" + id + "/show", Map.of());
     client.post("/admin/products/" + id + "/hide", Map.of());
-    long hideLine =
-        jdbc.queryForObject(
-            "select max(id) from audit_log where entity_type = 'product' and entity_id = ?",
-            Long.class,
-            id);
 
-    var response = client.post("/admin/audit/" + hideLine + "/restore", Map.of());
+    var response = client.post("/admin/audit/" + lastLine(id) + "/restore", Map.of());
 
     assertThat(response.getStatusCode().value()).isEqualTo(204);
     assertThat(stored(id)).isTrue();
@@ -209,18 +256,96 @@ class ProductVisibilityTest extends AuthTestSupport {
   }
 
   @Test
-  void aSnapshotFromBeforeTheSwitchExistedRestoresTheProductAsShown() {
+  void restoringTheLineOfAShowHidesTheProductAgain() {
+    var client = loggedInClient();
+    long id = create(client, "Nếp");
+    client.post("/admin/products/" + id + "/show", Map.of());
+
+    var response = client.post("/admin/audit/" + lastLine(id) + "/restore", Map.of());
+
+    assertThat(response.getStatusCode().value()).isEqualTo(204);
+    assertThat(stored(id)).isFalse();
+  }
+
+  @Test
+  void aDeletedProductComesBackHiddenEvenWhenItWasShown() {
+    var client = loggedInClient();
+    long id = create(client, "Nếp hiện");
+    client.post("/admin/products/" + id + "/show", Map.of());
+    client.delete("/admin/products/" + id);
+
+    var response = client.post("/admin/audit/" + auditId(id, "DELETE") + "/restore", Map.of());
+
+    assertThat(response.getStatusCode().value()).isEqualTo(204);
+    assertThat(adminName(client, id)).isEqualTo("Nếp hiện");
+    assertThat(stored(id)).isFalse();
+    assertThat(publicNames()).isEmpty();
+  }
+
+  @Test
+  void aDeletedProductFromBeforeTheSwitchExistedComesBackHidden() {
     var client = loggedInClient();
     long id = create(client, "Nếp cũ");
     client.delete("/admin/products/" + id);
     long line = auditId(id, "DELETE");
-    // Snapshots written before migration V3 have no "visible": every product was on the website.
     jdbc.update("update audit_log set before_json = before_json - 'visible' where id = ?", line);
 
     var response = client.post("/admin/audit/" + line + "/restore", Map.of());
 
     assertThat(response.getStatusCode().value()).isEqualTo(204);
+    assertThat(stored(id)).isFalse();
+  }
+
+  // ---- writes at the same time ---------------------------------------------------------------
+
+  @Test
+  void aSaveFromAnOlderCopyNeverWritesTheSwitchBack() {
+    long id = products.create(request("Nếp")).id();
+
+    transaction.executeWithoutResult(
+        status -> {
+          // This transaction holds the product as it was: hidden.
+          assertThat(repository.findById(id).orElseThrow().isVisible()).isFalse();
+          // Meanwhile another request shows it and commits.
+          jdbc.update("update product set visible = true where id = ?", id);
+          products.update(id, request("Nếp, sửa"));
+        });
+
     assertThat(stored(id)).isTrue();
+  }
+
+  @Test
+  void twoShowsAtTheSameTimeWriteOneAuditLine() throws Exception {
+    long id = products.create(request("Nếp")).id();
+    var firstShown = new CountDownLatch(1);
+    var executor = Executors.newSingleThreadExecutor();
+    try {
+      Future<?> first =
+          executor.submit(
+              () ->
+                  transaction.executeWithoutResult(
+                      status -> {
+                        products.show(id);
+                        firstShown.countDown();
+                        // The first transaction stays open while the second show starts.
+                        sleep(Duration.ofMillis(800));
+                      }));
+      assertThat(firstShown.await(10, TimeUnit.SECONDS)).isTrue();
+
+      var second = products.show(id);
+
+      first.get(10, TimeUnit.SECONDS);
+      assertThat(second.visible()).isTrue();
+    } finally {
+      executor.shutdownNow();
+    }
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from audit_log where entity_type = 'product' and entity_id = ?"
+                    + " and action = 'UPDATE'",
+                Integer.class,
+                id))
+        .isEqualTo(1);
   }
 
   // ---- errors and access ---------------------------------------------------------------------
@@ -237,24 +362,54 @@ class ProductVisibilityTest extends AuthTestSupport {
   }
 
   @Test
-  void aVisitorWhoIsNotLoggedInCannotShowAProduct() {
+  void aVisitorWhoIsNotLoggedInCannotShowOrHideAProduct() {
     var owner = loggedInClient();
-    long id = create(owner, "Nếp");
+    long shown = create(owner, "Hiện");
+    owner.post("/admin/products/" + shown + "/show", Map.of());
+    long hidden = create(owner, "Ẩn");
     var visitor = newClient();
     visitor.fetchCsrf();
 
-    var response = visitor.post("/admin/products/" + id + "/show", Map.of());
+    var show = visitor.post("/admin/products/" + hidden + "/show", Map.of());
+    var hide = visitor.post("/admin/products/" + shown + "/hide", Map.of());
 
-    assertThat(response.getStatusCode().value()).isEqualTo(401);
-    assertThat(stored(id)).isFalse();
+    assertThat(show.getStatusCode().value()).isEqualTo(401);
+    assertThat(hide.getStatusCode().value()).isEqualTo(401);
+    assertThat(stored(hidden)).isFalse();
+    assertThat(stored(shown)).isTrue();
+  }
+
+  @Test
+  void showAndHideWithoutTheCsrfHeaderAreRefusedWith403() {
+    var owner = loggedInClient();
+    long shown = create(owner, "Hiện");
+    owner.post("/admin/products/" + shown + "/show", Map.of());
+    long hidden = create(owner, "Ẩn");
+    owner.useCsrfToken(null);
+
+    var show = owner.post("/admin/products/" + hidden + "/show", Map.of());
+    var hide = owner.post("/admin/products/" + shown + "/hide", Map.of());
+
+    assertThat(show.getStatusCode().value()).isEqualTo(403);
+    assertThat(hide.getStatusCode().value()).isEqualTo(403);
+    assertThat(stored(hidden)).isFalse();
+    assertThat(stored(shown)).isTrue();
   }
 
   // ---- helpers -------------------------------------------------------------------------------
 
   private long create(ApiClient client, String nameVi) {
-    var response = client.post("/admin/products", body(nameVi));
+    return create(client, nameVi, "Sticky rice");
+  }
+
+  private long create(ApiClient client, String nameVi, String nameEn) {
+    var response = client.post("/admin/products", body(nameVi, nameEn));
     assertThat(response.getStatusCode().value()).isEqualTo(201);
     return ApiClient.json(response).path("id").asLong();
+  }
+
+  private String adminName(ApiClient client, long id) {
+    return ApiClient.json(client.get("/admin/products/" + id)).path("name").path("vi").asString();
   }
 
   private List<String> publicNames() {
@@ -286,11 +441,42 @@ class ProductVisibilityTest extends AuthTestSupport {
         action);
   }
 
+  private long lastLine(long id) {
+    return jdbc.queryForObject(
+        "select max(id) from audit_log where entity_type = 'product' and entity_id = ?",
+        Long.class,
+        id);
+  }
+
+  private static ProductRequest request(String nameVi) {
+    return new ProductRequest(
+        0,
+        false,
+        new LocalizedText(nameVi, "Sticky rice"),
+        null,
+        new LocalizedList(List.of("Dẻo"), List.of("Soft")),
+        null,
+        List.of(),
+        List.of());
+  }
+
+  private static void sleep(Duration duration) {
+    try {
+      Thread.sleep(duration);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
   private static Map<String, Object> body(String nameVi) {
+    return body(nameVi, "Sticky rice");
+  }
+
+  private static Map<String, Object> body(String nameVi, String nameEn) {
     var body = new LinkedHashMap<String, Object>();
     body.put("sortOrder", 0);
     body.put("showPrice", false);
-    body.put("name", text(nameVi, "Sticky rice"));
+    body.put("name", text(nameVi, nameEn));
     body.put("features", Map.of("vi", List.of("Dẻo"), "en", List.of("Soft")));
     body.put("packagings", List.of(Map.of("weightGrams", 1000)));
     body.put("mediaIds", List.of());

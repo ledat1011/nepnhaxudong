@@ -7,8 +7,9 @@ import vn.nepnhaxudong.common.LocalizedText;
 
 /**
  * A product as the admin sees it, with both languages. {@code missingEn} is true when a field that
- * has a Vietnamese text has no English text. {@code visible} is the "Hiện trên web" switch. It is
- * also the snapshot kept in the audit log.
+ * has a Vietnamese text has no English text. {@code visible} is the "Hiện trên web" switch; it is
+ * a {@code Boolean} because an audit snapshot written before migration V3 has none (a restore does
+ * not read it from the snapshot). It is also the snapshot kept in the audit log.
  */
 public record ProductAdminDto(
     long id,
@@ -22,14 +23,6 @@ public record ProductAdminDto(
     List<PackagingDto> packagings,
     List<Long> mediaIds,
     boolean missingEn) {
-
-  /**
-   * An audit snapshot written before migration V3 has no {@code visible}. Every product was on the
-   * website then, so a missing value means visible.
-   */
-  public ProductAdminDto {
-    visible = visible == null || visible;
-  }
 
   static ProductAdminDto from(Product product) {
     var vi = product.translation(Lang.VI).orElseThrow();
