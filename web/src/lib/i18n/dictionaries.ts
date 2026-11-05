@@ -28,9 +28,11 @@ const vi = {
     en: "English",
   },
   hero: {
-    what: "Gạo nếp cái hoa vàng · Hải Dương",
+    // The no-break space keeps the dot at the end of a line, never at the start of the next.
+    what: "Gạo nếp cái hoa vàng\u00a0· Hải Dương",
     zaloCta: "Liên hệ qua Zalo",
-    messengerCta: "Nhắn qua Messenger",
+    // Short, so it fits next to the Zalo button on a phone and the bag still shows below.
+    messengerCta: "Messenger",
     journeyCta: "Xem hành trình",
   },
   motion: {
@@ -176,9 +178,9 @@ const en: Dictionary = {
     en: "English",
   },
   hero: {
-    what: "Yellow-flower sticky rice · Hải Dương, Vietnam",
+    what: "Yellow-flower sticky rice\u00a0· Hải Dương, Vietnam",
     zaloCta: "Contact us on Zalo",
-    messengerCta: "Message us on Messenger",
+    messengerCta: "Messenger",
     journeyCta: "See the journey",
   },
   motion: {

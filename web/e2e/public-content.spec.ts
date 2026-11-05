@@ -42,7 +42,8 @@ test.describe("first phone screen", () => {
 
   test("says what is sold, and the top of the rice bag shows", async ({ page }) => {
     await page.goto("/vi");
-    await expect(page.getByText(vi.hero.what)).toBeInViewport();
+    await expect(page.locator("main h1 + p")).toHaveText(vi.hero.what);
+    await expect(page.locator("main h1 + p")).toBeInViewport();
     const bagTop = await page
       .locator("[data-product-bag]")
       .evaluate((el) => el.getBoundingClientRect().top);

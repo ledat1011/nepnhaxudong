@@ -37,7 +37,7 @@ function renderEnglishHero(messenger: string | null) {
 describe("Hero", () => {
   it("says under the name what is sold and where it comes from, above the tagline", () => {
     renderHero("0000 000 000");
-    const what = screen.getByText("Gạo nếp cái hoa vàng · Hải Dương");
+    const what = screen.getByText(dict.hero.what, { normalizer: (text) => text });
     const tagline = screen.getByText("[MẪU] Khẩu hiệu");
     expect(what.compareDocumentPosition(tagline) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

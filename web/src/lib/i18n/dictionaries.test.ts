@@ -55,7 +55,7 @@ describe("site description", () => {
   });
 
   it("says on the first screen what is sold and where it comes from", () => {
-    expect(getDictionary("vi").hero.what).toBe("Gạo nếp cái hoa vàng · Hải Dương");
-    expect(getDictionary("en").hero.what).toBe("Yellow-flower sticky rice · Hải Dương, Vietnam");
+    expect(getDictionary("vi").hero.what).toBe("Gạo nếp cái hoa vàng\u00a0· Hải Dương");
+    expect(getDictionary("en").hero.what).toBe("Yellow-flower sticky rice\u00a0· Hải Dương, Vietnam");
   });
 });
