@@ -82,4 +82,11 @@ describe("LoginScreen", () => {
     await signIn({ ...user, mustSetupTotp: true });
     expect(replace).toHaveBeenCalledWith("/admin/bat-xac-thuc");
   });
+  it("shows the logo and the name above the title", () => {
+    render(<LoginScreen />);
+    const brand = screen.getByText("Nếp Nhà");
+    const title = screen.getByRole("heading", { level: 1, name: "Đăng nhập quản trị" });
+    expect(brand.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(brand.parentElement?.querySelector("svg")).not.toBeNull();
+  });
 });

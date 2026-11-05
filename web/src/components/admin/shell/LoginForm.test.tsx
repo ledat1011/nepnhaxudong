@@ -118,4 +118,21 @@ describe("LoginForm", () => {
     render(<LoginForm onSuccess={vi.fn()} defaultEmail="an@example.com" />);
     expect(screen.getByLabelText("Email")).toHaveValue("an@example.com");
   });
+  it("shows the password with Hiện and hides it again with Ẩn", async () => {
+    const events = userEvent.setup();
+    render(<LoginForm onSuccess={vi.fn()} />);
+    const password = screen.getByLabelText("Mật khẩu");
+    await events.type(password, "lua-vang");
+    expect(password).toHaveAttribute("type", "password");
+    await events.click(screen.getByRole("button", { name: "Hiện mật khẩu" }));
+    expect(password).toHaveAttribute("type", "text");
+    expect(password).toHaveValue("lua-vang");
+    await events.click(screen.getByRole("button", { name: "Ẩn mật khẩu" }));
+    expect(password).toHaveAttribute("type", "password");
+  });
+
+  it("says what to do when the password is forgotten", () => {
+    render(<LoginForm onSuccess={vi.fn()} />);
+    expect(screen.getByText("Quên mật khẩu? Nhờ người quản trị trong nhà đặt lại.")).toBeInTheDocument();
+  });
 });

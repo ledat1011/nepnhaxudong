@@ -5,6 +5,7 @@ import { adminFetch } from "@/lib/admin/api";
 import { resetCsrfToken } from "@/lib/admin/csrf";
 import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
 import type { UserResponse } from "@/lib/admin/types";
+import { PasswordInput } from "@/components/admin/form/PasswordInput";
 import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
@@ -13,6 +14,7 @@ const TOTP_REQUIRED = "totp-required";
 const TOTP_INVALID = "totp-invalid";
 const MISSING_FIELDS_MESSAGE = "Hãy nhập email và mật khẩu.";
 const TOTP_HINT = "Nhập mã 6 số trong ứng dụng xác thực.";
+const FORGOT_HINT = "Quên mật khẩu? Nhờ người quản trị trong nhà đặt lại.";
 
 type Props = {
   onSuccess(user: UserResponse): void;
@@ -98,13 +100,16 @@ export function LoginForm({ onSuccess, defaultEmail = "", lockEmail = false, onC
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="login-password">Mật khẩu</Label>
-        <Input
+        <PasswordInput
           id="login-password"
-          type="password"
           autoComplete="current-password"
+          aria-describedby="login-password-hint"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
+        <p id="login-password-hint" className="text-sm text-muted-foreground">
+          {FORGOT_HINT}
+        </p>
       </div>
       {needTotp && (
         <div className="flex flex-col gap-2">
