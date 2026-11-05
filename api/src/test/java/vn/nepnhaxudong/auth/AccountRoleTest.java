@@ -96,6 +96,8 @@ class AccountRoleTest extends AuthTestSupport {
     long memberId = createUser(MEMBER_EMAIL, MEMBER_PASSWORD, false).getId();
     long ownerId = createOwner(OWNER_EMAIL, OWNER_PASSWORD, false).getId();
 
+    assertThatThrownBy(() -> userAdminService.list(memberId))
+        .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus().value()).isEqualTo(403));
     assertThatThrownBy(() -> userAdminService.disable(memberId, ownerId))
         .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus().value()).isEqualTo(403));
     assertThatThrownBy(() -> userAdminService.changeRole(memberId, ownerId, UserRole.MEMBER, null))

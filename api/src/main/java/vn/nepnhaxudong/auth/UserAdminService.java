@@ -48,8 +48,11 @@ public class UserAdminService {
     this.audit = audit;
   }
 
+  /** The accounts, for an enabled owner only (read without the row locks: nothing changes here). */
   @Transactional(readOnly = true)
-  public List<UserSummary> list() {
+  public List<UserSummary> list(long actorId) {
+    AppUser actor = users.findById(actorId).filter(AppUser::isEnabled).orElse(null);
+    requireOwner(actor);
     return users.findAll(Sort.by("id")).stream().map(UserSummary::of).toList();
   }
 
@@ -184,7 +187,11 @@ public class UserAdminService {
   private Map<Long, AppUser> lockForOwner(long actorId) {
     Map<Long, AppUser> accounts =
         users.findAllForUpdate().stream().collect(Collectors.toMap(AppUser::getId, Function.identity()));
-    AppUser actor = accounts.get(actorId);
+    requireOwner(accounts.get(actorId));
+    return accounts;
+  }
+
+  private static void requireOwner(AppUser actor) {
     if (actor == null || !actor.isEnabled()) {
       throw new ApiException(HttpStatus.FORBIDDEN, "Tài khoản của bạn đã bị khóa.");
     }
@@ -192,7 +199,6 @@ public class UserAdminService {
       throw new ApiException(
           HttpStatus.FORBIDDEN, AdminAccessFilter.OWNER_ONLY, ProblemCodes.OWNER_REQUIRED);
     }
-    return accounts;
   }
 
   private static AppUser target(Map<Long, AppUser> accounts, long targetId) {

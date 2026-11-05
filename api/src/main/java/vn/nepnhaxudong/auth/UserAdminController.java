@@ -30,8 +30,8 @@ public class UserAdminController {
   }
 
   @GetMapping
-  public List<UserSummary> list() {
-    return service.list();
+  public List<UserSummary> list(@AuthenticationPrincipal SessionPrincipal principal) {
+    return service.list(principal.userId());
   }
 
   @PostMapping
