@@ -48,3 +48,14 @@ export function screenTitle(pathname: string): string {
   const item = [...NAV_ITEMS, ...MORE_ITEMS].find((candidate) => isActivePath(pathname, candidate.href));
   return item?.label ?? "Quản trị";
 }
+
+/**
+ * The list screen of a detail page (a product, a story), for its "Quay lại" link.
+ * `null` on the dashboard and on a list screen itself.
+ */
+export function parentScreen(pathname: string): { href: string; label: string } | null {
+  const item = [...NAV_ITEMS, ...MORE_ITEMS].find(
+    (candidate) => candidate.href !== ADMIN_ROUTES.home && pathname.startsWith(`${candidate.href}/`),
+  );
+  return item === undefined ? null : { href: item.href, label: item.label };
+}

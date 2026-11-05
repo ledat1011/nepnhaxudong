@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
@@ -20,17 +21,21 @@ vi.mock("next/navigation", () => ({
 
 import { AdminSessionProvider } from "@/lib/admin/session";
 import { AppShell } from "./AppShell";
+import { useScreenDetail, type ScreenDetail } from "./screen-detail";
 
 const user: UserResponse = { id: 1, email: "an@example.com", displayName: "Nguyễn An", mustChangePassword: false };
 
-function renderShell() {
+function renderShell(children: ReactNode = <p>Nội dung riêng tư</p>) {
   return render(
     <AdminSessionProvider>
-      <AppShell>
-        <p>Nội dung riêng tư</p>
-      </AppShell>
+      <AppShell>{children}</AppShell>
     </AdminSessionProvider>,
   );
+}
+
+function EditedItem(detail: ScreenDetail) {
+  useScreenDetail(detail);
+  return <p>Nội dung riêng tư</p>;
 }
 
 beforeEach(() => {
@@ -101,5 +106,58 @@ describe("AppShell", () => {
     await waitFor(() => expect(screen.queryByText("Nội dung riêng tư")).not.toBeInTheDocument());
     expect(replace).toHaveBeenCalledWith("/admin/dang-nhap");
     expect(replace.mock.calls.filter(([url]) => String(url).includes("next="))).toEqual([]);
+  });
+
+  describe("on a detail page", () => {
+    it("shows Quay lại to the list, the name of the item as the heading and Xem trên web", async () => {
+      pathname.value = "/admin/san-pham/3";
+      adminFetch.mockResolvedValue(user);
+      renderShell(<EditedItem name="Gạo nếp cái hoa vàng" publicHref="/vi#san-pham" />);
+      const header = await screen.findByRole("banner");
+      const back = within(header).getByRole("link", { name: /^Quay lại/ });
+      expect(back).toHaveAttribute("href", "/admin/san-pham");
+      expect(back).toHaveAccessibleName("Quay lại danh sách sản phẩm");
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Gạo nếp cái hoa vàng");
+      expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+      expect(header).toHaveTextContent("Sản phẩm");
+      const web = within(header).getByRole("link", { name: /^Xem trên web/ });
+      expect(web).toHaveAttribute("href", "/vi#san-pham");
+      expect(web).toHaveAttribute("target", "_blank");
+      expect(web).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    });
+
+    it("has no Xem trên web while the item is not on the public site", async () => {
+      pathname.value = "/admin/cau-chuyen/5";
+      adminFetch.mockResolvedValue(user);
+      renderShell(<EditedItem name="Mùa gặt" publicHref={null} />);
+      const header = await screen.findByRole("banner");
+      expect(within(header).getByRole("link", { name: /^Quay lại/ })).toHaveAttribute("href", "/admin/cau-chuyen");
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Mùa gặt");
+      expect(within(header).queryByRole("link", { name: /Xem trên web/ })).not.toBeInTheDocument();
+    });
+
+    it("names the screen while the item is still loading", async () => {
+      pathname.value = "/admin/san-pham/3";
+      adminFetch.mockResolvedValue(user);
+      renderShell();
+      expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent("Sản phẩm");
+      expect(screen.getByRole("link", { name: /^Quay lại/ })).toBeInTheDocument();
+    });
+
+    it("scrolls away with the page, so the form keeps the height of the screen", async () => {
+      pathname.value = "/admin/san-pham/3";
+      adminFetch.mockResolvedValue(user);
+      renderShell(<EditedItem name="Gạo nếp" publicHref={null} />);
+      expect(await screen.findByRole("banner")).not.toHaveClass("sticky");
+    });
+  });
+
+  it("has no Quay lại on a list page", async () => {
+    pathname.value = "/admin/san-pham";
+    adminFetch.mockResolvedValue(user);
+    renderShell();
+    await screen.findByRole("banner");
+    expect(screen.queryByRole("link", { name: /^Quay lại/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("banner")).toHaveClass("sticky");
   });
 });
