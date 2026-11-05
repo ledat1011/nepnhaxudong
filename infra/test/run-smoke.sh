@@ -59,7 +59,8 @@ if command -v restic >/dev/null; then
   bash "$ROOT/infra/backup/backup.sh"
   bash "$ROOT/infra/backup/restore-test.sh"
   printf '\n== real restore of the latest snapshot, then the site must be healthy again\n'
-  echo "KHOI PHUC" | bash "$ROOT/infra/backup/restore.sh" latest
+  # restore.sh needs root (the images belong to UID 10001); -E keeps the test variables.
+  echo "KHOI PHUC" | sudo -E bash "$ROOT/infra/backup/restore.sh" latest
   ok=no
   for _ in $(seq 1 60); do
     if curl -ksS -m 10 https://localhost:8443/api/actuator/health 2>/dev/null | grep -q '"status":"UP"'; then ok=yes; break; fi

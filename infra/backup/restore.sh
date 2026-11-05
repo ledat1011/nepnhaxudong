@@ -5,6 +5,9 @@
 set -euo pipefail
 # shellcheck source=infra/backup/lib.sh
 . "$(dirname "$0")/lib.sh"
+# Root only: the images belong to UID 10001. Checked before anything is changed, so a run without the
+# rights cannot drop the database and then stop half way.
+if [ "$(id -u)" != 0 ]; then echo "run as root: sudo bash $0 ${1:-latest}" >&2; exit 1; fi
 load_env
 
 SNAPSHOT=${1:-latest}
