@@ -591,9 +591,9 @@ test("the hero clouds move and the pause button stops them", async ({ page }) =>
   expect(await cloudTransform(page)).not.toBe(first);
 
   await pause.click();
-  // A toggle button keeps its name; aria-pressed carries the state, the title follows it.
+  // A toggle button keeps its name and title; aria-pressed carries the state.
   await expect(pause).toHaveAttribute("aria-pressed", "true");
-  await expect(pause).toHaveAttribute("title", "Chạy lại chuyển động");
+  await expect(pause).toHaveAttribute("title", "Tạm dừng chuyển động");
   const stopped = await cloudTransform(page);
   await page.waitForTimeout(1000);
   expect(await cloudTransform(page)).toBe(stopped);
