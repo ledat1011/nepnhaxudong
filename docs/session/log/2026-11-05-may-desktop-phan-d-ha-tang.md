@@ -1,6 +1,7 @@
 # 2026-11-05 — máy desktop — phần D (hạ tầng)
 
 ## Phản hồi
+- Chủ dự án: "merge luôn nhé" cho PR #31 (phần D) → merge ngay khi CI xanh, không đợi review xong; các góp ý của review làm ở PR sau.
 - Chủ dự án chưa có VPS. Cần một máy chủ nhẹ để đưa web lên internet; hiện web là landing page, chưa có dữ liệu quan trọng; ưu tiên chi phí thấp. → Chọn cấu hình và nhà cung cấp theo giá trước, bớt các phần tốn tài nguyên nếu không cần ngay.
 
 ## Quyết định

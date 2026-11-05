@@ -42,7 +42,10 @@ tables=$(docker exec "$NAME" psql -U nepnha -d nepnha -tAc \
 migrations=$(docker exec "$NAME" psql -U nepnha -d nepnha -tAc \
   "select count(*) from flyway_schema_history where success")
 echo "tables: $tables, applied migrations: $migrations"
-[ "$tables" -gt 0 ] && [ "$migrations" -gt 0 ] || { echo "the restored database is empty" >&2; exit 1; }
+if [ "$tables" -eq 0 ] || [ "$migrations" -eq 0 ]; then
+  echo "the restored database is empty" >&2
+  exit 1
+fi
 
 ping_hc ""
 echo "restore test done"

@@ -23,7 +23,9 @@ die() { echo "ERROR: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || die "run as root"
 # shellcheck source=/dev/null
 . /etc/os-release
-[ "${ID:-}" = ubuntu ] && [ "${VERSION_ID:-}" = "24.04" ] || die "this script is for Ubuntu 24.04 (found ${PRETTY_NAME:-unknown})"
+if [ "${ID:-}" != ubuntu ] || [ "${VERSION_ID:-}" != "24.04" ]; then
+  die "this script is for Ubuntu 24.04 (found ${PRETTY_NAME:-unknown})"
+fi
 for key in "$ADMIN_KEY" "$DEPLOY_KEY"; do
   [[ "$key" =~ ^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256)\ [A-Za-z0-9+/=]+ ]] || die "pass both --admin-key and --deploy-key as one-line public keys"
 done

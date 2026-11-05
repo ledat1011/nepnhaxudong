@@ -91,7 +91,8 @@ case "$code" in 2*) fail "/api/revalidate answered $code from outside" ;; esac
 
 step "A body over 16 MB is refused with 413"
 head -c 17000000 /dev/zero > "$T/big.bin"
-code=$(cd "$T" && status -H "X-XSRF-TOKEN: $(csrf)" -F "file=@big.bin;type=image/jpeg" -F altVi=x -F altEn=x "$BASE/api/admin/media" || true)
+# Caddy may close the connection while curl still sends; curl then exits non-zero but has printed the status.
+code=$(cd "$T"; status -H "X-XSRF-TOKEN: $(csrf)" -F "file=@big.bin;type=image/jpeg" -F altVi=x -F altEn=x "$BASE/api/admin/media") || true
 [ "$code" = 413 ] || fail "a 17 MB upload answered $code"
 
 step "Postgres publishes no port"
