@@ -352,6 +352,38 @@ class RevalidateTest extends AuthTestSupport {
   }
 
   @Test
+  void showingAndHidingAProductEachSendHome() {
+    var client = loggedInClient();
+    long id = createProduct(client);
+    settle(client);
+
+    var shown = client.post("/admin/products/" + id + "/show", Map.of());
+    List<ReceivedRequest> afterShow = sentSince(client);
+    var hidden = client.post("/admin/products/" + id + "/hide", Map.of());
+    List<ReceivedRequest> afterHide = sentSince(client);
+
+    assertThat(shown.getStatusCode().value()).isEqualTo(200);
+    assertThat(hidden.getStatusCode().value()).isEqualTo(200);
+    assertThat(afterShow).hasSize(1);
+    assertThat(afterShow.get(0).tags()).containsExactly("home");
+    assertThat(afterHide).hasSize(1);
+    assertThat(afterHide.get(0).tags()).containsExactly("home");
+  }
+
+  @Test
+  void hidingAHiddenProductSendsNothing() {
+    var client = loggedInClient();
+    long id = createProduct(client);
+    settle(client);
+
+    var response = client.post("/admin/products/" + id + "/hide", Map.of());
+    List<ReceivedRequest> sent = sentSince(client);
+
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(sent).isEmpty();
+  }
+
+  @Test
   void restoringASiteSettingSendsHome() {
     var client = loggedInClient();
     client.put("/admin/settings/contact", contact());

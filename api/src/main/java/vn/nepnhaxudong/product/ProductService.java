@@ -87,6 +87,35 @@ public class ProductService {
     events.publishEvent(ContentChangedEvent.home());
   }
 
+  /**
+   * Turns "Hiện trên web" on, so the product appears on the public website. A product that is
+   * already shown stays as it is, with no audit line and no refresh of the website.
+   */
+  @Transactional
+  public ProductAdminDto show(long id) {
+    return changeVisibility(id, true);
+  }
+
+  /** Turns "Hiện trên web" off. A hidden product stays as it is, with no audit line. */
+  @Transactional
+  public ProductAdminDto hide(long id) {
+    return changeVisibility(id, false);
+  }
+
+  private ProductAdminDto changeVisibility(long id, boolean visible) {
+    var product = find(id);
+    var before = ProductAdminDto.from(product);
+    if (product.isVisible() == visible) {
+      return before;
+    }
+    product.setVisible(visible);
+    product.touch(clock.instant());
+    var after = ProductAdminDto.from(product);
+    audit.record(AUDIT_TYPE, id, AuditAction.UPDATE, before, after);
+    events.publishEvent(ContentChangedEvent.home());
+    return after;
+  }
+
   private Product find(long id) {
     return products
         .findById(id)

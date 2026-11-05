@@ -36,6 +36,10 @@ public class Product extends TimestampedEntity {
   @Column(name = "show_price", nullable = false)
   private boolean showPrice;
 
+  /** "Hiện trên web": only a visible product is on the public website. A new product is hidden. */
+  @Column(nullable = false)
+  private boolean visible;
+
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ProductTranslation> translations = new ArrayList<>();
 
@@ -71,6 +75,14 @@ public class Product extends TimestampedEntity {
 
   public void setShowPrice(boolean showPrice) {
     this.showPrice = showPrice;
+  }
+
+  public boolean isVisible() {
+    return visible;
+  }
+
+  void setVisible(boolean visible) {
+    this.visible = visible;
   }
 
   public Optional<ProductTranslation> translation(Lang lang) {

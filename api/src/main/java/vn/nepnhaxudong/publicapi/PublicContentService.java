@@ -25,7 +25,8 @@ import vn.nepnhaxudong.timeline.TimelineEventRepository;
 
 /**
  * Reads the content that the public website shows. It never writes, and it shows only what is
- * public: every product, milestone and article, and the stories that are published.
+ * public: the products with "Hiện trên web" on, every milestone and article, and the stories that
+ * are published.
  */
 @Service
 public class PublicContentService {
@@ -61,7 +62,7 @@ public class PublicContentService {
 
   @Transactional(readOnly = true)
   public HomeDto home(Lang lang) {
-    List<Product> productList = products.findAllByOrderBySortOrderAscIdAsc();
+    List<Product> productList = products.findAllByVisibleTrueOrderBySortOrderAscIdAsc();
     List<TimelineEvent> eventList = events.findAllByOrderBySortOrderAscIdAsc();
     List<PressMention> mentionList = mentions.findAllByOrderBySortOrderAscIdAsc();
     List<Story> storyList =
