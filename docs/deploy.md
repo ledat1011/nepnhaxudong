@@ -3,6 +3,8 @@
 Tài liệu này là danh sách việc **chỉ chủ dự án làm được**: thuê máy, tạo tài khoản, giữ key và mật khẩu.
 Phần code đã có sẵn trong repo. Lý do chọn cách làm: `docs/decisions/0012-ha-tang-vps-nho.md`. Plan: `docs/superpowers/plans/2026-11-05-phan-d-ha-tang.md`.
 
+Trong lúc chưa thuê VPS, bản xem thử giao diện (dữ liệu mẫu) chạy trên Vercel: `docs/xem-thu-vercel.md`.
+
 Cách hệ thống chạy, nói ngắn gọn:
 - Một VPS chạy 4 container: `caddy` (HTTPS, chia đường), `web` (Next.js), `api` (Spring Boot), `postgres`.
 - Mỗi lần merge vào `main`, workflow `deploy` của GitHub Actions làm các việc sau:

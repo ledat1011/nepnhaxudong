@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { NavigationProgress } from "@/components/ui/NavigationProgress";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { DEFAULT_LANG, isLang } from "@/lib/i18n/langs";
-import { getSiteUrl } from "@/lib/seo/metadata";
+import { getSiteUrl, isIndexingOff } from "@/lib/seo/metadata";
 import { fontClassName } from "../fonts";
 import "../globals.css";
 
@@ -12,9 +12,11 @@ type LangLayoutProps = {
   params: Promise<{ lang: string }>;
 };
 
-// A function, not a constant: SITE_URL is read per request, not frozen at build time.
+// A function, not a constant: SITE_URL and SITE_NOINDEX are read per request, not frozen at build time.
+// Pages do not set "robots", so this value reaches every public page.
 export function generateMetadata(): Metadata {
-  return { metadataBase: getSiteUrl() };
+  const metadataBase = getSiteUrl();
+  return isIndexingOff() ? { metadataBase, robots: { index: false, follow: false } } : { metadataBase };
 }
 
 /** Root layout. Each page renders its own header and footer, because only it has the home data. */

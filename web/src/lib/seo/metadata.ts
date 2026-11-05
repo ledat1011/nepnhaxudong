@@ -14,6 +14,14 @@ export function getSiteUrl(env: Env = process.env): URL {
   return new URL(env.SITE_URL || DEFAULT_SITE_URL);
 }
 
+/**
+ * True when SITE_NOINDEX is "1": a preview copy (for example on Vercel with sample data) that search engines
+ * must not list. Read at call time, like SITE_URL.
+ */
+export function isIndexingOff(env: Env = process.env): boolean {
+  return env.SITE_NOINDEX === "1";
+}
+
 export function withSiteName(title: string): string {
   return `${title} | ${SITE_NAME}`;
 }
