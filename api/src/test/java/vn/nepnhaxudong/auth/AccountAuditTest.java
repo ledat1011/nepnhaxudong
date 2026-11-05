@@ -185,7 +185,7 @@ class AccountAuditTest extends AuthTestSupport {
   // ---- helpers -------------------------------------------------------------------------------
 
   private ApiClient loggedIn() {
-    createUser(ADMIN_EMAIL, ADMIN_PASSWORD, false);
+    createOwner(ADMIN_EMAIL, ADMIN_PASSWORD, false);
     var client = newClient();
     assertThat(login(client, ADMIN_EMAIL, ADMIN_PASSWORD).getStatusCode().value()).isEqualTo(200);
     client.fetchCsrf();

@@ -8,13 +8,14 @@ import { useConfirmLeave } from "@/lib/admin/use-unsaved-changes";
 import { cn } from "@/lib/admin/utils";
 import { Button } from "@/components/admin/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/admin/ui/sheet";
-import { MORE_ITEMS, isActivePath } from "./nav-items";
+import { moreItemsFor } from "./nav-access";
+import { isActivePath } from "./nav-items";
 
 type Props = { open: boolean; onOpenChange(open: boolean): void };
 
 export function MoreSheet({ open, onOpenChange }: Props) {
   const pathname = usePathname();
-  const { signOut } = useAdminSession();
+  const { signOut, user } = useAdminSession();
   const confirmLeave = useConfirmLeave();
 
   return (
@@ -29,7 +30,7 @@ export function MoreSheet({ open, onOpenChange }: Props) {
           <SheetTitle>Thêm</SheetTitle>
         </SheetHeader>
         <ul className="flex flex-col px-2">
-          {MORE_ITEMS.map(({ label, href, icon: Icon }) => {
+          {moreItemsFor(user?.role).map(({ label, href, icon: Icon }) => {
             const active = isActivePath(pathname, href);
             return (
               <li key={href}>

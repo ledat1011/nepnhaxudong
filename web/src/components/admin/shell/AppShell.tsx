@@ -9,7 +9,8 @@ import { AdminHeader } from "./AdminHeader";
 import { SessionErrorScreen } from "./SessionErrorScreen";
 import { BottomNav } from "./BottomNav";
 import { FieldFocus } from "./FieldFocus";
-import { parentScreen, screenTitle } from "./nav-items";
+import { screenTitleFor } from "./nav-access";
+import { parentScreen } from "./nav-items";
 import { ScreenDetailContext, type ScreenDetail } from "./screen-detail";
 
 /** The gate of every private admin screen. It renders nothing private until the session is known. */
@@ -27,6 +28,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       );
     } else if (status === "must-change-password") {
       router.replace(ADMIN_ROUTES.changePassword);
+    } else if (status === "must-setup-totp") {
+      router.replace(ADMIN_ROUTES.setupTotp);
     }
   }, [status, pathname, router, signedOutOnPurpose]);
 
@@ -45,7 +48,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <ScreenDetailContext.Provider value={setDetail}>
         <div className="min-h-dvh pb-24">
           <AdminHeader
-            title={screenTitle(pathname)}
+            title={screenTitleFor(pathname, user.role)}
             userName={user.displayName}
             back={parentScreen(pathname)}
             detail={detail}

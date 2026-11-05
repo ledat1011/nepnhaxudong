@@ -30,5 +30,7 @@ export default defineConfig({
       dependencies: ["flow"],
       use: { ...devices["Desktop Chrome"], storageState: process.env.E2E_STATE_FILE },
     },
+    // The owner (the saved session) and a family member on a phone: roles and the 2FA reset.
+    { name: "roles", testMatch: /admin-roles\.spec\.ts/, dependencies: ["flow"], use: { ...devices["Desktop Chrome"] } },
   ],
 });

@@ -409,8 +409,11 @@ test("turning reduced motion on while the page is open reverts the motion", asyn
   await page.waitForSelector(MOTION_ON);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForSelector("html:not([data-motion])");
-  const opacities = await revealOpacities(page);
-  expect(opacities.every((opacity) => opacity === "1")).toBe(true);
+  // The attribute goes before GSAP has put every inline style back, so on a slow CI machine the first read can
+  // still see a block mid-revert. Wait for the end state instead of reading once.
+  await expect
+    .poll(async () => (await revealOpacities(page)).every((opacity) => opacity === "1"))
+    .toBe(true);
 });
 
 test("the mascot tilts while scrolling and settles after", async ({ page }) => {

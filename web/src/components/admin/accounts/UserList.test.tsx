@@ -25,6 +25,9 @@ function account(overrides: Partial<UserSummary>): UserSummary {
     enabled: true,
     totpEnabled: false,
     mustChangePassword: false,
+    role: "MEMBER",
+    mustSetupTotp: false,
+    totpRequired: false,
     ...overrides,
   };
 }
@@ -151,8 +154,73 @@ describe("UserList", () => {
     const user = userEvent.setup();
     render(<UserList users={users} onChanged={vi.fn()} />);
     await user.click(within(row("Bình")).getByRole("button", { name: /^Đặt lại mật khẩu/ }));
-    expect(await screen.findByText("Thao tác này cũng tắt xác thực 2 lớp của người này.")).toBeInTheDocument();
+    expect(await screen.findByText(/Một mật khẩu tạm thời mới sẽ hiện ra một lần/)).toBeInTheDocument();
     expect(within(screen.getByRole("dialog")).getByText(/binh@example.com/)).toBeInTheDocument();
+  });
+
+  it("shows the role of each person and when two-factor login must be set up again", () => {
+    const list = [
+      account({ id: 1, displayName: "An", role: "OWNER" }),
+      account({ id: 2, displayName: "Bình", email: "binh@example.com", mustSetupTotp: true }),
+    ];
+    render(<UserList users={list} onChanged={vi.fn()} />);
+    expect(within(row("An")).getByText("Chủ")).toBeInTheDocument();
+    expect(within(row("Bình")).getByText("Người nhà")).toBeInTheDocument();
+    expect(within(row("Bình")).getByText("Cần bật lại 2 lớp")).toBeInTheDocument();
+  });
+
+  it("asks before it makes a member an owner, then posts the role", async () => {
+    const user = userEvent.setup();
+    const onChanged = vi.fn();
+    render(<UserList users={users} onChanged={onChanged} />);
+    await user.click(within(row("Bình")).getByRole("button", { name: "Cho làm Chủ: Bình" }));
+    expect(posts()).toHaveLength(0);
+    await user.click(await screen.findByRole("button", { name: "Cho làm Chủ" }));
+    await waitFor(() => expect(posts()).toEqual([["/admin/users/2/role", { role: "OWNER" }]]));
+    expect(onChanged).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks before an owner steps back to member, and offers it only while another owner is active", async () => {
+    const user = userEvent.setup();
+    const twoOwners = [
+      account({ id: 1, displayName: "An", role: "OWNER" }),
+      account({ id: 2, displayName: "Bình", email: "binh@example.com", role: "OWNER" }),
+    ];
+    const { unmount } = render(<UserList users={twoOwners} onChanged={vi.fn()} />);
+    await user.click(within(row("Bình")).getByRole("button", { name: "Thôi làm Chủ: Bình" }));
+    expect(await screen.findByText(/Bình sẽ thành Người nhà/)).toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: "Thôi làm Chủ" }));
+    await waitFor(() => expect(posts()).toEqual([["/admin/users/2/role", { role: "MEMBER" }]]));
+    unmount();
+
+    const oneOwner = [
+      account({ id: 1, displayName: "An", role: "OWNER" }),
+      account({ id: 2, displayName: "Bình", email: "binh@example.com" }),
+      account({ id: 3, displayName: "Chi", email: "chi@example.com", role: "OWNER", enabled: false }),
+    ];
+    render(<UserList users={oneOwner} onChanged={vi.fn()} />);
+    // An is the only active owner: the family must keep one.
+    expect(within(row("An")).queryByRole("button", { name: /làm Chủ/ })).not.toBeInTheDocument();
+  });
+
+  it("offers to switch off two-factor login only for another person who has it, and asks first", async () => {
+    const user = userEvent.setup();
+    const onChanged = vi.fn();
+    const list = [
+      account({ id: 1, displayName: "An", role: "OWNER", totpEnabled: true }),
+      account({ id: 2, displayName: "Bình", email: "binh@example.com", totpEnabled: true }),
+      account({ id: 3, displayName: "Chi", email: "chi@example.com" }),
+    ];
+    render(<UserList users={list} onChanged={onChanged} />);
+    expect(within(row("An")).queryByRole("button", { name: /^Tắt xác thực 2 lớp/ })).not.toBeInTheDocument();
+    expect(within(row("Chi")).queryByRole("button", { name: /^Tắt xác thực 2 lớp/ })).not.toBeInTheDocument();
+    await user.click(within(row("Bình")).getByRole("button", { name: "Tắt xác thực 2 lớp của Bình" }));
+    const dialog = await screen.findByRole("dialog", { name: "Tắt xác thực 2 lớp" });
+    await user.click(within(dialog).getByRole("button", { name: "Tắt 2 lớp và đặt mật khẩu tạm" }));
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(posts()[0][0]).toBe("/admin/users/2/disable-totp");
+    expect(posts()[0][1]).toMatchObject({ temporaryPassword: expect.any(String) });
+    expect(onChanged).toHaveBeenCalledTimes(1);
   });
 
   it("opens the create dialog", async () => {

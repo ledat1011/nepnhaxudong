@@ -15,7 +15,9 @@ export function LoginScreen() {
   async function handleSuccess(user: UserResponse) {
     // The gate of the next screen reads the session, so load it before leaving.
     await refresh();
-    router.replace(user.mustChangePassword ? ADMIN_ROUTES.changePassword : safeNextPath(searchParams.get("next")));
+    if (user.mustChangePassword) router.replace(ADMIN_ROUTES.changePassword);
+    else if (user.mustSetupTotp) router.replace(ADMIN_ROUTES.setupTotp);
+    else router.replace(safeNextPath(searchParams.get("next")));
   }
 
   return (

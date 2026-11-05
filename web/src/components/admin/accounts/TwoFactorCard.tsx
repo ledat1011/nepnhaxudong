@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { create as createQr } from "qrcode";
+import { toast } from "sonner";
 import { useId, useMemo, useState, type FormEvent } from "react";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { Button } from "@/components/admin/ui/button";
@@ -11,8 +12,25 @@ import { adminFetch } from "@/lib/admin/api";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { TotpSetupResponse } from "@/lib/admin/types";
 import { useSave } from "@/lib/admin/use-save";
+import { useTouchScreen } from "@/lib/admin/use-touch-screen";
 
 const CODE_PATTERN = /^\d{6}$/;
+
+/** Only this kind of address may become a link: the API builds it, but the page does not trust it blindly. */
+const OTPAUTH_PREFIX = "otpauth://totp/";
+
+const ENABLED_MESSAGE = "Đã bật xác thực 2 lớp.";
+const CLIPBOARD_REMINDER = "Hãy xóa mã bí mật đã sao chép khỏi lịch sử bộ nhớ tạm của điện thoại.";
+/** Long enough to read the reminder; the forced setup page leaves right after the success. */
+const REMINDER_MS = 10_000;
+
+type CopyState = "idle" | "copied" | "failed";
+
+const COPY_MESSAGES: Record<CopyState, string> = {
+  idle: "",
+  copied: "Đã sao chép mã.",
+  failed: "Không sao chép được. Hãy tự chọn mã ở trên rồi sao chép.",
+};
 
 /** Empty squares around the code, in modules. Scanners need this quiet zone. */
 const QUIET_ZONE = 4;
@@ -48,14 +66,22 @@ type Props = {
   enabled: boolean;
   /** Called after it was switched on or off, so the account list can load again. */
   onChanged(): void;
+  /** Shows the "Đổi mật khẩu" link. The forced two-factor setup page leaves it out. */
+  passwordLink?: boolean;
+  /** False after an owner forced a new setup: only an owner may switch it off then. */
+  canSwitchOff?: boolean;
 };
 
 /**
  * Two-factor login of the signed-in user. The secret and the QR code live only in this component's state:
  * they are dropped on Hủy, after the code was accepted and when the card unmounts.
  */
-export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
+export function TwoFactorCard({ enabled: enabledNow, onChanged, passwordLink = true, canSwitchOff = true }: Props) {
   const codeId = useId();
+  const touch = useTouchScreen();
+  const [copy, setCopy] = useState<CopyState>("idle");
+  // Whether the secret went to the clipboard during this setup (the reminder after the success needs it).
+  const [copiedOnce, setCopiedOnce] = useState(false);
   // Shows the new state at once; the parent gives the card a new key when the loaded state changes.
   const [override, setOverride] = useState<boolean | null>(null);
   const enabled = override ?? enabledNow;
@@ -71,7 +97,8 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
       await adminFetch<void>("/admin/me/totp/enable", { method: "POST", body: { code: code.trim() } });
       return true;
     },
-    { successMessage: "Đã bật xác thực 2 lớp." },
+    // The toast is shown by `finish`, so it can carry the clipboard reminder.
+    { successMessage: null },
   );
   const disabling = useSave(
     async () => {
@@ -86,7 +113,22 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
 
   async function start() {
     const result = await starting.save();
-    if (result !== undefined) setSetup(result);
+    if (result !== undefined) {
+      setCopy("idle");
+      setCopiedOnce(false);
+      setSetup(result);
+    }
+  }
+
+  async function copySecret(secret: string) {
+    try {
+      // Missing on plain HTTP and in some in-app browsers; that counts as a failure.
+      await navigator.clipboard.writeText(secret);
+      setCopy("copied");
+      setCopiedOnce(true);
+    } catch {
+      setCopy("failed");
+    }
   }
 
   function cancel() {
@@ -99,6 +141,10 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
 
   async function finish(done: boolean | undefined, nowEnabled: boolean) {
     if (!done) return;
+    if (nowEnabled) {
+      if (copiedOnce) toast.success(`${ENABLED_MESSAGE} ${CLIPBOARD_REMINDER}`, { duration: REMINDER_MS });
+      else toast.success(ENABLED_MESSAGE);
+    }
     setSetup(null);
     setSwitchingOff(false);
     setCode("");
@@ -129,11 +175,43 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
 
       {setup !== null ? (
         <div className="flex flex-col gap-3">
-          <p className="text-sm">Quét mã QR bằng ứng dụng xác thực, hoặc gõ mã bí mật dưới đây vào ứng dụng.</p>
-          <QrCodeSvg text={setup.otpauthUri} />
-          <code className="block select-all break-all rounded-md border bg-muted p-3 font-mono text-base">
+          {touch && setup.otpauthUri.startsWith(OTPAUTH_PREFIX) ? (
+            // A phone cannot scan the QR code on its own screen; the otpauth link hands the secret to the app.
+            <>
+              <p className="text-sm">
+                Bấm nút dưới đây để thêm Nếp Nhà vào ứng dụng xác thực trên máy này, rồi quay lại đây nhập mã 6 số.
+              </p>
+              <Button asChild>
+                <a href={setup.otpauthUri}>Mở ứng dụng xác thực</a>
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Nút không mở được ứng dụng? Hãy sao chép mã bí mật và dán vào ứng dụng.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm">Quét mã QR bằng ứng dụng xác thực, hoặc gõ mã bí mật dưới đây vào ứng dụng.</p>
+              <QrCodeSvg text={setup.otpauthUri} />
+            </>
+          )}
+          <code
+            id={`${codeId}-secret`}
+            className="block select-all break-all rounded-md border bg-muted p-3 font-mono text-base"
+          >
             {setup.secret}
           </code>
+          <Button
+            type="button"
+            variant="outline"
+            aria-describedby={`${codeId}-secret`}
+            onClick={() => void copySecret(setup.secret)}
+          >
+            Sao chép mã
+          </Button>
+          {/* Always rendered, with its line reserved, so the message is announced and nothing below moves. */}
+          <p role="status" className="min-h-5 text-sm">
+            {COPY_MESSAGES[copy]}
+          </p>
         </div>
       ) : null}
 
@@ -163,9 +241,13 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
         <div className="flex flex-col gap-2">
           <ProblemMessage error={starting.error} />
           {enabled ? (
-            <Button type="button" variant="outline" onClick={() => setSwitchingOff(true)}>
-              Tắt xác thực 2 lớp
-            </Button>
+            canSwitchOff ? (
+              <Button type="button" variant="outline" onClick={() => setSwitchingOff(true)}>
+                Tắt xác thực 2 lớp
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">Chỉ Chủ tắt được xác thực 2 lớp của bạn.</p>
+            )
           ) : (
             <Button type="button" onClick={() => void start()} disabled={busy}>
               {starting.pending ? "Đang tạo mã…" : "Bật xác thực 2 lớp"}
@@ -174,9 +256,11 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged }: Props) {
         </div>
       )}
 
-      <Button asChild variant="outline">
-        <Link href={ADMIN_ROUTES.changePassword}>Đổi mật khẩu</Link>
-      </Button>
+      {passwordLink ? (
+        <Button asChild variant="outline">
+          <Link href={ADMIN_ROUTES.changePassword}>Đổi mật khẩu</Link>
+        </Button>
+      ) : null}
     </section>
   );
 }

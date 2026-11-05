@@ -2,6 +2,8 @@ package vn.nepnhaxudong.auth;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -44,6 +46,22 @@ public class AppUser extends TimestampedEntity {
 
   @Column(name = "totp_enabled", nullable = false)
   private boolean totpEnabled;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private UserRole role = UserRole.MEMBER;
+
+  /** Set when an owner switched off the two-factor login: the user must set it up again. */
+  @Column(name = "must_setup_totp", nullable = false)
+  private boolean mustSetupTotp;
+
+  /** Set with {@link #mustSetupTotp}: from then on only an owner may switch two-factor login off. */
+  @Column(name = "totp_required", nullable = false)
+  private boolean totpRequired;
+
+  /** The last TOTP step used to sign in; a code of this step or an earlier one is refused. */
+  @Column(name = "totp_last_step")
+  private Long totpLastStep;
 
   protected AppUser() {}
 
@@ -128,5 +146,47 @@ public class AppUser extends TimestampedEntity {
 
   public void setTotpEnabled(boolean totpEnabled) {
     this.totpEnabled = totpEnabled;
+  }
+
+  public UserRole getRole() {
+    return role;
+  }
+
+  public void setRole(UserRole role) {
+    this.role = role;
+  }
+
+  public boolean isOwner() {
+    return role == UserRole.OWNER;
+  }
+
+  public boolean isMustSetupTotp() {
+    return mustSetupTotp;
+  }
+
+  public void setMustSetupTotp(boolean mustSetupTotp) {
+    this.mustSetupTotp = mustSetupTotp;
+  }
+
+  public boolean isTotpRequired() {
+    return totpRequired;
+  }
+
+  public void setTotpRequired(boolean totpRequired) {
+    this.totpRequired = totpRequired;
+  }
+
+  public Long getTotpLastStep() {
+    return totpLastStep;
+  }
+
+  public void setTotpLastStep(Long totpLastStep) {
+    this.totpLastStep = totpLastStep;
+  }
+
+  /** A new or removed secret: the steps used with the old one mean nothing for the new one. */
+  public void replaceTotpSecret(String secret) {
+    this.totpSecret = secret;
+    this.totpLastStep = null;
   }
 }
