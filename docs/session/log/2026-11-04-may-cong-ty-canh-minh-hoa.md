@@ -36,7 +36,9 @@
 - 6 tư thế người vẽ thử bằng Recraft: duyệt kiểu dáng. Sửa: áo ba thành xanh lá nhạt, túi mẹ trao mỏng như túi 2 kg mẫu, vô lăng máy gặt không dùng màu da, quần anh 2 không màu đen.
 - Chữ 8 cảnh: không nêu cụ thể ai làm (bỏ "mẹ", "ba", "anh 2", "bà con"); kể theo việc làm, kiểu "Cho thóc vào máy…". Hình vẫn vẽ mẹ, ba, anh 2 như cũ.
 - Biểu cảm người phải đa dạng theo việc đang làm, không phải ai cũng cười. Đã chọn: mẹ cấy chăm chú (mắt mở nhìn xuống mạ, cười mỉm); nông dân mắt mở, miệng thẳng, nhìn xuống; ba lái máy mắt mở nhìn phía trước; ba cạnh lò nheo mắt vì nóng, có giọt mồ hôi; anh 2 bê bao gắng sức (má phồng, nghiến răng, giọt mồ hôi); mẹ trao túi giữ nụ cười nhắm mắt như mascot.
+- Tóc ba: muối tiêu, đen xen kẽ bạc, không bạc hẳn (sửa cho cả 2 tư thế của ba).
 - Áo ba: thêm một màu xanh lá nhạt chỉ dùng trong hình minh hoạ (ghi vào quyết định 0007).
+- Quy tắc chạy test (chủ dự án, 2026-11-05, chuyển qua session chính; sẽ vào `CLAUDE.md` qua PR #19): khi làm hoặc sửa, chỉ chạy test liên quan (`npx vitest run --related <file đã đổi>`); sau khi gộp nhánh (hoặc gộp `main` vào nhánh) thì chạy đủ `npm test`, typecheck và lint một lần, xem mã thoát; test đầu-cuối full-stack để CI chạy; trước khi merge PR, nếu lần chạy đủ đó chưa làm trên code cuối thì chờ CI.
 
 ## Còn mở
 Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.

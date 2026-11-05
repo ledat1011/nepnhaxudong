@@ -127,7 +127,7 @@ Màu máy theo ảnh xưởng, đổi sang màu thương hiệu gần nhất: th
 
 ### 4.2 Người
 - **Mẹ** là mascot (mẹ của chủ dự án), giữ đúng bản đã duyệt: nón lá, áo cánh nâu.
-- **Ba:** cao gầy, tóc bạc, đội mũ lưỡi trai, áo xanh. Tạm vẽ áo xanh lá nhạt gần Xanh mạ; chủ dự án sửa nếu là xanh dương.
+- **Ba:** cao gầy, tóc muối tiêu (đen xen kẽ bạc, không bạc hẳn), đội mũ lưỡi trai, áo Xanh lá nhạt `#A9C47F` (quyết định 0007).
 - **Anh 2:** mặt tròn giống mẹ; tạm vẽ tóc đen ngắn, áo thun Nâu áo.
 - **Khách:** nhân vật đơn giản, vẽ bằng code.
 - **Nông dân cùng cấy (cảnh 1):** 2 người nông dân đội nón lá, áo Vàng rơm (khác áo nâu của mẹ), không giống ai cụ thể.
