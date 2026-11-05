@@ -26,7 +26,7 @@ const created: UserSummary = {
   totpRequired: false,
 };
 
-const PASSWORD_TEXT = /^[A-Za-z2-9]{16}$/;
+const PASSWORD_TEXT = /^[a-z]+(-[a-z]+){3}-[1-9][0-9]$/;
 
 function posts(): CreateUserRequest[] {
   return adminFetch.mock.calls

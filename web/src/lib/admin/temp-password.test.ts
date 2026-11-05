@@ -1,46 +1,33 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { TEMP_PASSWORD_ALPHABET, TEMP_PASSWORD_LENGTH, TEMP_PASSWORD_MIN_LENGTH, generateTempPassword } from "./temp-password";
+import { TEMP_PASSWORD_MIN_LENGTH, TEMP_PASSWORD_WORDS, generateTempPassword, randomBelow } from "./temp-password";
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const SHAPE = /^([a-z]+)-([a-z]+)-([a-z]+)-([a-z]+)-(\d{2})$/;
+
 describe("generateTempPassword", () => {
-  it("is 16 characters and never has a look-alike character, over 1000 calls", () => {
+  it("is four words and a two-digit number joined by dashes, long enough for the API, over 1000 calls", () => {
     for (let i = 0; i < 1000; i += 1) {
       const password = generateTempPassword();
-      expect(password).toHaveLength(16);
-      expect(password).not.toMatch(/[0O1lI]/);
+      const parts = SHAPE.exec(password);
+      expect(parts, password).not.toBeNull();
+      expect(parts!.slice(1, 5).every((word) => TEMP_PASSWORD_WORDS.includes(word))).toBe(true);
+      expect(Number(parts![5])).toBeGreaterThanOrEqual(10);
+      expect(password.length).toBeGreaterThanOrEqual(TEMP_PASSWORD_MIN_LENGTH);
     }
-  });
-
-  it("is long enough for the API rule", () => {
-    expect(TEMP_PASSWORD_LENGTH).toBeGreaterThanOrEqual(TEMP_PASSWORD_MIN_LENGTH);
     expect(TEMP_PASSWORD_MIN_LENGTH).toBe(12);
   });
 
-  it("uses only characters of the alphabet, which has none of 0 O 1 l I", () => {
-    expect(TEMP_PASSWORD_ALPHABET).not.toMatch(/[0O1lI]/);
-    expect(new Set(TEMP_PASSWORD_ALPHABET).size).toBe(TEMP_PASSWORD_ALPHABET.length);
-    expect(generateTempPassword().split("").every((c) => TEMP_PASSWORD_ALPHABET.includes(c))).toBe(true);
+  it("picks from 128 different plain words (no accents, easy to type on any keyboard)", () => {
+    expect(TEMP_PASSWORD_WORDS).toHaveLength(128);
+    expect(new Set(TEMP_PASSWORD_WORDS).size).toBe(128);
+    expect(TEMP_PASSWORD_WORDS.every((word) => /^[a-z]{2,6}$/.test(word))).toBe(true);
   });
 
   it("changes between calls", () => {
     expect(generateTempPassword()).not.toBe(generateTempPassword());
-  });
-
-  it("drops random bytes above the largest multiple of the alphabet size instead of using modulo", () => {
-    const size = TEMP_PASSWORD_ALPHABET.length;
-    const limit = Math.floor(256 / size) * size;
-    // Bytes at or above `limit` would favour the first characters if they were taken modulo `size`.
-    const script = [255, 254, limit, limit + 1, ...Array.from({ length: 64 }, (_, i) => i)];
-    let next = 0;
-    vi.spyOn(crypto, "getRandomValues").mockImplementation(((array: Uint8Array) => {
-      for (let i = 0; i < array.length; i += 1) array[i] = script[next++ % script.length];
-      return array;
-    }) as typeof crypto.getRandomValues);
-    const password = generateTempPassword();
-    expect(password).toBe(TEMP_PASSWORD_ALPHABET.slice(0, TEMP_PASSWORD_LENGTH));
   });
 
   it("asks the crypto generator and never Math.random", () => {
@@ -49,5 +36,19 @@ describe("generateTempPassword", () => {
     generateTempPassword();
     expect(spy).toHaveBeenCalled();
     expect(random).not.toHaveBeenCalled();
+  });
+});
+
+describe("randomBelow", () => {
+  it("drops random values above the largest multiple of n instead of using modulo", () => {
+    const limit = Math.floor(2 ** 32 / 90) * 90;
+    const script = [2 ** 32 - 1, limit, 7];
+    let next = 0;
+    vi.spyOn(crypto, "getRandomValues").mockImplementation(((array: Uint32Array) => {
+      array[0] = script[next++];
+      return array;
+    }) as typeof crypto.getRandomValues);
+    expect(randomBelow(90)).toBe(7);
+    expect(next).toBe(3);
   });
 });

@@ -26,7 +26,7 @@ const target: UserSummary = {
   totpRequired: false,
 };
 
-const PASSWORD_TEXT = /^[A-Za-z2-9]{16}$/;
+const PASSWORD_TEXT = /^[a-z]+(-[a-z]+){3}-[1-9][0-9]$/;
 
 function resets(): { path: string; body: ResetPasswordRequest }[] {
   return adminFetch.mock.calls
@@ -55,7 +55,7 @@ describe("ResetPasswordDialog", () => {
     expect(screen.queryByText(/xác thực 2 lớp/)).not.toBeInTheDocument();
   });
 
-  it("posts a new 16-character password for that user and then shows it once", async () => {
+  it("posts a new word-group password for that user and then shows it once", async () => {
     const user = userEvent.setup();
     const onDone = vi.fn();
     render(<ResetPasswordDialog user={target} onClose={vi.fn()} onDone={onDone} />);

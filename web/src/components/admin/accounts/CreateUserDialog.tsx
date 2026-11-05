@@ -130,7 +130,7 @@ function CreateUserForm({ onOpenChange, onCreated }: Omit<Props, "open">) {
           </DialogHeader>
           {shown !== null ? (
             <div className="flex flex-col gap-4">
-              <PasswordReveal password={shown} />
+              <PasswordReveal password={shown} email={email.trim().toLowerCase()} />
               <Button type="button" onClick={() => onOpenChange(false)}>
                 Xong
               </Button>

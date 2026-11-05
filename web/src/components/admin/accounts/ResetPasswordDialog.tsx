@@ -93,7 +93,7 @@ function ResetPasswordForm({
         </DialogHeader>
         {shown !== null ? (
           <div className="flex flex-col gap-4">
-            <PasswordReveal password={shown} />
+            <PasswordReveal password={shown} email={user.email} />
             <Button type="button" onClick={onClose}>
               Xong
             </Button>
