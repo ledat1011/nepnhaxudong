@@ -34,8 +34,10 @@ describe("FeatureList", () => {
     expect(vietnamese()).toEqual(["Hạt tròn", "Dẻo"]);
   });
 
-  it("keeps the delete button away from the move buttons", () => {
+  it("puts the delete button last in the row, after the move buttons (the full-stack test measures the gap)", () => {
     render(<Harness initial={[newFeatureRow("Hạt tròn")]} />);
-    expect(screen.getByRole("button", { name: "Xóa đặc điểm 1" })).toHaveClass("ml-auto");
+    const remove = screen.getByRole("button", { name: "Xóa đặc điểm 1" });
+    expect(within(remove.parentElement!).getAllByRole("button").at(-1)).toBe(remove);
+    expect(remove.parentElement!.lastElementChild).toBe(remove);
   });
 });

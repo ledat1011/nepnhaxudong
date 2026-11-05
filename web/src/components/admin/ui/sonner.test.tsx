@@ -19,6 +19,7 @@ describe("Toaster", () => {
     expect(list).toHaveAttribute("data-x-position", "center");
   });
 
+  // jsdom has no layout: this checks the classes. admin-mobile.spec.ts measures the 44 px box in a browser.
   it("gives an action button a 44 px tap target", async () => {
     render(<Toaster />);
     act(() => {

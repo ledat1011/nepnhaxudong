@@ -62,12 +62,26 @@ describe("DialogContent focus on open", () => {
     expect(screen.getByLabelText("Mô tả ảnh")).toHaveFocus();
   });
 
-  it("keeps Tab inside the dialog, starting at the first box", async () => {
+  it("starts Tab at the first box and keeps Tab and Shift+Tab inside the dialog", async () => {
     const events = userEvent.setup();
     render(<FormDialog />);
     await events.click(screen.getByRole("button", { name: "Mở" }));
-    await screen.findByRole("dialog", { name: "Sửa ảnh" });
+    const dialog = await screen.findByRole("dialog", { name: "Sửa ảnh" });
     await events.tab();
     expect(screen.getByLabelText("Mô tả ảnh")).toHaveFocus();
+    // The dialog has two stops (the box and Đóng). Going round twice in each direction never leaves it.
+    const seen = new Set<Element>();
+    for (let i = 0; i < 4; i += 1) {
+      await events.tab();
+      expect(dialog).toContainElement(document.activeElement as HTMLElement);
+      seen.add(document.activeElement!);
+    }
+    for (let i = 0; i < 4; i += 1) {
+      await events.tab({ shift: true });
+      expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    }
+    expect(seen.size).toBe(2);
+    expect(seen).toContain(screen.getByLabelText("Mô tả ảnh"));
+    expect(seen).toContain(screen.getByRole("button", { name: "Đóng" }));
   });
 });

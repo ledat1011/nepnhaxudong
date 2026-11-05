@@ -127,6 +127,11 @@ test("a removed pack size comes back with Hoàn tác, messages show at the top, 
   await page.getByLabel("Đặc điểm 1 (tiếng Việt)").fill("Hạt tròn");
   await page.getByRole("button", { name: "Thêm quy cách" }).click();
   await page.getByLabel(/^Khối lượng/).fill("500");
+  // The delete button sits apart from the arrows: a slip of the finger moves a row, it does not delete it.
+  const downBox = (await page.getByRole("button", { name: "Đưa quy cách 1 xuống" }).boundingBox())!;
+  const deleteBox = (await page.getByRole("button", { name: "Xóa quy cách 1" }).boundingBox())!;
+  expect(deleteBox.x - (downBox.x + downBox.width)).toBeGreaterThanOrEqual(24);
+  expect(deleteBox.y).toBe(downBox.y);
 
   await page.getByRole("button", { name: "Xóa quy cách 1" }).click();
   await expect(page.getByLabel(/^Khối lượng/)).toHaveCount(0);
@@ -155,6 +160,23 @@ test("a removed pack size comes back with Hoàn tác, messages show at the top, 
   await expect(header.getByRole("link", { name: "Quay lại danh sách sản phẩm" })).toHaveAttribute("href", ADMIN_ROUTES.products);
   await expect(header.getByRole("link", { name: /^Xem trên web/ })).toHaveAttribute("href", "/vi#san-pham");
   expect(await pageScrollWidth(page)).toBeLessThanOrEqual(WIDTH);
+  await expect(page.locator("[data-sonner-toast]")).toHaveCount(0, { timeout: 10_000 });
+
+  // A message on the product page starts below Quay lại and Xem trên web.
+  await page.getByRole("button", { name: "Xóa đặc điểm 1" }).click();
+  const featureRemoved = page.locator("[data-sonner-toast]").filter({ hasText: "Đã xóa đặc điểm 1 (Hạt tròn)." });
+  await expect(featureRemoved).toBeVisible();
+  const toastTop = (await featureRemoved.boundingBox())!.y;
+  for (const link of [header.getByRole("link", { name: "Quay lại danh sách sản phẩm" }), header.getByRole("link", { name: /^Xem trên web/ })]) {
+    const box = (await link.boundingBox())!;
+    expect(toastTop).toBeGreaterThanOrEqual(box.y + box.height);
+  }
+  // Bỏ thay đổi brings the row back and closes the Hoàn tác message, so the row cannot come back twice.
+  await page.getByRole("button", { name: "Bỏ thay đổi", exact: true }).click();
+  await page.getByRole("alertdialog", { name: "Bỏ thay đổi chưa lưu?" }).getByRole("button", { name: "Bỏ thay đổi" }).click();
+  await expect(featureRemoved).toBeHidden();
+  await expect(page.getByLabel(/^Đặc điểm \d \(tiếng Việt\)$/)).toHaveCount(1);
+  await expect(page.getByLabel("Đặc điểm 1 (tiếng Việt)")).toHaveValue("Hạt tròn");
   await header.getByRole("link", { name: "Quay lại danh sách sản phẩm" }).click();
   await expect(page).toHaveURL(new RegExp(`${ADMIN_ROUTES.products}$`));
 });
