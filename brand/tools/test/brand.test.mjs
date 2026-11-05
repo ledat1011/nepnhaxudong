@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -511,6 +512,57 @@ test('vectorize-pose.py: ghi nguon anh, dung lai vectorize-mascot.py, khong co d
     assert.doesNotMatch(script, local, `co duong dan may ${local}`);
   }
 });
+
+// The first Python with the packages of requirements-mascot.txt, or null.
+const python = ['python3', 'python'].find(
+  (cmd) => spawnSync(cmd, ['-c', 'import vtracer, numpy, PIL'], { stdio: 'ignore' }).status === 0,
+) ?? null;
+
+// A 1024 x 1024 picture like a Recraft pose: near-white background, a Nâu áo blob with a Nâu đất
+// outline from y 300 to y 1000, and a near-white hole in its middle that touches no border.
+const SYNTHETIC_POSE = `
+import sys
+from PIL import Image, ImageDraw
+im = Image.new('RGB', (1024, 1024), (252, 252, 251))
+d = ImageDraw.Draw(im)
+d.ellipse([312, 300, 712, 1000], fill=(137, 90, 50), outline=(80, 47, 31), width=12)
+d.ellipse([452, 590, 572, 710], fill=(252, 252, 251), outline=(80, 47, 31), width=12)
+im.save(sys.argv[1])
+`;
+
+test(
+  'vectorize-pose.py: mot nhom person, chan cham day 256, lo kin giu Trang gao',
+  { skip: python === null && 'can Python 3 co vtracer, numpy, Pillow (pip install -r requirements-mascot.txt)' },
+  () => {
+    const dir = mkdtempSync(join(tmpdir(), 'nepnha-pose-'));
+    try {
+      const png = join(dir, 'pose.png');
+      const out = join(dir, 'pose.svg');
+      const make = spawnSync(python, ['-c', SYNTHETIC_POSE, png], { encoding: 'utf8' });
+      assert.equal(make.status, 0, make.stderr);
+      const run = spawnSync(python, [vectorizePosePath, png, out], { encoding: 'utf8' });
+      assert.equal(run.status, 0, run.stderr);
+
+      const svg = readFileSync(out, 'utf8');
+      const root = parseSync(svg);
+      assert.equal(root.attributes.viewBox, '0 0 256 256');
+      const children = root.children.filter((c) => c.type === 'element');
+      assert.equal(children.length, 1, 'svg goc phai co dung mot nhom');
+      assert.equal(children[0].name, 'g');
+      assert.equal(children[0].attributes['data-part'], 'person');
+
+      const image = new Resvg(svg, { fitTo: { mode: 'width', value: 256 } }).render();
+      const alpha = (x, y) => image.pixels[(y * 256 + x) * 4 + 3];
+      const rows = [...Array(256).keys()].filter((y) => [...Array(256).keys()].some((x) => alpha(x, y) > 0));
+      assert.equal(Math.max(...rows) + 1, 256, 'diem ve thap nhat phai o y = 256');
+      const at = (128 * 256 + 128) * 4;
+      const hole = [...image.pixels.slice(at, at + 4)];
+      assert.deepEqual(hole, [0xfb, 0xf7, 0xee, 255], 'lo kin phai giu mau Trang gao');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  },
+);
 
 test('mascot: pivot head / rice khop transform-origin va nam trong nhom', () => {
   const facts = svgFacts(mascotPath);
