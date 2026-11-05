@@ -32,6 +32,9 @@ A website for the family's yellow-flower sticky rice (gạo nếp cái hoa vàng
 ## Reply and language rules
 - Reply to the owner in Vietnamese.
 - Write files that instruct Claude in English: `CLAUDE.md`, `.claude/**` (skills, hooks, agents, settings), and hook messages. Documents for the owner in `docs/` (spec, plans, setup, `STATE.md`, session logs, decisions) stay in Vietnamese.
+- Write code in English (owner, 2026-11-05): identifiers, code comments, tests, commit messages, PR titles and
+  PR descriptions. Exceptions: the site's user-facing text stays bilingual (Vietnamese and English), and test data
+  or assertions may use Vietnamese where they check Vietnamese text.
 - When you write English: short sentences, simple words, no idioms, no figurative language.
 - Independent assessment: when the question already contains a conclusion, assess it as if the question were neutral. Give the reasons for and against
   before the conclusion. If your conclusion is different, say so in the first sentence. Change your mind only when there is new information or a new argument.
