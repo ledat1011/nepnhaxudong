@@ -12,7 +12,9 @@ import vn.nepnhaxudong.common.ApiException;
 
 /**
  * Switches two-factor login (TOTP) on and off for the logged-in user. Switching it on or off is
- * written to the audit log as {@code app_user} (a {@link UserSummary}, never the secret).
+ * written to the audit log as {@code app_user} (a {@link UserSummary}, never the secret). Each call
+ * locks the user's row, so it cannot overwrite an owner's change of the same account (see {@link
+ * UserAdminService#disableTotp}) that runs at the same time.
  */
 @Service
 public class TotpService {
@@ -58,6 +60,8 @@ public class TotpService {
     requireValid(user, code);
     var before = UserSummary.of(user);
     user.setTotpEnabled(true);
+    // The setup that an owner asked for (after switching it off) is done.
+    user.setMustSetupTotp(false);
     recordUpdate(before, user);
   }
 
@@ -90,7 +94,7 @@ public class TotpService {
   }
 
   private AppUser find(long userId) {
-    return users.findById(userId).orElseThrow(SessionExpiredException::new);
+    return users.findByIdForUpdate(userId).orElseThrow(SessionExpiredException::new);
   }
 
   private static String otpauthUri(String email, String secret) {
