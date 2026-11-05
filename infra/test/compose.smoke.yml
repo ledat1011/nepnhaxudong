@@ -1,0 +1,6 @@
+# Override for the smoke test (CI or a local Docker): use with infra/compose.prod.yml and infra/test/smoke.env.
+# SITE_HOST=localhost makes Caddy use its local CA, so no public certificate is needed.
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:8443:443"

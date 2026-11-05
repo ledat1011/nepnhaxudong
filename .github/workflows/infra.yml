@@ -1,0 +1,64 @@
+name: infra
+
+# Builds the three production images and runs the whole stack once (infra/test/run-smoke.sh):
+# health, pages, Secure cookies, a WebP upload, revalidate, limits, then a backup and a restore test.
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'api/Dockerfile'
+      - 'api/.dockerignore'
+      - 'web/Dockerfile'
+      - 'web/.dockerignore'
+      - '.github/workflows/infra.yml'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck -x infra/backup/*.sh infra/test/*.sh infra/vps/*.sh
+
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the API image
+        uses: docker/build-push-action@v6
+        with:
+          context: api
+          load: true
+          tags: nepnha-local/nepnha-api:smoke
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Build the web image
+        uses: docker/build-push-action@v6
+        with:
+          context: web
+          load: true
+          build-args: SITE_URL=https://localhost
+          tags: nepnha-local/nepnha-web:smoke
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+      - name: Build the Caddy image
+        uses: docker/build-push-action@v6
+        with:
+          context: infra/caddy
+          load: true
+          tags: nepnha-local/nepnha-caddy:smoke
+          cache-from: type=gha,scope=caddy
+          cache-to: type=gha,scope=caddy,mode=max
+      - run: sudo apt-get update -q && sudo apt-get install -y -q restic
+      - run: bash infra/test/run-smoke.sh

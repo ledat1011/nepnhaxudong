@@ -1,0 +1,114 @@
+name: deploy
+
+# On each push to main: build the three images for https://<SITE_HOST>, run the whole stack once on the runner
+# (infra/test/run-smoke.sh), push the images to GHCR, then run infra/vps/deploy.sh on the VPS over SSH.
+# deploy.sh checks health and goes back to the previous release when the check fails.
+# Skipped (not red) until the repository variable VPS_HOST exists. Setup: docs/deploy.md.
+#   Variables: VPS_HOST (IP of the VPS), SITE_HOST (for example 203-0-113-7.sslip.io)
+#   Secrets:   VPS_SSH_KEY (private key of user "deploy"), VPS_KNOWN_HOSTS (output of ssh-keyscan for the VPS)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+# One deploy at a time; a newer push waits instead of stopping a deploy in the middle.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  IMAGE_PREFIX: ghcr.io/ledat1011
+  IMAGE_TAG: ${{ github.sha }}
+  SOURCE_LABEL: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+jobs:
+  deploy:
+    if: vars.VPS_HOST != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the variables
+        env:
+          SITE_HOST: ${{ vars.SITE_HOST }}
+        run: |
+          [ -n "$SITE_HOST" ] || { echo "Set the repository variable SITE_HOST (docs/deploy.md)"; exit 1; }
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build the API image
+        uses: docker/build-push-action@v6
+        with:
+          context: api
+          load: true
+          tags: ${{ env.IMAGE_PREFIX }}/nepnha-api:${{ env.IMAGE_TAG }}
+          labels: ${{ env.SOURCE_LABEL }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Build the web image
+        uses: docker/build-push-action@v6
+        with:
+          context: web
+          load: true
+          build-args: SITE_URL=https://${{ vars.SITE_HOST }}
+          tags: ${{ env.IMAGE_PREFIX }}/nepnha-web:${{ env.IMAGE_TAG }}
+          labels: ${{ env.SOURCE_LABEL }}
+          cache-from: type=gha,scope=web-prod
+          cache-to: type=gha,scope=web-prod,mode=max
+      - name: Build the Caddy image
+        uses: docker/build-push-action@v6
+        with:
+          context: infra/caddy
+          load: true
+          tags: ${{ env.IMAGE_PREFIX }}/nepnha-caddy:${{ env.IMAGE_TAG }}
+          labels: ${{ env.SOURCE_LABEL }}
+          cache-from: type=gha,scope=caddy
+          cache-to: type=gha,scope=caddy,mode=max
+      - run: sudo apt-get update -q && sudo apt-get install -y -q restic
+      - name: Smoke test with the release images
+        run: bash infra/test/run-smoke.sh
+      - name: Push the images
+        run: |
+          for name in api web caddy; do
+            docker push --quiet "$IMAGE_PREFIX/nepnha-$name:$IMAGE_TAG"
+          done
+      - name: Prepare SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          [ -n "$VPS_SSH_KEY" ] && [ -n "$VPS_KNOWN_HOSTS" ] || { echo "Set the secrets VPS_SSH_KEY and VPS_KNOWN_HOSTS (docs/deploy.md)"; exit 1; }
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host vps\n  HostName %s\n  User deploy\n  IdentityFile ~/.ssh/deploy_key\n  StrictHostKeyChecking yes\n  ServerAliveInterval 30\n' \
+            "${{ vars.VPS_HOST }}" > ~/.ssh/config
+      - name: Copy the deploy files
+        run: |
+          scp -q infra/compose.prod.yml vps:/opt/nepnha/compose.yml
+          scp -q infra/vps/deploy.sh infra/vps/init-env.sh vps:/opt/nepnha/
+          scp -q -r infra/backup infra/systemd vps:/opt/nepnha/
+      - name: Deploy on the VPS
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SITE_HOST: ${{ vars.SITE_HOST }}
+        run: |
+          # The token of this job lets the VPS pull the images; it stops working when the job ends.
+          printf '%s' "$GHCR_TOKEN" | ssh vps "docker login ghcr.io -u '${{ github.actor }}' --password-stdin" >/dev/null
+          set +e
+          ssh vps "bash /opt/nepnha/deploy.sh '$IMAGE_TAG' '$SITE_HOST'"
+          rc=$?
+          ssh vps "docker logout ghcr.io" >/dev/null
+          exit $rc
+      - name: Clean up SSH
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
