@@ -2,6 +2,8 @@ package vn.nepnhaxudong.auth;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -44,6 +46,14 @@ public class AppUser extends TimestampedEntity {
 
   @Column(name = "totp_enabled", nullable = false)
   private boolean totpEnabled;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private UserRole role = UserRole.MEMBER;
+
+  /** Set when an owner switched off the two-factor login: the user must set it up again. */
+  @Column(name = "must_setup_totp", nullable = false)
+  private boolean mustSetupTotp;
 
   protected AppUser() {}
 
@@ -128,5 +138,25 @@ public class AppUser extends TimestampedEntity {
 
   public void setTotpEnabled(boolean totpEnabled) {
     this.totpEnabled = totpEnabled;
+  }
+
+  public UserRole getRole() {
+    return role;
+  }
+
+  public void setRole(UserRole role) {
+    this.role = role;
+  }
+
+  public boolean isOwner() {
+    return role == UserRole.OWNER;
+  }
+
+  public boolean isMustSetupTotp() {
+    return mustSetupTotp;
+  }
+
+  public void setMustSetupTotp(boolean mustSetupTotp) {
+    this.mustSetupTotp = mustSetupTotp;
   }
 }
