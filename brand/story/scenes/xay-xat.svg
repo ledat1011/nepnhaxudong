@@ -87,14 +87,17 @@
     <use href="#gr" transform="translate(626 494) rotate(-30)"/>
   </g>
   <use data-person="anh2-be-bao" data-slot="brother" x="8" y="346" width="210" height="210"/>
+  <!-- The sack rests on the hopper rim, mouth down, and leans on the elevator tower: it empties by itself
+       while anh 2 brings the next one on his shoulder. Drawn mouth to the right, then flipped and turned. -->
   <g data-part="pour-sack" stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M150 400Q186 380 230 400L252 436Q246 446 232 446L156 452Q136 436 150 400Z" fill="#FBF7EE"/>
-    <path d="M160 412Q192 400 226 416M156 430Q190 420 236 432" fill="none" stroke="#D9A13B" stroke-width="2.5"/>
+    <g transform="translate(246 470) rotate(-50) scale(-1 1) translate(-252 -440)">
+      <path d="M150 400Q186 380 230 400L252 436Q246 446 232 446L156 452Q136 436 150 400Z" fill="#FBF7EE"/>
+      <path d="M160 412Q192 400 226 416M156 430Q190 420 236 432" fill="none" stroke="#D9A13B" stroke-width="2.5"/>
+    </g>
     <g fill="#D9A13B" stroke-width="2">
-      <use href="#gr" transform="translate(252 448) rotate(30)"/>
-      <use href="#gr" transform="translate(258 462) rotate(-20)"/>
-      <use href="#gr" transform="translate(250 474) rotate(60)"/>
-      <use href="#gr" transform="translate(262 478) rotate(10)"/>
+      <use href="#gr" transform="translate(246 470) rotate(30)"/>
+      <use href="#gr" transform="translate(256 476) rotate(-20)"/>
+      <use href="#gr" transform="translate(238 480) rotate(60)"/>
     </g>
   </g>
   <use data-include="road" x="0" y="560"/>
