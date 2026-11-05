@@ -19,6 +19,15 @@ beforeEach(() => {
 });
 
 describe("MediaEditDialog", () => {
+  it("opens without the cursor in a box, so the description is not selected and the keyboard stays closed", async () => {
+    render(<MediaEditDialog media={item} onClose={() => {}} onChanged={() => {}} onDeleted={() => {}} />);
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() => expect(dialog).toHaveFocus());
+    const box = screen.getByLabelText(/Tiếng Việt/) as HTMLInputElement;
+    expect(box).not.toHaveFocus();
+    expect(box.value).toBe("Gạo");
+  });
+
   it("saves trimmed alt texts with PUT and reports the result", async () => {
     const saved = { ...item, altVi: "Gạo nếp", altEn: "Sticky rice" };
     adminFetch.mockResolvedValue(saved);
