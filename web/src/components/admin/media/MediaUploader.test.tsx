@@ -228,7 +228,10 @@ describe("MediaUploader", () => {
     await events.upload(picker(), [jpeg("a.jpg"), jpeg("b.jpg"), jpeg("c.jpg")]);
     await screen.findAllByRole("group", { name: /^Ảnh \d/ });
     await describeItem(events, 1, "Ruộng lúa", "Rice field");
-    await events.click(within(item(1)).getByRole("button", { name: "Dùng mô tả này cho 2 ảnh chưa có mô tả" }));
+    const copy = within(item(1)).getByRole("button", { name: "Dùng mô tả này cho 2 ảnh chưa có mô tả" });
+    // The long label wraps inside the card on a 375 px phone instead of sticking out of it (the button may shrink).
+    expect(copy).toHaveClass("max-w-full", "shrink", "whitespace-normal");
+    await events.click(copy);
 
     expect(within(item(2)).getByLabelText(/English/)).toHaveValue("Rice field");
     await waitFor(() => expect(uploadWithProgress).toHaveBeenCalledTimes(1));
