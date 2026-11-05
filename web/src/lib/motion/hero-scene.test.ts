@@ -104,7 +104,7 @@ const controller = vi.hoisted(() => {
 vi.mock("./loops", () => ({ getLoopController: () => ({ add: controller.add }) }));
 
 function fakeModules() {
-  const tween = { play: vi.fn(), pause: vi.fn(), kill: vi.fn() };
+  const tween = { play: vi.fn(), pause: vi.fn(), kill: vi.fn(), paused: vi.fn(() => false) };
   const setters = new Map<string, ReturnType<typeof vi.fn>>();
   let onToggle: ((self: { isActive: boolean }) => void) | undefined;
   const trigger = { kill: vi.fn() };
@@ -247,6 +247,49 @@ describe("setupHeroScene", () => {
     refresh[1]();
     vars.onUpdate();
     expect(fake.setters.get("c0:x")).toHaveBeenCalledTimes(2);
+  });
+
+  describe("a refresh while the loop is paused", () => {
+    function sized(width: number) {
+      const strip = document.getElementById("strip") as HTMLElement;
+      Object.defineProperty(strip, "clientWidth", { value: width, configurable: true });
+      strip.querySelectorAll<SVGElement>("[data-hero-cloud]").forEach((cloud) => {
+        cloud.getBoundingClientRect = () => ({ width: 100 }) as DOMRect;
+      });
+    }
+
+    function paused() {
+      document.body.innerHTML = SCENE;
+      sized(1000);
+      const fake = fakeModules();
+      fake.tween.paused.mockReturnValue(true);
+      setupHeroScene(fake.modules, document);
+      const [proxy, vars] = fake.gsap.to.mock.calls[0] as unknown as [{ t: number }, { onUpdate: () => void }];
+      const refresh = fake.ScrollTrigger.addEventListener.mock.calls[0][1] as unknown as () => void;
+      return { fake, proxy, vars, refresh, cloud: () => fake.setters.get("c0:x") as ReturnType<typeof vi.fn> };
+    }
+
+    it("draws the current frame again with the new sizes", () => {
+      const { proxy, vars, refresh, cloud } = paused();
+      proxy.t = 0.3;
+      vars.onUpdate();
+      const before = cloud().mock.lastCall?.[0] as number;
+      sized(400);
+      refresh();
+      expect(cloud()).toHaveBeenCalledTimes(2);
+      const after = cloud().mock.lastCall?.[0] as number;
+      expect(after).not.toBeCloseTo(before, 3);
+      // The same offset as a playing loop would draw at this time.
+      vars.onUpdate();
+      expect(cloud()).toHaveBeenCalledTimes(2);
+    });
+
+    it("keeps the static place when the loop has not drawn yet", () => {
+      const { refresh, cloud } = paused();
+      sized(400);
+      refresh();
+      expect(cloud()).not.toHaveBeenCalled();
+    });
   });
 
   it("writes a frame to every setter on update", () => {

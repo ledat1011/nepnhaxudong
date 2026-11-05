@@ -136,7 +136,6 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
     lastDrawn = null;
   };
   measure();
-  ScrollTrigger.addEventListener("refresh", measure);
 
   const apply = (frame: HeroFrame) => {
     frame.clouds.forEach((offset, i) => cloudX[i]?.(offset * spans[i]));
@@ -147,6 +146,12 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   };
 
   const proxy = { t: 0 };
+  let drawn = false;
+  const draw = () => {
+    lastDrawn = proxy.t * HERO_CYCLE_S;
+    drawn = true;
+    apply(heroFrame(proxy.t, starts, gusts.length));
+  };
   const tween = gsap.to(proxy, {
     t: 1,
     duration: HERO_CYCLE_S,
@@ -154,12 +159,16 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
     repeat: -1,
     paused: true,
     onUpdate: () => {
-      const time = proxy.t * HERO_CYCLE_S;
-      if (!heroFrameDue(time, lastDrawn)) return;
-      lastDrawn = time;
-      apply(heroFrame(proxy.t, starts, gusts.length));
+      if (heroFrameDue(proxy.t * HERO_CYCLE_S, lastDrawn)) draw();
     },
   });
+
+  const onRefresh = () => {
+    measure();
+    // A paused loop gets no update, so its frame is drawn here with the new sizes.
+    if (drawn && tween.paused()) draw();
+  };
+  ScrollTrigger.addEventListener("refresh", onRefresh);
 
   const entry = getLoopController().add(tween);
   const trigger = ScrollTrigger.create({
@@ -172,7 +181,7 @@ export const setupHeroScene: MotionSetup = ({ gsap, ScrollTrigger }, root) => {
   return () => {
     entry.remove();
     trigger.kill();
-    ScrollTrigger.removeEventListener("refresh", measure);
+    ScrollTrigger.removeEventListener("refresh", onRefresh);
     tween.kill();
     // Put everything back at its static place.
     spans = spans.map(() => 0);
