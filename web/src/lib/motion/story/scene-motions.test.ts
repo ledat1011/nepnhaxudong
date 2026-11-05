@@ -2,27 +2,11 @@ import { readFileSync } from "node:fs";
 import { gsap } from "gsap";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { STORY_SCENES, type SceneSlug } from "@/lib/story/scenes";
-import { SCENE_MOTIONS } from "./scene-motions";
+import { SCENE_MOTIONS, SCENE_PARTS } from "./scene-motions";
 
-/** The data-part table of Task 9: the one-time parts and the loop parts of each scene. */
-const PARTS: Record<SceneSlug, { once: string[]; loop: string[] }> = {
-  "cay-ma": { once: ["mother", "farmer", "seedling"], loop: ["ripple"] },
-  "nang-mua-gio": {
-    once: ["sun", "cloud", "wind", "rice", "rice-green", "rice-gold"],
-    loop: ["rain", "rice-sway"],
-  },
-  gat: { once: ["harvester", "crop", "sack", "driver", "brother"], loop: ["reel"] },
-  say: { once: ["air", "paddy", "father"], loop: ["fan-blades", "coals"] },
-  "xay-xat": { once: ["brother", "pour-sack", "husk", "rice-flow"], loop: ["elevator-grain"] },
-  "dong-goi": { once: ["mother", "lid", "stack-bag"], loop: [] },
-  // The wheels turn while the truck drives in; parked, it has no loop (a loop that cannot be
-  // seen would still repaint the scene).
-  "den-tay-khach": {
-    once: ["truck", "shelf-bag", "mother", "customer", "gift", "wheel"],
-    loop: [],
-  },
-  "mam-com": { once: ["dish"], loop: ["steam"] },
-};
+/** The scenes with a small repeating motion. A parked truck (den-tay-khach) has none: a loop that
+ * cannot be seen would still repaint the scene. */
+const LOOP_SCENES = new Set<SceneSlug>(["cay-ma", "nang-mua-gio", "gat", "say", "xay-xat", "mam-com"]);
 const SLUGS = STORY_SCENES.map((s) => s.slug);
 
 const ALLOWED_PROPS = new Set(["x", "y", "scale", "scaleX", "scaleY", "rotation", "opacity"]);
@@ -86,7 +70,7 @@ describe("SCENE_MOTIONS", () => {
   it.each(SLUGS)("%s: a paused endless loop only when the scene has loop parts", (slug) => {
     const motion = SCENE_MOTIONS[slug](gsap, mount(slug));
     const loop = motion?.loop ?? null;
-    if (PARTS[slug].loop.length === 0) {
+    if (!LOOP_SCENES.has(slug)) {
       expect(loop).toBeNull();
       return;
     }
@@ -161,7 +145,7 @@ describe("SCENE_MOTIONS", () => {
     expect(isIdentity(lid.style.transform)).toBe(true);
   });
 
-  it.each(SLUGS.flatMap((slug) => [...PARTS[slug].once, ...PARTS[slug].loop].map((part) => [slug, part])))(
+  it.each(SLUGS.flatMap((slug) => SCENE_PARTS[slug].map((part) => [slug, part])))(
     "%s: returns null without the %s part",
     (slug, part) => {
       const svg = mount(slug as SceneSlug);

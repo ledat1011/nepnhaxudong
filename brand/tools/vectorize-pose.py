@@ -178,6 +178,8 @@ def fit(mask, colors, keep=None):
     """The drawn pixels (and the box `keep`, if given) on a square canvas: bottom on the bottom edge,
     centered left to right. Returns (mask, colors, size, (x0, y0) of the crop, (left, top) padding)."""
     ys, xs = np.nonzero(mask)
+    if xs.size == 0:
+        raise SystemExit('the picture has no drawn pixels: everything is background (check the picture and FIXES.json)')
     x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
     if keep is not None:
         x0, y0, x1, y1 = min(x0, keep[0]), min(y0, keep[1]), max(x1, keep[2]), max(y1, keep[3])

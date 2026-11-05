@@ -530,6 +530,32 @@ d.ellipse([452, 590, 572, 710], fill=(252, 252, 251), outline=(80, 47, 31), widt
 im.save(sys.argv[1])
 `;
 
+// The same picture with only the background: nothing is drawn.
+const BLANK_POSE = `
+import sys
+from PIL import Image
+Image.new('RGB', (1024, 1024), (252, 252, 251)).save(sys.argv[1])
+`;
+
+test(
+  'vectorize-pose.py: anh khong co hinh ve thi dung voi thong bao ro rang',
+  { skip: python === null && 'can Python 3 co vtracer, numpy, Pillow (pip install -r requirements-mascot.txt)' },
+  () => {
+    const dir = mkdtempSync(join(tmpdir(), 'nepnha-pose-'));
+    try {
+      const png = join(dir, 'blank.png');
+      const make = spawnSync(python, ['-c', BLANK_POSE, png], { encoding: 'utf8' });
+      assert.equal(make.status, 0, make.stderr);
+      const run = spawnSync(python, [vectorizePosePath, png, join(dir, 'blank.svg')], { encoding: 'utf8' });
+      assert.notEqual(run.status, 0);
+      assert.match(run.stderr, /no drawn pixels/);
+      assert.doesNotMatch(run.stderr, /Traceback|ValueError/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  },
+);
+
 test(
   'vectorize-pose.py: mot nhom person, chan cham day 256, lo kin giu Trang gao',
   { skip: python === null && 'can Python 3 co vtracer, numpy, Pillow (pip install -r requirements-mascot.txt)' },
