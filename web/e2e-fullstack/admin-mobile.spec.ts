@@ -158,6 +158,14 @@ test("a removed pack size comes back with Hoàn tác, messages show at the top, 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(name);
   const header = page.getByRole("banner");
   await expect(header.getByRole("link", { name: "Quay lại danh sách sản phẩm" })).toHaveAttribute("href", ADMIN_ROUTES.products);
+  // A new product is hidden, so it has no public page yet. Once "Hiện trên web" is on, the header links to it.
+  await expect(header.getByRole("link", { name: /^Xem trên web/ })).toHaveCount(0);
+  await page.getByRole("switch", { name: "Hiện trên web" }).click();
+  await page
+    .getByRole("alertdialog", { name: "Kiểm tra trước khi hiện trên web" })
+    .getByRole("button", { name: /^(Vẫn hiện|Hiện trên web)$/ })
+    .click();
+  await expect(page.getByRole("switch", { name: "Hiện trên web" })).toBeChecked();
   await expect(header.getByRole("link", { name: /^Xem trên web/ })).toHaveAttribute("href", "/vi#san-pham");
   expect(await pageScrollWidth(page)).toBeLessThanOrEqual(WIDTH);
   await expect(page.locator("[data-sonner-toast]")).toHaveCount(0, { timeout: 10_000 });

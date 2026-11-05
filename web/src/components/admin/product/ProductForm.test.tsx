@@ -615,7 +615,7 @@ describe("ProductForm Hiện trên web", () => {
     await events.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Hiện trên web" }));
     const nameVi = within(screen.getByRole("group", { name: "Tên sản phẩm" })).getByLabelText(/^Tiếng Việt/);
     await events.type(nameVi, " mới");
-    expect(screen.getByRole("button", { name: "Đang lưu…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
     answer(product({ visible: true, mediaIds: [1] }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Lưu" })).toBeEnabled());
     expect(screen.getByRole("switch", { name: "Hiện trên web" })).toBeChecked();

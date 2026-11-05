@@ -357,7 +357,8 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
 
       <SaveBar
         dirty={dirty}
-        pending={saving.pending || leaving || switching}
+        pending={saving.pending || leaving}
+        waiting={switching}
         onSave={() => void save()}
         onDiscard={cancel}
         notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}

@@ -16,6 +16,7 @@ const product: ProductAdminDto = {
   id: 7,
   sortOrder: 3,
   showPrice: false,
+  visible: true,
   name: { vi: "Gạo nếp", en: null },
   description: { vi: null, en: null },
   features: { vi: ["Thơm"], en: [] },
@@ -29,11 +30,26 @@ beforeEach(() => {
   adminFetch.mockReset();
   adminFetch.mockImplementation(async (path: string, init?: { method?: string; body?: ProductRequest }) => {
     if (init?.method === "PUT") return { ...product, name: init.body!.name };
+    if (path === "/admin/products/7/show") return { ...product, visible: true };
     return path.startsWith("/admin/media") ? [] : undefined;
   });
 });
 
 describe("ProductForm header", () => {
+  it("has no public page while the product is hidden, and gets it once Hiện trên web is on", async () => {
+    const setDetail = vi.fn();
+    const events = userEvent.setup();
+    render(
+      <ScreenDetailContext.Provider value={setDetail}>
+        <ProductForm initial={{ ...product, visible: false }} />
+      </ScreenDetailContext.Provider>,
+    );
+    expect(setDetail).toHaveBeenLastCalledWith({ name: "Gạo nếp", publicHref: null });
+    await events.click(screen.getByRole("switch", { name: "Hiện trên web" }));
+    await events.click(screen.getByRole("button", { name: "Vẫn hiện" }));
+    await waitFor(() => expect(setDetail).toHaveBeenLastCalledWith({ name: "Gạo nếp", publicHref: "/vi#san-pham" }));
+  });
+
   it("names a new product and has no public page yet", () => {
     const setDetail = vi.fn();
     render(

@@ -7,6 +7,8 @@ import { ConfirmDialog } from "./ConfirmDialog";
 type Props = {
   dirty: boolean;
   pending: boolean;
+  /** Another write of the same item runs (for example "Hiện trên web"): both buttons wait, the label stays "Lưu". */
+  waiting?: boolean;
   onSave(): void;
   /** Drops the unsaved changes. Runs only after the user said yes to the question. */
   onDiscard(): void;
@@ -18,7 +20,7 @@ type Props = {
  * Sticks just above the bottom navigation (a 56 px bar plus the safe area).
  * "Bỏ thay đổi" sits next to "Lưu", so it asks first: a slip of the finger must not drop the work.
  */
-export function SaveBar({ dirty, pending, onSave, onDiscard, notice }: Props) {
+export function SaveBar({ dirty, pending, waiting = false, onSave, onDiscard, notice }: Props) {
   const [asking, setAsking] = useState(false);
   return (
     <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 flex flex-col gap-2 border-t bg-card p-3">
@@ -28,10 +30,10 @@ export function SaveBar({ dirty, pending, onSave, onDiscard, notice }: Props) {
         </p>
       ) : null}
       <div className="flex gap-2">
-        <Button type="button" variant="outline" className="flex-1" onClick={() => setAsking(true)} disabled={pending || !dirty}>
+        <Button type="button" variant="outline" className="flex-1" onClick={() => setAsking(true)} disabled={pending || waiting || !dirty}>
           Bỏ thay đổi
         </Button>
-        <Button type="button" className="flex-1" onClick={onSave} disabled={!dirty || pending}>
+        <Button type="button" className="flex-1" onClick={onSave} disabled={!dirty || pending || waiting}>
           {pending ? "Đang lưu…" : "Lưu"}
         </Button>
       </div>

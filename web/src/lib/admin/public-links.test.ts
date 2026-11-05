@@ -28,11 +28,12 @@ describe("storyPublicHref", () => {
 });
 
 describe("productPublicHref", () => {
-  it("is the product section of the home page for a saved product", () => {
-    expect(productPublicHref({ id: 3 } as ProductAdminDto)).toBe("/vi#san-pham");
+  it("is the product section of the home page for a product shown on the web", () => {
+    expect(productPublicHref({ id: 3, visible: true } as ProductAdminDto)).toBe("/vi#san-pham");
   });
 
-  it("is null for a product not saved yet", () => {
+  it("is null for a hidden product and for a product not saved yet", () => {
+    expect(productPublicHref({ id: 3, visible: false } as ProductAdminDto)).toBeNull();
     expect(productPublicHref(undefined)).toBeNull();
   });
 });

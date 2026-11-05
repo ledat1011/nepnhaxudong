@@ -12,9 +12,9 @@ export function storyPublicHref(story: StoryAdminDto | undefined): string | null
 
 /**
  * Where a product shows on the public site: the product section of the Vietnamese home page.
- * Every saved product is shown there today; `null` for a product that is not saved yet.
+ * `null` for a hidden product ("Hiện trên web" off) and for a product that is not saved yet.
  */
 export function productPublicHref(product: ProductAdminDto | undefined): string | null {
-  if (product === undefined) return null;
+  if (product === undefined || !product.visible) return null;
   return `${homePath("vi")}#${PRODUCT_SECTION}`;
 }
