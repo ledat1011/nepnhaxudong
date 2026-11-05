@@ -1,7 +1,8 @@
 name: infra
 
 # Builds the three production images and runs the whole stack once (infra/test/run-smoke.sh):
-# health, pages, Secure cookies, a WebP upload, revalidate, limits, then a backup and a restore test.
+# health, pages, Secure cookies, a WebP upload, revalidate, limits, then a backup and a restore test;
+# then infra/vps/deploy.sh against a local registry (a good release, then a broken one that must roll back).
 on:
   pull_request:
     paths:
@@ -62,3 +63,5 @@ jobs:
           cache-to: type=gha,scope=caddy,mode=max
       - run: sudo apt-get update -q && sudo apt-get install -y -q restic
       - run: bash infra/test/run-smoke.sh
+      - name: Deploy and rollback test (local registry)
+        run: bash infra/test/deploy-test.sh

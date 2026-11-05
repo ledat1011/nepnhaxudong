@@ -11,6 +11,9 @@ EXPECTED_HOST=${2:?usage: deploy.sh <image-tag> <site-host>}
 NEPNHA_DIR=${NEPNHA_DIR:-/opt/nepnha}
 ENV_FILE="$NEPNHA_DIR/.env"
 HEALTH_WAIT_SECONDS=${HEALTH_WAIT_SECONDS:-180}
+# Test only (a local CA for "localhost"): HEALTH_CURL_INSECURE=1 adds -k. Never set it on the VPS.
+CURL_TLS=()
+[ "${HEALTH_CURL_INSECURE:-}" = 1 ] && CURL_TLS=(-k)
 cd "$NEPNHA_DIR"
 
 env_get() { grep -E "^$1=" "$ENV_FILE" | tail -n 1 | cut -d= -f2- || true; }
@@ -38,10 +41,10 @@ healthy() {
   local deadline=$((SECONDS + HEALTH_WAIT_SECONDS))
   local url
   while [ "$SECONDS" -lt "$deadline" ]; do
-    if curl -fsS -m 10 --resolve "$SITE_HOST:443:127.0.0.1" "https://$SITE_HOST/api/actuator/health" 2>/dev/null \
+    if curl -fsS "${CURL_TLS[@]}" -m 10 --resolve "$SITE_HOST:443:127.0.0.1" "https://$SITE_HOST/api/actuator/health" 2>/dev/null \
         | grep -q '"status":"UP"'; then
       url="https://$SITE_HOST/vi"
-      if curl -fsS -m 20 -o /dev/null --resolve "$SITE_HOST:443:127.0.0.1" "$url"; then
+      if curl -fsS "${CURL_TLS[@]}" -m 20 -o /dev/null --resolve "$SITE_HOST:443:127.0.0.1" "$url"; then
         return 0
       fi
     fi

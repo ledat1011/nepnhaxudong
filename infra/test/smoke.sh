@@ -3,7 +3,7 @@
 #   base-url: for example https://localhost:8443 (the smoke compose file publishes Caddy there).
 # Env: SMOKE_ADMIN_EMAIL, SMOKE_ADMIN_PASSWORD (the bootstrap admin of a fresh database).
 # docker compose must reach the stack (COMPOSE_FILE / COMPOSE_ENV_FILES or the current folder).
-# Needs curl and jq. Stops at the first failed check and prints its name.
+# Needs curl and node (for JSON). Stops at the first failed check and prints its name.
 set -euo pipefail
 
 BASE=${1:?usage: smoke.sh <base-url>}
@@ -21,7 +21,11 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 # Prints the HTTP status; the body goes to $T/body and the headers to $T/headers.
 status() { "${CURL[@]}" -o "$T/body" -D "$T/headers" -w '%{http_code}' "$@"; }
 header() { grep -i "^$1:" "$T/headers" | tail -n 1 | cut -d' ' -f2- | tr -d '\r'; }
-csrf() { "${CURL[@]}" "$BASE/api/auth/csrf" | jq -r .token; }
+# Reads one field of the JSON on stdin.
+json_field() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s)[process.argv[1]]))' "$1"; }
+csrf() { "${CURL[@]}" "$BASE/api/auth/csrf" | json_field token; }
+# Prints a JSON object from key value pairs: json_obj email a@b.c password x
+json_obj() { node -e 'const a=process.argv.slice(1),o={};for(let i=0;i<a.length;i+=2)o[a[i]]=a[i+1];console.log(JSON.stringify(o))' "$@"; }
 
 step "API health is UP (waits up to 180 s)"
 for _ in $(seq 1 90); do
@@ -40,25 +44,29 @@ step "The CSRF cookie is Secure (the API sees HTTPS behind Caddy)"
 grep -i '^set-cookie: XSRF-TOKEN=' "$T/headers" | grep -qi 'secure' || fail "XSRF-TOKEN cookie is not Secure"
 
 step "Log in as the first admin and change the temporary password"
-jq -n --arg e "$SMOKE_ADMIN_EMAIL" --arg p "$SMOKE_ADMIN_PASSWORD" '{email:$e,password:$p}' > "$T/login.json"
+json_obj email "$SMOKE_ADMIN_EMAIL" password "$SMOKE_ADMIN_PASSWORD" > "$T/login.json"
 code=$(status -H "X-XSRF-TOKEN: $(csrf)" -H 'Content-Type: application/json' --data @"$T/login.json" "$BASE/api/auth/login")
 [ "$code" = 200 ] || fail "login answered $code: $(cat "$T/body")"
 grep -i '^set-cookie: NEPNHA_SESSION=' "$T/headers" | grep -qi 'secure' || fail "session cookie is not Secure"
 NEW_PASSWORD="Smoke-$(head -c 18 /dev/urandom | base64 | tr -dc 'A-Za-z0-9')"
-jq -n --arg c "$SMOKE_ADMIN_PASSWORD" --arg n "$NEW_PASSWORD" '{currentPassword:$c,newPassword:$n}' > "$T/pw.json"
+json_obj currentPassword "$SMOKE_ADMIN_PASSWORD" newPassword "$NEW_PASSWORD" > "$T/pw.json"
 code=$(status -H "X-XSRF-TOKEN: $(csrf)" -H 'Content-Type: application/json' --data @"$T/pw.json" "$BASE/api/auth/password")
 [ "$code" = 204 ] || fail "password change answered $code: $(cat "$T/body")"
 
-step "Upload a WebP image to the packaged API (TwelveMonkeys plugin) and read it back through Caddy"
+step "Upload a WebP image to the packaged API (TwelveMonkeys plugin; the API stores it re-encoded) and read it back through Caddy"
 # A 1x1 lossy WebP (the same bytes as WEBP_1X1 in api/src/test/java/vn/nepnhaxudong/media/TestImages.java).
 echo 'UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA' | base64 -d > "$T/tiny.webp"
-code=$(status -H "X-XSRF-TOKEN: $(csrf)" -F "file=@$T/tiny.webp;type=image/webp" -F altVi=smoke -F altEn=smoke "$BASE/api/admin/media")
+# Relative file names after "cd": curl on Windows (Git Bash) cannot read a /tmp/... path inside -F.
+code=$(cd "$T" && status -H "X-XSRF-TOKEN: $(csrf)" -F "file=@tiny.webp;type=image/webp" -F altVi=smoke -F altEn=smoke "$BASE/api/admin/media")
 [ "$code" = 201 ] || fail "upload answered $code: $(cat "$T/body")"
-MEDIA_URL=$(jq -r .url "$T/body")
+MEDIA_URL=$(json_field url < "$T/body")
 case "$MEDIA_URL" in /media/*) ;; *) fail "unexpected media url: $MEDIA_URL" ;; esac
 code=$(status "$BASE$MEDIA_URL")
 [ "$code" = 200 ] || fail "$MEDIA_URL answered $code"
-[ "$(header Content-Type)" = "image/webp" ] || fail "$MEDIA_URL has Content-Type '$(header Content-Type)'"
+case "$MEDIA_URL" in
+  *.jpg) want=image/jpeg ;; *.png) want=image/png ;; *.webp) want=image/webp ;; *) fail "unexpected extension: $MEDIA_URL" ;;
+esac
+[ "$(header Content-Type)" = "$want" ] || fail "$MEDIA_URL has Content-Type '$(header Content-Type)', want $want"
 [ "$(header X-Content-Type-Options)" = "nosniff" ] || fail "$MEDIA_URL has no nosniff"
 header Cache-Control | grep -q immutable || fail "$MEDIA_URL is not cached as immutable"
 code=$(status "$BASE/media/2000/01/missing.webp")
@@ -67,7 +75,7 @@ header Cache-Control | grep -q immutable && fail "a 404 of /media is cached as i
 
 step "A change in admin reaches the cached home page (API -> web revalidate)"
 TITLE="SMOKE-$(head -c 6 /dev/urandom | base64 | tr -dc 'A-Za-z0-9')"
-jq -n --arg t "$TITLE" '{year:2024,title:{vi:$t},description:{vi:"smoke"}}' > "$T/tl.json"
+printf '{"year":2024,"title":{"vi":"%s"},"description":{"vi":"smoke"}}' "$TITLE" > "$T/tl.json"
 code=$(status -H "X-XSRF-TOKEN: $(csrf)" -H 'Content-Type: application/json' --data @"$T/tl.json" "$BASE/api/admin/timeline")
 [ "$code" = 201 ] || fail "timeline create answered $code: $(cat "$T/body")"
 found=no
@@ -83,11 +91,14 @@ case "$code" in 2*) fail "/api/revalidate answered $code from outside" ;; esac
 
 step "A body over 16 MB is refused with 413"
 head -c 17000000 /dev/zero > "$T/big.bin"
-code=$(status -H "X-XSRF-TOKEN: $(csrf)" -F "file=@$T/big.bin;type=image/jpeg" -F altVi=x -F altEn=x "$BASE/api/admin/media" || true)
+code=$(cd "$T" && status -H "X-XSRF-TOKEN: $(csrf)" -F "file=@big.bin;type=image/jpeg" -F altVi=x -F altEn=x "$BASE/api/admin/media" || true)
 [ "$code" = 413 ] || fail "a 17 MB upload answered $code"
 
 step "Postgres publishes no port"
-if docker compose port postgres 5432 2>/dev/null | grep -q .; then fail "postgres publishes port 5432"; fi
+pg_id=$(docker compose ps -q postgres)
+[ -n "$pg_id" ] || fail "no postgres container"
+# "docker port" lists only published ports; "docker compose port" prints ":0" when there is none.
+if [ -n "$(docker port "$pg_id")" ]; then fail "postgres publishes a port: $(docker port "$pg_id")"; fi
 
 step "Login is rate limited per IP"
 codes=""

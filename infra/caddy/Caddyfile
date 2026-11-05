@@ -69,6 +69,7 @@
 
 	header {
 		-Server
+		-Via
 		# ">" sets it after the upstream answered, so there is one value even when Spring sends its own.
 		>Strict-Transport-Security "max-age=31536000"
 	}

@@ -1,6 +1,7 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop` (chạy thử web)
+Cập nhật: 2026-11-05 — máy `C:SERSADMINDESKTOP
+EPNHAXUDONG` (PH���N D, H��� T���NG)
 
 ## Giai đoạn hiện tại
 `main` (`addcdd3`) đã có đủ phần B: API (B1), web công khai (B2), trang quản trị (B3, PR #11), hiệu ứng GSAP (B4), logo và mascot (phần A), popup Zalo và thanh đang tải (PR #12), 10 việc cải tiến trang quản trị (quyết định `0008` và `0010`, PR #14, #15, #17, #18, #20) và cảnh minh họa (PR #21). Không còn nhánh nào chờ merge. Việc tiếp theo: rà trang công khai bằng các skill giao diện, các việc sau của cảnh minh họa, rồi phần D (hạ tầng).
@@ -39,7 +40,7 @@ Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop` (chạy thử web)
 5. Chủ dự án tự thử trên điện thoại thật: nút Back trên Android ("Ở lại" rồi Back lần nữa phải hỏi lại); quét mã QR Zalo; tải nhiều ảnh từ iPhone và Android; đăng nhập bằng một tài khoản "Người nhà" để thấy không có Tài khoản và Lịch sử tài khoản. Xác nhận màu Vàng lúa của thanh đang tải.
 6. Chủ dự án đọc và xác nhận các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec: mục 2.2, 3.0, 3.3, 4.1.
 7. Bật bảo vệ nhánh `main` (chưa xác nhận là đã bật). Nếu muốn GitHub tự merge khi CI đạt: bật "Allow auto-merge" trong Settings của repo.
-8. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới. Phần này chỉ cần code và CI, có thể làm bằng một cloud session riêng.
+8. Phần D (hạ tầng): code và CI đã xong (nhánh `feat/phan-d-ha-tang`). Còn lại là việc chủ dự án tự làm, theo checklist `docs/deploy.md`: thuê VPS 2 vCPU / 2 GB, chạy `setup.sh` và `init-env.sh`, đặt GitHub Variables (`VPS_HOST`, `SITE_HOST`) và Secrets (`VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`), chạy workflow `deploy`, tạo UptimeRobot, healthchecks.io và Backblaze B2; tên miền và Cloudflare làm sau cùng. Sau lần deploy đầu: thử tải ảnh thật và xem `/_next/image` với tên miền thật.
 9. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
 10. Dọn ở máy (chủ dự án tự xóa, công cụ không xóa được vì đường dẫn quá dài hoặc bị khóa): `D:\workspaces\nepnhaxudong-b4`, `D:\workspaces\nepnhaxudong-phan-b2`, và các thư mục còn sót trong `D:\workspaces\nepnhaxudong\.claude\worktrees\`. Thư mục `D:\workspaces\nepnhaxudong-b3` đang chạy bản xem thử, xóa sau khi tắt server. Tài khoản thử `ra-soat@example.test` (đã khóa) còn trong `nepnha_b3`.
 
@@ -50,28 +51,29 @@ Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop` (chạy thử web)
 - Máy `C:\Users\Admin\Desktop\nepnhaxudong`: MCP của dự án đã chạy trong ứng dụng Claude desktop, kể cả `nanobanana`; `recraft` còn chờ đăng nhập (chạy `claude` trong PowerShell mới, rồi `/mcp`).
 
 ## Ghi chú cho phần D
-Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, Docker, máy chủ).
+Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, Docker, máy chủ). Trạng thái sau phần D (nhánh `feat/phan-d-ha-tang`) ghi ở đầu mỗi dòng: **[xong]** kèm file làm việc đó và bài thử trong `infra/test/smoke.sh`, **[để sau]**, hoặc **[không đổi]** (quy tắc cho code, không phải việc của hạ tầng).
 
-- Sau Caddy (TLS kết thúc ở Caddy): đặt `server.forward-headers-strategy: framework` (hoặc `native`) và để Caddy gửi `X-Forwarded-Proto`. Nếu không, `request.isSecure()` là false, cookie `XSRF-TOKEN` thiếu `Secure` và không có header HSTS.
-- Giới hạn tốc độ `POST /api/auth/login` ở Caddy: mỗi lần thử tốn khoảng 16 MiB và CPU cho Argon2 (chạy ngoài transaction, không giữ kết nối DB), và email không tồn tại không bị khoá.
-- Giới hạn tốc độ `/api/admin/*` ở Caddy (bớt tải khi có người gửi nhiều request lạ; API đã chỉ đọc token CSRF từ header nên không đọc body multipart trước khi kiểm tra).
-- Cookie CSRF có `Path=/api` (context path). Trang quản trị Next.js phải đọc token từ JSON của `GET /api/auth/csrf`, không đọc từ `document.cookie`.
-- Mọi endpoint quản trị phải nằm dưới `/api/admin/**`, vì bước chặn "phải đổi mật khẩu" chỉ áp dụng cho tiền tố này.
-- Giới hạn kích thước body ở Caddy: `request_body { max_size 16MB }` cho `/api/*`. Tomcat reset kết nối khi body vượt `max-swallow-size` 20MB. Phản hồi 413 của Caddy là văn bản thường, nên giao diện quản trị hiện "Ảnh quá lớn. Tối đa 15 MB." với mọi lỗi 413 và kiểm tra `file.size` trước.
-- JVM: đặt `-Xmx` có chủ đích (ít nhất 768 MB), thêm `-XX:+ExitOnOutOfMemoryError` và chính sách tự khởi động lại của container. Giới hạn bộ nhớ container phải chừa chỗ cho bộ đệm native của libjpeg.
-- `MEDIA_DIR` là một volume bền, gắn chế độ chỉ đọc vào Caddy và sao lưu cùng DB. `/tmp` phải ghi được (Tomcat lưu các phần multipart ở đó).
-- Phục vụ `/media/*` với `Content-Type` theo đuôi file, `X-Content-Type-Options: nosniff` và cache dài, bất biến (tên file là UUID).
-- Sau khi đóng gói, thử một lần tải ảnh WebP lên bản `java -jar` (kiểm tra plugin TwelveMonkeys có được đăng ký).
-- Sự kiện làm mới trang (revalidate) chỉ nằm trong bộ nhớ: nếu mất một sự kiện thì trang cũ còn đến lần sửa sau (web dùng `force-cache` với tag, không có thời gian dự phòng). Cách bổ sung sau này: nút "làm mới trang web" trong trang quản trị (trang chủ và các bài viết), hoặc đặt thời gian `revalidate` dài ở phía web.
-- Sửa chữ thay thế hoặc xoá ảnh chỉ làm mới trang chủ; các trang bài viết có ảnh đó chưa được làm mới.
-- Trước khi lên production, chạy thử một lệnh revalidate thật từ API sang server web (bản `node .next/standalone/server.js`).
-- Ở local, web phục vụ ảnh tải lên từ `MEDIA_DEV_DIR` (chỉ ngoài production). Ở production, Caddy phục vụ `/media/*`.
+- **[xong]** `SERVER_FORWARD_HEADERS_STRATEGY=framework` trong `infra/compose.prod.yml`; smoke test kiểm tra cookie `XSRF-TOKEN` và `NEPNHA_SESSION` có `Secure`. Ghi chú gốc: sau Caddy (TLS kết thúc ở Caddy), đặt `server.forward-headers-strategy: framework` (hoặc `native`) và để Caddy gửi `X-Forwarded-Proto`. Nếu không, `request.isSecure()` là false, cookie `XSRF-TOKEN` thiếu `Secure` và không có header HSTS.
+- **[xong]** `infra/caddy/Caddyfile`: 5 lần / phút cho mỗi IP và 30 lần / phút cho tổng số; smoke test thấy 429. Ghi chú gốc: giới hạn tốc độ `POST /api/auth/login` ở Caddy, vì mỗi lần thử tốn khoảng 16 MiB và CPU cho Argon2 (chạy ngoài transaction, không giữ kết nối DB), và email không tồn tại không bị khoá.
+- **[xong]** `infra/caddy/Caddyfile`: 120 lần / phút cho mỗi IP. Ghi chú gốc: giới hạn tốc độ `/api/admin/*` ở Caddy (bớt tải khi có người gửi nhiều request lạ; API đã chỉ đọc token CSRF từ header nên không đọc body multipart trước khi kiểm tra).
+- **[không đổi]** Cookie CSRF có `Path=/api` (context path). Trang quản trị Next.js phải đọc token từ JSON của `GET /api/auth/csrf`, không đọc từ `document.cookie`.
+- **[không đổi]** Mọi endpoint quản trị phải nằm dưới `/api/admin/**`, vì bước chặn "phải đổi mật khẩu" chỉ áp dụng cho tiền tố này.
+- **[xong]** `request_body` 16 MB cho `/api/*` trong Caddyfile; smoke test thấy 413 với body 17 MB. Ghi chú gốc: Tomcat reset kết nối khi body vượt `max-swallow-size` 20MB. Phản hồi 413 của Caddy là văn bản thường, nên giao diện quản trị hiện "Ảnh quá lớn. Tối đa 15 MB." với mọi lỗi 413 và kiểm tra `file.size` trước.
+- **[xong]** `-Xmx768m -XX:+ExitOnOutOfMemoryError`, giới hạn container 1100 MB, `restart: unless-stopped` (`api/Dockerfile`, `infra/compose.prod.yml`). Đo ở máy này sau smoke test: API dùng 427 MB, cả 4 container khoảng 550 MB. Ghi chú gốc: đặt `-Xmx` có chủ đích (ít nhất 768 MB), thêm `-XX:+ExitOnOutOfMemoryError` và chính sách tự khởi động lại của container; giới hạn bộ nhớ container phải chừa chỗ cho bộ đệm native của libjpeg.
+- **[xong]** Ảnh nằm ở `/srv/nepnha/media` trên VPS: API ghi vào, Caddy gắn chỉ đọc, `backup.sh` sao lưu cùng DB; `/tmp` của container API ghi được. Ghi chú gốc: `MEDIA_DIR` là một volume bền, gắn chế độ chỉ đọc vào Caddy và sao lưu cùng DB. `/tmp` phải ghi được (Tomcat lưu các phần multipart ở đó).
+- **[xong]** Caddyfile: `Content-Type` theo đuôi file, `nosniff`, `immutable` chỉ cho file có thật (404 không bị cache); smoke test kiểm tra cả hai. Ghi chú gốc: phục vụ `/media/*` với `Content-Type` theo đuôi file, `X-Content-Type-Options: nosniff` và cache dài, bất biến (tên file là UUID).
+- **[xong]** Smoke test tải ảnh WebP lên image API đã đóng gói, được 201. API lưu lại thành `.jpg`. Ghi chú gốc: sau khi đóng gói, thử một lần tải ảnh WebP lên bản `java -jar` (kiểm tra plugin TwelveMonkeys có được đăng ký).
+- **[để sau]** Sự kiện làm mới trang (revalidate) chỉ nằm trong bộ nhớ: nếu mất một sự kiện thì trang cũ còn đến lần sửa sau (web dùng `force-cache` với tag, không có thời gian dự phòng). Cách bổ sung sau này: nút "làm mới trang web" trong trang quản trị (trang chủ và các bài viết), hoặc đặt thời gian `revalidate` dài ở phía web. Trong lúc chờ: `docker compose up -d --force-recreate web` trên VPS xóa cache trang.
+- **[để sau]** Sửa chữ thay thế hoặc xoá ảnh chỉ làm mới trang chủ; các trang bài viết có ảnh đó chưa được làm mới.
+- **[xong]** Smoke test tạo một mốc hành trình qua Caddy, rồi thấy nó trên `/vi` đã được cache (revalidate thật từ container API sang container web). Ghi chú gốc: trước khi lên production, chạy thử một lệnh revalidate thật từ API sang server web (bản `node .next/standalone/server.js`).
+- **[xong]** Ở production, Caddy phục vụ `/media/*`; image web không có `MEDIA_DEV_DIR`. Ghi chú gốc: ở local, web phục vụ ảnh tải lên từ `MEDIA_DEV_DIR` (chỉ ngoài production).
 
 Các việc phát sinh khi làm B2 (web công khai):
-- Cloudflare không được cache HTML (chỉ cache `/_next/static/*` và `/media/*`). Caddy không được cache, và phải chuyển tiếp header `rsc` và tham số `_rsc`. Các trang gửi `Cache-Control: s-maxage=31536000`, nên nếu cache ở rìa thì khách không thấy thay đổi từ admin. Trang 404 chung (đường dẫn lạ) cũng gửi header này.
-- `SITE_URL` phải đặt cả lúc build (cấu hình ảnh) và lúc chạy (canonical, sitemap). Server web chạy bằng `node .next/standalone/server.js`, không phải `next start`. Server này nghe theo biến `HOSTNAME`: trong Docker phải đặt `HOSTNAME=0.0.0.0`, vì trong container biến này mặc định là ID của container.
-- `POST /api/revalidate` của web chỉ gọi được trong mạng nội bộ (`WEB_BASE_URL=http://web:3000`), vì Caddy chuyển `/api/*` sang Spring. Route này nhận từ 1 đến 50 tag (`home`, `stories`, `story:<slug>`); một tag sai thì cả lần gọi bị trả 400.
-- Các điểm web giả định về hợp đồng API nằm ở bảng "Khoảng trống của hợp đồng API" đầu `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`.
+- **[xong]** Caddy gửi `Cloudflare-CDN-Cache-Control: no-store` cho mọi đường dẫn trừ `/_next/static/*` và `/media/*`; Caddy không cache; `rsc` và `_rsc` đi qua nguyên vẹn. `docs/deploy.md` mục 9 dặn không bật "Cache Everything". Ghi chú gốc: Cloudflare không được cache HTML (chỉ cache `/_next/static/*` và `/media/*`). Caddy không được cache, và phải chuyển tiếp header `rsc` và tham số `_rsc`. Các trang gửi `Cache-Control: s-maxage=31536000`, nên nếu cache ở rìa thì khách không thấy thay đổi từ admin. Trang 404 chung (đường dẫn lạ) cũng gửi header này.
+- **[xong]** `web/Dockerfile`: `SITE_URL` là build arg và biến lúc chạy, `node server.js`, `HOSTNAME=0.0.0.0`. Workflow deploy build web theo biến `SITE_HOST` của repo; `deploy.sh` từ chối chạy khi `SITE_HOST` trên VPS khác biến này. Ghi chú gốc: `SITE_URL` phải đặt cả lúc build (cấu hình ảnh) và lúc chạy (canonical, sitemap). Server web chạy bằng `node .next/standalone/server.js`, không phải `next start`. Server này nghe theo biến `HOSTNAME`: trong Docker phải đặt `HOSTNAME=0.0.0.0`, vì trong container biến này mặc định là ID của container.
+- **[xong]** `WEB_BASE_URL=http://web:3000`; smoke test kiểm tra `POST /api/revalidate` từ ngoài không trả 2xx. Ghi chú gốc: `POST /api/revalidate` của web chỉ gọi được trong mạng nội bộ, vì Caddy chuyển `/api/*` sang Spring. Route này nhận từ 1 đến 50 tag (`home`, `stories`, `story:<slug>`); một tag sai thì cả lần gọi bị trả 400.
+- **[không đổi]** Các điểm web giả định về hợp đồng API nằm ở bảng "Khoảng trống của hợp đồng API" đầu `docs/superpowers/plans/2026-11-04-phan-b2-web-cong-khai.md`.
+- **[để sau]** Chưa thử được `/_next/image` với ảnh thật và tên miền thật (cần VPS): `docs/deploy.md` mục 6 có bước thử bằng tay sau lần deploy đầu.
 
 Các việc phát sinh khi làm B4 (hiệu ứng):
 - Khi khách mở thẳng một đường dẫn có `#neo` (ví dụ `/vi#bao-chi`), chuyển động chỉ bắt đầu sau khi trang cuộn xong tới đó, có thể chậm tới 2,5 giây.
