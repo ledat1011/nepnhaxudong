@@ -11,8 +11,31 @@ import { useAdminSession } from "@/lib/admin/session";
 import type { UserSummary } from "@/lib/admin/types";
 import { withReLogin } from "@/lib/admin/with-relogin";
 
-/** The accounts of the family, and the two-factor card of the signed-in user. */
+/**
+ * An owner ("Chủ") sees the family accounts and the own two-factor card. A member ("Người nhà") sees only
+ * the own two-factor card: the API refuses them the account list (403).
+ */
 export default function AccountsPage() {
+  const { user: me } = useAdminSession();
+  return me?.role === "OWNER" ? <OwnerAccounts /> : <MemberSecurity />;
+}
+
+function MemberSecurity() {
+  const { user: me, refresh } = useAdminSession();
+  const enabled = me?.totpEnabled ?? false;
+  return (
+    <div className="flex flex-col gap-6 p-4">
+      {/* A new key when the session changes: the card starts again and keeps no secret from before. */}
+      <TwoFactorCard key={String(enabled)} enabled={enabled} onChanged={() => void refresh()} />
+      <p className="text-sm text-muted-foreground">
+        Tài khoản của cả nhà do Chủ quản lý. Khi cần mở khóa, đặt lại mật khẩu hay tắt xác thực 2 lớp vì mất
+        điện thoại, hãy nhờ Chủ.
+      </p>
+    </div>
+  );
+}
+
+function OwnerAccounts() {
   const { requireReLogin, user: me } = useAdminSession();
   const [users, setUsers] = useState<UserSummary[] | null>(null);
   const [error, setError] = useState<AdminApiError | null>(null);

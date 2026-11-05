@@ -9,7 +9,7 @@ import { AdminHeader } from "./AdminHeader";
 import { SessionErrorScreen } from "./SessionErrorScreen";
 import { BottomNav } from "./BottomNav";
 import { FieldFocus } from "./FieldFocus";
-import { screenTitle } from "./nav-items";
+import { screenTitleFor } from "./nav-access";
 
 /** The gate of every private admin screen. It renders nothing private until the session is known. */
 export function AppShell({ children }: { children: ReactNode }) {
@@ -43,7 +43,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <NavGuardProvider>
       <div className="min-h-dvh pb-24">
-        <AdminHeader title={screenTitle(pathname)} userName={user.displayName} />
+        <AdminHeader title={screenTitleFor(pathname, user.role)} userName={user.displayName} />
         <main>{children}</main>
         <BottomNav />
       </div>
