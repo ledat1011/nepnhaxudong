@@ -18,9 +18,10 @@ export function SessionErrorScreen({ onRetry }: { onRetry(): Promise<void> }) {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-4 p-4">
-      <p role="alert" className="text-lg font-bold">
-        Không kết nối được máy chủ.
-      </p>
+      <div role="alert" className="flex flex-col gap-1">
+        <p className="text-lg font-bold">Không kết nối được máy chủ.</p>
+        <p>Hãy kiểm tra Wi-Fi hoặc 4G, rồi bấm Thử lại.</p>
+      </div>
       <Button type="button" onClick={() => void retry()} disabled={pending}>
         Thử lại
       </Button>

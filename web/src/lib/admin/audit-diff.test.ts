@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { actionLabel, diffSnapshots, entityTypeLabel, entryMeta, formatVnTime } from "./audit-diff";
+import { actionLabel, diffSnapshots, entityTypeLabel, entryMeta, entryTitle, formatVnTime } from "./audit-diff";
 
 describe("diffSnapshots", () => {
   it("names the Hiện trên web switch of a product and says Có or Không", () => {
@@ -240,6 +240,12 @@ describe("entryMeta", () => {
 
   it("joins time, user, kind and action", () => {
     expect(entryMeta(line)).toBe("08:00 04/11/2026 · Mẹ · Sản phẩm · Sửa");
+  });
+
+  it("names an item without a title in words, not with the API's #id", () => {
+    expect(entryTitle({ label: "#12" })).toBe("(chưa có tiêu đề)");
+    expect(entryTitle({ label: "" })).toBe("(chưa có tiêu đề)");
+    expect(entryTitle({ label: "Gạo #1" })).toBe("Gạo #1");
   });
 
   it("says the account was deleted when the line has no user name", () => {

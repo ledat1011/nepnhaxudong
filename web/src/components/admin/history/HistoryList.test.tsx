@@ -13,6 +13,46 @@ const { session } = vi.hoisted(() => ({ session: { role: "OWNER" as "OWNER" | "M
 vi.mock("@/lib/admin/session", () => ({ useAdminSession: () => ({ requireReLogin, user: { id: 1, role: session.role } }) }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
+/** A small stand-in for the app router: a history stack of addresses that components can subscribe to. */
+const nav = vi.hoisted(() => {
+  const listeners = new Set<() => void>();
+  const state = { entries: ["/admin/lich-su"], index: 0 };
+  const changed = () => listeners.forEach((listener) => listener());
+  return {
+    reset(url = "/admin/lich-su") {
+      state.entries = [url];
+      state.index = 0;
+    },
+    current: () => state.entries[state.index],
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    push: vi.fn((url: string) => {
+      state.entries = [...state.entries.slice(0, state.index + 1), url];
+      state.index += 1;
+      changed();
+    }),
+    replace: vi.fn((url: string) => {
+      state.entries[state.index] = url;
+      changed();
+    }),
+    /** The Back button of the phone or the browser. */
+    back: vi.fn(() => {
+      state.index = Math.max(0, state.index - 1);
+      changed();
+    }),
+  };
+});
+vi.mock("next/navigation", async () => {
+  const { useSyncExternalStore } = await import("react");
+  return {
+    usePathname: () => "/admin/lich-su",
+    useRouter: () => ({ push: nav.push, replace: nav.replace, back: nav.back }),
+    useSearchParams: () => new URLSearchParams(useSyncExternalStore(nav.subscribe, nav.current).split("?")[1] ?? ""),
+  };
+});
+
 import { HistoryList } from "./HistoryList";
 
 function entry(id: number, overrides: Partial<AuditEntryDto> = {}): AuditEntryDto {
@@ -47,6 +87,10 @@ beforeEach(() => {
   adminFetch.mockReset();
   requireReLogin.mockReset();
   session.role = "OWNER";
+  nav.reset();
+  nav.push.mockClear();
+  nav.replace.mockClear();
+  nav.back.mockClear();
 });
 
 describe("HistoryList filter by role", () => {
@@ -206,5 +250,57 @@ describe("HistoryList", () => {
     await userEvent.click(await screen.findByRole("button", { name: /Mục 5/ }));
     await userEvent.click(await screen.findByRole("button", { name: "Quay lại danh sách" }));
     expect(screen.getByLabelText("Loại nội dung")).toHaveValue("story");
+  });
+
+  it("says the account was deleted, not two dots, when a line has no user name", async () => {
+    adminFetch.mockResolvedValue([entry(1, { userDisplayName: null })]);
+    render(<HistoryList />);
+    const row = await screen.findByRole("button", { name: /Mục 1/ });
+    expect(row).toHaveTextContent("08:00 04/11/2026 · Tài khoản đã xóa · Sản phẩm · Sửa");
+  });
+});
+
+describe("HistoryList and the address of the page", () => {
+  function detailAndList() {
+    adminFetch.mockImplementation(async (path: string) => {
+      const match = /^\/admin\/audit\/(\d+)$/.exec(path);
+      if (match) return { ...entry(Number(match[1])), before: { a: 1 }, after: { a: 2 } };
+      return [entry(5)];
+    });
+  }
+
+  it("puts the open line in the address, so the Back button of the phone returns to the list", async () => {
+    detailAndList();
+    render(<HistoryList />);
+    await screen.findByRole("button", { name: /Mục 5/ });
+    await userEvent.selectOptions(screen.getByLabelText("Loại nội dung"), "story");
+    await userEvent.click(await screen.findByRole("button", { name: /Mục 5/ }));
+    expect(nav.push).toHaveBeenCalledWith("/admin/lich-su?mo=5");
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    act(() => nav.back());
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Loại nội dung")).toBeVisible();
+    expect(screen.getByLabelText("Loại nội dung")).toHaveValue("story");
+  });
+
+  it("opens the line named in the address, and its back button shows the list in the same place", async () => {
+    nav.reset("/admin/lich-su?mo=7");
+    detailAndList();
+    render(<HistoryList />);
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(adminFetch).toHaveBeenCalledWith("/admin/audit/7");
+    await userEvent.click(screen.getByRole("button", { name: "Quay lại danh sách" }));
+    // Nothing was pushed here, so going back in history would leave the page: the address is replaced instead.
+    expect(nav.back).not.toHaveBeenCalled();
+    expect(nav.replace).toHaveBeenCalledWith("/admin/lich-su", { scroll: false });
+    expect(await screen.findByLabelText("Loại nội dung")).toBeVisible();
+  });
+
+  it("shows the list when the line number in the address is not a number", async () => {
+    nav.reset("/admin/lich-su?mo=abc");
+    detailAndList();
+    render(<HistoryList />);
+    expect(await screen.findByRole("button", { name: /Mục 5/ })).toBeVisible();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 });

@@ -5,7 +5,7 @@ import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { Button } from "@/components/admin/ui/button";
 import { adminFetch } from "@/lib/admin/api";
-import { actionLabel, diffSnapshots, entityTypeLabel, formatVnTime } from "@/lib/admin/audit-diff";
+import { diffSnapshots, entryMeta, entryTitle } from "@/lib/admin/audit-diff";
 import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
 import { useAdminSession } from "@/lib/admin/session";
 import type { AuditDetailDto } from "@/lib/admin/types";
@@ -92,9 +92,9 @@ export function HistoryDetail({ id, onRestored, onClose }: Props) {
       {line !== null && !stale ? (
         <>
           <div className="flex flex-col gap-1">
-            <h2 className="break-words text-lg font-bold">{line.label}</h2>
+            <h2 className="break-words text-lg font-bold">{entryTitle(line)}</h2>
             <p className="break-words text-sm text-muted-foreground">
-              {formatVnTime(line.createdAt)} · {line.userDisplayName} · {entityTypeLabel(line.entityType)} · {actionLabel(line.action)}
+              {entryMeta(line)}
             </p>
           </div>
           {rows.length === 0 ? (
@@ -117,7 +117,7 @@ export function HistoryDetail({ id, onRestored, onClose }: Props) {
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.path} className="align-top">
-                    <th scope="row" className="break-all border-b p-2 text-left font-medium">
+                    <th scope="row" className="break-words border-b p-2 text-left font-medium">
                       {row.path}
                     </th>
                     <td className="border-b p-2">

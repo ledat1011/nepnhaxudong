@@ -44,6 +44,14 @@ export function entryMeta(entry: Pick<AuditEntryDto, "createdAt" | "userDisplayN
   return [formatVnTime(entry.createdAt), user, entityTypeLabel(entry.entityType), actionLabel(entry.action)].join(" · ");
 }
 
+/** Shown for an item that has no title (the API then labels it with its id, "#12"). */
+export const UNTITLED = "(chưa có tiêu đề)";
+
+/** The first line of a history row: the name of the item. */
+export function entryTitle(entry: Pick<AuditEntryDto, "label">): string {
+  return entry.label.trim() === "" || /^#\d+$/.test(entry.label) ? UNTITLED : entry.label;
+}
+
 const VN_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
   timeZone: "Asia/Ho_Chi_Minh",
   hourCycle: "h23",

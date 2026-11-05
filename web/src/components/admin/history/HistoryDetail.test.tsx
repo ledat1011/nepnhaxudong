@@ -75,10 +75,12 @@ describe("HistoryDetail", () => {
     expect(within(table).getByRole("columnheader", { name: "Sau" })).toBeInTheDocument();
     const rows = within(table).getAllByRole("row").slice(1);
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toHaveTextContent("name.vi");
+    // Field names are the words of the edit screens, not the names in the code.
+    expect(rows[0]).toHaveTextContent("Tên sản phẩm (tiếng Việt)");
     expect(rows[0]).toHaveTextContent("Nếp cũ");
     expect(rows[0]).toHaveTextContent("Nếp mới");
-    expect(rows[1]).toHaveTextContent("packagings.0.weightGrams");
+    expect(rows[1]).toHaveTextContent("Quy cách 1: khối lượng");
+    expect(table).not.toHaveTextContent("packagings");
   });
 
   it("marks a side that has no value with (trống), not with a dash", async () => {

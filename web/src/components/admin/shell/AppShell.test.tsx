@@ -108,6 +108,8 @@ describe("AppShell", () => {
     adminFetch.mockRejectedValueOnce(new AdminApiError(0, "Không kết nối được máy chủ."));
     renderShell();
     expect(await screen.findByText("Không kết nối được máy chủ.")).toBeInTheDocument();
+    // It says what to do, not only what went wrong.
+    expect(screen.getByText("Hãy kiểm tra Wi-Fi hoặc 4G, rồi bấm Thử lại.")).toBeInTheDocument();
     expect(screen.queryByText("Nội dung riêng tư")).not.toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
 

@@ -1,13 +1,14 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { Button } from "@/components/admin/ui/button";
 import { adminFetch } from "@/lib/admin/api";
-import { actionLabel, entityTypeLabel, formatVnTime } from "@/lib/admin/audit-diff";
+import { entryMeta, entryTitle } from "@/lib/admin/audit-diff";
 import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
-import { ADMIN_ROUTES } from "@/lib/admin/routes";
+import { ADMIN_ROUTES, historyEntryHref } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
 import type { AuditEntryDto } from "@/lib/admin/types";
 import { withReLogin } from "@/lib/admin/with-relogin";
@@ -63,12 +64,18 @@ export function RecentChanges() {
       {entries !== null && entries.length > 0 ? (
         <ul className="flex flex-col gap-2">
           {entries.map((entry) => (
-            <li key={entry.id} className="min-w-0 rounded-md border bg-card p-3">
-              <span className="block min-w-0 break-words font-semibold">{entry.label}</span>
-              <span className="block min-w-0 break-words text-sm text-muted-foreground">
-                {formatVnTime(entry.createdAt)} · {entry.userDisplayName} · {entityTypeLabel(entry.entityType)} ·{" "}
-                {actionLabel(entry.action)}
-              </span>
+            <li key={entry.id}>
+              {/* Same look as a to-do row: the chevron says the row opens its detail in Lịch sử. */}
+              <Link
+                href={historyEntryHref(entry.id)}
+                className="flex min-h-11 min-w-0 items-center gap-3 rounded-md border bg-card p-3 outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 active:bg-secondary"
+              >
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="min-w-0 break-words font-semibold">{entryTitle(entry)}</span>
+                  <span className="min-w-0 break-words text-sm text-muted-foreground">{entryMeta(entry)}</span>
+                </span>
+                <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
+              </Link>
             </li>
           ))}
         </ul>

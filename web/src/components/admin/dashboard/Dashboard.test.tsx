@@ -66,6 +66,16 @@ describe("RecentChanges", () => {
     expect(screen.getByRole("link", { name: "Xem tất cả" })).toHaveAttribute("href", "/admin/lich-su");
   });
 
+  it("opens the history detail of a line when the user taps it", async () => {
+    adminFetch.mockResolvedValue([entry(7), { ...entry(8), userDisplayName: null, label: "#8" }]);
+    render(<RecentChanges />);
+    const link = await screen.findByRole("link", { name: /Bài 7/ });
+    expect(link).toHaveAttribute("href", "/admin/lich-su?mo=7");
+    const untitled = screen.getByRole("link", { name: /chưa có tiêu đề/ });
+    expect(untitled).toHaveAttribute("href", "/admin/lich-su?mo=8");
+    expect(untitled).toHaveTextContent("Tài khoản đã xóa");
+  });
+
   it("says when there is nothing yet", async () => {
     adminFetch.mockResolvedValue([]);
     render(<RecentChanges />);
