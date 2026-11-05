@@ -114,7 +114,8 @@ describe("composeScene references and slots", () => {
     ["xlink:href='#skin'", "xlink:href='#cay-ma-skin'"],
     ['xlink:href="#skin"', 'xlink:href="#cay-ma-skin"'],
   ])("prefixes %s", (from, to) => {
-    const extra = from.includes("(") ? `<style>.a{fill:${from}}</style>` : `<use ${from}/>`;
+    const quote = from.includes('"') ? "'" : '"';
+    const extra = from.includes("(") ? `<rect style=${quote}fill:${from}${quote}/>` : `<use ${from}/>`;
     const expected = to;
     expect(run(use + extra)).toContain(expected);
   });

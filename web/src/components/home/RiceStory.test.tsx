@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { BRAND } from "@/lib/brand/colors";
 import { roadBend, roadPath } from "@/lib/story/road";
 import { STORY_SCENES } from "@/lib/story/scenes";
+import { Hero } from "./Hero";
 import { RiceStory } from "./RiceStory";
 
 const KEYS = {
@@ -186,12 +187,51 @@ describe("RiceStory", () => {
   it("shows the Zalo link in the last scene only when there is a number", () => {
     const dict = getDictionary("vi");
     const { container, rerender } = render(<RiceStory dict={dict} zalo="0912 345 678" />);
-    const link = screen.getByRole("link", { name: dict.hero.zaloCta });
+    const link = screen.getByRole("link", { name: dict.story.zaloCta });
     expect(link.getAttribute("href")).toContain("zalo.me/");
     const last = container.querySelectorAll("li[data-story-scene]")[7];
     expect(last.contains(link)).toBe(true);
     rerender(<RiceStory dict={dict} zalo={null} />);
-    expect(screen.queryByRole("link", { name: dict.hero.zaloCta })).toBeNull();
+    expect(screen.queryByRole("link", { name: dict.story.zaloCta })).toBeNull();
   });
 
+  it("has its own pause button at the top, away from the road and the pictures", () => {
+    const dict = getDictionary("vi");
+    const { container } = render(<RiceStory dict={dict} zalo={null} />);
+    const button = screen.getByRole("button", { name: dict.motion.pause, hidden: true });
+    expect(button).toHaveAttribute("aria-pressed", "false");
+    // Hidden until the motion code runs, like the hero button.
+    expect(button).toHaveClass("hidden");
+    expect(button.className).toContain("[html[data-motion=on]_&]:inline-flex");
+    expect(button.closest("[data-story-road-wrap]")).toBeNull();
+    const place = button.closest("[data-story-pause]");
+    // Placed out of the flow, so showing it moves nothing on the page.
+    expect(place).toHaveClass("absolute");
+    const heading = screen.getByRole("heading", { level: 2, name: dict.story.title });
+    expect(place?.parentElement?.contains(heading)).toBe(true);
+    const wrap = container.querySelector("[data-story-road-wrap]") as Element;
+    expect(place?.compareDocumentPosition(wrap)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("keeps the story button and the hero button in the same state", () => {
+    const dict = getDictionary("vi");
+    window.localStorage.clear();
+    render(
+      <>
+        <Hero lang="vi" dict={dict} tagline="t" zalo={null} hasJourney={false} />
+        <RiceStory dict={dict} zalo={null} />
+      </>,
+    );
+    const buttons = () => screen.getAllByRole("button", { name: dict.motion.pause, hidden: true });
+    expect(buttons()).toHaveLength(2);
+    const [hero, story] = buttons();
+    try {
+      fireEvent.click(story);
+      expect(buttons().map((b) => b.getAttribute("aria-pressed"))).toEqual(["true", "true"]);
+      fireEvent.click(hero);
+      expect(buttons().map((b) => b.getAttribute("aria-pressed"))).toEqual(["false", "false"]);
+    } finally {
+      window.localStorage.clear();
+    }
+  });
 });

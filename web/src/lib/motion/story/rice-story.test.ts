@@ -6,10 +6,10 @@ import {
   setupRiceStory,
   STORY_INTRO_LINE,
   STORY_LOAD_AHEAD,
-  STORY_LOOP_UPDATES_PER_S,
   STORY_ROAD_LINE,
   throttledLoop,
 } from "./rice-story";
+import { LOOP_UPDATES_PER_S } from "../throttle";
 
 const mocks = vi.hoisted(() => ({
   inlineSvg: vi.fn(),
@@ -18,9 +18,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("./inline-svg", () => ({ inlineSvg: mocks.inlineSvg }));
-vi.mock("./scene-motions", () => ({
-  SCENE_MOTIONS: new Proxy({}, { get: () => mocks.build }),
-}));
+vi.mock("./scene-motions", async () => {
+  const { STORY_SCENES: scenes } = await import("@/lib/story/scenes");
+  const known = new Set<string | symbol>(scenes.map((s) => s.slug));
+  return { SCENE_MOTIONS: new Proxy({}, { get: (_, slug) => (known.has(slug) ? mocks.build : undefined) }) };
+});
 vi.mock("../loops", () => ({ getLoopController: () => ({ add: mocks.add }) }));
 
 type Vars = Record<string, unknown> & {
@@ -435,6 +437,85 @@ describe("setupRiceStory", () => {
     expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(7);
   });
 
+  it("moves a drawing that an earlier run swapped in while this run's file loaded", async () => {
+    // Run 1 starts the fetch, then the motion restarts (a media query change) before it ends.
+    const pending: Array<(svg: SVGSVGElement | null) => void> = [];
+    mocks.inlineSvg.mockImplementation(
+      (img: HTMLImageElement) =>
+        new Promise((resolve) => {
+          pending.push((svg) => {
+            if (svg && img.isConnected) img.replaceWith(svg);
+            resolve(svg && svg.isConnected ? svg : null);
+          });
+        }),
+    );
+    const first = fakeModules();
+    const cleanup = setupRiceStory(first.modules, document);
+    loadTriggers(first)[0].vars.onEnter?.();
+    (cleanup as () => void)();
+    const second = fakeModules();
+    setupRiceStory(second.modules, document);
+    loadTriggers(second)[0].vars.onEnter?.();
+    expect(pending).toHaveLength(2);
+    // Run 1's file swaps the img, so run 2's file finds no img and returns null.
+    pending[0](svgFor(STORY_SCENES[0].slug));
+    pending[1](svgFor(STORY_SCENES[0].slug));
+    await flush();
+    const inline = items()[0].querySelector("svg[data-scene]");
+    expect(inline).not.toBeNull();
+    expect(mocks.build).toHaveBeenCalledTimes(1);
+    expect(mocks.build.mock.calls[0][1]).toBe(inline);
+    expect(second.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(1);
+  });
+
+  it("skips a scene whose slug has no motion and moves the others", async () => {
+    items()[0].setAttribute("data-story-scene", "not-a-scene");
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    await load(fake);
+    expect(mocks.build).toHaveBeenCalledTimes(7);
+    expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(7);
+  });
+
+  it("skips an already inline drawing whose slug has no motion", () => {
+    items().forEach((li) => {
+      li.querySelector("img")?.replaceWith(svgFor(li.getAttribute("data-story-scene") ?? ""));
+    });
+    items()[3].setAttribute("data-story-scene", "not-a-scene");
+    const fake = fakeModules();
+    expect(() => setupRiceStory(fake.modules, document)).not.toThrow();
+    expect(mocks.build).toHaveBeenCalledTimes(7);
+  });
+
+  it("fills the stop inside each scene, also when a scene above has none", () => {
+    items()[0].querySelector("[data-story-stop]")?.remove();
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    const fill = fake.triggers.filter((t) => t.vars.start === `top ${roadLine()}`);
+    expect(fill.map((t) => t.vars.trigger)).toEqual(items().slice(1));
+    fill[1].vars.onToggle?.({ isActive: true });
+    const active = Array.from(document.querySelectorAll("[data-story-stop][data-active]"));
+    expect(active).toEqual([items()[2].querySelector("[data-story-stop]")]);
+  });
+
+  it("measures a scene at the scroll position a pending #hash jump goes to", async () => {
+    const target = document.getElementById("sau-cau-chuyen") as HTMLElement;
+    // The jump will scroll the page down by 3800 px: scenes 0 to 3 are then above the line.
+    target.getBoundingClientRect = () => ({ top: 3800 }) as DOMRect;
+    Object.defineProperty(document.documentElement, "scrollHeight", { value: 20000, configurable: true });
+    window.history.replaceState(null, "", "/#sau-cau-chuyen");
+    try {
+      const fake = fakeModules();
+      setupRiceStory(fake.modules, document);
+      await load(fake);
+      const shown = motions.map((m) => m.intro.progress.mock.calls.some(([p]) => p === 1));
+      expect(shown).toEqual([true, true, true, true, false, false, false, false]);
+      expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(4);
+    } finally {
+      window.history.replaceState(null, "", "/");
+    }
+  });
+
   it("does not move the drawings that arrive after cleanup", async () => {
     const fake = fakeModules();
     const cleanup = setupRiceStory(fake.modules, document);
@@ -446,7 +527,7 @@ describe("setupRiceStory", () => {
 });
 
 describe("throttledLoop", () => {
-  it(`steps the loop at most ${STORY_LOOP_UPDATES_PER_S} times a second, only while it plays`, () => {
+  it(`steps the loop at most ${LOOP_UPDATES_PER_S} times a second, only while it plays`, () => {
     let time = 0;
     const loop = { totalTime: vi.fn((t?: number) => (t === undefined ? time : ((time = t), loop))) };
     const ticker = { add: vi.fn(), remove: vi.fn() };

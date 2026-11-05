@@ -1,18 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { SCENE_SLUGS } from "../../../scripts/story-scenes.mjs";
-
-/** The data-part groups the motion code (Task 11) looks for in each finished scene. */
-const SCENE_PARTS: Record<string, readonly string[]> = {
-  "cay-ma": ["mother", "farmer", "seedling", "ripple"],
-  "nang-mua-gio": ["sun", "cloud", "wind", "rice", "rice-green", "rice-gold", "rain", "rice-sway"],
-  gat: ["harvester", "crop", "sack", "driver", "brother", "reel"],
-  say: ["air", "paddy", "father", "fan-blades", "coals"],
-  "xay-xat": ["brother", "pour-sack", "husk", "rice-flow", "elevator-grain"],
-  "dong-goi": ["mother", "lid", "stack-bag"],
-  "den-tay-khach": ["truck", "shelf-bag", "mother", "customer", "gift", "wheel"],
-  "mam-com": ["dish", "steam"],
-};
+import { SCENE_PARTS } from "@/lib/motion/story/scene-motions";
+import type { SceneSlug } from "./scenes";
 
 /** The groups of the bag drawing that buildBagTimeline (lib/motion/product-bag.ts) needs. */
 const BAG_PARTS = ["puffy", "brick", "grains", "wrinkles", "air", "seal", "label", "tray"];
@@ -35,7 +25,7 @@ describe("story scene parts", () => {
   it.each(SCENE_SLUGS)("%s has every data-part group", (slug) => {
     const doc = load(slug);
     expect(doc.querySelector("parsererror")).toBeNull();
-    const missing = SCENE_PARTS[slug].filter((name) => parts(doc, name).length === 0);
+    const missing = SCENE_PARTS[slug as SceneSlug].filter((name) => parts(doc, name).length === 0);
     expect(missing).toEqual([]);
   });
 

@@ -42,6 +42,9 @@
 - Bản cuối 6 tư thế người (để dùng thương mại): tạo lại bằng Nano Banana trả phí, làm sau khi PR của nhánh này merge, trên một nhánh riêng; giữ đúng mặt, tóc, quần áo đã duyệt.
 - Áo ba: thêm một màu xanh lá nhạt chỉ dùng trong hình minh hoạ (ghi vào quyết định 0007).
 - Quy tắc chạy test (chủ dự án, 2026-11-05, chuyển qua session chính; sẽ vào `CLAUDE.md` qua PR #19): khi làm hoặc sửa, chỉ chạy test liên quan (`npx vitest run --related <file đã đổi>`); sau khi gộp nhánh (hoặc gộp `main` vào nhánh) thì chạy đủ `npm test`, typecheck và lint một lần, xem mã thoát; test đầu-cuối full-stack để CI chạy; trước khi merge PR, nếu lần chạy đủ đó chưa làm trên code cuối thì chờ CI.
+- Khung mở đầu của mỗi cảnh (hiện "khung trước" khi cảnh còn ở 1/4 dưới màn hình, rồi chuyển động chạy khi cuộn tới): chủ dự án giữ như hiện tại (2026-11-05).
+- Nút "Tạm dừng chuyển động" thứ hai ở đầu khối câu chuyện: chủ dự án không chọn; Claude quyết định thêm, vì khối câu chuyện nằm xa nút ở Hero (2026-11-05).
+- Nút Zalo cuối khối câu chuyện đổi chữ thành "Nhắn Zalo cho nhà" / "Message us on Zalo", để khác tên nút "Liên hệ qua Zalo" ở Hero (máy đọc màn hình không gặp hai link trùng tên). Claude chọn câu chữ theo gợi ý của session chính; chủ dự án đọc lại.
 
 ## Còn mở
 Câu chữ 3 chú thích túi và 8 cảnh đọc lại khi có bản thật.

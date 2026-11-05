@@ -81,6 +81,8 @@ describe("HeroScene", () => {
     expect(tile?.querySelectorAll("use").length).toBeGreaterThan(100);
     const copies = [...(field?.querySelectorAll("use[href='#nn-hero-field-tile']") ?? [])];
     expect(copies.map((u) => u.getAttribute("x"))).toEqual(["-1440", "1440"]);
+    // Below md the layer is narrower than the middle tile, so the side copies are not drawn.
+    copies.forEach((u) => expect(u).toHaveClass("max-md:hidden"));
     const layer = field?.parentElement;
     expect(layer?.className).toContain("aspect-[4320/260]");
     expect(layer?.className).toContain("w-[calc(var(--hero-m)*14.19)]");
