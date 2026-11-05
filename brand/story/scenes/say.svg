@@ -83,9 +83,10 @@
     <ellipse cx="740" cy="374" rx="4" ry="6.5" transform="rotate(-20 740 374)"/>
       </g>
   </g>
-  <g transform="translate(408 0) scale(-1 1)">
+  <!-- Ba leans toward the furnace (turned about his feet), so the poker ends inside the fire door. -->
+  <g transform="translate(-16 8) rotate(-14 330 556)"><g transform="translate(408 0) scale(-1 1)">
     <use data-person="ba-canh-lo" data-slot="father" x="0" y="350" width="206" height="206"/>
-  </g>
+  </g></g>
   <!-- hot air: fan, furnace, plenum, then up through the mesh and the paddy -->
   <g>
     <g data-part="air" transform="translate(108 330)">
