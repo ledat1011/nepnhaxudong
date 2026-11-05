@@ -139,7 +139,7 @@ Mobile-first, thanh menu dưới cùng.
 | Màn hình | Chức năng |
 |---|---|
 | Tổng quan | Lối tắt + thay đổi gần đây |
-| Sản phẩm | Tên, mô tả, đặc điểm (VI/EN), quy cách đóng gói, bật/tắt giá, chọn ảnh. Đặc điểm nhập đúng thứ tự tròn mẩy, dẻo, thơm (mục 3.2): web gắn icon theo thứ tự này; đặc điểm thứ tư trở đi không có icon (đề xuất, chờ chủ dự án xác nhận) |
+| Sản phẩm | Tên, mô tả, đặc điểm (VI/EN), quy cách đóng gói, bật/tắt giá, chọn ảnh. Công tắc "Hiện trên web" ở danh sách và ở form: sản phẩm mới mặc định ẩn; bật hiện thì mở bảng kiểm tra (ảnh, tiếng Anh, quy cách) với "Vẫn hiện" và "Quay lại sửa" (quyết định 0010, mục 2). Đặc điểm nhập đúng thứ tự tròn mẩy, dẻo, thơm (mục 3.2): web gắn icon theo thứ tự này; đặc điểm thứ tư trở đi không có icon (đề xuất, chờ chủ dự án xác nhận) |
 | Hành trình | Thêm / sửa mốc (năm, tiêu đề, mô tả, ảnh), kéo thả sắp xếp |
 | Báo chí | Dán link → tự điền tiêu đề + ngày từ thẻ meta của trang báo, sửa được |
 | Câu chuyện | Trình soạn thảo Tiptap, VI/EN, Nháp / Đã đăng, xem trước |
@@ -161,12 +161,13 @@ Mục nào thiếu bản EN được đánh dấu "thiếu EN".
 - Package theo chức năng: `auth`, `product`, `timeline`, `press`, `story`, `media`, `site`, `audit`, `publish`.
 - Công khai (chỉ đọc): `GET /api/public/{lang}/home` (toàn bộ dữ liệu trang chủ trong một lần gọi), `GET /api/public/{lang}/stories`, `GET /api/public/{lang}/stories/{slug}`.
 - Admin: CRUD dưới `/api/admin/...` cho từng loại nội dung, tài khoản, ảnh, cài đặt; `GET /api/admin/audit`, `POST /api/admin/audit/{id}/restore`.
+- Sản phẩm có trường `visible` ("Hiện trên web"): `POST /api/admin/products/{id}/show` và `POST /api/admin/products/{id}/hide` (trả về sản phẩm, ghi `audit_log` dạng UPDATE, làm mới trang chủ; bật một sản phẩm đã hiện thì không đổi gì). `PUT` không đổi `visible`. `GET /api/public/{lang}/home` chỉ trả sản phẩm có `visible = true`. Migration `V3__product_visible.sql`: sản phẩm có sẵn giữ `true`, sản phẩm mới mặc định `false`.
 - Mỗi lần ghi: lưu bản ghi `audit_log` (trước / sau) trong cùng transaction, sau khi commit thì gọi revalidate của Next.js. Revalidate lỗi → ghi log WARN và thử lại 3 lần; nội dung vẫn đã được lưu.
 - Lỗi trả về dạng `application/problem+json`, thông báo VI cho admin.
 
 ### 4.4 Dữ liệu (Postgres 16, Flyway)
 - Mỗi loại nội dung: bảng chính + bảng `*_translation` (`entity_id`, `lang`, các trường chữ). Ràng buộc `UNIQUE(entity_id, lang)`.
-- Bảng: `app_user`, `product` (+ `product_translation`, `product_media`), `packaging` (`weight_grams`, `price_vnd` có thể null, `sort_order`), `timeline_event` (+ translation), `press_mention` (+ translation), `story` (+ translation có `slug`, `status`), `media` (`path`, `width`, `height`, `mime`, `alt_vi`, `alt_en`), `site_setting`, `audit_log` (`user_id`, `entity_type`, `entity_id`, `action`, `before_json`, `after_json`, `created_at`), các bảng của Spring Session.
+- Bảng: `app_user`, `product` (có `visible`, + `product_translation`, `product_media`), `packaging` (`weight_grams`, `price_vnd` có thể null, `sort_order`), `timeline_event` (+ translation), `press_mention` (+ translation), `story` (+ translation có `slug`, `status`), `media` (`path`, `width`, `height`, `mime`, `alt_vi`, `alt_en`), `site_setting`, `audit_log` (`user_id`, `entity_type`, `entity_id`, `action`, `before_json`, `after_json`, `created_at`), các bảng của Spring Session.
 
 ### 4.5 Ảnh
 - Lưu ở `/data/media` trên VPS, Caddy phục vụ `/media/*`, có trong backup.
