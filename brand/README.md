@@ -62,12 +62,12 @@ trong `web/`.
 
 | Tư thế | Ảnh gốc (ngoài repo) | Sửa tay trong `story/pose-fixes/` |
 |---|---|---|
-| `me-cay` | `me-cay-recraft-v1.png` | Lật ngang; nét mặt chăm chú: xoá mắt cười, vẽ mắt mở nhìn xuống cây mạ, miệng cười nhẹ khép (`me-cay-face.svg`). Nón, tóc mái, tóc, má giữ như mascot. |
-| `nong-dan-cay` | `nong-dan-cay-recraft-v1.png` | Lật ngang; áo và nón Vàng rơm, mặt / tai / tay / chân `da` (ảnh gốc dùng một màu cho cả hai); mạ Xanh mạ (tự động sẽ thành Vàng lúa); bóng quần Nâu áo; mắt mở nhìn xuống, miệng thẳng (`nong-dan-cay-face.svg`). |
+| `me-cay` | `me-cay-recraft-v1.png` | Lật ngang; nét mặt chăm chú: xoá mắt cười, vẽ mắt mở mí khép hờ nhìn xuống cây mạ, miệng cười nhỏ khép (`me-cay-face.svg`). Nón, tóc mái, tóc, má giữ như mascot. |
+| `nong-dan-cay` | `nong-dan-cay-recraft-v1.png` | Lật ngang; áo và nón Vàng rơm, mặt / tai / tay / chân `da` (ảnh gốc dùng một màu cho cả hai); mạ Xanh mạ (tự động sẽ thành Vàng lúa); bóng quần Nâu áo; mắt mở nhìn xuống, miệng cười hiền (`nong-dan-cay-face.svg`). |
 | `me-trao-tui` | `me-trao-tui-recraft-v2.png` | Lật ngang; mặt và tay `da`, nón Vàng rơm; xoá túi dày của ảnh gốc, vẽ tay túi 2 kg mảnh (`me-trao-tui-bag.svg`) nằm dưới hai bàn tay. |
-| `ba-lai-may` | `ba-lai-may-recraft-v2.png` | Lật ngang; áo Xanh lá nhạt; vô lăng Nâu đất, lỗ giữa vô lăng trong suốt; mắt mở nhìn về phía trước theo hướng xe chạy, miệng cười nhẹ; cằm tròn được xoá bớt và vẽ lại thon hơn; thêm nếp cười và tóc bạc bên thái dương dưới mũ (`ba-lai-may-face.svg`). |
-| `ba-canh-lo` | `ba-canh-lo-recraft-v1.png` | Lật ngang; mặt dưới vành mũ Nâu đất (tự động sẽ thành `toc`); mắt nheo vì nóng, giọt mồ hôi ở thái dương (`ba-canh-lo-face.svg`). |
-| `anh2-be-bao` | `anh2-be-bao-recraft-v2.png` | Lật ngang; quần Nâu đất (ảnh gốc màu đen như tóc); khe giữa hai chân trong suốt; xoá thúng đan, vẽ bao thóc trắng có sọc Vàng lúa như bao trong cảnh 3 và 5 (`anh2-be-bao-sack.svg`, nằm dưới đầu và tay; `fit` giữ cả bao trong khung); mặt gồng sức: má phồng, mắt nhắm chặt, nghiến răng, giọt mồ hôi (`anh2-be-bao-face.svg`). |
+| `ba-lai-may` | `ba-lai-may-recraft-v2.png` | Lật ngang; áo Xanh lá nhạt; vô lăng Nâu đất, lỗ giữa vô lăng trong suốt; mắt mở nhìn về phía trước (về guồng gặt), miệng cười nhẹ; cằm tròn được xoá bớt và vẽ lại thon hơn; thêm nếp cười và tóc bạc bên thái dương dưới mũ (`ba-lai-may-face.svg`); tóc muối tiêu (`toc` xen mảng Trắng gạo), giống `ba-canh-lo`. |
+| `ba-canh-lo` | `ba-canh-lo-recraft-v1.png` | Lật ngang; mặt dưới vành mũ Nâu đất (tự động sẽ thành `toc`); mắt nheo vì nóng, giọt mồ hôi ở thái dương (`ba-canh-lo-face.svg`); tóc muối tiêu (`toc` xen mảng Trắng gạo), giống `ba-lai-may`. |
+| `anh2-be-bao` | `anh2-be-bao-recraft-v2.png` | Lật ngang; quần Nâu đất (ảnh gốc màu đen như tóc); khe giữa hai chân trong suốt; xoá thúng đan, vẽ bao thóc trắng có sọc Vàng lúa như bao trong cảnh 3 và 5 (`anh2-be-bao-sack.svg`, nằm dưới đầu và tay; `fit` giữ cả bao trong khung); mặt làm việc nặng mà vẫn vui: mắt mở, miệng mím cười nhỏ, một bên má hơi phồng, giọt mồ hôi (`anh2-be-bao-face.svg`). |
 
 Hai mascot, hai việc: `logo-full` dùng mascot chi tiết (`mascot/mascot-layered.svg`) cho chỗ lớn
 (bao bì, banner, đầu trang); `logo-icon` và `logo-mono` dùng mascot giản lược (`logo/mascot-logo.svg`)
