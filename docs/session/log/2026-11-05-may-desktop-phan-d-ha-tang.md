@@ -14,7 +14,7 @@
 - Chủ dự án hỏi dùng "GitHub server" được không; agent giải thích GitHub Pages chỉ chứa file tĩnh, web cần máy chủ Node. Chủ dự án chọn **Vercel** (gói Hobby, dữ liệu mẫu, không cho Google index). Quyết định `docs/decisions/0015-xem-thu-vercel.md`.
 
 ## Còn mở
-- Chủ dự án tạo tài khoản Vercel và import repo theo `docs/xem-thu-vercel.md`; sau đó agent kiểm tra link.
+- Chủ dự án sửa biến `SITE_URL` trên Vercel thành `https://nepnhaxudong-prevew.vercel.app` rồi Redeploy (đang là `https://nepnhaxudong.vercel.app`, link này trả 404, nên link chia sẻ và ảnh xem trước bị hỏng).
 - Chủ dự án làm checklist `docs/deploy.md`: thuê VPS, key SSH, `setup.sh`, `init-env.sh`, GitHub Variables và Secrets, UptimeRobot, healthchecks.io, Backblaze B2; tên miền và Cloudflare sau cùng.
 
 ## Đã làm
@@ -24,3 +24,4 @@
 - Sửa theo review cả nhánh (nhánh `feat/ha-tang-sua-review`): rollback vẫn chạy khi `docker compose up` lỗi; rollback dùng lại file compose cũ; `setup.sh` kiểm tra giá trị SSH mà sshd thật sự dùng; khôi phục thử nối qua TCP; `restore.sh` xóa cả schema trước khi khôi phục; cache restic và thời gian chờ cho systemd; token gửi lên VPS chỉ đọc được; phiên bản Caddy và plugin được ghim; check healthchecks riêng cho khôi phục thử.
 - Lỗi phát hiện khi thử: `deploy.sh` cũ chạy `docker image prune -af --filter until=168h`, nên lần chạy `deploy-test.sh` ở máy này đã xóa mọi image Docker không dùng (không mất container hay volume). Đã đổi: `deploy.sh` chỉ xóa image Nếp Nhà của tag cũ, giữ bản hiện tại và bản trước.
 - PR #31 (phần D) đã merge vào `main` (`6ea995f`). PR #33: sửa theo review, và `restore.sh` kiểm tra quyền root trước khi đổi gì.
+- PR #35 (biến `SITE_NOINDEX`, hướng dẫn Vercel) đã merge. Bản xem thử https://nepnhaxudong-prevew.vercel.app/vi: `/vi`, `/en` trả 200, `/` chuyển sang `/vi`, `robots.txt` chặn hết, trang có `noindex, nofollow`, 8 ảnh không hỏng, không cuộn ngang ở 375 px.
