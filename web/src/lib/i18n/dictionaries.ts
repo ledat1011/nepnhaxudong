@@ -15,6 +15,7 @@ const vi = {
   nav: {
     label: "Điều hướng chính",
     product: "Sản phẩm",
+    riceStory: "Quy trình",
     journey: "Hành trình",
     press: "Báo chí",
     story: "Câu chuyện",
@@ -151,6 +152,7 @@ const en: Dictionary = {
   nav: {
     label: "Main navigation",
     product: "Product",
+    riceStory: "Process",
     journey: "Journey",
     press: "Press",
     story: "Stories",

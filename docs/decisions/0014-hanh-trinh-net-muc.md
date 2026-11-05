@@ -23,6 +23,10 @@ và giữ kiểu phẳng "để sau này còn làm chuyển động".
 - Bản phác đã duyệt nằm trong `brand/story/phac/` (WebP 1600 px, kèm `prompts.json`).
 - 9 tranh manhua bán thực tế đầy đủ nằm trong `brand/story/manhua/`. Không dùng cho hành trình; có thể dùng cho tranh của phần Câu chuyện.
 
+## Trên web
+Chủ dự án muốn đưa ảnh lên web ngay, chuyển động làm sau. Trang chủ hiện dùng 8 bản phác (bước 2 dùng cảnh ngày) dạng WebP 1200 × 675 trong `web/public/story/`. Các cảnh SVG tách lớp và mã chuyển động của từng cảnh vẫn giữ trong repo, nhưng trang không dùng tới, vì tuần sau sẽ dựng lại cảnh SVG từ các bản phác này. Hai test đầu-cuối về cảnh SVG đang tạm tắt, ghi rõ lý do.
+Menu có thêm mục "Quy trình" (tiếng Anh "Process") dẫn tới khối "Từ hạt lúa tới người dùng" (`#tu-hat-lua`).
+
 ## Còn phải làm
 Chủ dự án chọn làm tuần sau:
 - Dựng lại 9 cảnh bằng SVG tách lớp theo bản phác: sửa `brand/story/scenes/`, trace người mới bằng `brand/tools/vectorize-pose.py`.

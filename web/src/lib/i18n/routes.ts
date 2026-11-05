@@ -8,6 +8,7 @@ export const STORY_SECTION: Record<Lang, string> = {
 /** Anchor ids of the home page sections, shared by both languages. */
 export const SECTION_IDS = [
   "san-pham",
+  "tu-hat-lua",
   "hanh-trinh",
   "bao-chi",
   "cau-chuyen",

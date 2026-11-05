@@ -36,6 +36,7 @@ describe("routes", () => {
   it("lists the home section ids", () => {
     expect(SECTION_IDS).toEqual([
       "san-pham",
+      "tu-hat-lua",
       "hanh-trinh",
       "bao-chi",
       "cau-chuyen",

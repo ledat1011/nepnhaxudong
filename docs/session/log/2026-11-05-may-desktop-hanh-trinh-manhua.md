@@ -14,6 +14,7 @@
 - Xem bản phác thứ 3 (màu phẳng, nét mực manhua) của bước 2 và 4, chủ dự án: "okay đẹp đó duyệt" → duyệt kiểu vẽ và bố cục 2 cảnh; vẽ tiếp cảnh đêm của bước 2 và 6 cảnh còn lại theo cùng kiểu, sửa từ cảnh hiện tại.
 - Xem 7 cảnh mới, chủ dự án: cảnh xay xát chỉ có anh 2 (bỏ ba); cảnh đóng gói thì mẹ ngồi ghế đóng gạo; các cảnh còn lại OK.
 - Chủ dự án duyệt 9 bản phác; hẹn dựng SVG và thay vào web vào tuần sau ("Để tuần sau").
+- Chủ dự án: đưa ảnh lên web ở `main` rồi deploy lại lên cloud (link xem thử); ảnh động để tuần sau; nền trắng hiện tại hơi trống, nhờ gợi ý; thanh menu chưa có nút tới khối hành trình này → thêm mục menu; "làm luôn merge vào main".
 
 ## Quyết định
 - Cảnh hành trình: màu phẳng, nét mực manhua, 9 bản phác đã duyệt — `docs/decisions/0014-hanh-trinh-net-muc.md`.

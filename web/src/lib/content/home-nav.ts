@@ -6,6 +6,7 @@ type SectionId = (typeof SECTION_IDS)[number];
 
 const LABEL_KEYS: Record<SectionId, keyof Dictionary["nav"]> = {
   "san-pham": "product",
+  "tu-hat-lua": "riceStory",
   "hanh-trinh": "journey",
   "bao-chi": "press",
   "cau-chuyen": "story",
@@ -16,6 +17,9 @@ function hasContent(id: SectionId, home: HomeData): boolean {
   switch (id) {
     case "san-pham":
       return home.products.length > 0;
+    // The rice story is fixed content of the page, not data from the API.
+    case "tu-hat-lua":
+      return true;
     case "hanh-trinh":
       return home.timeline.length > 0;
     case "bao-chi":

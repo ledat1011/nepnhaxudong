@@ -15,10 +15,11 @@ function ids(nav: Array<{ id: string }>): string[] {
 }
 
 describe("buildHomeNav", () => {
-  it("lists all five sections in page order with their labels", async () => {
+  it("lists all six sections in page order with their labels", async () => {
     const nav = buildHomeNav(await homeVi(), dict);
     expect(nav).toEqual([
       { id: "san-pham", label: dict.nav.product },
+      { id: "tu-hat-lua", label: dict.nav.riceStory },
       { id: "hanh-trinh", label: dict.nav.journey },
       { id: "bao-chi", label: dict.nav.press },
       { id: "cau-chuyen", label: dict.nav.story },
@@ -28,7 +29,7 @@ describe("buildHomeNav", () => {
 
   it("drops the journey and press sections when they are empty", async () => {
     const home = { ...(await homeVi()), timeline: [], press: [] };
-    expect(ids(buildHomeNav(home, dict))).toEqual(["san-pham", "cau-chuyen", "lien-he"]);
+    expect(ids(buildHomeNav(home, dict))).toEqual(["san-pham", "tu-hat-lua", "cau-chuyen", "lien-he"]);
   });
 
   it("drops the product section when there are no products", async () => {
@@ -41,8 +42,8 @@ describe("buildHomeNav", () => {
     expect(ids(buildHomeNav(home, dict))).not.toContain("cau-chuyen");
   });
 
-  it("always keeps the contact section", async () => {
+  it("always keeps the rice story and the contact section", async () => {
     const home = { ...(await homeVi()), products: [], timeline: [], press: [], stories: [] };
-    expect(ids(buildHomeNav(home, dict))).toEqual(["lien-he"]);
+    expect(ids(buildHomeNav(home, dict))).toEqual(["tu-hat-lua", "lien-he"]);
   });
 });
