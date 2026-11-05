@@ -1,9 +1,9 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop` (chạy thử web)
+Cập nhật: 2026-11-05 — máy công ty (dừng session, ghi lại việc đang dở)
 
 ## Giai đoạn hiện tại
-`main` (`addcdd3`) đã có đủ phần B: API (B1), web công khai (B2), trang quản trị (B3, PR #11), hiệu ứng GSAP (B4), logo và mascot (phần A), popup Zalo và thanh đang tải (PR #12), 10 việc cải tiến trang quản trị (quyết định `0008` và `0010`, PR #14, #15, #17, #18, #20) và cảnh minh họa (PR #21). Không còn nhánh nào chờ merge. Việc tiếp theo: rà trang công khai bằng các skill giao diện, các việc sau của cảnh minh họa, rồi phần D (hạ tầng).
+`main` (`9e5eb42`) đã có đủ phần B: API (B1), web công khai (B2), trang quản trị (B3, PR #11), hiệu ứng GSAP (B4), logo và mascot (phần A), popup Zalo và thanh đang tải (PR #12), 10 việc cải tiến trang quản trị (quyết định `0008` và `0010`), cảnh minh họa (PR #21, #24), hai báo cáo rà giao diện và danh sách đề xuất chung (PR #16, #22, #23), luật Rancher Desktop và luật làm việc chung (PR #25). Đang làm dở: nhóm A và B của danh sách đề xuất (3 nhánh) và việc 9 cuộn mượt khối câu chuyện (1 nhánh). Cả 4 nhánh đã push lên GitHub; thư mục làm việc ở máy đã xóa. Xem mục "Đang làm".
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
@@ -28,27 +28,40 @@ Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop` (chạy thử web)
 - Cảnh minh hoạ đã merge vào `main` (PR #21; spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md`, plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md`). Có: nền Hero trải hết bề ngang, mờ dần về mép trái, vòng lặp 60 giây và nút tạm dừng tròn; hình túi hút chân không là ảnh đầu tiên của bộ ảnh, kèm 3 chú thích; khối "Từ hạt lúa tới người dùng" dạng con đường dọc uốn với 8 cảnh (tải SVG khi gần tới, chuyển động riêng mỗi cảnh, hạt gạo đi theo cuộn, nền cảnh mờ dần ra hai bên) và 6 tư thế người. Còn làm sau khi merge, bằng PR riêng: đo Lighthouse `/vi`, `/en` (Chromium không chạy được từ công cụ dòng lệnh của agent) và ghi vào `docs/setup.md`; Delivery Gate, `inspect.mjs` ở 375 px và 1280 px, review `web-interface-guidelines`; review cả nhánh; bản cuối 6 tư thế người bằng Nano Banana trả phí trên nhánh riêng, trước khi lên web thật. Góp ý của chủ dự án: `docs/session/log/2026-11-04-may-cong-ty-canh-minh-hoa.md`.
 
 ## Đang làm
-- Không có nhánh nào đang làm. Bản xem thử local: web http://localhost:3011 và API cổng 8090, chạy `main` mới nhất trên database `nepnha_b3` (đã chạy migration V3, V4; tài khoản admin là "Chủ"). Hai server chạy trong cửa sổ PowerShell thu nhỏ; script ở thư mục scratchpad của session, không nằm trong repo.
-- Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ liệu mẫu ở http://localhost:3000 (`npm run dev`, cấu hình `web-mock` trong `.claude/launch.json`). Node trên máy là 24 (tài liệu ghi 22); web vẫn chạy được. Đã cài thêm (2026-11-05): 7 plugin của dự án (`--scope project`), `uv` 0.13.7, JDK 21 (Temurin 21.0.13, `JAVA_HOME` trỏ tới nó), Docker Desktop 29.9.2 (WSL 2). Phải thoát hẳn ứng dụng Claude rồi mở lại thì session mới thấy các biến môi trường mới. Chưa chạy thử API và trang quản trị trên máy này. Lưu ý: luật mới trong `CLAUDE.md` (cùng ngày) dùng Rancher Desktop, không dùng Docker Desktop; chủ dự án quyết định có giữ Docker Desktop trên máy này không.
-- Link xem thử tạm trên internet (2026-11-05): Cloudflare quick tunnel tới bản production dữ liệu mẫu ở cổng 3300. Tunnel đã tắt, link cũ không còn dùng được; server cổng 3300 vẫn chạy. Mở lại tunnel sẽ ra địa chỉ mới, phải build lại web với `SITE_URL` là địa chỉ đó.
+Chủ dự án duyệt nhóm A và B (việc 1 đến 16) của danh sách `docs/reviews/2026-11-05-tong-hop-de-xuat.md`. File quyết định `docs/decisions/0011-nhom-a-b.md` hiện chỉ nằm trên nhánh `feat/cong-khai-nhom-ab`, sẽ vào `main` khi nhánh đó merge. Cả 4 nhánh dưới đây đã commit hết và đã push; không có thay đổi nào chỉ nằm ở máy. Để làm tiếp: tạo worktree mới từ nhánh trên GitHub (`git worktree add .claude/worktrees/<ten> <nhanh>`), hoặc mở session mới và bảo nó làm tiếp nhánh đó.
+
+| Nhánh | Phần việc (theo quyết định 0011) | Đã làm | Còn lại |
+|---|---|---|---|
+| `feat/cong-khai-nhom-ab` (`cc175ee`) | Trang công khai: việc 1 (phần code), 2, 3 (phần trang công khai), 7, 12 | Không vẽ ô ảnh trống khi khối không có ảnh; ô thay thế khi ảnh không tải được; chữ liên hệ rõ hơn; lời mời ở cuối câu chuyện; vùng chạm và chữ cho trình đọc màn hình; test đầu-cuối cho các phần này | Gộp `main` mới vào nhánh (chưa gộp 5 commit mới của `main`), rồi làm các bước chung bên dưới |
+| `feat/admin-noi-dung-nhom-ab` (`636b601`) | Các màn nội dung của trang quản trị: việc 4, 5, 6, 10, 14, 16, và "Xem trên web / Chia sẻ sau khi đăng" của việc 15 | Cỡ túi hiện cách đọc quen (cảnh báo dưới 100 g); Số Zalo có ví dụ và nút "Thử mở Zalo"; Hành trình tự xếp theo năm sau khi lưu; màn đăng nhập có logo, nút "Hiện" mật khẩu và hướng dẫn khi quên; mật khẩu tạm là các nhóm từ, có "Gửi qua Zalo"; trình soạn câu chuyện đưa tiêu đề, ảnh bìa, nội dung lên đầu, hỏi trước khi "Xóa bài", có "Xem trên web" và "Chia sẻ" sau khi đăng; test full-stack đi theo nhãn mới | Gộp lại `main` (thiếu 5 commit mới), rồi làm các bước chung |
+| `feat/admin-khung-nhom-ab` (`b215fc8`) | Khung và Lịch sử của trang quản trị: việc 8, 11, 13, và gợi ý micro, chấm số việc trên menu của việc 15 | Lịch sử ghi tên trường bằng tiếng Việt và có dòng cho tài khoản đã xóa; mở dòng Lịch sử từ Tổng quan; ô nhập chữ 16 px ở mọi cỡ màn hình, hộp thoại cuộn được; menu trái từ 1024 px, cột trang 960 px, số việc cần làm trên Tổng quan; gợi ý một lần về micro của bàn phím điện thoại; nút bị tắt nói lý do, mục chưa có tên ghi "(chưa có tiêu đề)"; test full-stack cho màn hình rộng | Gộp lại `main` (thiếu 5 commit mới), rồi làm các bước chung |
+| `feat/cuon-muot-cau-chuyen` (`433cf47`) | Việc 9: cuộn khối câu chuyện mượt hơn | Hình câu chuyện đổi sang SVG nhúng thẳng khi trình duyệt rảnh (chưa đo) | Làm mờ mép trên ở khung ngoài; đo trước và sau; gộp `main` (thiếu 6 commit); chạy đủ test đầu-cuối; mở PR |
+
+Các bước chung còn lại cho mỗi nhánh nhóm A, B: chạy đủ `npm test`, `npm run typecheck`, `npm run lint` sau khi gộp `main`; chạy Delivery Gate của antislop và tự xem bằng trình duyệt ở 375 px và 1280 px; review cả nhánh; mở PR; merge khi CI (gồm test đầu-cuối) đạt. Ba nhánh có thể chạm chung vài file của trang quản trị (ví dụ test full-stack, nhãn chung): merge từng nhánh một và gộp lại `main` trước nhánh tiếp theo.
+
+Máy công ty: bản xem thử ở local đang tắt (web cổng 3011, API cổng 8090, database `nepnha_b3`). Muốn chạy lại cần Rancher Desktop đang chạy (Postgres cổng 5433), xem `docs/setup.md`.
+
+Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ liệu mẫu ở http://localhost:3000 (`npm run dev`, cấu hình `web-mock` trong `.claude/launch.json`). Node trên máy là 24 (tài liệu ghi 22); web vẫn chạy được. Đã cài thêm (2026-11-05): 7 plugin của dự án (`--scope project`), `uv` 0.13.7, JDK 21 (Temurin 21.0.13, `JAVA_HOME` trỏ tới nó), Docker Desktop 29.9.2 (WSL 2). Phải thoát hẳn ứng dụng Claude rồi mở lại thì session mới thấy các biến môi trường mới. Chưa chạy thử API và trang quản trị trên máy này. Luật trong `CLAUDE.md` cho dùng Docker Desktop hoặc Rancher Desktop (PR #27), nên Docker Desktop trên máy này dùng được.
+
+Link xem thử tạm trên internet (máy `C:\Users\Admin\Desktop`, 2026-11-05): Cloudflare quick tunnel tới bản production dữ liệu mẫu ở cổng 3300. Tunnel đã tắt, link cũ không còn dùng được; server cổng 3300 vẫn chạy. Mở lại tunnel sẽ ra địa chỉ mới, phải build lại web với `SITE_URL` là địa chỉ đó.
 
 ## Việc tiếp theo
-1. Rà trang công khai bằng các skill giao diện (taste-skill, Delivery Gate của antislop, `web-interface-guidelines`) trên `main` hiện tại, gộp với báo cáo trang quản trị thành một danh sách đề xuất cho chủ dự án. Làm ở máy (cần plugin và trình duyệt).
-2. Việc sau của cảnh minh họa (PR riêng): Lighthouse `/vi`, `/en`; Delivery Gate; `inspect.mjs` 375 px và 1280 px; review `web-interface-guidelines`; review cả nhánh; bản cuối 6 tư thế người bằng Nano Banana trả phí.
-3. Làm lại bố cục trang chủ theo hướng "Một họa tiết" (hạt gạo nếp): spec ngắn, plan, rồi làm (`docs/design/2026-11-04-huong-bo-cuc-one-motif.md`).
-4. Ba việc admin tiếp theo theo báo cáo `docs/reviews/2026-11-05-ui-admin.md`: màn hình rộng (4.10), Lịch sử đọc được (4.13), Hành trình tự xếp theo năm (T7).
+1. Làm tiếp 4 nhánh ở mục "Đang làm" cho tới khi merge.
+2. Việc sau của cảnh minh họa (PR riêng): Lighthouse `/vi`, `/en`; `inspect.mjs` 375 px và 1280 px; review cả nhánh; bản cuối 6 tư thế người bằng Nano Banana trả phí.
+3. Nhóm C (làm lại bố cục trang chủ theo hướng "Một họa tiết", hạt gạo nếp, `docs/design/2026-11-04-huong-bo-cuc-one-motif.md`) và nhóm D (các việc cần sửa API) của danh sách đề xuất: chờ chủ dự án duyệt.
+4. Thêm luật vào `CLAUDE.md`: test đầu-cuối phải đạt (trên CI hoặc ở máy) trước khi merge PR có sửa web. Hai lần merge sớm (#17, #21) đã làm hỏng test đầu-cuối trên `main`.
 5. Chủ dự án tự thử trên điện thoại thật: nút Back trên Android ("Ở lại" rồi Back lần nữa phải hỏi lại); quét mã QR Zalo; tải nhiều ảnh từ iPhone và Android; đăng nhập bằng một tài khoản "Người nhà" để thấy không có Tài khoản và Lịch sử tài khoản. Xác nhận màu Vàng lúa của thanh đang tải.
 6. Chủ dự án đọc và xác nhận các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec: mục 2.2, 3.0, 3.3, 4.1.
 7. Bật bảo vệ nhánh `main` (chưa xác nhận là đã bật). Nếu muốn GitHub tự merge khi CI đạt: bật "Allow auto-merge" trong Settings của repo.
 8. Phần D (hạ tầng), theo các ghi chú ở mục "Ghi chú cho phần D" bên dưới. Phần này chỉ cần code và CI, có thể làm bằng một cloud session riêng.
-9. Khi có ảnh thật: xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
-10. Dọn ở máy (chủ dự án tự xóa, công cụ không xóa được vì đường dẫn quá dài hoặc bị khóa): `D:\workspaces\nepnhaxudong-b4`, `D:\workspaces\nepnhaxudong-phan-b2`, và các thư mục còn sót trong `D:\workspaces\nepnhaxudong\.claude\worktrees\`. Thư mục `D:\workspaces\nepnhaxudong-b3` đang chạy bản xem thử, xóa sau khi tắt server. Tài khoản thử `ra-soat@example.test` (đã khóa) còn trong `nepnha_b3`.
+9. Khi có ảnh thật (gia đình chụp 6 đến 12 ảnh: túi 2 kg thật, hạt gạo cận cảnh, ruộng, máy sấy, máy xát, mâm xôi, người nhà): xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
+10. Trên bản xem thử: tắt "Hiện trên web" của sản phẩm thử "[THỬ REVIEW]". Tài khoản thử `ra-soat@example.test` (đã khóa) còn trong database `nepnha_b3`.
 
 ## Vướng mắc
 - Chưa đặt `GEMINI_API_KEY`.
 - 4 MCP của dự án chưa được duyệt trong Claude Code.
 - Chưa đăng nhập Recraft.
-- Ba dòng trên không còn đúng với máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): máy này đã đặt `GEMINI_API_KEY`, đã duyệt 4 MCP của dự án và đã đăng nhập Recraft; `claude mcp list` báo cả 4 kết nối được. Các máy khác chưa kiểm tra.
+- Ba dòng trên không còn đúng với máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): máy này đã đặt `GEMINI_API_KEY`, đã duyệt 4 MCP của dự án và đã đăng nhập Recraft; `claude mcp list` báo cả 4 kết nối được. Máy công ty đã đăng nhập Recraft (2026-11-04). Các máy khác chưa kiểm tra.
 
 ## Ghi chú cho phần D
 Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, Docker, máy chủ).
@@ -83,4 +96,4 @@ Các việc phát sinh khi làm B4 (hiệu ứng):
 - Việc sau này: bỏ bản mascot thứ hai trong dữ liệu RSC. Nếu LCP hoặc TBT xấu đi, cân nhắc dùng `brand/logo/mascot-logo.svg`.
 
 ## Quyết định gần nhất
-- `docs/decisions/0010-viec-tiep-theo-admin.md`, `0009-taste-bo-cuc.md`, `0008-uu-tien-sua-admin.md`
+- `docs/decisions/0011-nhom-a-b.md` (trên nhánh `feat/cong-khai-nhom-ab`), `0010-viec-tiep-theo-admin.md`, `0009-taste-bo-cuc.md`, `0008-uu-tien-sua-admin.md`
