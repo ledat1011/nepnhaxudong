@@ -41,7 +41,9 @@ Các bước chung còn lại cho mỗi nhánh nhóm A, B: chạy đủ `npm tes
 
 Máy công ty: bản xem thử ở local đang tắt (web cổng 3011, API cổng 8090, database `nepnha_b3`). Muốn chạy lại cần Rancher Desktop đang chạy (Postgres cổng 5433), xem `docs/setup.md`.
 
-Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ liệu mẫu ở http://localhost:3000 (`npm run dev`, cấu hình `web-mock` trong `.claude/launch.json`). Node trên máy là 24 (tài liệu ghi 22); web vẫn chạy được. Đã cài thêm (2026-11-05): 7 plugin của dự án (`--scope project`), `uv` 0.13.7, JDK 21 (Temurin 21.0.13, `JAVA_HOME` trỏ tới nó), Docker Desktop 29.9.2 (WSL 2). Phải thoát hẳn ứng dụng Claude rồi mở lại thì session mới thấy các biến môi trường mới. Chưa chạy thử API và trang quản trị trên máy này.
+Máy `C:\Users\Admin\Desktop\nepnhaxudong` (2026-11-05): web chạy với dữ liệu mẫu ở http://localhost:3000 (`npm run dev`, cấu hình `web-mock` trong `.claude/launch.json`). Node trên máy là 24 (tài liệu ghi 22); web vẫn chạy được. Đã cài thêm (2026-11-05): 7 plugin của dự án (`--scope project`), `uv` 0.13.7, JDK 21 (Temurin 21.0.13, `JAVA_HOME` trỏ tới nó), Docker Desktop 29.9.2 (WSL 2). Phải thoát hẳn ứng dụng Claude rồi mở lại thì session mới thấy các biến môi trường mới. Chưa chạy thử API và trang quản trị trên máy này. Luật trong `CLAUDE.md` cho dùng Docker Desktop hoặc Rancher Desktop (PR #27), nên Docker Desktop trên máy này dùng được.
+
+Link xem thử tạm trên internet (máy `C:\Users\Admin\Desktop`, 2026-11-05): Cloudflare quick tunnel tới bản production dữ liệu mẫu ở cổng 3300. Tunnel đã tắt, link cũ không còn dùng được; server cổng 3300 vẫn chạy. Mở lại tunnel sẽ ra địa chỉ mới, phải build lại web với `SITE_URL` là địa chỉ đó.
 
 ## Việc tiếp theo
 1. Làm tiếp 4 nhánh ở mục "Đang làm" cho tới khi merge.
