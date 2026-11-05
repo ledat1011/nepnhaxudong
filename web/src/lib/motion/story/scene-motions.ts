@@ -9,10 +9,10 @@ export type SceneMotion = { intro: gsap.core.Timeline; loop: gsap.core.Timeline 
 type Parts = Record<string, SVGElement[]>;
 
 /**
- * The `data-part` groups each scene needs (the table of Task 9, tested in
- * lib/story/scene-parts.test.ts). A scene without one of them keeps its static drawing.
+ * The `data-part` groups each scene needs (the table of Task 9). lib/story/scene-parts.test.ts
+ * checks that every finished scene file has them. A scene without one keeps its static drawing.
  */
-const REQUIRED: Record<SceneSlug, readonly string[]> = {
+export const SCENE_PARTS: Record<SceneSlug, readonly string[]> = {
   "cay-ma": ["mother", "farmer", "seedling", "ripple"],
   "nang-mua-gio": ["sun", "cloud", "wind", "rice", "rice-green", "rice-gold", "rain", "rice-sway"],
   gat: ["harvester", "crop", "sack", "driver", "brother", "reel"],
@@ -28,7 +28,7 @@ const DISH_COUNT = 4;
 
 function collect(svg: SVGSVGElement, slug: SceneSlug): Parts | null {
   const parts: Parts = {};
-  for (const name of REQUIRED[slug]) {
+  for (const name of SCENE_PARTS[slug]) {
     const found = Array.from(svg.querySelectorAll<SVGElement>(`[data-part='${name}']`));
     if (found.length === 0) return null;
     parts[name] = found;
