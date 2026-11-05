@@ -43,6 +43,8 @@
 - (2026-11-05) Máy dùng Rancher Desktop để có `docker`, không phải Docker Desktop. Khi `docker` không chạy: bật Rancher Desktop (`rdctl start`) rồi chờ; nếu máy chưa cài thì nhờ chủ dự án cài, vì dự án làm trên nhiều máy. Đã ghi vào `CLAUDE.md` và `docs/setup.md`.
 - (2026-11-05) "Tìm trong các ghi chú cũ trên máy coi còn cái nào hữu ích rồi dùng đi" → lấy các luật dùng chung (không có nội dung công ty): chạy server trong cửa sổ riêng, hỏi trước khi dừng tiến trình đang giữ cổng, lỗi môi trường thì báo và dừng, xóa đường code cũ khi thay, tự xem giao diện bằng trình duyệt trước khi báo xong, mô tả PR tự đứng được. Đã ghi vào `CLAUDE.md`.
 - (2026-11-05) Ngôn ngữ: chủ dự án chọn "Code, commit, PR only" → code, comment, test, commit, tiêu đề và mô tả PR viết tiếng Anh; file cho Claude vẫn tiếng Anh; tài liệu trong `docs/` vẫn tiếng Việt; nội dung web vẫn song ngữ. Đã ghi vào `CLAUDE.md`.
+- (2026-11-05) "Clear những repo đã làm xong, giữ lại repo chính thôi", rồi "merge và clear, không cần chạy lại" → đã merge PR #25; đã xóa `nepnhaxudong-b3`, `-b4`, `-phan-b2`, các worktree đã merge và nhánh local đã merge. Không chạy lại server.
+- (2026-11-05) "Move những cái chưa làm vào note rồi clean luôn" → push 3 nhánh nhóm A, B; ghi việc đã làm và còn lại của 4 nhánh đang dở vào `docs/session/STATE.md` (mục "Đang làm"); rồi xóa cả 4 worktree. Nhánh vẫn còn trên GitHub.
 - (2026-11-05) Chủ dự án hỏi luật "hỏi trung lập" đã có chưa → đã có trong `CLAUDE.md` (mục "Reply and language rules", dòng "Independent assessment").
 
 ## Quyết định
