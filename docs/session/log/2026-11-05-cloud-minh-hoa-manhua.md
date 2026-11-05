@@ -7,6 +7,8 @@
 
 - Chủ dự án nhắn "vẽ thử 3 tranh bìa câu chuyện kiểu manhua" (session `cse_011zkgeUfp7fxRegaKPpFRvB`) → session này vẫn chưa có `GEMINI_API_KEY`, nên chưa vẽ được; đã chuẩn bị script để lần sau chỉ chạy một lệnh.
 
+- Chủ dự án đặt `GEMINI_API_KEY` trong tab Environment variables của môi trường cloud. Ảnh chụp màn hình gửi vào chat có hiện đủ key → khuyên tạo key mới, xoá key cũ, không dùng key trong ảnh.
+
 ## Quyết định
 - Phong cách manhua cho tranh minh họa Câu chuyện, giữ mascot, logo, font và màu — xem `docs/decisions/0011-minh-hoa-cau-chuyen-manhua.md`.
 
@@ -14,6 +16,8 @@
 - Đặt `GEMINI_API_KEY` trong cài đặt môi trường cloud, mở session mới, rồi vẽ thử 3 tranh bìa cho chủ dự án chọn.
 - Chủ dự án cho biết danh sách câu chuyện cần tranh (tên bài, cảnh muốn vẽ).
 - 3 tranh thử dùng 3 cảnh ví dụ trong quyết định 0011 (gặt lúa, sàng gạo bằng nia, cả nhà ăn xôi), vì chưa có danh sách bài.
+
+- Chủ dự án tạo key Gemini mới, xoá key đã lộ trong ảnh chụp, thay vào môi trường cloud, rồi mở session mới để vẽ.
 
 ## Đã làm
 - Viết quyết định 0011 kèm mẫu prompt vẽ.
