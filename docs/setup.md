@@ -1,8 +1,9 @@
 # Cài đặt
 
 ## Cài đặt một máy mới (Windows)
-1. Cài Git for Windows, Node 22, JDK 21, Docker Desktop hoặc Rancher Desktop (xem mục "Docker trên máy"), uv và Python 3 (Python 3 cần cho hai skill `state-diagram` và `call-chain`). Cài bằng `winget` được, ví dụ:
+1. Cài Git for Windows, Node 22, Claude Code (lệnh `claude`; ứng dụng Claude desktop không thêm lệnh này vào PATH), JDK 21, Docker Desktop hoặc Rancher Desktop (xem mục "Docker trên máy"), uv và Python 3 (Python 3 cần cho hai skill `state-diagram` và `call-chain`). Cài bằng `winget` được, ví dụ:
    ```bash
+   winget install --id Anthropic.ClaudeCode -e
    winget install --id EclipseAdoptium.Temurin.21.JDK -e
    winget install --id astral-sh.uv -e
    winget install --id Docker.DockerDesktop -e
@@ -40,9 +41,9 @@
    claude plugin install claude-seo@agricidaniel-claude-seo --scope project
    claude plugin install andrej-karpathy-skills@karpathy-skills --scope project
    ```
-   Nếu `claude` không có trong PATH, ứng dụng desktop có sẵn file `claude.exe` trong `%LOCALAPPDATA%\Claude-Data\<thư mục ứng dụng>\claude-code\<phiên bản>\`. Lệnh cài viết lại định dạng của `.claude/settings.json` (nội dung không đổi): trả file về bằng `git restore .claude/settings.json`. Kiểm tra bằng `claude plugin list`, rồi mở session mới.
+   Lệnh cài viết lại định dạng của `.claude/settings.json` (nội dung không đổi): trả file về bằng `git restore .claude/settings.json`. Kiểm tra bằng `claude plugin list`, rồi mở session mới.
    Lần đầu mở session, MCP `shadcn` và `next-devtools` có thể báo quá thời gian vì `npx` đang tải gói; mở session mới là được.
-6. Recraft cần đăng nhập một lần: trong Claude Code chạy `/mcp`, chọn `recraft`, rồi chọn Authenticate.
+6. Recraft cần đăng nhập một lần, trong terminal (ứng dụng Claude desktop không có lệnh `/mcp`). Trong thư mục repo chạy `claude`; lần đầu nó hỏi có dùng các MCP server trong `.mcp.json` không — chọn dùng tất cả. Sau đó gõ `/mcp`, chọn `recraft`, rồi chọn Authenticate và đăng nhập trên trình duyệt. Nếu terminal báo không tìm thấy `claude` ngay sau khi cài, mở một cửa sổ PowerShell mới.
 7. Kiểm tra: hỏi "Giai đoạn hiện tại là gì?". Agent phải trả lời đúng theo `docs/session/STATE.md` mà không cần bạn kể lại.
 
 ## Gói cài thêm cho các skill dùng chung

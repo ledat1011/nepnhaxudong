@@ -47,7 +47,7 @@ Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop` (chạy thử web)
 - Chưa đặt `GEMINI_API_KEY`.
 - 4 MCP của dự án chưa được duyệt trong Claude Code.
 - Chưa đăng nhập Recraft.
-- Máy `C:\Users\Admin\Desktop\nepnhaxudong`: MCP của dự án đã chạy trong ứng dụng Claude desktop; `nanobanana` còn chờ `GEMINI_API_KEY`, `recraft` còn chờ đăng nhập.
+- Máy `C:\Users\Admin\Desktop\nepnhaxudong`: MCP của dự án đã chạy trong ứng dụng Claude desktop, kể cả `nanobanana`; `recraft` còn chờ đăng nhập (chạy `claude` trong PowerShell mới, rồi `/mcp`).
 
 ## Ghi chú cho phần D
 Các việc này phát sinh khi làm B1 và thuộc phần triển khai (Caddy, Docker, máy chủ).
