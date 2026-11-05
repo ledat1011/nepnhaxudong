@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import {
   AlertDialog,
@@ -31,6 +31,8 @@ type Props = {
   onChanged(product: ProductAdminDto): void;
   /** "Quay lại sửa" in the check panel: the field of the first gap. */
   onFix(key: FieldKey): void;
+  /** True while a show or hide request runs, so a form can hold its own save until it is done. */
+  onBusyChange?(busy: boolean): void;
   className?: string;
 };
 
@@ -41,7 +43,7 @@ type Props = {
  * The panels open from code, not from a trigger, so they give the focus back to the switch themselves. While a change
  * is sent the switch is only marked `aria-disabled`: a real `disabled` would drop the focus to the page.
  */
-export function VisibilitySwitch({ product, label, disabled = false, onChanged, onFix, className }: Props) {
+export function VisibilitySwitch({ product, label, disabled = false, onChanged, onFix, onBusyChange, className }: Props) {
   const id = useId();
   const switchRef = useRef<HTMLButtonElement>(null);
   const [checking, setChecking] = useState(false);
@@ -53,6 +55,9 @@ export function VisibilitySwitch({ product, label, disabled = false, onChanged, 
     successMessage: "Đã ẩn sản phẩm khỏi web.",
   });
   const pending = showing.pending || hiding.pending;
+  useEffect(() => {
+    onBusyChange?.(pending);
+  }, [pending, onBusyChange]);
 
   async function change(action: typeof showing) {
     showing.reset();

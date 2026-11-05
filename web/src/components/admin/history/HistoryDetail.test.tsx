@@ -51,6 +51,18 @@ beforeEach(() => {
 });
 
 describe("HistoryDetail", () => {
+  it("shows a show or hide of a product as Hiện trên web: Không to Có", async () => {
+    adminFetch.mockResolvedValue(
+      detail({ before: { visible: false, name: { vi: "Nếp" } }, after: { visible: true, name: { vi: "Nếp" } } }),
+    );
+    render(<HistoryDetail id={7} onRestored={vi.fn()} onClose={vi.fn()} />);
+    const table = await screen.findByRole("table");
+    const rows = within(table).getAllByRole("row").slice(1);
+    expect(rows).toHaveLength(1);
+    expect(within(rows[0]).getByRole("rowheader")).toHaveTextContent("Hiện trên web");
+    expect(within(rows[0]).getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["Không", "Có"]);
+  });
+
   it("shows who, what, when in Vietnam time and a Before / After table of the changed fields", async () => {
     adminFetch.mockResolvedValue(detail());
     render(<HistoryDetail id={7} onRestored={vi.fn()} onClose={vi.fn()} />);

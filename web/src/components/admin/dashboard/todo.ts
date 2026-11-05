@@ -90,7 +90,7 @@ function products(list: ProductAdminDto[]): Todo[] {
       href: fieldHref(path, key),
     });
     const todos: Todo[] = [];
-    // Like a draft story: a product someone made but forgot to show. It links to the switch, which opens the checks.
+    // Like a draft story: a product someone made but forgot to show. The link puts the focus on the switch.
     if (!product.visible) todos.push(todo("hidden", `${name} đang ẩn, chưa hiện trên web.`, "product.visible"));
     const fields: [string, boolean, string, FieldKey][] = [
       ["name", isMissingEn(product.name), "Tên sản phẩm", "product.name.en"],

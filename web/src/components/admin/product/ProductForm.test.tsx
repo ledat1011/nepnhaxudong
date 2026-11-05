@@ -602,6 +602,43 @@ describe("ProductForm Hiện trên web", () => {
     expect(adminFetch.mock.calls.filter(([, init]) => init?.method === "PUT")).toEqual([]);
   });
 
+  it("blocks Lưu while a show request runs, even when text is typed meanwhile", async () => {
+    const events = userEvent.setup();
+    let answer: (value: ProductAdminDto) => void = () => {};
+    adminFetch.mockImplementation((path: string) => {
+      if (path.startsWith("/admin/media")) return Promise.resolve([media(1)]);
+      if (path === "/admin/products/7/show") return new Promise<ProductAdminDto>((resolve) => (answer = resolve));
+      return Promise.resolve(undefined);
+    });
+    render(<ProductForm initial={product({ visible: false, mediaIds: [1] })} />);
+    await events.click(screen.getByRole("switch", { name: "Hiện trên web" }));
+    await events.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Hiện trên web" }));
+    const nameVi = within(screen.getByRole("group", { name: "Tên sản phẩm" })).getByLabelText(/^Tiếng Việt/);
+    await events.type(nameVi, " mới");
+    expect(screen.getByRole("button", { name: "Đang lưu…" })).toBeDisabled();
+    answer(product({ visible: true, mediaIds: [1] }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Lưu" })).toBeEnabled());
+    expect(screen.getByRole("switch", { name: "Hiện trên web" })).toBeChecked();
+  });
+
+  it("locks the switch while a save runs", async () => {
+    const events = userEvent.setup();
+    let answer: (value: ProductAdminDto) => void = () => {};
+    adminFetch.mockImplementation((path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return Promise.resolve([]);
+      if (init?.method === "PUT") return new Promise<ProductAdminDto>((resolve) => (answer = resolve));
+      return Promise.resolve(undefined);
+    });
+    render(<ProductForm initial={product({ visible: false })} />);
+    await events.click(screen.getByRole("switch", { name: "Hiện giá" }));
+    await events.click(screen.getByRole("button", { name: "Lưu" }));
+    // The form is back to its saved state while the save runs, but the switch stays locked.
+    await events.click(screen.getByRole("switch", { name: "Hiện giá" }));
+    expect(screen.getByRole("switch", { name: "Hiện trên web" })).toBeDisabled();
+    answer(product({ visible: false, showPrice: false }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Lưu$|^Đang lưu…$/ })).toBeInTheDocument());
+  });
+
   it("moves the cursor to the first gap on Quay lại sửa", async () => {
     const events = userEvent.setup();
     render(<ProductForm initial={product({ visible: false, mediaIds: [] })} />);

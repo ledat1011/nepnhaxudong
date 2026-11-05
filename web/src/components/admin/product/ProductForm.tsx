@@ -147,6 +147,8 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const [state, setState] = useState<FormState>(() => stateFrom(initial));
   const [baselineSnapshot, setBaselineSnapshot] = useState(() => snapshot(stateFrom(initial)));
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // A show or hide request runs: Lưu waits, so the two writes never cross.
+  const [switching, setSwitching] = useState(false);
   // True after a create or delete succeeded, until the page changes: no second tap may write again.
   const [leaving, setLeaving] = useState(false);
   const dirty = snapshot(state) !== baselineSnapshot;
@@ -266,6 +268,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
           disabled={dirty || saving.pending || deleting.pending || leaving}
           onChanged={visibilityChanged}
           onFix={fixGap}
+          onBusyChange={setSwitching}
         />
         <p className="text-sm text-muted-foreground">
           {baseline === undefined
@@ -340,7 +343,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
 
       <SaveBar
         dirty={dirty}
-        pending={saving.pending || leaving}
+        pending={saving.pending || leaving || switching}
         onSave={() => void save()}
         onDiscard={cancel}
         notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}
