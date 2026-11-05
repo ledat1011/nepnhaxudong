@@ -2,7 +2,8 @@ package vn.nepnhaxudong.auth;
 
 /**
  * The signed-in user. {@code role} tells the admin web whether to show account management;
- * {@code mustSetupTotp} sends the user to the two-factor setup before anything else.
+ * {@code totpEnabled} is the state of the user's own two-factor card; {@code mustSetupTotp} sends
+ * the user to the two-factor setup before anything else.
  */
 public record UserResponse(
     Long id,
@@ -10,6 +11,7 @@ public record UserResponse(
     String displayName,
     boolean mustChangePassword,
     UserRole role,
+    boolean totpEnabled,
     boolean mustSetupTotp) {
 
   static UserResponse of(AppUser user) {
@@ -19,6 +21,7 @@ public record UserResponse(
         user.getDisplayName(),
         user.isMustChangePassword(),
         user.getRole(),
+        user.isTotpEnabled(),
         user.isMustSetupTotp());
   }
 }

@@ -310,6 +310,7 @@ class AccountRoleTest extends AuthTestSupport {
     var login = login(client, MEMBER_EMAIL, MEMBER_PASSWORD);
     assertThat(login.getStatusCode().value()).isEqualTo(200);
     assertThat(ApiClient.json(login).path("mustSetupTotp").asBoolean()).isTrue();
+    assertThat(ApiClient.json(login).path("totpEnabled").asBoolean()).isFalse();
     client.fetchCsrf();
     var blocked = client.get("/admin/products");
     assertThat(blocked.getStatusCode().value()).isEqualTo(403);
@@ -321,7 +322,9 @@ class AccountRoleTest extends AuthTestSupport {
     assertThat(enabled.getStatusCode().value()).isEqualTo(204);
 
     assertThat(client.get("/admin/products").getStatusCode().value()).isEqualTo(200);
-    assertThat(ApiClient.json(client.get("/auth/me")).path("mustSetupTotp").asBoolean()).isFalse();
+    JsonNode me = ApiClient.json(client.get("/auth/me"));
+    assertThat(me.path("mustSetupTotp").asBoolean()).isFalse();
+    assertThat(me.path("totpEnabled").asBoolean()).isTrue();
     assertThat(users.findById(memberId).orElseThrow().isMustSetupTotp()).isFalse();
   }
 
