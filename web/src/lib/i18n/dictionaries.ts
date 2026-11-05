@@ -47,18 +47,18 @@ const vi = {
     skip: "Bỏ qua câu chuyện",
     step: "Bước",
     cayMaTitle: "Cấy mạ",
-    cayMaText: "Mẹ cùng bà con trong xóm cấy từng khóm mạ nếp cái hoa vàng xuống ruộng nước.",
+    cayMaText: "Cấy từng khóm mạ nếp cái hoa vàng xuống ruộng nước.",
     nangMuaGioTitle: "Nắng, mưa, gió",
     nangMuaGioText: "Lúa lớn lên qua nắng, mưa và gió của xứ Đông, từ xanh mạ đến vàng óng.",
     gatTitle: "Gặt lúa",
-    gatText: "Ba lái máy gặt, anh 2 đỡ từng bao thóc mới.",
+    gatText: "Máy gặt cắt lúa, tách hạt, rồi đổ thóc vào từng bao.",
     sayTitle: "Sấy thóc tại nhà",
     sayText:
       "Quạt thổi hơi nóng từ lò than vào gầm, hơi nóng đi lên qua lưới sắt và làm khô lớp thóc.",
     xayXatTitle: "Xay xát",
-    xayXatText: "Anh 2 đổ thóc vào máy; vỏ trấu bay ra, hạt gạo trắng chảy xuống.",
+    xayXatText: "Cho thóc vào máy; vỏ trấu bay ra, hạt gạo trắng chảy xuống.",
     dongGoiTitle: "Đóng gói",
-    dongGoiText: "Mẹ hút chân không từng túi 2 kg cho gạo giữ khô và thơm.",
+    dongGoiText: "Hút chân không từng túi 2 kg cho gạo giữ khô và thơm.",
     denTayKhachTitle: "Đến tay khách",
     denTayKhachText:
       "Xe của nhà phân phối chở gạo tới siêu thị; khách cũng tới tận nhà lấy gạo, làm quà.",
@@ -168,20 +168,20 @@ const en: Dictionary = {
     step: "Step",
     cayMaTitle: "Planting seedlings",
     cayMaText:
-      "Mother and the neighbours plant the yellow-flower sticky rice seedlings, bunch by bunch, in the flooded field.",
+      "Bunch by bunch, the yellow-flower sticky rice seedlings go into the flooded field.",
     nangMuaGioTitle: "Sun, rain and wind",
     nangMuaGioText:
       "The rice grows through the sun, rain and wind of the xứ Đông region, from green seedling to golden grain.",
     gatTitle: "Harvest",
-    gatText: "Father drives the harvester. Older brother holds each new sack of rice.",
+    gatText: "The harvester cuts the rice, threshes it and fills one sack after another.",
     sayTitle: "Drying the rice at home",
     sayText:
       "A fan blows hot air from the coal stove under the floor. The air rises through the iron mesh and dries the rice.",
     xayXatTitle: "Milling",
     xayXatText:
-      "Older brother pours the rice into the machine. The husks fly out and white grains pour down.",
+      "The rice goes into the machine. The husks fly out and white grains pour down.",
     dongGoiTitle: "Packing",
-    dongGoiText: "Mother vacuum-seals each 2 kg bag so the rice stays dry and fragrant.",
+    dongGoiText: "Each 2 kg bag is vacuum-sealed so the rice stays dry and fragrant.",
     denTayKhachTitle: "Reaching the customer",
     denTayKhachText:
       "The distributor's truck takes the rice to the supermarket. Customers also come to our home to pick up rice, as gifts.",

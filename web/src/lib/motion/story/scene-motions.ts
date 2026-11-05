@@ -119,7 +119,7 @@ function nangMuaGio(gsap: Gsap, p: Parts): SceneMotion {
 function gat(gsap: Gsap, p: Parts): SceneMotion {
   const [harvester] = p.harvester;
   const [brother] = p.brother;
-  // The sack on the harvester moves with it. Anh 2's own sack is part of his pose.
+  // The sack on the harvester moves with it. The sack on the shoulder is part of the pose.
   const onMachine = p.sack.filter((s) => harvester.contains(s));
   const ground = p.sack.filter((s) => !harvester.contains(s));
 

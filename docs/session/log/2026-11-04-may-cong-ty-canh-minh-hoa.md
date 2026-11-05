@@ -34,6 +34,7 @@
 - Timeline con đường trên máy tính: giữ xen kẽ trái / phải, không xếp so le; thu gọn khoảng cách giữa các cảnh và thu nhỏ hình một chút để bớt khoảng trống.
 - Đoạn đường hạt gạo đã đi qua: dải Vàng lúa rộng gần hết mặt đường (không để hẹp như vạch giữa đường).
 - 6 tư thế người vẽ thử bằng Recraft: duyệt kiểu dáng. Sửa: áo ba thành xanh lá nhạt, túi mẹ trao mỏng như túi 2 kg mẫu, vô lăng máy gặt không dùng màu da, quần anh 2 không màu đen.
+- Chữ 8 cảnh: không nêu cụ thể ai làm (bỏ "mẹ", "ba", "anh 2", "bà con"); kể theo việc làm, kiểu "Cho thóc vào máy…". Hình vẫn vẽ mẹ, ba, anh 2 như cũ.
 - Áo ba: thêm một màu xanh lá nhạt chỉ dùng trong hình minh hoạ (ghi vào quyết định 0007).
 
 ## Còn mở

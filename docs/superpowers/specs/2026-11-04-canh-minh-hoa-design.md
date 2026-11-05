@@ -121,7 +121,7 @@ Vị trí: ngay sau khối Sản phẩm, trước "Hành trình". `id` của kh�
 | 7 | Đến tay khách | Mẹ, khách | Xe tải nhỏ của nhà phân phối chạy tới kệ siêu thị, kệ đầy dần túi gạo; khách tới nhà, mẹ trao túi; hộp quà buộc nơ hiện ra (bánh xe quay khi xe chạy vào) | — |
 | 8 | Mâm cơm | — | Món lần lượt hiện trên mâm: xôi, bánh chưng, chè, bình rượu nếp | Hơi nóng bốc lên |
 
-Mỗi cảnh có tiêu đề ngắn và 1–2 câu (vi / en). Cuối cảnh 8 có nút thật "Liên hệ qua Zalo" (dùng `zaloHref` như Hero; không hiện nếu chưa có số Zalo).
+Mỗi cảnh có tiêu đề ngắn và 1–2 câu (vi / en). Chữ kể theo việc làm, không nêu cụ thể ai làm (theo góp ý của chủ dự án, 2026-11-05), ví dụ "Cho thóc vào máy…"; người chỉ có trong hình. Cuối cảnh 8 có nút thật "Liên hệ qua Zalo" (dùng `zaloHref` như Hero; không hiện nếu chưa có số Zalo).
 
 Màu máy theo ảnh xưởng, đổi sang màu thương hiệu gần nhất: tháp gầu tải Xanh mạ, máy bóc vỏ Nâu áo, máy đỏ dùng Hồng má, máy hút chân không dùng Vàng rơm và Trắng gạo cho phần inox.
 
