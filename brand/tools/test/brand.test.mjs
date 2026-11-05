@@ -498,6 +498,20 @@ test('trace-logo-head.py: doc nguon qua read_source (kiem SHA-256), khong co duo
   }
 });
 
+const vectorizePosePath = fileURLToPath(new URL('../vectorize-pose.py', import.meta.url));
+
+test('vectorize-pose.py: ghi nguon anh, dung lai vectorize-mascot.py, khong co duong dan may', () => {
+  const script = readFileSync(vectorizePosePath, 'utf8');
+  const header = script.slice(0, script.indexOf('"""', 3));
+  assert.match(header, /approved by the owner on 2026-11-05/, 'thieu ghi chu nguon anh');
+  assert.match(script, /spec_from_file_location\('vectorize_mascot'/, 'phai nhap vectorize-mascot.py bang importlib');
+  assert.match(script, /vm\.classify\(/, 'phai phan loai mau bang classify cua vectorize-mascot.py');
+  assert.match(script, /vm\.trace\(/, 'phai trace bang trace cua vectorize-mascot.py');
+  for (const local of [/\b[A-Za-z]:\\/, /AppData/i, /scratchpad/i, /\/(Users|home)\//]) {
+    assert.doesNotMatch(script, local, `co duong dan may ${local}`);
+  }
+});
+
 test('mascot: pivot head / rice khop transform-origin va nam trong nhom', () => {
   const facts = svgFacts(mascotPath);
   const svg = readFileSync(mascotPath, 'utf8');
