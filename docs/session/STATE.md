@@ -27,6 +27,7 @@ Cập nhật: 2026-11-04 — máy công ty
 - Minh họa và hiệu ứng mới (nền đồng lúa ở hero, hình bịch gạo, câu chuyện "từ đồng tới mâm cơm"): spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md`, đang làm trên nhánh `feat/canh-minh-hoa` ở một session riêng.
 
 ## Việc tiếp theo
+0. Tranh minh họa Câu chuyện kiểu manhua (quyết định `0011`): đặt `GEMINI_API_KEY`, vẽ thử 3 tranh bìa 16:9, chủ dự án chọn rồi mới vẽ cho mọi bài. Mascot giữ nguyên.
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).
 2. Mở PR cho B3, chờ CI (có workflow `fullstack` mới), rồi merge vào `main`.
 3. Sau khi B3 merge, trên nhánh mới từ `main`: popup Zalo và thanh "đang tải" (thiết kế đã duyệt, ghi trong `docs/session/log/2026-11-04-may-cong-ty-phan-b3-admin.md`), rồi 5 việc ưu tiên của trang quản trị (`docs/decisions/0008-uu-tien-sua-admin.md`).
@@ -36,7 +37,7 @@ Cập nhật: 2026-11-04 — máy công ty
 7. Kiểm tra trên máy cá nhân và cloud session theo `docs/setup.md`, rồi ghi kết quả vào `docs/setup.md` và file này.
 
 ## Vướng mắc
-- Chưa đặt `GEMINI_API_KEY`.
+- Chưa đặt `GEMINI_API_KEY` (máy và môi trường cloud). Cần key này để vẽ tranh Câu chuyện kiểu manhua (`docs/decisions/0011-minh-hoa-cau-chuyen-manhua.md`).
 - 4 MCP của dự án chưa được duyệt trong Claude Code.
 - Chưa đăng nhập Recraft.
 
@@ -73,4 +74,4 @@ Các việc phát sinh khi làm B4 (hiệu ứng):
 - Việc sau này: bỏ bản mascot thứ hai trong dữ liệu RSC. Nếu LCP hoặc TBT xấu đi, cân nhắc dùng `brand/logo/mascot-logo.svg`.
 
 ## Quyết định gần nhất
-- `docs/decisions/0005-spring-boot-4.md`
+- `docs/decisions/0011-minh-hoa-cau-chuyen-manhua.md`
