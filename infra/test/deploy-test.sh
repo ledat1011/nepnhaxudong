@@ -18,6 +18,10 @@ cleanup() {
   if [ "$rc" -ne 0 ]; then (cd "$D" && docker compose logs --tail 60) || true; fi
   (cd "$D" && docker compose down -v --remove-orphans) >/dev/null 2>&1 || true
   docker rm -f nepnha-deploy-test-registry >/dev/null 2>&1 || true
+  local ref
+  for ref in $(docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "^$REG/nepnha-" || true); do
+    docker image rm "$ref" >/dev/null 2>&1 || true
+  done
   rm -rf "$D" 2>/dev/null || true
   exit "$rc"
 }
