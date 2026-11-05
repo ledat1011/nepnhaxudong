@@ -192,3 +192,66 @@ test("a removed pack size comes back with Hoàn tác, messages show at the top, 
   await header.getByRole("link", { name: "Quay lại danh sách sản phẩm" }).click();
   await expect(page).toHaveURL(new RegExp(`${ADMIN_ROUTES.products}$`));
 });
+
+test("a pack size reads as the public site writes it, and a weight under 100 g gets a note", async ({ page }) => {
+  await page.goto(`${ADMIN_ROUTES.products}/moi`);
+  await page.getByRole("switch", { name: "Hiện giá" }).click();
+  await page.getByRole("button", { name: "Thêm quy cách" }).click();
+  const weight = page.getByLabel(/^Khối lượng/);
+  const price = page.getByLabel("Giá (VND)");
+
+  // "2" in the gram box would show as "2 g" on the public site: the note says what to type for 2 kg.
+  await weight.fill("2");
+  await expect(weight).toHaveAccessibleDescription("= 2 g Ô này tính bằng gam. Nếu là 2 kg, hãy gõ 2000.");
+  await expect(page.getByText("Ô này tính bằng gam. Nếu là 2 kg, hãy gõ 2000.")).toBeVisible();
+  await weight.fill("2000");
+  await expect(weight).toHaveAccessibleDescription("= 2 kg");
+  await expect(page.getByText("= 2 kg", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Ô này tính bằng gam/)).toHaveCount(0);
+
+  await price.fill("150000");
+  await expect(price).toHaveAccessibleDescription("= 150.000 đ");
+  expect(await pageScrollWidth(page)).toBeLessThanOrEqual(WIDTH);
+});
+
+test("Hành trình puts a new event in year order, warns when a move breaks it, and Xếp theo năm fixes it", async ({ page }) => {
+  const title = `[E2E] Mốc năm ${Math.floor(Math.random() * 1_000_000)}`;
+  const rows = page.getByRole("list").first().getByRole("listitem");
+  await page.goto(ADMIN_ROUTES.timeline);
+  // The list must have another event after the new one; the flow project made one in 2031.
+  await expect(rows.first()).toBeVisible();
+
+  // 1901 is earlier than every other event. The API puts a new event last; the page then sorts by year.
+  await page.getByRole("button", { name: "Thêm mốc" }).click();
+  const form = page.getByRole("dialog", { name: "Thêm mốc" });
+  await form.getByLabel(/^Năm/).fill("1901");
+  await form.getByRole("group", { name: /^Tiêu đề/ }).getByLabel("Tiếng Việt").fill(title);
+  await form.getByRole("button", { name: "Lưu", exact: true }).click();
+  await expect(form).toBeHidden();
+  await expect(page.locator("[data-sonner-toast]").filter({ hasText: "Đã xếp mốc theo năm." })).toBeVisible();
+  await expect(rows.first()).toContainText(`1901${title}`);
+  const warning = page.getByText(/^Thứ tự chưa theo năm/);
+  await expect(warning).toHaveCount(0);
+
+  // Moved below a later year: the page says what is wrong and what the public site shows.
+  await page.getByRole("button", { name: `Đưa mốc ${title} xuống` }).click();
+  await expect(warning).toBeVisible();
+  await expect(warning).toContainText(`mốc 1901 (${title})`);
+  await expect(rows.nth(1)).toContainText(title);
+
+  await page.getByRole("button", { name: "Xếp theo năm" }).click();
+  await expect(warning).toHaveCount(0);
+  await expect(rows.first()).toContainText(title);
+  // The order was saved: it is the same after a reload.
+  await page.reload();
+  await expect(rows.first()).toContainText(title);
+  await expect(warning).toHaveCount(0);
+
+  // Clean up, so the other checks see the list as the flow left it.
+  await rows.first().getByRole("button", { name: new RegExp(`^1901`) }).click();
+  const edit = page.getByRole("dialog", { name: "Sửa mốc" });
+  await edit.getByRole("button", { name: "Xóa mốc" }).click();
+  await page.getByRole("alertdialog", { name: "Xóa mốc này?" }).getByRole("button", { name: "Xóa", exact: true }).click();
+  await expect(page.getByText(title)).toHaveCount(0);
+});
+
