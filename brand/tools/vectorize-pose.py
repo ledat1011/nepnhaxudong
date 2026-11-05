@@ -13,7 +13,8 @@ Steps (classify, 3 x 3 smoothing, vtracer trace and palette snap come from vecto
 2. Classify every pixel to a source color in CIE Lab (an edge pixel goes to the nearer end of an
    ink-to-color pair, so edges get no halo color).
 3. Background: background pixels connected to the image border become transparent. Enclosed
-   background (eye whites, silver hair) stays Trắng gạo.
+   background (eye whites, silver hair) stays Trắng gạo. The script stops when the background is not
+   near Trắng gạo (BACKGROUND_MAX_DISTANCE).
 4. Hand fixes from FIXES.json.
 5. Smooth (SMOOTH_SIZE mode filter, then the 3 x 3 majority of vectorize-mascot.py), trace with
    vtracer and snap each path color to the palette.
@@ -31,7 +32,8 @@ FIXES.json keys (coordinates in source pixels, as the PNG shows them, before any
   a list, when it is given).
 - "clear": the same items without "to", run after every recolor: makes those pixels transparent.
 - "overlay" / "underlay": "file.svg": hand-drawn elements (inside an <svg> root, in source pixels)
-  drawn over / under the trace with the same mirror, crop and scale. The fit (step 6) does not see them.
+  drawn over / under the trace with the same mirror, crop and scale. The file must be in the folder of
+  FIXES.json. The fit (step 6) does not see them: "fit": [x0, y0, x1, y1] makes it include that box.
 - "smooth": mode filter size (odd, 1 = off). "trace": vtracer settings that replace TRACE.
 
 Needs Python 3 with the versions in requirements-mascot.txt (pip install -r requirements-mascot.txt).
@@ -60,6 +62,8 @@ TOKEN_INDEX = {name: i for i, name in enumerate(POSE_TOKENS)}
 INK_TOKENS = {'nau-dat', 'toc'}
 ANCHOR_MIN_PIXELS = 1000
 ANCHOR_MERGE = 4.0
+# How far (CIE Lab) the background may be from Trắng gạo. The Recraft backgrounds are about 4.5.
+BACKGROUND_MAX_DISTANCE = 8.0
 SMOOTH_SIZE = 5
 TRACE = {**vm.TRACE, 'filter_speckle': 6, 'corner_threshold': 120, 'length_threshold': 16.0,
          'splice_threshold': 60}
@@ -133,6 +137,9 @@ def fix_region(item, anchor, mask, colors, what):
     """The drawn pixels a recolor or clear item names: the region under "at", the box or the polygon."""
     if 'at' in item:
         x, y = item['at']
+        height, width = mask.shape
+        if not (0 <= x < width and 0 <= y < height):
+            raise SystemExit(f'{what}: {item["at"]} is outside the {width} x {height} picture')
         seed = np.zeros_like(mask)
         seed[y, x] = True
         region = connected(seed, mask & (anchor == anchor[y, x]))
@@ -167,11 +174,13 @@ def mode_filter(mask, colors, size):
     return label >= 0, np.where(label >= 0, label, 0)
 
 
-def fit(mask, colors):
-    """The drawn pixels on a square canvas: bottom on the bottom edge, centered left to right.
-    Returns (mask, colors, size, (x0, y0) of the crop, (left, top) padding)."""
+def fit(mask, colors, keep=None):
+    """The drawn pixels (and the box `keep`, if given) on a square canvas: bottom on the bottom edge,
+    centered left to right. Returns (mask, colors, size, (x0, y0) of the crop, (left, top) padding)."""
     ys, xs = np.nonzero(mask)
     x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    if keep is not None:
+        x0, y0, x1, y1 = min(x0, keep[0]), min(y0, keep[1]), max(x1, keep[2]), max(y1, keep[3])
     w, h = x1 - x0, y1 - y0
     size = max(w, h)
     left, top = (size - w) // 2, size - h
@@ -180,6 +189,25 @@ def fit(mask, colors):
     out_mask[top:top + h, left:left + w] = mask[y0:y1, x0:x1]
     out_colors[top:top + h, left:left + w] = colors[y0:y1, x0:x1]
     return out_mask, out_colors, size, (x0, y0), (left, top)
+
+
+def fixes_file(fixes_path, name):
+    """A file named in FIXES.json, which must stay in the folder of FIXES.json."""
+    folder = fixes_path.resolve().parent
+    path = (folder / name).resolve()
+    if not path.is_relative_to(folder):
+        raise SystemExit(f'{name} is outside {folder}: hand-drawn files stay next to their FIXES.json')
+    return path
+
+
+def check_background(hex_color):
+    """Stops when the most common color is not near Trắng gạo: then step 3 would clear the wrong color."""
+    lab = vm.srgb_to_lab(vm.hex_rgb(hex_color))
+    rice = vm.srgb_to_lab(vm.hex_rgb(PALETTE[TOKEN_INDEX['trang-gao']]))
+    distance = float(np.sqrt(((lab - rice) ** 2).sum()))
+    if distance > BACKGROUND_MAX_DISTANCE:
+        raise SystemExit(f'the most common color {hex_color} is {distance:.1f} from Trắng gạo in CIE Lab '
+                         f'(at most {BACKGROUND_MAX_DISTANCE}): the picture needs a near-white background')
 
 
 def drawn_group(path, mirror, width, crop, pad, scale):
@@ -219,6 +247,7 @@ def main(argv):
 
     rgb = vm.read_source(args.source, any_source=True)
     anchors = find_anchors(rgb)
+    check_background(anchors[0][0])
     tokens = anchor_tokens(anchors, fixes.get('map', {}))
     vm.ANCHORS = [('background' if t is None else h, h, t, t in INK_TOKENS) for (h, _), t in zip(anchors, tokens)]
     anchor = vm.classify(rgb)
@@ -239,11 +268,14 @@ def main(argv):
         mask, colors = np.fliplr(mask), np.fliplr(colors)
 
     mask, colors = mode_filter(mask, colors, fixes.get('smooth', SMOOTH_SIZE))
-    mask, colors, size, crop, pad = fit(mask, colors)
+    keep = fixes.get('fit')
+    if keep is not None and mirror:
+        keep = [rgb.shape[1] - keep[2], keep[1], rgb.shape[1] - keep[0], keep[3]]
+    mask, colors, size, crop, pad = fit(mask, colors, keep)
     vm.SCALE = OUT_SIZE / size
     paths = vm.trace(mask, colors, {**TRACE, **fixes.get('trace', {})})
     body = ''.join(f'<path d="{d}" fill="{fill}"/>' for d, fill in paths)
-    drawn = lambda key: drawn_group(args.fixes.parent / fixes[key], mirror, rgb.shape[1], crop, pad, vm.SCALE)
+    drawn = lambda key: drawn_group(fixes_file(args.fixes, fixes[key]), mirror, rgb.shape[1], crop, pad, vm.SCALE)
     if 'underlay' in fixes:
         body = drawn('underlay') + body
     if 'overlay' in fixes:
