@@ -24,7 +24,7 @@ describe("SingleImageSection", () => {
   it("shows the image number and removes the image with Bỏ ảnh", async () => {
     const onChange = vi.fn();
     render(<SingleImageSection mediaId={9} onChange={onChange} />);
-    expect(screen.getByText("Ảnh số 9")).toBeInTheDocument();
+    expect(screen.getByText("(chưa có mô tả)")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Bỏ ảnh" }));
     expect(onChange).toHaveBeenCalledWith(null);
   });

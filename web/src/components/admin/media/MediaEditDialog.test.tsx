@@ -53,6 +53,18 @@ describe("MediaEditDialog", () => {
     expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
   });
 
+  it("says why Lưu cannot be pressed", async () => {
+    const events = userEvent.setup();
+    render(<MediaEditDialog media={item} onClose={() => {}} onChanged={() => {}} onDeleted={() => {}} />);
+    const save = screen.getByRole("button", { name: "Lưu" });
+    expect(save).toHaveAccessibleDescription("Chưa có gì thay đổi.");
+    await events.clear(screen.getByLabelText(/English/));
+    expect(save).toHaveAccessibleDescription("Cần có mô tả cả tiếng Việt và tiếng Anh.");
+    await events.type(screen.getByLabelText(/English/), "Sticky rice");
+    expect(save).toBeEnabled();
+    expect(save).not.toHaveAccessibleDescription();
+  });
+
   it("deletes after the confirmation", async () => {
     adminFetch.mockResolvedValue(undefined);
     const onDeleted = vi.fn();

@@ -137,6 +137,18 @@ describe("TwoFactorCard (switched off)", () => {
     await user.type(screen.getByLabelText("Mã 6 số"), "12ab");
     expect(screen.getByRole("button", { name: "Xác nhận và bật" })).toBeDisabled();
   });
+
+  it("says why the confirm button cannot be pressed yet", async () => {
+    const user = userEvent.setup();
+    render(<TwoFactorCard enabled={false} onChanged={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Bật xác thực 2 lớp" }));
+    await screen.findByText(setup.secret);
+    const confirm = screen.getByRole("button", { name: "Xác nhận và bật" });
+    expect(confirm).toHaveAccessibleDescription("Nhập đủ 6 số từ ứng dụng xác thực thì nút này mới bấm được.");
+    await user.type(screen.getByLabelText("Mã 6 số"), "123456");
+    expect(confirm).toBeEnabled();
+    expect(screen.queryByText(/Nhập đủ 6 số/)).not.toBeInTheDocument();
+  });
 });
 
 describe("TwoFactorCard (switched on and kept on by an owner)", () => {

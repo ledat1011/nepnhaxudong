@@ -230,7 +230,13 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged, passwordLink = t
             />
           </div>
           <ProblemMessage error={enabling.error ?? disabling.error} />
-          <Button type="submit" disabled={!codeValid || busy}>
+          {/* A greyed-out button with no reason looks broken, so the reason is said until the code is complete. */}
+          {!codeValid && !busy ? (
+            <p id={`${codeId}-why`} className="text-sm text-muted-foreground">
+              Nhập đủ 6 số từ ứng dụng xác thực thì nút này mới bấm được.
+            </p>
+          ) : null}
+          <Button type="submit" disabled={!codeValid || busy} aria-describedby={!codeValid && !busy ? `${codeId}-why` : undefined}>
             {busy ? "Đang xử lý…" : setup !== null ? "Xác nhận và bật" : "Xác nhận và tắt"}
           </Button>
           <Button type="button" variant="outline" onClick={cancel} disabled={busy}>

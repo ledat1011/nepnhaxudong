@@ -33,7 +33,7 @@ export function SingleImageSection({ mediaId, onChange, label = "Ảnh" }: Props
           ) : (
             <span className="size-16 rounded bg-muted" aria-hidden />
           )}
-          <span className="min-w-0 flex-1 truncate text-sm">{media?.altVi ?? `Ảnh số ${mediaId}`}</span>
+          <span className="min-w-0 flex-1 truncate text-sm">{media?.altVi ?? "(chưa có mô tả)"}</span>
           <Button type="button" variant="outline" onClick={() => onChange(null)}>
             Bỏ ảnh
           </Button>

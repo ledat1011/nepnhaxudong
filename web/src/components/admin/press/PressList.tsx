@@ -26,7 +26,7 @@ type Props = {
 type Change = { item: PressMentionAdminDto; sortOrder: number };
 
 export function mentionName(item: PressMentionAdminDto): string {
-  return item.title.vi ?? item.title.en ?? `số ${item.id}`;
+  return item.title.vi ?? item.title.en ?? "(chưa có tiêu đề)";
 }
 
 /** "2024-05-01" as "01/05/2024". Text is split, not parsed as a Date, so no time zone can shift the day. */

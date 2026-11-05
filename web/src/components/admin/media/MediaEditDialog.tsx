@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
@@ -52,6 +52,9 @@ function EditForm({ media, onChanged, onDeleted }: FormProps) {
   const changed = request.vi !== (media.altVi ?? null) || request.en !== (media.altEn ?? null);
   const valid = request.vi !== null && request.en !== null;
   const busy = update.pending || remove.pending;
+  // A greyed-out Lưu with no reason looks broken to an older user, so the reason is written under it.
+  const blockedReason = busy ? null : !valid ? "Cần có mô tả cả tiếng Việt và tiếng Anh." : !changed ? "Chưa có gì thay đổi." : null;
+  const reasonId = useId();
 
   async function saveAlt() {
     const saved = await update.save();
@@ -79,10 +82,20 @@ function EditForm({ media, onChanged, onDeleted }: FormProps) {
         <Button type="button" variant="outline" onClick={() => setConfirmOpen(true)} disabled={busy}>
           Xóa ảnh
         </Button>
-        <Button type="button" onClick={() => void saveAlt()} disabled={!changed || !valid || busy}>
+        <Button
+          type="button"
+          onClick={() => void saveAlt()}
+          disabled={!changed || !valid || busy}
+          aria-describedby={blockedReason !== null ? reasonId : undefined}
+        >
           {update.pending ? "Đang lưu…" : "Lưu"}
         </Button>
       </DialogFooter>
+      {blockedReason !== null ? (
+        <p id={reasonId} className="text-sm text-muted-foreground sm:text-right">
+          {blockedReason}
+        </p>
+      ) : null}
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
