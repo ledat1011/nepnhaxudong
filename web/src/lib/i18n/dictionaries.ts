@@ -33,7 +33,6 @@ const vi = {
   },
   motion: {
     pause: "Tạm dừng chuyển động",
-    resume: "Chạy lại chuyển động",
   },
   sections: {
     product: "Sản phẩm",
@@ -169,7 +168,6 @@ const en: Dictionary = {
   },
   motion: {
     pause: "Pause motion",
-    resume: "Play motion",
   },
   sections: {
     product: "Product",
