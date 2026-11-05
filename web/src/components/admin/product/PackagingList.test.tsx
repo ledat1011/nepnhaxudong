@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { afterEach, describe, expect, it } from "vitest";
 import { Toaster } from "@/components/admin/ui/sonner";
-import { PackagingList, newPackagingRow, type PackagingRow } from "./PackagingList";
+import { PackagingList, newPackagingRow, packagingErrorKey, type PackagingRow } from "./PackagingList";
 
 afterEach(() => {
   act(() => toast.dismiss());
@@ -59,5 +59,47 @@ describe("PackagingList", () => {
     const newer = (await screen.findByText("Đã xóa quy cách 1 (250 g).")).closest("li")!;
     await events.click(within(newer).getByRole("button", { name: "Hoàn tác" }));
     expect(weights()).toEqual(["250", "500", "1000", "2000"]);
+  });
+  it("shows under each box how the public site reads it", async () => {
+    const events = userEvent.setup();
+    render(<Harness initial={[newPackagingRow("2000", "150000")]} />);
+    const weight = screen.getByLabelText(/^Khối lượng/);
+    const price = screen.getByLabelText("Giá (VND)");
+    expect(weight).toHaveAccessibleDescription("= 2 kg");
+    expect(price).toHaveAccessibleDescription("= 150.000 đ");
+
+    await events.clear(weight);
+    await events.type(weight, "500");
+    expect(weight).toHaveAccessibleDescription("= 500 g");
+  });
+
+  it("warns under 100 g and under 1.000 đ, without blocking the form", async () => {
+    const events = userEvent.setup();
+    render(<Harness initial={[newPackagingRow()]} />);
+    const weight = screen.getByLabelText(/^Khối lượng/);
+    const price = screen.getByLabelText("Giá (VND)");
+    await events.type(weight, "2");
+    await events.type(price, "150");
+    expect(weight).toHaveAccessibleDescription("= 2 g Ô này tính bằng gam. Nếu là 2 kg, hãy gõ 2000.");
+    expect(price).toHaveAccessibleDescription("= 150 đ Giá dưới 1.000 đ. Nếu là 150.000 đ, hãy gõ 150000.");
+    expect(weight).not.toHaveAttribute("aria-invalid");
+
+    await events.type(weight, "000");
+    expect(weight).toHaveAccessibleDescription("= 2 kg");
+  });
+
+  it("reads the error first, then the reading, when a box has an error", () => {
+    const row = newPackagingRow("2");
+    render(
+      <PackagingList
+        rows={[row]}
+        showPrice={false}
+        onChange={() => {}}
+        errors={{ [packagingErrorKey(row, "weight")]: "Khối lượng phải lớn hơn 0." }}
+      />,
+    );
+    expect(screen.getByLabelText(/^Khối lượng/)).toHaveAccessibleDescription(
+      "Khối lượng phải lớn hơn 0. = 2 g Ô này tính bằng gam. Nếu là 2 kg, hãy gõ 2000.",
+    );
   });
 });

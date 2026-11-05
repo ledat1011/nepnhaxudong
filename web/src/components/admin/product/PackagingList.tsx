@@ -6,6 +6,7 @@ import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
 import { Label } from "@/components/admin/ui/label";
 import { invalidProps, type FieldErrors } from "@/lib/admin/field-errors";
+import { priceReading, priceWarning, weightReading, weightWarning } from "@/lib/admin/packaging-reading";
 import { useRemoveWithUndo } from "@/lib/admin/use-remove-with-undo";
 import { moved, nextRowKey } from "./rows";
 
@@ -37,6 +38,31 @@ function removedMessage(n: number, row: PackagingRow): string {
   return weight === "" ? `Đã xóa quy cách ${n}.` : `Đã xóa quy cách ${n} (${weight} g).`;
 }
 
+/**
+ * The props of a number box: the error (if any) and then the reading under it are its description,
+ * so a screen reader hears "= 2 kg" after the label.
+ */
+function boxProps(id: string, error: string | null | undefined, hasReading: boolean) {
+  const described = [error ? `${id}-error` : null, hasReading ? `${id}-reading` : null].filter(Boolean).join(" ");
+  return { ...invalidProps(id, error), "aria-describedby": described === "" ? undefined : described };
+}
+
+/**
+ * Under a number box: the value as people read it ("= 2 kg", "= 150.000 đ") and, for a value that looks like a
+ * slip, a note. The note never blocks saving: a 50 g sample bag is possible.
+ */
+function Reading({ id, reading, warning }: { id: string; reading: string | null; warning: string | null }) {
+  if (reading === null && warning === null) return null;
+  return (
+    <p id={`${id}-reading`} className="text-sm">
+      {reading !== null ? <span className="font-semibold">{reading}</span> : null}
+      {/* The space keeps the two parts apart for a screen reader; the note starts on its own line. */}
+      {reading !== null && warning !== null ? " " : null}
+      {warning !== null ? <span className="block font-medium text-destructive">{warning}</span> : null}
+    </p>
+  );
+}
+
 /** Pack sizes in order. The price box is shown only while the product shows its price. */
 export function PackagingList({ rows, showPrice, onChange, errors = {} }: Props) {
   const remove = useRemoveWithUndo(rows, onChange, { keyOf: (row) => row.key, max: MAX_PACKAGINGS });
@@ -52,6 +78,8 @@ export function PackagingList({ rows, showPrice, onChange, errors = {} }: Props)
           const n = index + 1;
           const weightError = errors[packagingErrorKey(row, "weight")];
           const priceError = errors[packagingErrorKey(row, "price")];
+          const weightNote = { reading: weightReading(row.weight), warning: weightWarning(row.weight) };
+          const priceNote = { reading: priceReading(row.price), warning: priceWarning(row.price) };
           return (
             <li key={row.key} className="flex flex-col gap-2 rounded-md border p-3">
               <div className="grid gap-2 sm:grid-cols-2">
@@ -67,10 +95,11 @@ export function PackagingList({ rows, showPrice, onChange, errors = {} }: Props)
                     min={1}
                     required
                     value={row.weight}
-                    {...invalidProps(`${row.key}-w`, weightError)}
+                    {...boxProps(`${row.key}-w`, weightError, weightNote.reading !== null || weightNote.warning !== null)}
                     onChange={(e) => update(index, { weight: e.target.value })}
                   />
                   <FieldError id={`${row.key}-w`} message={weightError} />
+                  <Reading id={`${row.key}-w`} {...weightNote} />
                 </div>
                 {showPrice ? (
                   <div className="flex flex-col gap-1.5">
@@ -81,10 +110,11 @@ export function PackagingList({ rows, showPrice, onChange, errors = {} }: Props)
                       inputMode="numeric"
                       min={0}
                       value={row.price}
-                      {...invalidProps(`${row.key}-p`, priceError)}
+                      {...boxProps(`${row.key}-p`, priceError, priceNote.reading !== null || priceNote.warning !== null)}
                       onChange={(e) => update(index, { price: e.target.value })}
                     />
                     <FieldError id={`${row.key}-p`} message={priceError} />
+                    <Reading id={`${row.key}-p`} {...priceNote} />
                   </div>
                 ) : null}
               </div>
