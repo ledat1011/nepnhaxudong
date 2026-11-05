@@ -11,3 +11,14 @@ afterEach(() => {
 if (typeof document.elementFromPoint !== "function") {
   document.elementFromPoint = () => null;
 }
+
+// jsdom has no pointer capture. Sonner captures the pointer when a finger presses a toast (to let it swipe away).
+for (const name of ["setPointerCapture", "releasePointerCapture", "hasPointerCapture"] as const) {
+  if (typeof HTMLElement.prototype[name] !== "function") {
+    Object.defineProperty(HTMLElement.prototype, name, {
+      configurable: true,
+      writable: true,
+      value: name === "hasPointerCapture" ? () => false : () => {},
+    });
+  }
+}

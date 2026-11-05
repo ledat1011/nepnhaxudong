@@ -522,7 +522,7 @@ function UploadItem({ item, copyCount, onAlt, onLeave, onTouch, onUpload, onCopy
           </Button>
         ) : null}
         {ready && copyCount > 0 ? (
-          <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal text-left" onClick={onCopy}>
+          <Button type="button" variant="outline" className="h-auto min-h-11 max-w-full shrink whitespace-normal text-left" onClick={onCopy}>
             Dùng mô tả này cho {copyCount} ảnh chưa có mô tả
           </Button>
         ) : null}

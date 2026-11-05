@@ -15,7 +15,7 @@ vi.mock("@/lib/admin/session", () => ({
   useAdminSession: () => ({ requireReLogin }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), dismiss: vi.fn() }) }));
 
 import { NavGuardProvider } from "@/lib/admin/nav-guard";
 import { ProductForm } from "./ProductForm";

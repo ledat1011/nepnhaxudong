@@ -27,6 +27,7 @@ type Props = {
 /** Asks, when the editor opens, whether to bring back the text this phone kept and that was never saved. */
 export function DraftRestoreDialog({ savedAt, stale, onRestore, onDiscard, onLater }: Props) {
   const answered = useRef(false);
+  const restore = useRef<HTMLButtonElement>(null);
   const when = new Date(savedAt);
   return (
     <AlertDialog
@@ -35,7 +36,13 @@ export function DraftRestoreDialog({ savedAt, stale, onRestore, onDiscard, onLat
         if (!open && !answered.current) onLater();
       }}
     >
-      <AlertDialogContent>
+      <AlertDialogContent
+        onOpenAutoFocus={(event) => {
+          // Radix chooses the cancel button. Here that is "Bỏ bản đó", so a quick tap or Enter would lose the text.
+          event.preventDefault();
+          restore.current?.focus();
+        }}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>Có bài đang viết dở</AlertDialogTitle>
           <AlertDialogDescription>
@@ -54,6 +61,7 @@ export function DraftRestoreDialog({ savedAt, stale, onRestore, onDiscard, onLat
             Bỏ bản đó
           </AlertDialogCancel>
           <AlertDialogAction
+            ref={restore}
             onClick={() => {
               answered.current = true;
               onRestore();

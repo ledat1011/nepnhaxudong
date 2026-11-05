@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense, useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { NavGuardProvider } from "@/lib/admin/nav-guard";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
@@ -9,13 +9,15 @@ import { AdminHeader } from "./AdminHeader";
 import { SessionErrorScreen } from "./SessionErrorScreen";
 import { BottomNav } from "./BottomNav";
 import { FieldFocus } from "./FieldFocus";
-import { screenTitle } from "./nav-items";
+import { parentScreen, screenTitle } from "./nav-items";
+import { ScreenDetailContext, type ScreenDetail } from "./screen-detail";
 
 /** The gate of every private admin screen. It renders nothing private until the session is known. */
 export function AppShell({ children }: { children: ReactNode }) {
   const { status, user, signedOutOnPurpose, refresh } = useAdminSession();
   const pathname = usePathname();
   const router = useRouter();
+  const [detail, setDetail] = useState<ScreenDetail | null>(null);
 
   useEffect(() => {
     if (status === "signed-out") {
@@ -40,11 +42,18 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <NavGuardProvider>
-      <div className="min-h-dvh pb-24">
-        <AdminHeader title={screenTitle(pathname)} userName={user.displayName} />
-        <main>{children}</main>
-        <BottomNav />
-      </div>
+      <ScreenDetailContext.Provider value={setDetail}>
+        <div className="min-h-dvh pb-24">
+          <AdminHeader
+            title={screenTitle(pathname)}
+            userName={user.displayName}
+            back={parentScreen(pathname)}
+            detail={detail}
+          />
+          <main>{children}</main>
+          <BottomNav />
+        </div>
+      </ScreenDetailContext.Provider>
       {/* Opens a screen at one field when a link says which (?o=…). It reads the search params, hence Suspense. */}
       <Suspense fallback={null}>
         <FieldFocus />

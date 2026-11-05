@@ -64,6 +64,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /*
+   * When the browser moves to a box (Tab, "Tiếp" on the phone keyboard), the box stops below the sticky header
+   * (56 px) and above the bottom menu (56 px) plus the Lưu bar (about 68 px), not behind them.
+   */
+  html {
+    scroll-padding-top: 4rem;
+    scroll-padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+  }
   body {
     @apply bg-background text-foreground;
   }
