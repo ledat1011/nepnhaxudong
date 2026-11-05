@@ -188,7 +188,8 @@ export function TwoFactorCard({ enabled: enabledNow, onChanged, passwordLink = t
           >
             Sao chép mã
           </Button>
-          <p role="status" className="text-sm empty:hidden">
+          {/* Always rendered, with its line reserved, so the message is announced and nothing below moves. */}
+          <p role="status" className="min-h-5 text-sm">
             {COPY_MESSAGES[copy]}
           </p>
         </div>

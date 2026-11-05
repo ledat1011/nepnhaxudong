@@ -172,7 +172,7 @@ describe("UserList", () => {
     const user = userEvent.setup();
     const onChanged = vi.fn();
     render(<UserList users={users} onChanged={onChanged} />);
-    await user.click(within(row("Bình")).getByRole("button", { name: "Cho Bình làm Chủ" }));
+    await user.click(within(row("Bình")).getByRole("button", { name: "Cho làm Chủ: Bình" }));
     expect(posts()).toHaveLength(0);
     await user.click(await screen.findByRole("button", { name: "Cho làm Chủ" }));
     await waitFor(() => expect(posts()).toEqual([["/admin/users/2/role", { role: "OWNER" }]]));
@@ -186,7 +186,7 @@ describe("UserList", () => {
       account({ id: 2, displayName: "Bình", email: "binh@example.com", role: "OWNER" }),
     ];
     const { unmount } = render(<UserList users={twoOwners} onChanged={vi.fn()} />);
-    await user.click(within(row("Bình")).getByRole("button", { name: "Thôi cho Bình làm Chủ" }));
+    await user.click(within(row("Bình")).getByRole("button", { name: "Thôi làm Chủ: Bình" }));
     expect(await screen.findByText(/Bình sẽ thành Người nhà/)).toBeInTheDocument();
     await user.click(await screen.findByRole("button", { name: "Thôi làm Chủ" }));
     await waitFor(() => expect(posts()).toEqual([["/admin/users/2/role", { role: "MEMBER" }]]));

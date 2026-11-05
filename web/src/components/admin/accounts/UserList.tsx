@@ -204,7 +204,7 @@ export function UserList({ users, onChanged }: Props) {
                   <Button
                     type="button"
                     variant="outline"
-                    aria-label={`Cho ${user.displayName} làm Chủ`}
+                    aria-label={`Cho làm Chủ: ${user.displayName}`}
                     disabled={busy}
                     onClick={() => ask(user, "promote", isMe)}
                   >
@@ -214,7 +214,7 @@ export function UserList({ users, onChanged }: Props) {
                   <Button
                     type="button"
                     variant="outline"
-                    aria-label={`Thôi cho ${user.displayName} làm Chủ`}
+                    aria-label={`Thôi làm Chủ: ${user.displayName}`}
                     disabled={busy}
                     onClick={() => ask(user, "demote", isMe)}
                   >
@@ -230,7 +230,7 @@ export function UserList({ users, onChanged }: Props) {
                     disabled={busy}
                     onClick={() => ask(user, "disable-totp", isMe)}
                   >
-                    Tắt 2 lớp
+                    Tắt xác thực 2 lớp
                   </Button>
                 ) : null}
               </div>
