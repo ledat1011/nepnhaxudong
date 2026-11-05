@@ -5,10 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
 import type { UserResponse } from "@/lib/admin/types";
 
-const { adminFetch, replace, pathname } = vi.hoisted(() => ({
+const { adminFetch, replace, pathname, search } = vi.hoisted(() => ({
   adminFetch: vi.fn(),
   replace: vi.fn(),
   pathname: { value: "/admin/anh" },
+  search: { value: "" },
 }));
 
 vi.mock("@/lib/admin/api", () => ({ adminFetch }));
@@ -16,7 +17,7 @@ vi.mock("@/lib/admin/csrf", () => ({ resetCsrfToken: vi.fn() }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
   usePathname: () => pathname.value,
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(search.value),
 }));
 
 import { AdminSessionProvider } from "@/lib/admin/session";
@@ -42,6 +43,7 @@ beforeEach(() => {
   adminFetch.mockReset();
   replace.mockReset();
   pathname.value = "/admin/anh";
+  search.value = "";
 });
 
 describe("AppShell", () => {
@@ -124,6 +126,16 @@ describe("AppShell", () => {
       expect(web).toHaveAttribute("href", "/vi#san-pham");
       expect(web).toHaveAttribute("target", "_blank");
       expect(web).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    });
+
+    it("goes back to Tổng quan when the page was opened from a to-do row", async () => {
+      pathname.value = "/admin/san-pham/3";
+      search.value = "o=product.description.en";
+      adminFetch.mockResolvedValue(user);
+      renderShell(<EditedItem name="Gạo nếp" publicHref={null} />);
+      const back = await screen.findByRole("link", { name: "Quay lại Tổng quan" });
+      expect(back).toHaveAttribute("href", "/admin");
+      expect(screen.getByRole("banner")).toHaveTextContent("Sản phẩm");
     });
 
     it("has no Xem trên web while the item is not on the public site", async () => {

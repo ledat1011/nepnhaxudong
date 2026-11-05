@@ -6,7 +6,7 @@ import { FIELD_PARAM, closedTab, fieldTarget, findField, type FieldTarget } from
 
 /** How long a screen may take to load its data before the search for the field stops. */
 const GIVE_UP_MS = 10_000;
-/** A dialog that just opened moves the focus to its first box; the field is focused after that. */
+/** A dialog that just opened takes the focus itself; the field is focused after that. */
 const SETTLE_MS = 150;
 /** How long the field keeps its extra ring, so the eye finds it (a button shows no focus ring after a tap). */
 const MARK_MS = 4_000;
