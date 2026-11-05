@@ -1,4 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <!-- Closed happy eyes, like ba-canh-lo, over the open dot eyes of the picture. Source pixels. -->
-  <path d="M467 322Q485 296 503 322M587 328Q605 302 623 328" fill="none" stroke="#4A2C1A" stroke-width="11" stroke-linecap="round"/>
+  <!-- Face edits so ba reads older and like ba-canh-lo (source pixels, before the mirror):
+       closed happy eyes over the dot eyes, a narrower jaw line (the round jaw is cleared in
+       ba-lai-may.json), smile lines, and silver hair at the side under the cap. -->
+  <g fill="none" stroke="#4A2C1A" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M467 322Q485 296 503 322M587 328Q605 302 623 328"/>
+    <path d="M431 312Q438 400 500 452Q548 478 612 468"/>
+    <path d="M478 366q-8 12 0 24M604 368q8 12 0 24" stroke-width="7"/>
+    <path d="M640 244H740V286Q716 286 704 300L690 318Q658 290 640 244Z" fill="#FBF7EE" stroke="none"/>
+    <path d="M640 246Q656 292 690 318" stroke-width="9"/>
+  </g>
 </svg>

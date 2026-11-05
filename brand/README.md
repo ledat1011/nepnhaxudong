@@ -14,7 +14,7 @@
 | `logo/mascot-logo.svg` | Mascot giản lược (ít hạt lúa hơn, hạt to hơn, nét dày hơn), cùng nhóm và `data-pivot` như mascot chi tiết; nguồn của `logo-mono.svg`. |
 | `logo/mascot-logo-head.svg` | Cả cái đầu của mascot giản lược (không bị bó lúa che), nguồn của `logo-icon.svg`. |
 | `story/people/*.svg` | 6 tư thế người cho các cảnh câu chuyện (`me-cay`, `nong-dan-cay`, `me-trao-tui`, `ba-lai-may`, `ba-canh-lo`, `anh2-be-bao`), trace từ ảnh Recraft đã duyệt bằng `tools/vectorize-pose.py`. Mỗi file `viewBox="0 0 256 256"`, đúng một nhóm `<g data-part="person">`, chân chạm đáy khung. `web/scripts/build-story.mjs` ghép chúng vào cảnh. |
-| `story/pose-fixes/` | Phần sửa tay của từng tư thế cho `vectorize-pose.py`: `<tu-the>.json` (lật ngang, đổi màu, xoá vùng) và hình vẽ tay đặt trên / dưới hình trace (`me-trao-tui-bag.svg`: túi 2 kg mảnh; `ba-lai-may-eyes.svg`: mắt cười nhắm). |
+| `story/pose-fixes/` | Phần sửa tay của từng tư thế cho `vectorize-pose.py`: `<tu-the>.json` (lật ngang, đổi màu, xoá vùng) và hình vẽ tay đặt trên / dưới hình trace (`me-trao-tui-bag.svg`: túi 2 kg mảnh; `ba-lai-may-face.svg`: mắt cười nhắm, cằm thon hơn, nếp cười, tóc bạc bên thái dương). |
 | `tokens/tokens.json` | Nguồn gốc màu, font, các cặp chữ / nền hợp lệ. |
 | `tokens/tokens.css` | Biến CSS sinh từ `tokens.json` (`--color-*`, `--font-*`). |
 | `fonts/` | Pacifico, Quicksand 400 / 500 / 700 (giấy phép OFL). |
@@ -65,7 +65,7 @@ trong `web/`.
 | `me-cay` | `me-cay-recraft-v1.png` | Lật ngang. |
 | `nong-dan-cay` | `nong-dan-cay-recraft-v1.png` | Lật ngang; áo và nón Vàng rơm, mặt / tai / tay / chân `da` (ảnh gốc dùng một màu cho cả hai); mạ Xanh mạ (tự động sẽ thành Vàng lúa); bóng quần Nâu áo. |
 | `me-trao-tui` | `me-trao-tui-recraft-v2.png` | Lật ngang; mặt và tay `da`, nón Vàng rơm; xoá túi dày của ảnh gốc, vẽ tay túi 2 kg mảnh (`me-trao-tui-bag.svg`) nằm dưới hai bàn tay. |
-| `ba-lai-may` | `ba-lai-may-recraft-v2.png` | Lật ngang; áo Xanh lá nhạt; vô lăng Nâu đất, lỗ giữa vô lăng trong suốt; mắt chấm thành mắt cười nhắm (`ba-lai-may-eyes.svg`) như `ba-canh-lo`. |
+| `ba-lai-may` | `ba-lai-may-recraft-v2.png` | Lật ngang; áo Xanh lá nhạt; vô lăng Nâu đất, lỗ giữa vô lăng trong suốt; mắt chấm thành mắt cười nhắm như `ba-canh-lo`; cằm tròn được xoá bớt và vẽ lại thon hơn; thêm nếp cười và tóc bạc bên thái dương dưới mũ (`ba-lai-may-face.svg`). |
 | `ba-canh-lo` | `ba-canh-lo-recraft-v1.png` | Lật ngang; mặt dưới vành mũ Nâu đất (tự động sẽ thành `toc`). |
 | `anh2-be-bao` | `anh2-be-bao-recraft-v2.png` | Lật ngang; quần Nâu đất (ảnh gốc màu đen như tóc); bao Vàng rơm, vân đan Vàng lúa; khe giữa hai chân trong suốt. |
 
