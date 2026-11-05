@@ -1,5 +1,7 @@
 # Cài đặt
 
+Đưa web lên internet (VPS, deploy, sao lưu, tên miền): xem `docs/deploy.md`. Chạy thử hệ thống production ở máy này (cần Docker): build 3 image như hướng dẫn ở đầu `infra/test/run-smoke.sh`, rồi chạy `bash infra/test/run-smoke.sh` và `bash infra/test/deploy-test.sh` trong Git Bash.
+
 ## Cài đặt một máy mới (Windows)
 1. Cài Git for Windows, Node 22, Claude Code (lệnh `claude`; ứng dụng Claude desktop không thêm lệnh này vào PATH), JDK 21, Docker Desktop hoặc Rancher Desktop (xem mục "Docker trên máy"), uv và Python 3 (Python 3 cần cho hai skill `state-diagram` và `call-chain`). Cài bằng `winget` được, ví dụ:
    ```bash

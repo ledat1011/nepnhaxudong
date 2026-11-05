@@ -9,5 +9,9 @@
 - Chủ dự án duyệt thiết kế phần D, gồm hai điểm khác spec: deploy qua GHCR (không dùng `docker save | ssh docker load`), chưa chạy Grafana Alloy; cảnh báo bằng UptimeRobot và healthchecks.io. Duyệt luôn: viết plan rồi làm và mở PR.
 
 ## Còn mở
+- Chủ dự án làm checklist `docs/deploy.md`: thuê VPS, key SSH, `setup.sh`, `init-env.sh`, GitHub Variables và Secrets, UptimeRobot, healthchecks.io, Backblaze B2; tên miền và Cloudflare sau cùng.
 
 ## Đã làm
+- Plan `docs/superpowers/plans/2026-11-05-phan-d-ha-tang.md`, quyết định `docs/decisions/0011-ha-tang-vps-nho.md`.
+- Image `api`, `web`, `caddy`; `infra/compose.prod.yml`; sao lưu restic và lịch systemd; script VPS; workflow `infra` (PR) và `deploy` (push `main`, bỏ qua khi chưa có biến `VPS_HOST`).
+- Đã chạy ở máy này (Docker Desktop): `run-smoke.sh` qua hết 10 bước kiểm tra; `deploy-test.sh` qua (bản hỏng tự quay lại bản trước). Bước sao lưu và khôi phục thử chỉ chạy trên CI, vì máy này không có restic.

@@ -1,10 +1,9 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-05 — máy `C:SERSADMINDESKTOP
-EPNHAXUDONG` (PH���N D, H��� T���NG)
+Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop\nepnhaxudong` (phần D, hạ tầng)
 
 ## Giai đoạn hiện tại
-`main` (`addcdd3`) đã có đủ phần B: API (B1), web công khai (B2), trang quản trị (B3, PR #11), hiệu ứng GSAP (B4), logo và mascot (phần A), popup Zalo và thanh đang tải (PR #12), 10 việc cải tiến trang quản trị (quyết định `0008` và `0010`, PR #14, #15, #17, #18, #20) và cảnh minh họa (PR #21). Không còn nhánh nào chờ merge. Việc tiếp theo: rà trang công khai bằng các skill giao diện, các việc sau của cảnh minh họa, rồi phần D (hạ tầng).
+`main` (`addcdd3`) đã có đủ phần B: API (B1), web công khai (B2), trang quản trị (B3, PR #11), hiệu ứng GSAP (B4), logo và mascot (phần A), popup Zalo và thanh đang tải (PR #12), 10 việc cải tiến trang quản trị (quyết định `0008` và `0010`, PR #14, #15, #17, #18, #20) và cảnh minh họa (PR #21). Phần D (hạ tầng): code, test và tài liệu nằm ở nhánh `feat/phan-d-ha-tang` (plan `docs/superpowers/plans/2026-11-05-phan-d-ha-tang.md`, quyết định `0011`). Web chưa lên VPS: còn chờ chủ dự án làm checklist `docs/deploy.md`. Việc tiếp theo khác: rà trang công khai bằng các skill giao diện, và các việc sau của cảnh minh họa.
 
 ## Đã xong
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
@@ -84,4 +83,4 @@ Các việc phát sinh khi làm B4 (hiệu ứng):
 - Việc sau này: bỏ bản mascot thứ hai trong dữ liệu RSC. Nếu LCP hoặc TBT xấu đi, cân nhắc dùng `brand/logo/mascot-logo.svg`.
 
 ## Quyết định gần nhất
-- `docs/decisions/0010-viec-tiep-theo-admin.md`, `0009-taste-bo-cuc.md`, `0008-uu-tien-sua-admin.md`
+- `docs/decisions/0011-ha-tang-vps-nho.md`, `0010-viec-tiep-theo-admin.md`, `0009-taste-bo-cuc.md`, `0008-uu-tien-sua-admin.md`
