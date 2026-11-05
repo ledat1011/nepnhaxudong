@@ -85,7 +85,8 @@ test("the owner adds a family member, who signs in on a phone and sets a passwor
 });
 
 test("a family member sees no account management, and the API refuses it with 403", async () => {
-  await member.getByRole("button", { name: "Thêm" }).click();
+  // The bottom menu's "Thêm", not other buttons whose names start with "Thêm" (for example "Thêm người nhà").
+  await member.getByRole("navigation", { name: "Menu chính" }).getByRole("button", { name: "Thêm", exact: true }).click();
   const sheet = member.getByRole("dialog", { name: "Thêm" });
   await expect(sheet.getByRole("link", { name: "Bảo mật" })).toBeVisible();
   await expect(sheet.getByRole("link", { name: "Tài khoản" })).toHaveCount(0);
