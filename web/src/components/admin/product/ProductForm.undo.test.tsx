@@ -20,6 +20,7 @@ const product: ProductAdminDto = {
   id: 7,
   sortOrder: 3,
   showPrice: false,
+  visible: true,
   name: { vi: "Gạo nếp", en: null },
   description: { vi: null, en: null },
   features: { vi: ["Thơm"], en: [] },

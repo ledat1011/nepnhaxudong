@@ -86,6 +86,8 @@ class DevSeedTest {
     assertThat(count("packaging")).isEqualTo(1);
     assertThat(jdbc.queryForObject("select weight_grams from packaging", Integer.class))
         .isEqualTo(2000);
+    // The sample product is on the sample website: "Hiện trên web" is on.
+    assertThat(count("product where visible")).isEqualTo(1);
     assertThat(count("media")).isZero();
     assertThat(count("product_media")).isZero();
     assertThat(count("timeline_event where media_id is not null")).isZero();

@@ -68,7 +68,7 @@ public class ProductService {
 
   @Transactional
   public ProductAdminDto update(long id, ProductRequest request) {
-    var product = find(id);
+    var product = findForWrite(id);
     validate(request);
     var before = ProductAdminDto.from(product);
     apply(product, request);
@@ -80,11 +80,57 @@ public class ProductService {
 
   @Transactional
   public void delete(long id) {
-    var product = find(id);
+    var product = findForWrite(id);
     var before = ProductAdminDto.from(product);
     products.delete(product);
     audit.record(AUDIT_TYPE, id, AuditAction.DELETE, before, null);
     events.publishEvent(ContentChangedEvent.home());
+  }
+
+  /**
+   * Turns "Hiện trên web" on, so the product appears on the public website. A product that is
+   * already shown stays as it is, with no audit line and no refresh of the website.
+   */
+  @Transactional
+  public ProductAdminDto show(long id) {
+    return changeVisibility(id, true);
+  }
+
+  /** Turns "Hiện trên web" off. A hidden product stays as it is, with no audit line. */
+  @Transactional
+  public ProductAdminDto hide(long id) {
+    return changeVisibility(id, false);
+  }
+
+  /**
+   * The row is locked first, so two requests at the same moment run one after the other: the
+   * second one sees the value of the first and changes nothing.
+   */
+  private ProductAdminDto changeVisibility(long id, boolean visible) {
+    var product = findForWrite(id);
+    var before = ProductAdminDto.from(product);
+    if (product.isVisible() == visible) {
+      return before;
+    }
+    writeVisible(product, visible);
+    product.touch(clock.instant());
+    var after = ProductAdminDto.from(product);
+    audit.record(AUDIT_TYPE, id, AuditAction.UPDATE, before, after);
+    events.publishEvent(ContentChangedEvent.home());
+    return after;
+  }
+
+  /** Stores "Hiện trên web" and keeps the entity in memory equal to the row. */
+  void writeVisible(Product product, boolean visible) {
+    products.writeVisible(product.getId(), visible);
+    product.setVisible(visible);
+  }
+
+  /** The product with its row locked until the transaction ends (see the repository). */
+  private Product findForWrite(long id) {
+    return products
+        .findByIdForUpdate(id)
+        .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm."));
   }
 
   private Product find(long id) {

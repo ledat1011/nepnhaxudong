@@ -15,6 +15,12 @@ describe("SaveBar", () => {
     expect(screen.getByRole("button", { name: "Đang lưu…" })).toBeDisabled();
   });
 
+  it("can wait for another write without saying it saves", () => {
+    render(<SaveBar dirty pending={false} waiting onSave={() => {}} onDiscard={() => {}} />);
+    expect(screen.getByRole("button", { name: "Lưu" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Bỏ thay đổi" })).toBeDisabled();
+  });
+
   it("calls onSave", async () => {
     const onSave = vi.fn();
     const events = userEvent.setup();

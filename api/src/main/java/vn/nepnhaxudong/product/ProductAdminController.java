@@ -40,7 +40,10 @@ public class ProductAdminController {
     return service.create(body);
   }
 
-  /** Replaces the whole product, including its pack sizes and images. */
+  /**
+   * Replaces the whole product, including its pack sizes and images. "Hiện trên web" is not part
+   * of the body: it changes only through show and hide.
+   */
   @PutMapping("/{id}")
   public ProductAdminDto update(@PathVariable long id, @Valid @RequestBody ProductRequest body) {
     return service.update(id, body);
@@ -50,5 +53,17 @@ public class ProductAdminController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable long id) {
     service.delete(id);
+  }
+
+  /** Turns "Hiện trên web" on. Answers 200 with the product, also when it was already shown. */
+  @PostMapping("/{id}/show")
+  public ProductAdminDto show(@PathVariable long id) {
+    return service.show(id);
+  }
+
+  /** Turns "Hiện trên web" off. Answers 200 with the product, also when it was already hidden. */
+  @PostMapping("/{id}/hide")
+  public ProductAdminDto hide(@PathVariable long id) {
+    return service.hide(id);
   }
 }

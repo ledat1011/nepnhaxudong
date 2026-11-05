@@ -138,7 +138,7 @@ class PublicApiTest extends AuthTestSupport {
   @Test
   void homeHasExactlyTheFieldsOfTheWebTypes() {
     long imageId = newMedia("a.webp");
-    products.create(
+    shownProduct(
         productRequest(
             "Gạo nếp",
             "Sticky rice",
@@ -217,7 +217,7 @@ class PublicApiTest extends AuthTestSupport {
 
   @Test
   void englishHomeFallsBackToVietnameseWhenThereIsNoEnglishText() {
-    products.create(
+    shownProduct(
         new ProductRequest(
             0,
             false,
@@ -265,7 +265,7 @@ class PublicApiTest extends AuthTestSupport {
 
   @Test
   void englishHomeUsesTheEnglishTextAndVietnameseHomeKeepsVietnamese() {
-    products.create(productRequest("Gạo nếp", "Sticky rice", false, List.of(), List.of()));
+    shownProduct(productRequest("Gạo nếp", "Sticky rice", false, List.of(), List.of()));
     timeline.create(
         new TimelineEventRequest(
             2000,
@@ -296,14 +296,14 @@ class PublicApiTest extends AuthTestSupport {
 
   @Test
   void priceIsNullWhenShowPriceIsFalseAndShownWhenItIsTrue() {
-    products.create(
+    shownProduct(
         productRequest(
             "Giá ẩn",
             "Hidden",
             false,
             List.of(new PackagingDto(1000, 50000L, null), new PackagingDto(2000, null, null)),
             List.of()));
-    products.create(
+    shownProduct(
         productRequest(
             "Giá hiện",
             "Shown",
@@ -342,7 +342,7 @@ class PublicApiTest extends AuthTestSupport {
   void productImagesAreInOrderAndAltFollowsTheLanguage() {
     long one = newMedia("one.webp");
     long two = newMedia("two.webp");
-    products.create(productRequest("A", "A en", false, List.of(), List.of(two, one)));
+    shownProduct(productRequest("A", "A en", false, List.of(), List.of(two, one)));
 
     JsonNode vi = ApiClient.json(newClient().get("/public/vi/home")).path("products").get(0);
     JsonNode en = ApiClient.json(newClient().get("/public/en/home")).path("products").get(0);
@@ -711,19 +711,24 @@ class PublicApiTest extends AuthTestSupport {
         mediaIds);
   }
 
+  /** Creates the product and turns "Hiện trên web" on: a new product is hidden. */
+  private long shownProduct(ProductRequest request) {
+    long id = products.create(request).id();
+    products.show(id);
+    return id;
+  }
+
   private long productWithOrder(String nameVi, int sortOrder) {
-    return products
-        .create(
-            new ProductRequest(
-                sortOrder,
-                false,
-                new LocalizedText(nameVi, null),
-                null,
-                new LocalizedList(List.of("Đặc điểm"), null),
-                null,
-                List.of(),
-                List.of()))
-        .id();
+    return shownProduct(
+        new ProductRequest(
+            sortOrder,
+            false,
+            new LocalizedText(nameVi, null),
+            null,
+            new LocalizedList(List.of("Đặc điểm"), null),
+            null,
+            List.of(),
+            List.of()));
   }
 
   private long publishedStory(String slugVi, String titleVi, String slugEn, String titleEn) {

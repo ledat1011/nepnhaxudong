@@ -27,6 +27,14 @@ test("the dashboard has no serious accessibility problem", async ({ page }) => {
   expect(await seriousViolations(page)).toEqual([]);
 });
 
+test("the product list with a hidden product has no serious accessibility problem", async ({ page }) => {
+  await page.goto(ADMIN_ROUTES.products);
+  // admin-flow.spec.ts left one product hidden: its row has the "Đang ẩn" badge and the switch is off.
+  await expect(page.getByText("Đang ẩn").first()).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  expect(await seriousViolations(page)).toEqual([]);
+});
+
 test("the story form has no serious accessibility problem", async ({ page }) => {
   await page.goto(`${ADMIN_ROUTES.stories}/moi`);
   await expect(page.locator(".ProseMirror").first()).toBeVisible();
