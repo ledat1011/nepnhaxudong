@@ -6,10 +6,10 @@ import {
   setupRiceStory,
   STORY_INTRO_LINE,
   STORY_LOAD_AHEAD,
-  STORY_LOOP_UPDATES_PER_S,
   STORY_ROAD_LINE,
   throttledLoop,
 } from "./rice-story";
+import { LOOP_UPDATES_PER_S } from "../throttle";
 
 const mocks = vi.hoisted(() => ({
   inlineSvg: vi.fn(),
@@ -446,7 +446,7 @@ describe("setupRiceStory", () => {
 });
 
 describe("throttledLoop", () => {
-  it(`steps the loop at most ${STORY_LOOP_UPDATES_PER_S} times a second, only while it plays`, () => {
+  it(`steps the loop at most ${LOOP_UPDATES_PER_S} times a second, only while it plays`, () => {
     let time = 0;
     const loop = { totalTime: vi.fn((t?: number) => (t === undefined ? time : ((time = t), loop))) };
     const ticker = { add: vi.fn(), remove: vi.fn() };

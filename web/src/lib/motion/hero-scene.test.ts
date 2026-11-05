@@ -5,13 +5,13 @@ import {
   GUST_MAX_DEG,
   GUST_SWINGS,
   HERO_CYCLE_S,
-  HERO_UPDATES_PER_S,
   SUN_BOBS,
   cloudOffset,
   heroFrame,
   heroFrameDue,
   setupHeroScene,
 } from "./hero-scene";
+import { LOOP_UPDATES_PER_S } from "./throttle";
 
 const STARTS = [0.08, 0.42, 0.74];
 const GUSTS = 5;
@@ -78,7 +78,7 @@ describe("heroFrame", () => {
 
 describe("heroFrameDue", () => {
   it("draws about 30 frames per second of loop time", () => {
-    expect(HERO_UPDATES_PER_S).toBe(30);
+    expect(LOOP_UPDATES_PER_S).toBe(30);
     expect(heroFrameDue(10, null)).toBe(true);
     expect(heroFrameDue(10, 10)).toBe(false);
     expect(heroFrameDue(10 + 1 / 60, 10)).toBe(false);
