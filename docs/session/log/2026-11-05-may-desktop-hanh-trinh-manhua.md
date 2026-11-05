@@ -26,6 +26,7 @@
 - Nối tranh vào web và làm chuyển động: làm sau.
 
 ## Đã làm
+- Chủ dự án cho phép mở tunnel và tắt server cũ cổng 3300. Link xem thử mới: https://gods-corresponding-opened-solid.trycloudflare.com/vi (bản build từ PR #34, dữ liệu mẫu); đã mở ở 375 px qua link, 8 ảnh tải đủ, không tràn ngang.
 - Nút thứ hai ở hero đổi thành "Chuyện hạt nếp" (tiếng Anh "A grain's story"), trỏ tới `#tu-hat-lua`, luôn hiện. Sửa lỗi bấm lại link cùng `#`: Next.js coi đó là không đổi địa chỉ nên không cuộn; thêm `SectionLink` tự cuộn tới khối trong đúng trường hợp đó (menu và nút hero).
 - Web dùng 8 bản phác (WebP 1200 × 675), thêm mục menu "Quy trình" tới `#tu-hat-lua`, proxy cho qua `/story/*.webp`; PR #34. Repo không cho bật auto-merge, nên merge tay khi CI đạt. Mở Cloudflare tunnel bị chặn bởi bộ lọc quyền của Claude: chủ dự án tự mở tunnel hoặc cho phép.
 - Vẽ 9 tranh (8 bước, bước 2 có ngày và đêm), vẽ lại tranh gặt một lần vì tranh đầu có chữ "BA", "ANH HAI" và chữ trên máy gặt. Tổng 10 ảnh Pro, khoảng 1,35 USD.
