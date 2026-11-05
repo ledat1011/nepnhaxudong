@@ -136,7 +136,7 @@ Biến môi trường (mẫu ở `api/.env.example`). Không ghi mật khẩu th
 | Biến | Ý nghĩa |
 | --- | --- |
 | `DB_URL`, `DB_USER`, `DB_PASSWORD` | Kết nối Postgres. Profile `dev` đã có mặc định cho local. |
-| `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD` | Admin đầu tiên. API chỉ tạo tài khoản này khi bảng `app_user` còn trống. Mật khẩu tạm này **bắt buộc đổi ở lần đăng nhập đầu**; chưa đổi thì mọi đường dẫn `/api/admin/**` trả 403. |
+| `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD` | Admin đầu tiên. API chỉ tạo tài khoản này khi bảng `app_user` còn trống. Tài khoản này có vai trò **Chủ** (quản lý tài khoản của cả nhà); tài khoản thêm sau là **Người nhà** cho đến khi Chủ đổi vai trò. Mật khẩu tạm này **bắt buộc đổi ở lần đăng nhập đầu**; chưa đổi thì mọi đường dẫn `/api/admin/**` trả 403. |
 | `MEDIA_DIR` | Thư mục chứa ảnh tải lên (mặc định `./data/media`). |
 | `WEB_BASE_URL`, `REVALIDATE_SECRET` | Địa chỉ web và khoá chung với web. Sau khi nội dung đổi, API gọi web để làm mới trang. Để trống ở local khi chưa chạy web: API bỏ qua các lệnh gọi này. |
 
