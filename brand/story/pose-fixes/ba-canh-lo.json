@@ -2,7 +2,13 @@
   "mirror": true,
   "map": {"#35231C": "nau-dat"},
   "recolor": [
-    {"to": "da", "box": [450, 198, 492, 224], "from": "nau-dat"}
+    {"to": "da", "box": [450, 198, 492, 224], "from": "nau-dat"},
+    {"to": "da", "at": [470, 182]},
+    {"to": "da", "polygon": [[458, 246], [498, 246], [498, 282], [470, 282], [458, 290]], "from": "nau-dat"},
+    {"to": "toc", "at": [620, 200]},
+    {"to": "trang-gao", "polygon": [[520, 148], [584, 148], [578, 200], [548, 216]], "from": "toc"},
+    {"to": "trang-gao", "polygon": [[598, 158], [620, 158], [642, 236], [628, 266]], "from": "toc"},
+    {"to": "trang-gao", "polygon": [[570, 244], [626, 244], [612, 284], [570, 284]], "from": "toc"}
   ],
   "overlay": "ba-canh-lo-face.svg"
 }

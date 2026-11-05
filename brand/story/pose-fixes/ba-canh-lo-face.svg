@@ -1,6 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <!-- Squinting from the heat of the furnace, with a drop of sweat on the temple (source pixels,
-       before the mirror). The old closed eye is cleared in ba-canh-lo.json. -->
-  <path d="M454 214Q470 207 487 211M491 216L500 221" fill="none" stroke="#4A2C1A" stroke-width="9" stroke-linecap="round"/>
-  <path d="M516 166Q530 186 530 196A14 14 0 0 1 502 196Q502 186 516 166Z" fill="#E9F2F1" stroke="#4A2C1A" stroke-width="6" stroke-linejoin="round"/>
+  <!-- Squinting from the heat of the furnace (source pixels, before the mirror): the brow pulled down
+       toward the nose, the eye pressed to a narrow slit with two creases behind it, a small tight mouth,
+       and a drop of sweat on the temple. The old brow, closed eye and smile are painted over with skin in
+       ba-canh-lo.json. Eye and brow strokes match ba-lai-may-face.svg, so both read as the same man. -->
+  <g fill="none" stroke="#4A2C1A" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M450 201Q466 189 490 187" stroke-width="11"/>
+    <path d="M452 214Q471 206 491 211Q472 219 452 214Z" fill="#4A2C1A" stroke-width="6"/>
+    <path d="M498 208L506 205M498 218L506 221" stroke-width="6"/>
+    <path d="M449 273Q461 270 474 274" stroke-width="9"/>
+  </g>
+  <path d="M523 158Q536 177 536 187A13 13 0 0 1 510 187Q510 177 523 158Z" fill="#E9F2F1" stroke="#4A2C1A" stroke-width="6" stroke-linejoin="round"/>
 </svg>
