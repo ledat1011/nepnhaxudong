@@ -51,7 +51,7 @@ function Box({ id, label, value, onChange, multiline, maxLength, required, error
           {required ? <RequiredMark /> : null}
         </Label>
         {maxLength !== undefined ? (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {text.length}/{maxLength}
           </span>
         ) : null}

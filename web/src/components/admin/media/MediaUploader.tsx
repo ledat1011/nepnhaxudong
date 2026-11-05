@@ -478,7 +478,7 @@ function UploadItem({ item, copyCount, onAlt, onLeave, onTouch, onUpload, onCopy
             className="size-20 shrink-0 rounded-md border bg-muted object-cover"
           />
         ) : (
-          <span className="flex size-20 shrink-0 flex-col items-center justify-center gap-1 rounded-md border bg-muted p-1 text-center text-xs text-muted-foreground">
+          <span className="flex size-20 shrink-0 flex-col items-center justify-center gap-1 rounded-md border bg-muted p-1 text-center text-[13px] leading-tight text-muted-foreground">
             <ImageOff aria-hidden="true" className="size-5" />
             {item.phase === "preparing" ? "Đang chuẩn bị" : "Không xem trước được"}
           </span>

@@ -89,6 +89,10 @@
   input[type="radio"],
   input[type="file"] {
     cursor: pointer;
+    /* A tap acts at once (no wait for a double-tap zoom); pinch zoom still works. */
+    touch-action: manipulation;
+    /* The grey flash of the phone browser is replaced by each control's own active colour. */
+    -webkit-tap-highlight-color: transparent;
   }
   :disabled,
   [aria-disabled="true"] {
