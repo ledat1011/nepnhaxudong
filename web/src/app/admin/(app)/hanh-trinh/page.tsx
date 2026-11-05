@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { TimelineEventForm } from "@/components/admin/timeline/TimelineEventForm";
 import { TimelineList } from "@/components/admin/timeline/TimelineList";
@@ -8,6 +9,7 @@ import { Button } from "@/components/admin/ui/button";
 import { adminFetch } from "@/lib/admin/api";
 import { AdminApiError, GENERIC_ERROR_MESSAGE } from "@/lib/admin/errors";
 import { useAdminSession } from "@/lib/admin/session";
+import { sortedByYear, yearOrderBreak } from "@/lib/admin/timeline-order";
 import type { TimelineEventAdminDto } from "@/lib/admin/types";
 import { withReLogin } from "@/lib/admin/with-relogin";
 
@@ -15,6 +17,32 @@ import { withReLogin } from "@/lib/admin/with-relogin";
 function linkedId(): number | null {
   const value = Number(new URLSearchParams(window.location.search).get("sua"));
   return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+/**
+ * The events in year order, saved with PUT /admin/timeline/order. Same-year events keep their order. If the save
+ * fails the events stay as loaded: the list then shows the warning and its "Xếp theo năm" button.
+ */
+async function inYearOrder(
+  events: TimelineEventAdminDto[],
+  requireReLogin: () => Promise<void>,
+): Promise<TimelineEventAdminDto[]> {
+  if (yearOrderBreak(events) === null) return events;
+  const sorted = sortedByYear(events);
+  try {
+    await withReLogin(
+      () =>
+        adminFetch<void>("/admin/timeline/order", {
+          method: "PUT",
+          body: { ids: sorted.map((item) => item.id) },
+        }),
+      requireReLogin,
+    );
+    toast.success("Đã xếp mốc theo năm.");
+    return sorted;
+  } catch {
+    return events;
+  }
 }
 
 /** What the dialog shows: nothing, a new event, or one event to edit. */
@@ -32,30 +60,36 @@ export default function TimelinePage() {
   const [linkGone, setLinkGone] = useState(false);
   // True while a GET runs: the list on screen may be out of date.
   const [reloading, setReloading] = useState(false);
+  // True after a save: the next load puts the events in year order, so a new 1980 does not stay after 1990.
+  const sortAfterSave = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- marks the reload as started
     setReloading(true);
-    withReLogin(() => adminFetch<TimelineEventAdminDto[]>("/admin/timeline"), requireReLogin).then(
-      (value) => {
-        if (cancelled) return;
-        setEvents(value);
-        if (!linkHandled.current) {
-          linkHandled.current = true;
-          const id = linkedId();
-          const linked = value.find((item) => item.id === id);
-          if (linked !== undefined) setEditing(linked);
-          else if (id !== null) setLinkGone(true);
-        }
-        setReloading(false);
-      },
-      (failure: unknown) => {
-        if (cancelled) return;
-        setError(failure instanceof AdminApiError ? failure : new AdminApiError(0, GENERIC_ERROR_MESSAGE));
-        setReloading(false);
-      },
-    );
+    const sortNow = sortAfterSave.current;
+    sortAfterSave.current = false;
+    withReLogin(() => adminFetch<TimelineEventAdminDto[]>("/admin/timeline"), requireReLogin)
+      .then((value) => (sortNow ? inYearOrder(value, requireReLogin) : value))
+      .then(
+        (value) => {
+          if (cancelled) return;
+          setEvents(value);
+          if (!linkHandled.current) {
+            linkHandled.current = true;
+            const id = linkedId();
+            const linked = value.find((item) => item.id === id);
+            if (linked !== undefined) setEditing(linked);
+            else if (id !== null) setLinkGone(true);
+          }
+          setReloading(false);
+        },
+        (failure: unknown) => {
+          if (cancelled) return;
+          setError(failure instanceof AdminApiError ? failure : new AdminApiError(0, GENERIC_ERROR_MESSAGE));
+          setReloading(false);
+        },
+      );
     return () => {
       cancelled = true;
     };
@@ -92,13 +126,16 @@ export default function TimelinePage() {
       {events !== null && events.length === 0 ? (
         <p className="py-6 text-center text-muted-foreground">Chưa có mốc nào.</p>
       ) : null}
-      {events !== null && events.length > 0 ? <TimelineList events={events} refreshing={reloading || error !== null} onSelect={setEditing} /> : null}
+      {events !== null && events.length > 0 ? (
+        <TimelineList events={events} refreshing={reloading || error !== null} onSelect={setEditing} />
+      ) : null}
       {editing !== null ? (
         <TimelineEventForm
           key={editing === "new" ? "new" : editing.id}
           initial={editing === "new" ? undefined : editing}
           onClose={() => setEditing(null)}
           onChanged={() => {
+            sortAfterSave.current = true;
             setEditing(null);
             setAttempt((n) => n + 1);
           }}

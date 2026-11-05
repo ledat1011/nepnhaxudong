@@ -152,4 +152,27 @@ describe("TimelineList", () => {
     await userEvent.click(screen.getByRole("button", { name: "Đưa mốc Mốc 1 xuống" }));
     expect(screen.getByRole("button", { name: /^2000/ })).toBeDisabled();
   });
+  it("says nothing about the order while it follows the years", () => {
+    render(<TimelineList events={EVENTS} onSelect={vi.fn()} />);
+    expect(screen.queryByText(/Thứ tự chưa theo năm/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Xếp theo năm" })).toBeNull();
+  });
+
+  it("warns when a later year stands before an earlier one, and Xếp theo năm saves the year order", async () => {
+    render(<TimelineList events={[event(1, 1990), event(3, 2010), event(2, 2000)]} onSelect={vi.fn()} />);
+    expect(screen.getByText(/Thứ tự chưa theo năm/)).toHaveTextContent(
+      "Thứ tự chưa theo năm: mốc 2010 (Mốc 3) đang đứng trước mốc 2000 (Mốc 2). Trang web hiện đúng thứ tự này.",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Xếp theo năm" }));
+    await waitFor(() => expect(orderCalls()).toHaveLength(1));
+    expect(orderCalls()[0][1]).toEqual({ method: "PUT", body: { ids: [1, 2, 3] } });
+    expect(shownOrder()).toEqual(["Mốc 1", "Mốc 2", "Mốc 3"]);
+    expect(screen.queryByText(/Thứ tự chưa theo năm/)).toBeNull();
+  });
+
+  it("warns at once when a move breaks the year order", async () => {
+    render(<TimelineList events={EVENTS} onSelect={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: "Đưa mốc Mốc 1 xuống" }));
+    expect(await screen.findByText(/Thứ tự chưa theo năm/)).toHaveTextContent("mốc 2000 (Mốc 2) đang đứng trước mốc 1990 (Mốc 1)");
+  });
 });

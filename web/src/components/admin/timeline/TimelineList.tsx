@@ -18,6 +18,7 @@ import { MissingEnBadge } from "@/components/admin/form/MissingEnBadge";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { Button } from "@/components/admin/ui/button";
 import { adminFetch } from "@/lib/admin/api";
+import { sortedByYear, yearOrderBreak } from "@/lib/admin/timeline-order";
 import type { TimelineEventAdminDto } from "@/lib/admin/types";
 import { useSave } from "@/lib/admin/use-save";
 
@@ -194,9 +195,22 @@ export function TimelineList({ events, refreshing = false, onSelect }: Props) {
     void apply(arrayMove(shown, from, to));
   }
 
+  const orderBreak = yearOrderBreak(shown);
+
   return (
     <div className="flex flex-col gap-3">
       <ProblemMessage error={reorder.error} />
+      {orderBreak !== null ? (
+        <div role="status" className="flex flex-col gap-2 rounded-md border border-destructive/50 bg-card p-3">
+          <p className="text-sm font-medium">
+            Thứ tự chưa theo năm: mốc {orderBreak.earlier.year} ({eventName(orderBreak.earlier)}) đang đứng trước mốc{" "}
+            {orderBreak.later.year} ({eventName(orderBreak.later)}). Trang web hiện đúng thứ tự này.
+          </p>
+          <Button type="button" variant="outline" className="self-start" disabled={busy} onClick={() => void apply(sortedByYear(shown))}>
+            Xếp theo năm
+          </Button>
+        </div>
+      ) : null}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
