@@ -28,8 +28,9 @@ const CONTROL_KEYS = new Set([
 
 /** Puts the real scene file into the page and returns its svg. */
 function mount(slug: SceneSlug): SVGSVGElement {
-  const scene = STORY_SCENES.find((s) => s.slug === slug);
-  const text = readFileSync(`public${scene?.src}`, "utf8");
+  // The layered SVG scene, kept for motion while the page shows the WebP sketches (decision 0014).
+  const index = STORY_SCENES.findIndex((s) => s.slug === slug);
+  const text = readFileSync(`public/story/canh-${index + 1}-${slug}.svg`, "utf8");
   const doc = new DOMParser().parseFromString(text, "image/svg+xml");
   const svg = document.importNode(doc.documentElement, true) as unknown as SVGSVGElement;
   document.body.append(svg);

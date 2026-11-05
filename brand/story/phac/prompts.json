@@ -1,0 +1,108 @@
+[
+  {
+    "name": "2-ngay",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-2-nang-mua-gio-1600.png",
+      "me-trao-tui-512.png",
+      "ba-canh-lo-512.png"
+    ],
+    "prompt": "Edit the first attached image (a rice field scene with sun, rain cloud and wind). Changes:\n1. Make the rice field THICKER and denser: more rice plants, fuller clumps, filling the whole width of the field, still the same simple flat style of rice plants.\n2. Add BA and ME (father and mother) standing in the field among the rice, waist-deep in the rice, on the left half of the field, caring for the rice: ME (like the woman in the second attached picture: conical non la hat, brown blouse) gently holds a rice head and looks at the grains; BA stands next to her, checking a rice plant. Both are smiling softly. They are small compared to the scene, like the people in the other story scenes.\nBA (the father) must look like this: a thin Vietnamese man about 65 to 70 years old, short grey-white hair (mostly grey, a little dark at the back), a thin face with high cheekbones and a kind, quiet smile, slim build. He wears a plain dark grey button-up shirt with rolled sleeves and light khaki trousers, sandals. No cap.\n\nKeep the sun, the cloud with rain drops and the wind lines in the sky.\nKEEP THE STYLE EXACTLY like the attached scene: simple, rustic flat cartoon illustration, flat colour fills, even dark-brown outlines, no shading, no gradients, no texture, no extra detail. Same colours, same sky, same ground bands, same framing, keep the important content inside a central 2:1 band. People drawn in the same simple flat style as the attached character pictures. No text, no letters, no watermark.\n",
+    "followUpEdit": "Edit the first attached image.\n1. Change BA (the father, the man in the grey shirt): make his face a little FULLER and rounder (fuller cheeks, softer jaw), fewer wrinkles (only light smile lines), so he looks about 62 to 65, healthy and kind. His hair: short SALT-AND-PEPPER hair, mostly dark black with grey only at the temples and a few grey strands, NOT white. Keep his grey shirt, khaki trousers, sandals, pose and size.\n2. Change ME (the woman in the conical hat): she must be an ADULT woman about 55, not a child: adult body height about the same as BA, adult proportions, a round kind motherly face, like the woman in the second attached picture (conical non la hat, brown blouse, straight black shoulder-length hair). Keep her pose holding a rice head.\nKeep everything else exactly the same: the same simple rustic flat cartoon style (flat colours, even dark-brown outlines, no shading, no gradients, no texture), the same composition, colours, sky, ground and objects. No text, no letters, no watermark.",
+    "inkLineEdit": "Edit the first attached image.\n1. RICE FIELD: make the field MUCH THICKER: a dense sea of ripe golden sticky rice that fills the whole field from left to right and from the far edge to the front, plants packed tightly together and overlapping in several rows, heavy grain heads bending, no empty ground visible between the plants. BA and ME stand waist-deep inside this dense rice.\n2. ME (the woman in the conical hat) must be an ADULT woman about 55, NOT a child: redraw her completely with adult proportions; the top of her head (under the hat) is level with the forehead of BA; a round kind motherly face, straight black shoulder-length hair, conical non la hat, brown blouse, like the woman in the second attached picture. She holds a rice head and looks at it.\n3. Keep BA (the man in the grey shirt) as he is: salt-and-pepper hair, fuller face, grey shirt.\nKeep the sun, the rain cloud and the wind lines.\nNEW LINE STYLE (apply to the whole picture): keep FLAT colour fills (one flat colour per shape, no gradients, no soft shading on objects or people), but redraw every outline as expressive Chinese manhua ink-brush linework: dark brown-black ink lines that swell and thin with brush pressure, confident strokes, dry-brush broken ends, slightly rough and hand-made, thicker on outer silhouettes and thinner on inner details. A few bold solid ink shadow shapes (flat, hard-edged) are allowed under objects and in cloth folds. The sky may have a light grey ink-wash texture and a few small ink splatters at the edges. Keep the same simple, rustic composition and the same colours. No text, no letters, no watermark.\n"
+  },
+  {
+    "name": "4-say",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-4-say-1600.png",
+      "ba-canh-lo-512.png"
+    ],
+    "prompt": "Edit the first attached image (drying paddy at home: fan, brick coal furnace, drying bed under a roof). Changes:\n1. Make the FAN LOWER: shorten its wooden stand so the fan centre is about at the height of the middle of the furnace (about waist height of a man); the fan still blows into the furnace.\n2. Move BA: he now stands BEHIND the fan, on the left side of the scene, leaning forward and putting coal into the furnace with a small shovel. Make the furnace fire door on the side facing him so he can reach it. Remove the man who stood between the furnace and the drying bed.\nBA (the father) must look like this: a thin Vietnamese man about 65 to 70 years old, short grey-white hair (mostly grey, a little dark at the back), a thin face with high cheekbones and a kind, quiet smile, slim build. He wears a plain dark grey button-up shirt with rolled sleeves and light khaki trousers, sandals. No cap.\n\nKeep the furnace, the drying bed, the roof, the hot-air arrows and everything else the same.\nKEEP THE STYLE EXACTLY like the attached scene: simple, rustic flat cartoon illustration, flat colour fills, even dark-brown outlines, no shading, no gradients, no texture, no extra detail. Same colours, same sky, same ground bands, same framing, keep the important content inside a central 2:1 band. People drawn in the same simple flat style as the attached character pictures. No text, no letters, no watermark.\n",
+    "followUpEdit": "Edit the attached image.\n1. Change BA (the father, the man in the grey shirt): make his face a little FULLER and rounder (fuller cheeks, softer jaw), fewer wrinkles (only light smile lines), so he looks about 62 to 65, healthy and kind. His hair: short SALT-AND-PEPPER hair, mostly dark black with grey only at the temples and a few grey strands, NOT white. Keep his grey shirt, khaki trousers, sandals, pose and size.\nKeep everything else exactly the same: the same simple rustic flat cartoon style (flat colours, even dark-brown outlines, no shading, no gradients, no texture), the same composition, colours, sky, ground and objects. No text, no letters, no watermark.",
+    "inkLineEdit": "Edit the attached image. Keep the composition, the low fan, the furnace, the drying bed and BA shovelling coal behind the fan exactly as they are.\nNEW LINE STYLE (apply to the whole picture): keep FLAT colour fills (one flat colour per shape, no gradients, no soft shading on objects or people), but redraw every outline as expressive Chinese manhua ink-brush linework: dark brown-black ink lines that swell and thin with brush pressure, confident strokes, dry-brush broken ends, slightly rough and hand-made, thicker on outer silhouettes and thinner on inner details. A few bold solid ink shadow shapes (flat, hard-edged) are allowed under objects and in cloth folds. The sky may have a light grey ink-wash texture and a few small ink splatters at the edges. Keep the same simple, rustic composition and the same colours. No text, no letters, no watermark.\n"
+  },
+  {
+    "name": "1-cay-ma",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-1-cay-ma-1600.png",
+      "2-ngay-v3.png"
+    ],
+    "prompt": "Edit the first attached image (a simple flat scene: transplanting rice seedlings). Keep its composition, every object and every person in the same place, and its colours. Only change the drawing style.\nThe second attached image is the APPROVED STYLE REFERENCE: match its line style, ink-wash sky and flat colours exactly.\nPeople: keep every person, pose and position as in the first image. If the older man (BA, the father) appears: he is about 62 to 65, a slightly full kind face, short salt-and-pepper hair (mostly black, grey at the temples), keep his clothes as in the first image. If the younger man (ANH HAI, the son) appears: he is about 40, short black hair, a round face, a solid, slightly heavy build. The woman (ME, the mother) is an adult woman about 55 with a round kind face; keep her as an adult.\nNEW LINE STYLE (apply to the whole picture): keep FLAT colour fills (one flat colour per shape, no gradients, no soft shading on objects or people), but redraw every outline as expressive Chinese manhua ink-brush linework: dark brown-black ink lines that swell and thin with brush pressure, confident strokes, dry-brush broken ends, slightly rough and hand-made, thicker on outer silhouettes and thinner on inner details. A few bold solid ink shadow shapes (flat, hard-edged) are allowed under objects and in cloth folds. The sky may have a light grey ink-wash texture and a few small ink splatters at the edges. Keep the same simple, rustic composition and the same colours. No text, no letters, no watermark.\n"
+  },
+  {
+    "name": "3-gat",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-3-gat-1600.png",
+      "2-ngay-v3.png"
+    ],
+    "prompt": "Edit the first attached image (a simple flat scene: harvesting with a combine harvester and filling sacks). Keep its composition, every object and every person in the same place, and its colours. Only change the drawing style.\nThe second attached image is the APPROVED STYLE REFERENCE: match its line style, ink-wash sky and flat colours exactly.\nPeople: keep every person, pose and position as in the first image. If the older man (BA, the father) appears: he is about 62 to 65, a slightly full kind face, short salt-and-pepper hair (mostly black, grey at the temples), keep his clothes as in the first image. If the younger man (ANH HAI, the son) appears: he is about 40, short black hair, a round face, a solid, slightly heavy build. The woman (ME, the mother) is an adult woman about 55 with a round kind face; keep her as an adult.\nNEW LINE STYLE (apply to the whole picture): keep FLAT colour fills (one flat colour per shape, no gradients, no soft shading on objects or people), but redraw every outline as expressive Chinese manhua ink-brush linework: dark brown-black ink lines that swell and thin with brush pressure, confident strokes, dry-brush broken ends, slightly rough and hand-made, thicker on outer silhouettes and thinner on inner details. A few bold solid ink shadow shapes (flat, hard-edged) are allowed under objects and in cloth folds. The sky may have a light grey ink-wash texture and a few small ink splatters at the edges. Keep the same simple, rustic composition and the same colours. No text, no letters, no watermark.\n"
+  },
+  {
+    "name": "5-xay-xat",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-5-xay-xat-1600.png",
+      "2-ngay-v3.png"
+    ],
+    "prompt": "Edit the first attached image (a simple flat scene: milling the paddy into white rice). Keep its composition, every object and every person in the same place, and its colours. Only change the drawing style.\nThe second attached image is the APPROVED STYLE REFERENCE: match its line style, ink-wash sky and flat colours exactly.\nPeople: keep every person, pose and position as in the first image. If the older man (BA, the father) appears: he is about 62 to 65, a slightly full kind face, short salt-and-pepper hair (mostly black, grey at the temples), keep his clothes as in the first image. If the younger man (ANH HAI, the son) appears: he is about 40, short black hair, a round face, a solid, slightly heavy build. The woman (ME, the mother) is an adult woman about 55 with a round kind face; keep her as an adult.\nNEW LINE STYLE (apply to the whole picture): keep FLAT colour fills (one flat colour per shape, no gradients, no soft shading on objects or people), but redraw every outline as expressive Chinese manhua ink-brush linework: dark brown-black ink lines that swell and thin with brush pressure, confident strokes, dry-brush broken ends, slightly rough and hand-made, thicker on outer silhouettes and thinner on inner details. A few bold solid ink shadow shapes (flat, hard-edged) are allowed under objects and in cloth folds. The sky may have a light grey ink-wash texture and a few small ink splatters at the edges. Keep the same simple, rustic composition and the same colours. No text, no letters, no watermark.\n",
+    "followUpEdit": "Edit the attached image. Remove the older man (the father in the middle, holding a white sack) completely, and fill the space behind him with the same background (wall stripes, floor). Keep only the younger man on the left carrying a sack on his shoulder, and the milling machine.\nKeep everything else exactly the same: the composition, all other objects, colours, the flat colour fills with manhua ink-brush outlines, and the ink-wash sky. No text, no letters, no watermark."
+  },
+  {
+    "name": "6-dong-goi",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-6-dong-goi-1600.png",
+      "2-ngay-v3.png"
+    ],
+    "prompt": "Edit the first attached image (a simple flat scene: vacuum-packing the rice into 2 kg bags). Keep its composition, every object and every person in the same place, and its colours. Only change the drawing style.\nThe second attached image is the APPROVED STYLE REFERENCE: match its line style, ink-wash sky and flat colours exactly.\nPeople: keep every person, pose and position as in the first image. If the older man (BA, the father) appears: he is about 62 to 65, a slightly full kind face, short salt-and-pepper hair (mostly black, grey at the temples), keep his clothes as in the first image. If the younger man (ANH HAI, the son) appears: he is about 40, short black hair, a round face, a solid, slightly heavy build. The woman (ME, the mother) is an adult woman about 55 with a round kind face; keep her as an adult.\nNEW LINE STYLE (apply to the whole picture): keep FLAT colour fills (one flat colour per shape, no gradients, no soft shading on objects or people), but redraw every outline as expressive Chinese manhua ink-brush linework: dark brown-black ink lines that swell and thin with brush pressure, confident strokes, dry-brush broken ends, slightly rough and hand-made, thicker on outer silhouettes and thinner on inner details. A few bold solid ink shadow shapes (flat, hard-edged) are allowed under objects and in cloth folds. The sky may have a light grey ink-wash texture and a few small ink splatters at the edges. Keep the same simple, rustic composition and the same colours. No text, no letters, no watermark.\n",
+    "followUpEdit": "Edit the attached image. The woman in the conical hat now SITS on a simple wooden chair at the table instead of kneeling on the floor: she sits upright, her hands on the table putting a bag of rice into the vacuum sealing machine. She is an adult woman about 55 with a round kind face. Also remove any letters or words on the rice bags and on the machine: the bags are plain clear bags of white rice with a plain green label with no writing.\nKeep everything else exactly the same: the composition, all other objects, colours, the flat colour fills with manhua ink-brush outlines, and the ink-wash sky. No text, no letters, no watermark."
+  },
+  {
+    "name": "7-den-tay-khach",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-7-den-tay-khach-1600.png",
+      "2-ngay-v3.png"
+    ],
+    "prompt": "Edit the first attached image (a simple flat scene: the rice reaching customers). Keep its composition, every object and every person in the same place, and its colours. Only change the drawing style.\nThe second attached image is the APPROVED STYLE REFERENCE: match its line style, ink-wash sky and flat colours exactly.\nPeople: keep every person, pose and position as in the first image. If the older man (BA, the father) appears: he is about 62 to 65, a slightly full kind face, short salt-and-pepper hair (mostly black, grey at the temples), keep his clothes as in the first image. If the younger man (ANH HAI, the son) appears: he is about 40, short black hair, a round face, a solid, slightly heavy build. The woman (ME, the mother) is an adult woman about 55 with a round kind face; keep her as an adult.\nNEW LINE STYLE (apply to the whole picture): keep FLAT colour fills (one flat colour per shape, no gradients, no soft shading on objects or people), but redraw every outline as expressive Chinese manhua ink-brush linework: dark brown-black ink lines that swell and thin with brush pressure, confident strokes, dry-brush broken ends, slightly rough and hand-made, thicker on outer silhouettes and thinner on inner details. A few bold solid ink shadow shapes (flat, hard-edged) are allowed under objects and in cloth folds. The sky may have a light grey ink-wash texture and a few small ink splatters at the edges. Keep the same simple, rustic composition and the same colours. No text, no letters, no watermark.\n",
+    "followUpEdit": "Edit the attached image. Replace the small house on the left with the family's RICE PRODUCTION WORKSHOP, drawn in the same style:\n- A low one-storey building with plain grey cement walls and a flat grey roof edge, with a wide white folding window-door made of tall panels with small glass squares.\n- Next to it, a gate opening with two tall dark-green metal gate doors standing open, decorated with simple rectangular bars.\n- Above the gate, a wide horizontal sign board with a green and white face and a thin strip of a golden rice field picture on it. The sign has NO letters, NO words and NO numbers on it.\n- Through the open gate you see a shed with a green corrugated metal roof and a few rice sacks and shelves inside.\n- Behind the buildings, a green hill with trees, drawn softly.\nKeep the mother handing the bag of rice to the customer in front of the workshop, the gift box, the shop shelves on the right and the delivery truck exactly as they are.\nKeep the same style: flat colour fills, manhua ink-brush outlines, light ink-wash sky, same colours and composition. No text, no letters, no numbers, no watermark anywhere.\n"
+  },
+  {
+    "name": "8-mam-com",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "canh-8-mam-com-1600.png",
+      "2-ngay-v3.png"
+    ],
+    "prompt": "Edit the first attached image (a simple flat scene: the family meal tray with sticky rice dishes). Keep its composition, every object and every person in the same place, and its colours. Only change the drawing style.\nThe second attached image is the APPROVED STYLE REFERENCE: match its line style, ink-wash sky and flat colours exactly.\nPeople: keep every person, pose and position as in the first image. If the older man (BA, the father) appears: he is about 62 to 65, a slightly full kind face, short salt-and-pepper hair (mostly black, grey at the temples), keep his clothes as in the first image. If the younger man (ANH HAI, the son) appears: he is about 40, short black hair, a round face, a solid, slightly heavy build. The woman (ME, the mother) is an adult woman about 55 with a round kind face; keep her as an adult.\nNEW LINE STYLE (apply to the whole picture): keep FLAT colour fills (one flat colour per shape, no gradients, no soft shading on objects or people), but redraw every outline as expressive Chinese manhua ink-brush linework: dark brown-black ink lines that swell and thin with brush pressure, confident strokes, dry-brush broken ends, slightly rough and hand-made, thicker on outer silhouettes and thinner on inner details. A few bold solid ink shadow shapes (flat, hard-edged) are allowed under objects and in cloth folds. The sky may have a light grey ink-wash texture and a few small ink splatters at the edges. Keep the same simple, rustic composition and the same colours. No text, no letters, no watermark.\n"
+  },
+  {
+    "name": "2-nang-mua-gio-dem",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "2-ngay-v3.png"
+    ],
+    "prompt": "Turn the attached daytime scene into the SAME scene at NIGHT under a full moon. Keep EXACTLY the same composition and framing: the same dense rice field, BA and ME in the same places and poses, the same line style. Replace the sun with a big pale full moon in the same place, replace the rain cloud with a few thin moonlit clouds, remove the rain drops and wind lines, add a few small fireflies above the rice. Night colours: deep blue-grey ink-wash sky, the rice and people in darker, cooler flat colours with soft silver moonlight, still flat fills with the same ink-brush outlines. No text, no letters, no watermark."
+  }
+]

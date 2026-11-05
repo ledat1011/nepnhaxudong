@@ -6,10 +6,8 @@ import { Hero } from "./Hero";
 
 const dict = getDictionary("vi");
 
-function renderHero(zalo: string | null, hasJourney = true) {
-  return render(
-    <Hero lang="vi" dict={dict} tagline="[MẪU] Khẩu hiệu" zalo={zalo} hasJourney={hasJourney} />,
-  );
+function renderHero(zalo: string | null) {
+  return render(<Hero lang="vi" dict={dict} tagline="[MẪU] Khẩu hiệu" zalo={zalo} />);
 }
 
 describe("Hero", () => {
@@ -40,17 +38,12 @@ describe("Hero", () => {
     expect(screen.queryByRole("link", { name: dict.hero.zaloCta })).not.toBeInTheDocument();
   });
 
-  it("links the journey button to the journey section", () => {
+  it("links the second button to the rice story section", () => {
     renderHero(null);
-    expect(screen.getByRole("link", { name: dict.hero.journeyCta })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: dict.hero.riceStoryCta })).toHaveAttribute(
       "href",
-      "/vi#hanh-trinh",
+      "/vi#tu-hat-lua",
     );
-  });
-
-  it("has no journey button when the page has no journey", () => {
-    renderHero(null, false);
-    expect(screen.queryByRole("link", { name: dict.hero.journeyCta })).not.toBeInTheDocument();
   });
 
   it("draws the hero scene behind the content instead of the old field strip", () => {

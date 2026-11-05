@@ -147,26 +147,23 @@ body {
 }
 
 /*
- * Story scenes (RiceStory.tsx): a picture is 1200 x 600, the 800-unit drawing in the middle
- * (16.6667 % to 83.3333 %) and 200 units of its background on each side. The drawing is shown
- * whole; the background past it fades to transparent over --bleed-left / --bleed-right (0 shows
- * none of it), so it goes away into the Trắng gạo section like the hero scene. A short fade at
- * the top and bottom (sky and road) removes the cut lines there. The two gradients are
- * intersected. The inline svg that replaces the img copies its class, so the fade stays.
+ * Story scenes (RiceStory.tsx): each picture is a flat sketch on an off-white ink-wash ground.
+ * A short fade on all four edges takes away the cut line, so the picture goes into the Trắng gạo
+ * section without a hard box. The two gradients are intersected.
  */
 .story-scene-fade {
   --story-scene-x: linear-gradient(
     to right,
-    transparent calc(16.6667% - var(--bleed-left, 0px)),
-    var(--color-earth) 16.6667%,
-    var(--color-earth) 83.3333%,
-    transparent calc(83.3333% + var(--bleed-right, 0px))
+    transparent,
+    var(--color-earth) 4%,
+    var(--color-earth) 96%,
+    transparent
   );
   --story-scene-y: linear-gradient(
     to bottom,
     transparent,
-    var(--color-earth) 3%,
-    var(--color-earth) 97%,
+    var(--color-earth) 5%,
+    var(--color-earth) 95%,
     transparent
   );
   -webkit-mask-image: var(--story-scene-x), var(--story-scene-y);

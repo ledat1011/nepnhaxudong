@@ -15,6 +15,7 @@ const vi = {
   nav: {
     label: "Điều hướng chính",
     product: "Sản phẩm",
+    riceStory: "Quy trình",
     journey: "Hành trình",
     press: "Báo chí",
     story: "Câu chuyện",
@@ -29,7 +30,7 @@ const vi = {
   },
   hero: {
     zaloCta: "Liên hệ qua Zalo",
-    journeyCta: "Xem hành trình",
+    riceStoryCta: "Chuyện hạt nếp",
   },
   motion: {
     pause: "Tạm dừng chuyển động",
@@ -151,6 +152,7 @@ const en: Dictionary = {
   nav: {
     label: "Main navigation",
     product: "Product",
+    riceStory: "Process",
     journey: "Journey",
     press: "Press",
     story: "Stories",
@@ -165,7 +167,7 @@ const en: Dictionary = {
   },
   hero: {
     zaloCta: "Contact us on Zalo",
-    journeyCta: "See the journey",
+    riceStoryCta: "A grain's story",
   },
   motion: {
     pause: "Pause motion",

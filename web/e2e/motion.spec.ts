@@ -919,11 +919,9 @@ test.describe("the rice story road", () => {
       if (i > 0) expect(labels[i].top).toBeGreaterThan(labels[i - 1].top);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(PHONE.width);
-    await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(8);
-    // The fourth dish is the last one to come to the table.
-    await page.locator("[data-dish='ruou-nep']").scrollIntoViewIfNeeded();
-    await page.waitForTimeout(3000);
-    expect(await page.$eval("[data-dish='ruou-nep']", (el) => getComputedStyle(el).opacity)).toBe("1");
+    // The WebP sketches stay as images: there are no scene parts to move (decision 0014).
+    await expect(page.locator(`${SCENES} img`)).toHaveCount(8);
+    await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(0);
   });
 
   test("desktop: the scenes take turns left and right of the road, nothing is pinned", async ({
@@ -1004,7 +1002,9 @@ test.describe("the rice story road", () => {
     await expect(page.locator("footer")).toBeInViewport();
   });
 
-  test("a broken scene file keeps the static image", async ({ page }) => {
+  // The scenes are WebP sketches until the layered SVG scenes come back for motion (decision
+  // 0014). Nothing is swapped for an inline svg now. Turn this test on again with them.
+  test.skip("a broken scene file keeps the static image", async ({ page }) => {
     let calls = 0;
     // The first request is the <img>; the second one is the fetch of the inline swap.
     await page.route("**/story/canh-4-say.svg", async (route) => {
@@ -1050,7 +1050,9 @@ test.describe("the rice story road", () => {
     expect(press.every((o) => o === "1")).toBe(true);
   });
 
-  test("the pause button also stops the story loops", async ({ page }) => {
+  // The scenes are WebP sketches until the layered SVG scenes come back for motion (decision
+  // 0014). Nothing is swapped for an inline svg now. Turn this test on again with them.
+  test.skip("the pause button also stops the story loops", async ({ page }) => {
     await openStory(page, PHONE);
     await page.evaluate(() => {
       const li = document.querySelector("li[data-story-scene='say']") as HTMLElement;

@@ -95,29 +95,18 @@ describe("RiceStory", () => {
     });
   });
 
-  it("lets each picture's background run past the text column and fade, never past the page", () => {
+  it("fits each picture to the text column with soft edges, never past the page", () => {
     const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
-    // The bleed overflows the column; the section clips it, so the page never scrolls sideways.
     expect(container.querySelector("section[data-rice-story]")?.getAttribute("class")).toContain("overflow-x-clip");
     const items = [...container.querySelectorAll("li[data-story-scene]")];
-    items.forEach((li, i) => {
+    items.forEach((li) => {
       const img = li.querySelector("img") as HTMLImageElement;
       const classes = img.getAttribute("class") ?? "";
-      // 1200 x 600: the 800-unit drawing fills the column, 200 units of background on each side.
-      for (const name of ["story-scene-fade", "aspect-[2/1]", "w-[150%]", "max-w-none", "-ml-[25%]"]) {
+      // A 16:9 sketch (1200 x 675) as wide as the column; the fade softens its four edges.
+      for (const name of ["story-scene-fade", "aspect-[16/9]", "w-full"]) {
         expect(classes, name).toContain(name);
       }
-      // How far the background shows past the drawing: little on the road side, more outside.
-      const vars = li.getAttribute("class") ?? "";
-      expect(vars).toContain("[--bleed-left:8px]");
-      expect(vars).toContain("[--bleed-right:16px]");
-      if (i % 2 === 0) {
-        expect(vars).toContain("md:[--bleed-left:16.6667%]");
-        expect(vars).toContain("md:[--bleed-right:28px]");
-      } else {
-        expect(vars).toContain("md:[--bleed-left:28px]");
-        expect(vars).toContain("md:[--bleed-right:16.6667%]");
-      }
+      expect(classes).not.toContain("max-w-none");
     });
   });
 
@@ -153,7 +142,7 @@ describe("RiceStory", () => {
       const img = li.querySelector("img");
       expect(img).toHaveAttribute("src", STORY_SCENES[i].src);
       expect(img).toHaveAttribute("width", "1200");
-      expect(img).toHaveAttribute("height", "600");
+      expect(img).toHaveAttribute("height", "675");
       expect(img).toHaveAttribute("loading", "lazy");
       expect(img).toHaveAttribute("decoding", "async");
       expect(img).toHaveAttribute("alt", "");
@@ -218,7 +207,7 @@ describe("RiceStory", () => {
     window.localStorage.clear();
     render(
       <>
-        <Hero lang="vi" dict={dict} tagline="t" zalo={null} hasJourney={false} />
+        <Hero lang="vi" dict={dict} tagline="t" zalo={null} />
         <RiceStory dict={dict} zalo={null} />
       </>,
     );

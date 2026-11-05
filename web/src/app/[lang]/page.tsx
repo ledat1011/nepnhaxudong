@@ -67,7 +67,6 @@ export default async function HomePage({ params }: HomePageProps) {
           dict={dict}
           tagline={home.brand.tagline}
           zalo={home.contact.zalo}
-          hasJourney={has("hanh-trinh")}
         />
         {has("san-pham") && (
           <section aria-labelledby="san-pham">

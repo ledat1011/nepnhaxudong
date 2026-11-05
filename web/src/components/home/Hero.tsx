@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { Mascot } from "@/components/brand/Mascot";
 import { ZaloLink } from "@/components/contact/ZaloLink";
 import { MotionPauseButton } from "@/components/motion/MotionPauseButton";
+import { SectionLink } from "@/components/ui/SectionLink";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { homePath } from "@/lib/i18n/routes";
@@ -12,8 +12,6 @@ type HeroProps = {
   dict: Dictionary;
   tagline: string;
   zalo: string | null;
-  /** Whether the page has a journey section to link to. */
-  hasJourney: boolean;
 };
 
 const BUTTON_CLASS =
@@ -37,7 +35,7 @@ const BUTTON_CLASS =
  * the panel bottom), right of the centered mascot and above the text; from `md` it is the
  * bottom-right corner of the hero.
  */
-export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {
+export function Hero({ lang, dict, tagline, zalo }: HeroProps) {
   return (
     <section
       data-hero-scene=""
@@ -57,8 +55,7 @@ export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {
         <div className="relative z-[2] order-2 text-center md:order-1 md:py-16 md:text-left">
           <h1 className="font-display text-6xl leading-[1.3] text-earth md:text-7xl">{dict.site.name}</h1>
           <p className="mx-auto mt-4 max-w-md text-lg font-medium md:mx-0 md:text-xl">{tagline}</p>
-          {(zalo !== null || hasJourney) && (
-            <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
+          <div className="mt-8 flex flex-wrap justify-center gap-3 md:justify-start">
               {zalo !== null && (
                 <ZaloLink
                   zalo={zalo}
@@ -68,16 +65,14 @@ export function Hero({ lang, dict, tagline, zalo, hasJourney }: HeroProps) {
                   {dict.hero.zaloCta}
                 </ZaloLink>
               )}
-              {hasJourney && (
-                <Link
-                  href={`${homePath(lang)}#hanh-trinh`}
-                  className={`${BUTTON_CLASS} border-2 border-coat text-earth hover:bg-straw`}
-                >
-                  {dict.hero.journeyCta}
-                </Link>
-              )}
+              {/* The rice story is fixed content of the home page, so this button is always there. */}
+              <SectionLink
+                href={`${homePath(lang)}#tu-hat-lua`}
+                className={`${BUTTON_CLASS} border-2 border-coat text-earth hover:bg-straw`}
+              >
+                {dict.hero.riceStoryCta}
+              </SectionLink>
             </div>
-          )}
         </div>
         <div className="relative order-1 mx-auto w-(--hero-m) md:order-2 md:self-end" aria-hidden="true">
           <HeroSun />

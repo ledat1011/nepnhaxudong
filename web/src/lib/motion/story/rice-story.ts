@@ -248,7 +248,9 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
         continue;
       }
       const img = scene.li.querySelector("img");
-      if (!img) continue;
+      // Only an SVG scene has parts to move. The scenes are WebP sketches for now (decision
+      // 0014); fetching one again would only fail to parse.
+      if (!img || !new URL(img.src, window.location.href).pathname.endsWith(".svg")) continue;
       // Each drawing loads about one screen before its own scene, not with the whole section.
       loads.push(
         ScrollTrigger.create({

@@ -41,6 +41,9 @@ describe("classifyPath", () => {
 
   it("lets the story scene files through, and nothing else under /story", () => {
     expect(classifyPath("/story/canh-1-cay-ma.svg")).toBe("pass");
+    expect(classifyPath("/story/canh-1-cay-ma.webp")).toBe("pass");
+    expect(classifyPath("/story/a/b.webp")).toBe("not-found");
+    expect(classifyPath("/story/a.png")).toBe("not-found");
     expect(classifyPath("/story")).toBe("not-found");
     expect(classifyPath("/story/a/b.svg")).toBe("not-found");
     expect(classifyPath("/story/a.php")).toBe("not-found");

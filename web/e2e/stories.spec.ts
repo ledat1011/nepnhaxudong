@@ -42,11 +42,11 @@ test.describe("story list and story pages", () => {
 });
 
 test.describe("rice story section", () => {
-  // Without motion the <img> stays: the motion code swaps it for the inline svg.
+  // The scenes are WebP images (decision 0014); without motion nothing else changes them.
   test.use({ reducedMotion: "reduce" });
 
   test("a scene drawing is served and loads in the page", async ({ page, request }) => {
-    const response = await request.get("/story/canh-1-cay-ma.svg");
+    const response = await request.get("/story/canh-1-cay-ma.webp");
     expect(response.status()).toBe(200);
     await page.goto("/vi");
     const img = page.locator('li[data-story-scene="cay-ma"] img');

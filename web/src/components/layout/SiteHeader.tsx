@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { ZaloLink } from "@/components/contact/ZaloLink";
 import { LinkPendingStatus } from "@/components/ui/LinkPendingStatus";
+import { SectionLink } from "@/components/ui/SectionLink";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { homePath } from "@/lib/i18n/routes";
@@ -23,10 +23,10 @@ export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderP
   const home = homePath(lang);
   const items = nav.map((item) => (
     <li key={item.id}>
-      <Link href={`${home}#${item.id}`} className={LINK_CLASS}>
+      <SectionLink href={`${home}#${item.id}`} className={LINK_CLASS}>
         {item.label}
         <LinkPendingStatus label={dict.loading.page} />
-      </Link>
+      </SectionLink>
     </li>
   ));
 

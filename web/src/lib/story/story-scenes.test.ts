@@ -191,8 +191,9 @@ describe("story scene list", () => {
   it("matches SCENE_SLUGS and the file names", () => {
     expect(STORY_SCENES.map((s) => s.slug)).toEqual(SCENE_SLUGS);
     STORY_SCENES.forEach((s, i) => {
-      expect(s.src).toBe(`/story/canh-${i + 1}-${s.slug}.svg`);
-      expect([s.width, s.height]).toEqual([SCENE_WIDTH, SCENE_HEIGHT]);
+      expect(s.src).toBe(`/story/canh-${i + 1}-${s.slug}.webp`);
+      // The WebP sketch (1200 x 675), not the layered SVG scene of SCENE_WIDTH x SCENE_HEIGHT.
+      expect([s.width, s.height]).toEqual([1200, 675]);
     });
   });
 });

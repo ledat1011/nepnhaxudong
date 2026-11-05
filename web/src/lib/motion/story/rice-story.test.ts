@@ -110,7 +110,7 @@ const MARKUP = `
             <svg></svg><span data-story-road-passed><span></span></span>
           </span>
           <span data-story-stop aria-hidden="true"></span>
-          <img src="${s.src}" alt=""><h3>t</h3></li>`,
+          <img src="${s.src.replace(/\.webp$/, ".svg")}" alt=""><h3>t</h3></li>`,
       ).join("")}</ol>
     </div>
     <div id="sau-cau-chuyen" tabindex="-1"></div>
