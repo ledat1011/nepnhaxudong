@@ -111,6 +111,23 @@ body {
   }
 }
 
+/*
+ * Story scenes (RiceStory.tsx): no frame. Each picture fades to transparent at all four edges, the
+ * same way the hero scene fades, so it sits on the Trắng gạo section without a cut line. The two
+ * gradients are intersected, so a corner fades from both sides. The inline svg that replaces the
+ * img copies its class, so the fade stays after the swap.
+ */
+.story-scene-fade {
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, var(--color-earth) 10%, var(--color-earth) 90%, transparent),
+    linear-gradient(to bottom, transparent, var(--color-earth) 8%, var(--color-earth) 90%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent, var(--color-earth) 10%, var(--color-earth) 90%, transparent),
+    linear-gradient(to bottom, transparent, var(--color-earth) 8%, var(--color-earth) 90%, transparent);
+  mask-composite: intersect;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;

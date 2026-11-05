@@ -155,7 +155,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                       loading="lazy"
                       decoding="async"
                       alt=""
-                      className="mt-3 aspect-[4/3] h-auto w-full rounded-2xl border-2 border-grain bg-rice"
+                      className="story-scene-fade mt-3 aspect-[4/3] h-auto w-full"
                     />
                     <h3 className="mt-4 text-xl font-bold text-earth">{title}</h3>
                     <p data-story-text className="mt-2 leading-relaxed">
