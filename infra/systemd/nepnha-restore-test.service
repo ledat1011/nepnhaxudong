@@ -5,4 +5,10 @@ After=network-online.target docker.service
 
 [Service]
 Type=oneshot
+# Root services get no HOME, so restic needs a cache folder set here; without it every run downloads the
+# index again from the bucket.
+Environment=RESTIC_CACHE_DIR=/var/cache/restic
+CacheDirectory=restic
+# A hung run must not block the next night.
+TimeoutStartSec=2h
 ExecStart=/bin/bash /opt/nepnha/backup/restore-test.sh

@@ -100,11 +100,16 @@ Từ giờ, mỗi lần merge vào `main` là web tự cập nhật.
 - [ ] **UptimeRobot** (uptimerobot.com): tạo 2 monitor kiểu HTTP(s), mỗi 5 phút, báo qua email:
   - `https://<SITE_HOST>/vi`
   - `https://<SITE_HOST>/api/actuator/health`
-- [ ] **healthchecks.io**: tạo một check tên `nepnha-backup`, chu kỳ 1 ngày, grace 2 giờ. Thêm đường ping vào `.env`:
-  ```bash
-  sudo -u deploy sh -c 'echo "HEALTHCHECK_URL=https://hc-ping.com/<uuid>" >> /opt/nepnha/.env'
+- [ ] **healthchecks.io**: tạo hai check:
+  - `nepnha-backup`: chu kỳ 1 ngày, grace 2 giờ (sao lưu mỗi đêm);
+  - `nepnha-restore-test`: chu kỳ 31 ngày, grace 1 ngày (chạy thử khôi phục mỗi tháng).
+
+  Mỗi check có một đường ping riêng, dạng `https://hc-ping.com/<uuid>`. Mở `.env` bằng `sudo -u deploy nano /opt/nepnha/.env` và điền hai dòng có sẵn:
   ```
-  Khi bản sao lưu đêm nào lỗi hoặc không chạy, healthchecks.io gửi email.
+  HEALTHCHECK_URL=https://hc-ping.com/<uuid-của-nepnha-backup>
+  RESTORE_HEALTHCHECK_URL=https://hc-ping.com/<uuid-của-nepnha-restore-test>
+  ```
+  Khi một lần chạy lỗi hoặc không chạy đúng hạn, healthchecks.io gửi email.
 
 ## 8. Gửi bản sao lưu ra ngoài VPS (Backblaze B2)
 Trước bước này, bản sao lưu chỉ nằm trên VPS. Mất VPS là mất cả bản sao lưu.
@@ -151,7 +156,8 @@ Các lệnh dưới đây chạy trong cửa sổ `nepnha@<IP>`.
   ```bash
   sudo -u deploy bash /opt/nepnha/deploy.sh "$(cat /opt/nepnha/.previous-tag)" <SITE_HOST>
   ```
-  Trước khi chạy lệnh này, đăng nhập GHCR nếu image đã bị xóa khỏi máy.
+  VPS luôn giữ image của bản đang chạy và bản trước, nên lệnh này không cần tải gì. Lệnh này dùng file `compose.yml` hiện tại. Khi bản mới đổi file đó, hãy chép file cũ lại trước: `sudo -u deploy cp /opt/nepnha/compose.prev.yml /opt/nepnha/compose.yml`.
+- Sau khi một PR đổi file trong `infra/systemd/`: cài lại lịch sao lưu bằng lệnh `sudo install …` ở mục 6. Deploy chỉ chép file vào `/opt/nepnha/systemd`, không tự cài.
 - Xem danh sách bản sao lưu:
   ```bash
   sudo bash /opt/nepnha/backup/snapshots.sh

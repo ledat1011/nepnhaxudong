@@ -5,10 +5,13 @@
 set -euo pipefail
 # shellcheck source=infra/backup/lib.sh
 . "$(dirname "$0")/lib.sh"
+# Root only: the images belong to UID 10001. Checked before anything is changed, so a run without the
+# rights cannot drop the database and then stop half way.
+if [ "$(id -u)" != 0 ]; then echo "run as root: sudo bash $0 ${1:-latest}" >&2; exit 1; fi
 load_env
 
 SNAPSHOT=${1:-latest}
-WORK=$(mktemp -d)
+WORK=$(work_dir)
 trap 'rm -rf "$WORK"' EXIT
 
 echo "This replaces the database and $MEDIA_HOST_DIR with snapshot '$SNAPSHOT'."
@@ -16,7 +19,7 @@ echo "The site is down for a short time. Type KHOI PHUC to go on:"
 read -r answer
 [ "$answer" = "KHOI PHUC" ] || { echo "stopped, nothing changed"; exit 1; }
 
-restic restore "$SNAPSHOT" --target "$WORK"
+restic restore "$SNAPSHOT" --tag nepnha --host nepnha --target "$WORK"
 DUMP="$WORK$STAGE_DIR/nepnha.dump"
 [ -s "$DUMP" ] || { echo "no database dump in snapshot $SNAPSHOT" >&2; exit 1; }
 
@@ -24,7 +27,10 @@ echo "stopping web and api"
 compose stop web api
 
 echo "restoring the database"
-compose exec -T postgres pg_restore -U nepnha -d nepnha --clean --if-exists --no-owner --exit-on-error < "$DUMP"
+# Drop the whole schema first: "pg_restore --clean" drops only the objects in the dump, so tables of a newer
+# migration would stay while flyway_schema_history goes back, and Flyway would fail on the next start.
+compose exec -T postgres psql -U nepnha -d nepnha -v ON_ERROR_STOP=1 -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+compose exec -T postgres pg_restore -U nepnha -d nepnha --no-owner --exit-on-error --single-transaction < "$DUMP"
 
 echo "restoring the images"
 if [ -d "$WORK$MEDIA_HOST_DIR" ]; then
