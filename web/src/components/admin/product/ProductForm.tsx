@@ -8,12 +8,14 @@ import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
+import { useScreenDetail } from "@/components/admin/shell/screen-detail";
 import { MediaPicker } from "@/components/admin/media/MediaPicker";
 import { Button } from "@/components/admin/ui/button";
 import { Switch } from "@/components/admin/ui/switch";
 import { adminFetch } from "@/lib/admin/api";
 import { apiRest, langOfDetail, NOT_SAVED_NOTICE, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
+import { productPublicHref } from "@/lib/admin/public-links";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
 import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
@@ -142,6 +144,11 @@ function toRequest(state: FormState, sortOrder: number | undefined): ProductRequ
 export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const router = useRouter();
   const [baseline, setBaseline] = useState<ProductAdminDto | undefined>(initial);
+  // The header names the product as it is saved, and links to where it shows on the public site.
+  useScreenDetail({
+    name: baseline === undefined ? "Sản phẩm mới" : (baseline.name.vi ?? "Sản phẩm chưa có tên"),
+    publicHref: productPublicHref(baseline),
+  });
   const [state, setState] = useState<FormState>(() => stateFrom(initial));
   const [baselineSnapshot, setBaselineSnapshot] = useState(() => snapshot(stateFrom(initial)));
   const [confirmDelete, setConfirmDelete] = useState(false);
