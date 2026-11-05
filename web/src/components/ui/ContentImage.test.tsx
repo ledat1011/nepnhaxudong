@@ -21,11 +21,6 @@ const IMAGE = {
 };
 
 describe("ContentImage", () => {
-  it("renders the placeholder when there is no image", () => {
-    render(<ContentImage image={null} sizes="100vw" placeholderLabel="Ảnh sắp được cập nhật" />);
-    expect(screen.getByRole("img", { name: "Ảnh sắp được cập nhật" })).toBeInTheDocument();
-  });
-
   it("renders the image with alt, size and source from the API", () => {
     render(<ContentImage image={IMAGE} sizes="100vw" placeholderLabel="Ảnh sắp được cập nhật" />);
     const img = screen.getByRole("img", { name: "Cánh đồng lúa" });

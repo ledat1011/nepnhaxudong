@@ -40,3 +40,18 @@ describe("StoryCard text", () => {
     expect(container.querySelector("b, i")).toBeNull();
   });
 });
+
+describe("StoryCard cover", () => {
+  it("draws no image box when the story has no cover", () => {
+    const { container } = render(<StoryCard lang="vi" dict={dict} story={story} />);
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(container.querySelector("[data-story-cover]")).toBeNull();
+  });
+
+  it("shows the cover when the story has one", () => {
+    const cover = { url: "https://cdn.example.com/c.webp", width: 1600, height: 900, alt: "Ảnh bìa" };
+    const { container } = render(<StoryCard lang="vi" dict={dict} story={{ ...story, cover }} />);
+    expect(screen.getByRole("img", { name: "Ảnh bìa" })).toBeInTheDocument();
+    expect(container.querySelector("[data-story-cover]")).not.toBeNull();
+  });
+});

@@ -45,9 +45,10 @@ describe("JourneySection", () => {
     expect(items[2]).toHaveTextContent("2026");
   });
 
-  it("shows a placeholder for an event without an image", () => {
-    render(<JourneySection dict={dict} events={EVENTS} />);
-    expect(screen.getAllByRole("img", { name: dict.image.placeholder })).toHaveLength(2);
+  it("draws no image box for an event without an image", () => {
+    const { container } = render(<JourneySection dict={dict} events={EVENTS} />);
+    expect(screen.queryByRole("img", { name: dict.image.placeholder })).not.toBeInTheDocument();
+    expect(container.querySelectorAll("[data-journey-photo]")).toHaveLength(1);
     expect(screen.getByRole("img", { name: "Ảnh mốc hai" })).toBeInTheDocument();
   });
 

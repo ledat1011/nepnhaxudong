@@ -25,14 +25,16 @@ export function PressSection({ lang, dict, items }: PressSectionProps) {
                 rel="noopener noreferrer"
                 className="group flex h-full flex-col overflow-hidden rounded-2xl border-2 border-straw bg-rice hover:border-coat focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
               >
-                <div className="aspect-[16/9] overflow-hidden">
-                  <ContentImage
-                    image={item.image}
-                    sizes="(min-width: 1024px) 24rem, (min-width: 640px) 50vw, 100vw"
-                    placeholderLabel={dict.image.placeholder}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+                {item.image !== null && (
+                  <div data-press-photo className="aspect-[16/9] overflow-hidden">
+                    <ContentImage
+                      image={item.image}
+                      sizes="(min-width: 1024px) 24rem, (min-width: 640px) 50vw, 100vw"
+                      placeholderLabel={dict.image.placeholder}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
                 <div className="flex flex-1 flex-col gap-2 p-5">
                   <p className="text-sm font-bold text-coat">
                     {item.sourceName}

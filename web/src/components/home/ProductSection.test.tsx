@@ -85,10 +85,20 @@ describe("ProductSection", () => {
     expect(screen.queryByRole("heading", { name: dict.product.packaging })).not.toBeInTheDocument();
   });
 
-  it("renders the product as an article with a placeholder when it has no images", () => {
+  it("renders a product with no images and no bag as one text column, with no image box", () => {
     renderProduct();
-    expect(screen.getByRole("article")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: dict.image.placeholder })).toBeInTheDocument();
+    const article = screen.getByRole("article");
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(article.children).toHaveLength(1);
+    expect(article).not.toHaveClass("md:grid-cols-2");
+  });
+
+  it("keeps two columns when the product has photos", () => {
+    renderProduct({
+      ...PRODUCT,
+      images: [{ url: "https://cdn.example.com/a.webp", width: 800, height: 600, alt: "Hạt nếp" }],
+    });
+    expect(screen.getByRole("article")).toHaveClass("md:grid-cols-2");
   });
 
   it("passes gallery image sources ready for the browser", () => {

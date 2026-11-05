@@ -1,10 +1,9 @@
 import Image from "next/image";
-import { ImagePlaceholder } from "@/components/brand/ImagePlaceholder";
 import { toImageSrc } from "@/lib/content/image-src";
 import type { ImageRef } from "@/lib/content/types";
 
 type ContentImageProps = {
-  image: ImageRef | null;
+  image: ImageRef;
   sizes: string;
   placeholderLabel: string;
   /**
@@ -15,16 +14,8 @@ type ContentImageProps = {
   className?: string;
 };
 
-export function ContentImage({
-  image,
-  sizes,
-  placeholderLabel,
-  fetchPriority,
-  className,
-}: ContentImageProps) {
-  if (image === null) {
-    return <ImagePlaceholder label={placeholderLabel} className={className} />;
-  }
+/** An image from the API. Callers draw no image box at all when there is no image. */
+export function ContentImage({ image, sizes, fetchPriority, className }: ContentImageProps) {
   return (
     <Image
       src={toImageSrc(image.url)}

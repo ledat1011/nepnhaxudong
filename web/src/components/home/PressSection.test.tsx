@@ -61,8 +61,18 @@ describe("PressSection", () => {
     }
   });
 
-  it("shows a placeholder when an item has no image", () => {
-    render(<PressSection lang="vi" dict={dict} items={ITEMS} />);
-    expect(screen.getAllByRole("img", { name: dict.image.placeholder })).toHaveLength(2);
+  it("draws no image box when an item has no image", () => {
+    const { container } = render(<PressSection lang="vi" dict={dict} items={ITEMS} />);
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(container.querySelector("[data-press-photo]")).toBeNull();
+  });
+
+  it("shows the image of an item that has one", () => {
+    const image = { url: "https://cdn.example.com/p.webp", width: 800, height: 450, alt: "Ảnh bài" };
+    const { container } = render(
+      <PressSection lang="vi" dict={dict} items={[{ ...ITEMS[0], image }, ITEMS[1]]} />,
+    );
+    expect(screen.getByRole("img", { name: "Ảnh bài" })).toBeInTheDocument();
+    expect(container.querySelectorAll("[data-press-photo]")).toHaveLength(1);
   });
 });

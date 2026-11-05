@@ -57,6 +57,15 @@ describe("StoryPage", () => {
     expect(h1).not.toHaveClass("font-display");
   });
 
+  it("draws no image box when the story has no cover", async () => {
+    const page = await StoryPage({
+      params: Promise.resolve({ lang: "vi", section: "cau-chuyen", slug: "bai-1" }),
+    });
+    const { container } = render(page);
+    expect(screen.queryByRole("img", { name: "Ảnh sắp được cập nhật" })).not.toBeInTheDocument();
+    expect(container.querySelector("[data-story-cover]")).toBeNull();
+  });
+
   it("loads the cover, the top image of the page, at once and with high fetch priority", async () => {
     story = {
       ...STORY,

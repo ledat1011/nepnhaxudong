@@ -121,13 +121,9 @@ describe("Gallery", () => {
     expect(screen.queryByRole("button", { name: dict.gallery.next })).not.toBeInTheDocument();
   });
 
-  it("shows a placeholder and no lightbox when there are no images", async () => {
-    const user = userEvent.setup();
-    render(<Gallery images={[]} dict={dict} />);
-    const placeholder = screen.getByRole("img", { name: dict.image.placeholder });
-    await user.click(placeholder);
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  it("renders nothing, not an empty image box, when there are no images and no drawing", () => {
+    const { container } = render(<Gallery images={[]} dict={dict} />);
+    expect(container).toBeEmptyDOMElement();
   });
 
   describe("with a lead drawing (the bag)", () => {

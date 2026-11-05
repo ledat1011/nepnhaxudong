@@ -32,14 +32,16 @@ export function StoryCard({ lang, story, dict, headingLevel = 3 }: StoryCardProp
   const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
     <article className={STORY_CARD_CLASS}>
-      <div className="aspect-[16/9] overflow-hidden">
-        <ContentImage
-          image={story.cover}
-          sizes="(min-width: 1024px) 24rem, (min-width: 640px) 50vw, 100vw"
-          placeholderLabel={dict.image.placeholder}
-          className="h-full w-full object-cover"
-        />
-      </div>
+      {story.cover !== null && (
+        <div data-story-cover className="aspect-[16/9] overflow-hidden">
+          <ContentImage
+            image={story.cover}
+            sizes="(min-width: 1024px) 24rem, (min-width: 640px) 50vw, 100vw"
+            placeholderLabel={dict.image.placeholder}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
       <div className="flex flex-1 flex-col gap-2 p-5">
         <time dateTime={story.publishedAt} className={STORY_CARD_TEXT.date}>
           {formatDate(story.publishedAt, lang)}

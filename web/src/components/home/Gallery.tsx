@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { ImagePlaceholder } from "@/components/brand/ImagePlaceholder";
 import type { ImageRef } from "@/lib/content/types";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -131,14 +130,8 @@ export function Gallery({ images, dict, lead }: GalleryProps) {
     };
   }, [open, step]);
 
-  if (count === 0 && !lead) {
-    return (
-      <ImagePlaceholder
-        label={dict.image.placeholder}
-        className="aspect-[4/3] w-full rounded-2xl"
-      />
-    );
-  }
+  // No photo and no drawing: draw nothing, so the product shows as text only (ProductSection).
+  if (count === 0 && !lead) return null;
 
   const current = photoIndex >= 0 ? images[photoIndex] : undefined;
 

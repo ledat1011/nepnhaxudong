@@ -51,8 +51,9 @@ describe("StoryListSkeleton", () => {
   });
 
   it("draws cards with the frame, grid and cover size of the real cards", () => {
+    const cover = { url: "https://cdn.example.com/c.webp", width: 1600, height: 900, alt: "Bìa" };
     const { container: real } = render(
-      <StoryCard lang="vi" dict={dict} story={story(1)} headingLevel={2} />,
+      <StoryCard lang="vi" dict={dict} story={{ ...story(1), cover }} headingLevel={2} />,
     );
     const realCard = real.querySelector("article") as HTMLElement;
     const realCover = realCard.firstElementChild as HTMLElement;

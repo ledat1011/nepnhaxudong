@@ -67,15 +67,20 @@ export default async function StoryPage({ params }: StoryPageProps) {
           <time dateTime={story.publishedAt} className="mt-4 block font-bold text-coat">
             {formatDate(story.publishedAt, lang)}
           </time>
-          <div className="mt-8 aspect-[16/9] overflow-hidden rounded-2xl border-2 border-grain">
-            <ContentImage
-              image={story.cover}
-              sizes="(min-width: 768px) 48rem, 100vw"
-              placeholderLabel={dict.image.placeholder}
-              fetchPriority="high"
-              className="h-full w-full object-cover"
-            />
-          </div>
+          {story.cover !== null && (
+            <div
+              data-story-cover
+              className="mt-8 aspect-[16/9] overflow-hidden rounded-2xl border-2 border-grain"
+            >
+              <ContentImage
+                image={story.cover}
+                sizes="(min-width: 768px) 48rem, 100vw"
+                placeholderLabel={dict.image.placeholder}
+                fetchPriority="high"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
           <div className="mt-8">
             <StoryBody html={story.bodyHtml} />
           </div>

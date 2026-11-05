@@ -31,7 +31,8 @@ describe("StoryCard", () => {
     );
     expect(screen.getByText("[MẪU] Trích đoạn 1")).toBeInTheDocument();
     expect(screen.getByText("10 tháng 4, 2026")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: dict.image.placeholder })).toBeInTheDocument();
+    // No cover: the card is text only, with no empty image box.
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
   it("uses the English story path for English", () => {
