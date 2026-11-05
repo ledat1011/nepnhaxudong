@@ -57,7 +57,9 @@ describe("ContactForm", () => {
     serve(filled);
     render(<ContactForm />);
     expect(await screen.findByLabelText("Điện thoại")).toHaveValue("0901 234 567");
-    expect(screen.getByLabelText("Zalo (chỉ số)")).toHaveValue("0901234567");
+    // Zalo is the same number as the phone, so the box is ticked and the Zalo box is not needed.
+    expect(screen.getByRole("checkbox", { name: "Zalo dùng số điện thoại ở trên" })).toBeChecked();
+    expect(screen.queryByLabelText("Số Zalo")).toBeNull();
     expect(screen.getByLabelText("Messenger (đường dẫn)")).toHaveValue("https://m.me/nepnha");
     expect(screen.getByLabelText("Đường dẫn bản đồ")).toHaveValue("https://maps.example.com/x");
     expect(within(screen.getByRole("group", { name: /Địa chỉ/ })).getByLabelText("English")).toHaveValue("Hanoi");
@@ -71,7 +73,8 @@ describe("ContactForm", () => {
     const user = userEvent.setup();
     serve(filled);
     render(<ContactForm />);
-    for (const label of ["Điện thoại", "Zalo (chỉ số)", "Messenger (đường dẫn)", "Đường dẫn bản đồ"]) {
+    await user.click(await screen.findByRole("checkbox", { name: "Zalo dùng số điện thoại ở trên" }));
+    for (const label of ["Điện thoại", "Số Zalo", "Messenger (đường dẫn)", "Đường dẫn bản đồ"]) {
       await user.clear(await screen.findByLabelText(label));
     }
     for (const group of [/Địa chỉ/, /Giờ liên hệ/]) {
@@ -106,13 +109,13 @@ describe("ContactForm", () => {
     const user = userEvent.setup();
     serve(empty);
     render(<ContactForm />);
-    await user.type(await screen.findByLabelText("Zalo (chỉ số)"), "abc");
+    await user.type(await screen.findByLabelText("Số Zalo"), "abc");
     adminFetch.mockImplementation(async (_path: string, init?: { method?: string }) => {
       if (init?.method === "PUT") throw new AdminApiError(400, "Số Zalo chỉ gồm chữ số, dấu cách, dấu +, dấu chấm và dấu gạch ngang, tối đa 30 ký tự.");
       return empty;
     });
     await user.click(screen.getByRole("button", { name: "Lưu" }));
-    const zalo = screen.getByLabelText("Zalo (chỉ số)");
+    const zalo = screen.getByLabelText("Số Zalo");
     // The message is under the Zalo box, not at the end of the page, and the screen moves there.
     await waitFor(() => expect(zalo).toHaveFocus());
     expect(zalo).toHaveAttribute("aria-invalid", "true");
@@ -121,7 +124,54 @@ describe("ContactForm", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Chưa lưu. Hãy sửa ô có viền đỏ.");
     expect(puts()).toHaveLength(1);
     expect(puts()[0].zalo).toBe("abc");
-    expect(screen.getByLabelText("Zalo (chỉ số)")).toHaveValue("abc");
+    expect(screen.getByLabelText("Số Zalo")).toHaveValue("abc");
+  });
+
+  it("names the Zalo box Số Zalo and gives an example", async () => {
+    serve(empty);
+    render(<ContactForm />);
+    const zalo = await screen.findByLabelText("Số Zalo");
+    expect(zalo).toHaveAccessibleDescription("Ví dụ: 0912 345 678");
+    expect(zalo).toHaveAttribute("inputmode", "tel");
+  });
+
+  it("sends the phone number as the Zalo number while Zalo dùng số điện thoại ở trên is ticked", async () => {
+    const user = userEvent.setup();
+    serve({ ...empty, zalo: "0988 111 222" });
+    render(<ContactForm />);
+    await user.type(await screen.findByLabelText("Điện thoại"), "0901 234 567");
+    const same = screen.getByRole("checkbox", { name: "Zalo dùng số điện thoại ở trên" });
+    expect(same).not.toBeChecked();
+    await user.click(same);
+    expect(screen.queryByLabelText("Số Zalo")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(puts()).toHaveLength(1));
+    expect(puts()[0]).toMatchObject({ phone: "0901 234 567", zalo: "0901 234 567" });
+  });
+
+  it("gives the Zalo box back with its number when the tick is taken off", async () => {
+    const user = userEvent.setup();
+    serve(filled);
+    render(<ContactForm />);
+    await user.click(await screen.findByRole("checkbox", { name: "Zalo dùng số điện thoại ở trên" }));
+    expect(screen.getByLabelText("Số Zalo")).toHaveValue("0901234567");
+  });
+
+  it("opens the Zalo chat of the number on screen with Thử mở Zalo, before it is saved", async () => {
+    const user = userEvent.setup();
+    serve(empty);
+    render(<ContactForm />);
+    expect(screen.queryByRole("link", { name: /Thử mở Zalo/ })).toBeNull();
+    await user.type(await screen.findByLabelText("Số Zalo"), "+84 912 345 678");
+    const open = screen.getByRole("link", { name: /Thử mở Zalo/ });
+    expect(open).toHaveAttribute("href", "https://zalo.me/0912345678");
+    expect(open).toHaveAttribute("target", "_blank");
+    expect(open).toHaveAttribute("rel", "noopener noreferrer");
+
+    await user.click(screen.getByRole("checkbox", { name: "Zalo dùng số điện thoại ở trên" }));
+    expect(screen.queryByRole("link", { name: /Thử mở Zalo/ })).toBeNull();
+    await user.type(screen.getByLabelText("Điện thoại"), "0901 234 567");
+    expect(screen.getByRole("link", { name: /Thử mở Zalo/ })).toHaveAttribute("href", "https://zalo.me/0901234567");
   });
 
   it("puts a length error of the address under the box that is too long", async () => {

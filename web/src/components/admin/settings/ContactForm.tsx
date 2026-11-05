@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
+import { buttonVariants } from "@/components/admin/ui/button";
 import { adminFetch } from "@/lib/admin/api";
 import { apiRest, langOfDetail, NOT_SAVED_NOTICE, type FieldRule, type Lang } from "@/lib/admin/field-errors";
 import { toRequestText } from "@/lib/admin/localized";
@@ -11,12 +12,15 @@ import type { ContactSettings, LocalizedText } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
+import { zaloHref, zaloNumber } from "@/lib/format";
 import { SettingField } from "./SettingField";
 import { SettingLoader } from "./SettingLoader";
 
 type FormState = {
   phone: string;
   zalo: string;
+  /** "Zalo dùng số điện thoại ở trên": the Zalo number sent is the phone number. The API has no such field. */
+  zaloIsPhone: boolean;
   messenger: string;
   address: LocalizedText;
   mapUrl: string;
@@ -25,10 +29,18 @@ type FormState = {
 
 const EMPTY_TEXT: LocalizedText = { vi: null, en: null };
 
+/** True when both numbers are set and dial the same digits ("0901 234 567" and "0901234567"). */
+function sameNumber(phone: string | null, zalo: string | null): boolean {
+  if (phone === null || zalo === null) return false;
+  const digits = zaloNumber(phone);
+  return digits !== null && digits === zaloNumber(zalo);
+}
+
 function stateFrom(settings: ContactSettings): FormState {
   return {
     phone: settings.phone ?? "",
     zalo: settings.zalo ?? "",
+    zaloIsPhone: sameNumber(settings.phone, settings.zalo),
     messenger: settings.messenger ?? "",
     address: settings.address ?? EMPTY_TEXT,
     mapUrl: settings.mapUrl ?? "",
@@ -41,11 +53,16 @@ function textOrNull(value: string): string | null {
   return trimmed === "" ? null : trimmed;
 }
 
+/** The Zalo number the website will use: the phone number while the tick is on. */
+function zaloOf(state: FormState): string {
+  return state.zaloIsPhone ? state.phone : state.zalo;
+}
+
 /** The request body. Every box may be empty: an empty box is `null`, never "". The API checks the rest. */
 function toRequest(state: FormState): ContactSettings {
   return {
     phone: textOrNull(state.phone),
-    zalo: textOrNull(state.zalo),
+    zalo: textOrNull(zaloOf(state)),
     messenger: textOrNull(state.messenger),
     address: toRequestText(state.address),
     mapUrl: textOrNull(state.mapUrl),
@@ -65,7 +82,8 @@ function longBox(text: LocalizedText): Lang {
 function fieldRules(state: FormState): FieldRule[] {
   return [
     { prefix: "Số điện thoại", field: "phone" },
-    { prefix: "Số Zalo", field: "zalo" },
+    // While the tick is on there is no Zalo box: the phone box holds the number.
+    { prefix: "Số Zalo", field: state.zaloIsPhone ? "phone" : "zalo" },
     { prefix: "Đường dẫn Messenger", field: "messenger" },
     { prefix: "Đường dẫn bản đồ", field: "mapUrl" },
     { prefix: "Địa chỉ", field: (detail) => `address.${langOfDetail(detail, longBox(state.address))}` },
@@ -86,6 +104,7 @@ export function ContactForm() {
 }
 
 function ContactFields({ initial }: { initial: ContactSettings }) {
+  const sameId = useId();
   const [state, setState] = useState<FormState>(() => stateFrom(initial));
   const [baseline, setBaseline] = useState(() => JSON.stringify(stateFrom(initial)));
   const dirty = JSON.stringify(state) !== baseline;
@@ -141,13 +160,29 @@ function ContactFields({ initial }: { initial: ContactSettings }) {
         error={fields.errors.phone}
         onChange={(phone) => patch({ phone })}
       />
-      <SettingField
-        label="Zalo (chỉ số)"
-        inputMode="tel"
-        value={state.zalo}
-        error={fields.errors.zalo}
-        onChange={(zalo) => patch({ zalo })}
-      />
+      <div className="flex flex-col gap-3">
+        <label htmlFor={sameId} className="flex min-h-11 items-center gap-3 text-base">
+          <input
+            id={sameId}
+            type="checkbox"
+            className="size-5 shrink-0 accent-primary"
+            checked={state.zaloIsPhone}
+            onChange={(event) => patch({ zaloIsPhone: event.target.checked })}
+          />
+          Zalo dùng số điện thoại ở trên
+        </label>
+        {state.zaloIsPhone ? null : (
+          <SettingField
+            label="Số Zalo"
+            inputMode="tel"
+            hint="Ví dụ: 0912 345 678"
+            value={state.zalo}
+            error={fields.errors.zalo}
+            onChange={(zalo) => patch({ zalo })}
+          />
+        )}
+        <ZaloTry number={zaloOf(state)} />
+      </div>
       <SettingField
         label="Messenger (đường dẫn)"
         inputMode="url"
@@ -186,5 +221,24 @@ function ContactFields({ initial }: { initial: ContactSettings }) {
         notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}
       />
     </div>
+  );
+}
+
+/**
+ * "Thử mở Zalo": opens the chat of the number on screen, saved or not, the way the Zalo button of the public site
+ * does. Shown only when there is a number to open.
+ */
+function ZaloTry({ number }: { number: string }) {
+  if (zaloNumber(number) === null) return null;
+  return (
+    <a
+      href={zaloHref(number)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={buttonVariants({ variant: "outline", className: "self-start" })}
+    >
+      Thử mở Zalo
+      <span className="sr-only"> (mở thẻ mới)</span>
+    </a>
   );
 }

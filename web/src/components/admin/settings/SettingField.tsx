@@ -14,11 +14,14 @@ type Props = {
   placeholder?: string;
   /** Shown right under the box, which is then marked as wrong. */
   error?: string | null;
+  /** A short help line under the box, for example an example value. */
+  hint?: string;
 };
 
 /** One labelled text box of a settings form. */
-export function SettingField({ label, value, onChange, inputMode = "text", placeholder, error }: Props) {
+export function SettingField({ label, value, onChange, inputMode = "text", placeholder, error, hint }: Props) {
   const id = useId();
+  const described = [error ? `${id}-error` : null, hint ? `${id}-hint` : null].filter(Boolean).join(" ");
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
@@ -30,9 +33,15 @@ export function SettingField({ label, value, onChange, inputMode = "text", place
         placeholder={placeholder}
         value={value}
         {...invalidProps(id, error)}
+        aria-describedby={described === "" ? undefined : described}
         onChange={(event) => onChange(event.target.value)}
       />
       <FieldError id={id} message={error} />
+      {hint ? (
+        <p id={`${id}-hint`} className="text-sm text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }
