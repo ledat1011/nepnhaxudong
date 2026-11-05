@@ -12,12 +12,13 @@
 - Chủ dự án chọn: "phẳng nét mực manhua đi đẹp đó" → cảnh hành trình giữ màu phẳng và bố cục tách lớp được, nhưng nét viền là nét mực bút lông kiểu manhua (đậm nhạt, đầu nét khô); nền trời có thể loang mực nhẹ vì là lớp riêng.
 - Chủ dự án: "còn đồng lúa chưa sửa hả" → đồng lúa bước 2 phải dày hẳn: lúa mọc kín, chen nhau thành một biển lúa, không còn từng khóm rời có khoảng trống.
 - Xem bản phác thứ 3 (màu phẳng, nét mực manhua) của bước 2 và 4, chủ dự án: "okay đẹp đó duyệt" → duyệt kiểu vẽ và bố cục 2 cảnh; vẽ tiếp cảnh đêm của bước 2 và 6 cảnh còn lại theo cùng kiểu, sửa từ cảnh hiện tại.
+- Xem 7 cảnh mới, chủ dự án: cảnh xay xát chỉ có anh 2 (bỏ ba); cảnh đóng gói thì mẹ ngồi ghế đóng gạo; các cảnh còn lại OK.
 
 ## Quyết định
 - Không dùng tranh manhua cho hành trình (chủ dự án thấy chi tiết quá). Các cảnh mới vẽ theo phong cách phẳng hiện tại, chờ chủ dự án duyệt.
 
 ## Còn mở
-- Chủ dự án xem 7 cảnh mới và góp ý.
+- Chủ dự án xem lại cảnh xay xát và đóng gói đã sửa.
 - Dựng lại 9 cảnh bằng SVG tách lớp theo bản phác (sửa `brand/story/scenes/`, trace người mới). Xoá chữ lạ trên túi, máy và biển hiệu nếu có.
 - Nối tranh vào web và làm chuyển động: làm sau.
 
@@ -28,3 +29,4 @@
 - Chủ dự án hỏi "không làm style manhua hả" → giải thích: hành trình theo kiểu phẳng để làm chuyển động; manhua dùng cho tranh phần Câu chuyện; có thể làm kiểu phẳng với nét mực. Chờ chủ dự án chọn.
 - Bản phác thứ 3 (màu phẳng, nét mực manhua): đồng lúa bước 2 đã dày kín; trời thành loang mực xám (mất màu Xanh trời). Mẹ vẫn như bé gái sau 2 lần sửa → khi dựng SVG sẽ dùng tư thế mẹ người lớn đã trace. Thêm 2 ảnh, khoảng 0,27 USD; tổng phần hành trình 14 ảnh, khoảng 1,9 USD.
 - Vẽ cảnh đêm bước 2 (từ cảnh ngày, cùng bố cục) và 6 cảnh còn lại theo kiểu đã duyệt, lưu cả 9 ảnh trong `brand/story/phac/`. Mẹ vẫn dáng tròn như bé gái (giống người đã trace ở cảnh cũ). Thêm 7 ảnh, khoảng 0,95 USD; tổng phần hành trình 21 ảnh, khoảng 2,8 USD.
+- Sửa cảnh xay xát (chỉ còn anh 2) và đóng gói (mẹ ngồi ghế, bỏ chữ trên túi và máy). Mẹ ở cảnh đóng gói giờ ra người lớn. Thêm 2 ảnh, khoảng 0,27 USD; tổng phần hành trình 23 ảnh, khoảng 3,1 USD.
