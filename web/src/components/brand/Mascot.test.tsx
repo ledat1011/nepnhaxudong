@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { BRAND, MASCOT_ONLY_COLORS } from "@/lib/brand/colors";
+import { BRAND, ILLUSTRATION_ONLY_COLORS } from "@/lib/brand/colors";
 import { Mascot } from "./Mascot";
 
 describe("Mascot", () => {
@@ -21,7 +21,7 @@ describe("Mascot", () => {
   it("uses only brand and mascot colors for fill and stroke", () => {
     const { container } = render(<Mascot title="Nếp Nhà" />);
     const allowed = new Set<string>(
-      [...Object.values(BRAND), ...Object.values(MASCOT_ONLY_COLORS), "none"].map((c) => c.toLowerCase()),
+      [...Object.values(BRAND), ...Object.values(ILLUSTRATION_ONLY_COLORS), "none"].map((c) => c.toLowerCase()),
     );
     const painted = container.querySelectorAll("[fill], [stroke]");
     expect(painted.length).toBeGreaterThan(0);

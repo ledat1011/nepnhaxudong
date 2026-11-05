@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { ImagePlaceholder } from "@/components/brand/ImagePlaceholder";
 import type { ImageRef } from "@/lib/content/types";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -9,10 +9,22 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 /** An image with a source the browser can load; the server builds `src` (see ProductSection). */
 export type GalleryImage = Omit<ImageRef, "url"> & { src: string };
 
+/**
+ * A drawing shown before the photos (the bag, ProductBag). It is item 0: the large box shows it
+ * first, its thumbnail comes first when there are photos, and it never opens the lightbox.
+ */
+export type GalleryLead = { main: ReactNode; thumb: ReactNode };
+
 type GalleryProps = {
   images: GalleryImage[];
   dict: Dictionary;
+  lead?: GalleryLead;
 };
+
+const BOX_CLASS = "block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-straw";
+const THUMB_CLASS = "block aspect-[4/3] w-20 overflow-hidden rounded-lg bg-straw";
+const THUMB_STATE_CLASS = (pressed: boolean) =>
+  pressed ? "ring-2 ring-coat ring-offset-2 ring-offset-rice" : "opacity-80 hover:opacity-100";
 
 const FOCUS_CLASS =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
@@ -57,17 +69,21 @@ function CloseIcon() {
   );
 }
 
-export function Gallery({ images, dict }: GalleryProps) {
+export function Gallery({ images, dict, lead }: GalleryProps) {
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(false);
   const openerRef = useRef<HTMLElement | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const count = images.length;
+  // With a lead drawing, item 0 is the drawing and the photos are items 1..count.
+  const offset = lead ? 1 : 0;
+  const photoIndex = index - offset;
 
+  // The lightbox arrows move through the photos only.
   const step = useCallback(
-    (delta: number) => setIndex((current) => (current + delta + count) % count),
-    [count],
+    (delta: number) => setIndex((current) => offset + ((current - offset + delta + count) % count)),
+    [count, offset],
   );
 
   useEffect(() => {
@@ -115,7 +131,7 @@ export function Gallery({ images, dict }: GalleryProps) {
     };
   }, [open, step]);
 
-  if (count === 0) {
+  if (count === 0 && !lead) {
     return (
       <ImagePlaceholder
         label={dict.image.placeholder}
@@ -124,40 +140,59 @@ export function Gallery({ images, dict }: GalleryProps) {
     );
   }
 
-  const current = images[index];
+  const current = photoIndex >= 0 ? images[photoIndex] : undefined;
 
   return (
     <div>
-      <button
-        type="button"
-        aria-label={dict.gallery.viewLarge}
-        onClick={(event) => {
-          openerRef.current = event.currentTarget;
-          setOpen(true);
-        }}
-        className={`block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-2xl bg-straw ${FOCUS_CLASS}`}
-      >
-        <Image
-          src={current.src}
-          alt={current.alt}
-          width={current.width}
-          height={current.height}
-          sizes="(min-width: 768px) 50vw, 100vw"
-          className="h-full w-full object-cover"
-        />
-      </button>
+      {lead && (
+        // Kept in the page while a photo is shown, so the bag motion keeps its elements.
+        <div data-gallery-lead hidden={index !== 0} className={BOX_CLASS}>
+          {lead.main}
+        </div>
+      )}
+      {current && (
+        <button
+          type="button"
+          aria-label={dict.gallery.viewLarge}
+          onClick={(event) => {
+            openerRef.current = event.currentTarget;
+            setOpen(true);
+          }}
+          className={`${BOX_CLASS} cursor-zoom-in ${FOCUS_CLASS}`}
+        >
+          <Image
+            src={current.src}
+            alt={current.alt}
+            width={current.width}
+            height={current.height}
+            sizes="(min-width: 768px) 50vw, 100vw"
+            className="h-full w-full object-cover"
+          />
+        </button>
+      )}
 
-      {count > 1 && (
+      {count + offset > 1 && (
         <ul className="mt-3 flex gap-2 overflow-x-auto p-1">
+          {lead && (
+            <li className="shrink-0">
+              <button
+                type="button"
+                aria-label={dict.gallery.bag}
+                aria-pressed={index === 0}
+                onClick={() => setIndex(0)}
+                className={`${THUMB_CLASS} ${FOCUS_CLASS} ${THUMB_STATE_CLASS(index === 0)}`}
+              >
+                {lead.thumb}
+              </button>
+            </li>
+          )}
           {images.map((image, i) => (
             <li key={image.src} className="shrink-0">
               <button
                 type="button"
-                aria-pressed={i === index}
-                onClick={() => setIndex(i)}
-                className={`block aspect-[4/3] w-20 overflow-hidden rounded-lg bg-straw ${FOCUS_CLASS} ${
-                  i === index ? "ring-2 ring-coat ring-offset-2 ring-offset-rice" : "opacity-80 hover:opacity-100"
-                }`}
+                aria-pressed={i + offset === index}
+                onClick={() => setIndex(i + offset)}
+                className={`${THUMB_CLASS} ${FOCUS_CLASS} ${THUMB_STATE_CLASS(i + offset === index)}`}
               >
                 <Image
                   src={image.src}
@@ -173,7 +208,7 @@ export function Gallery({ images, dict }: GalleryProps) {
         </ul>
       )}
 
-      {open && (
+      {open && current && (
         <div
           ref={dialogRef}
           role="dialog"

@@ -12,11 +12,16 @@ export function shouldHideOnSetup(rect: { top: number }, viewportHeight: number)
   return rect.top >= viewportHeight;
 }
 
-/** `shouldHideOnSetup` for an element, measured at the scroll position the page is moving to. */
-export function shouldHideElement(el: Element, pendingScroll: number): boolean {
+/**
+ * `shouldHideOnSetup` for an element, measured at the scroll position the page is moving to.
+ * `line` is the part of the screen height to compare with: 1 is the bottom edge. A motion whose
+ * trigger starts higher up (for example `top 75%`) passes that line, so an element that is
+ * already in the screen but has not reached its trigger yet can still start hidden.
+ */
+export function shouldHideElement(el: Element, pendingScroll: number, line = 1): boolean {
   return shouldHideOnSetup(
     { top: el.getBoundingClientRect().top - pendingScroll },
-    window.innerHeight,
+    window.innerHeight * line,
   );
 }
 

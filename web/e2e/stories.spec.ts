@@ -40,3 +40,27 @@ test.describe("story list and story pages", () => {
     });
   }
 });
+
+test.describe("rice story section", () => {
+  // Without motion the <img> stays: the motion code swaps it for the inline svg.
+  test.use({ reducedMotion: "reduce" });
+
+  test("a scene drawing is served and loads in the page", async ({ page, request }) => {
+    const response = await request.get("/story/canh-1-cay-ma.svg");
+    expect(response.status()).toBe(200);
+    await page.goto("/vi");
+    const img = page.locator('li[data-story-scene="cay-ma"] img');
+    await img.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() => img.evaluate((el: HTMLImageElement) => el.naturalWidth))
+      .toBeGreaterThan(0);
+  });
+
+  test("is one road timeline of eight numbered steps", async ({ page }) => {
+    await page.goto("/en");
+    const steps = page.locator("ol[data-story-list] > li[data-story-scene] [data-story-step]");
+    await expect(steps).toHaveText(Array.from({ length: 8 }, (_, i) => `Step ${i + 1}`));
+    await expect(page.locator("[data-story-road][aria-hidden='true']")).toHaveCount(8);
+    await expect(page.locator("[data-story-progress], [data-story-pin]")).toHaveCount(0);
+  });
+});

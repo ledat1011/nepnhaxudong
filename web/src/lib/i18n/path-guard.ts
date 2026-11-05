@@ -8,6 +8,8 @@ export type PathDecision = "redirect-root" | "pass" | "not-found";
 const INTERNAL_PREFIXES = ["_next", "_not-found", "api", "admin", "media"];
 // Files the app serves itself.
 const OWN_FILES = new Set(["robots.txt", "sitemap.xml", "icon.svg"]);
+// Folder of the story scene drawings in `public/`: one level of `.svg` files.
+const STORY_ASSET_DIR = "story";
 // Folder of the generated image routes, under a language and under its story section.
 const IMAGE_ROUTE = "opengraph-image";
 
@@ -17,7 +19,7 @@ const IMAGE_ROUTE = "opengraph-image";
  * 404 page comes with a real HTML body and is not cached as a rendered page.
  */
 export function classifyPath(pathname: string): PathDecision {
-  const [first, second] = pathname.split("/").filter(Boolean);
+  const [first, second, third] = pathname.split("/").filter(Boolean);
   if (first === undefined) return "redirect-root";
 
   if (isLang(first)) {
@@ -26,5 +28,8 @@ export function classifyPath(pathname: string): PathDecision {
   }
 
   if (INTERNAL_PREFIXES.includes(first)) return "pass";
+  if (first === STORY_ASSET_DIR) {
+    return second?.endsWith(".svg") && third === undefined ? "pass" : "not-found";
+  }
   return OWN_FILES.has(first) && second === undefined ? "pass" : "not-found";
 }

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- The slim 2 kg vacuum bag, drawn under the traced hands (source pixels, before the mirror).
+       Same shape as web/src/components/home/ProductBag.tsx: a front 1.7 times as tall as wide,
+       a thin side a quarter of the front, the spare film and heat seal only at the top. -->
+  <g stroke="#4A2C1A" stroke-width="10" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M128 384L122 318Q212 310 302 318L296 384Z" fill="#E9F2F1"/>
+    <path d="M134 334H290" stroke="#F2E2B6" stroke-width="14"/>
+    <path d="M134 334H290" stroke="#8B5A2B" stroke-width="14" stroke-dasharray="4 7" stroke-linecap="butt"/>
+    <path d="M112 390H282V680H112Z" fill="#FBF7EE"/>
+    <path d="M112 390L148 372H318L282 390Z" fill="#FBF7EE"/>
+    <path d="M282 390L318 372V662L282 680Z" fill="#F2E2B6"/>
+  </g>
+  <g fill="#D9A13B" fill-opacity="0.5">
+    <ellipse cx="150" cy="430" rx="9" ry="5" transform="rotate(-25 150 430)"/>
+    <ellipse cx="205" cy="452" rx="9" ry="5" transform="rotate(30 205 452)"/>
+    <ellipse cx="250" cy="420" rx="9" ry="5" transform="rotate(-40 250 420)"/>
+    <ellipse cx="172" cy="505" rx="9" ry="5" transform="rotate(15 172 505)"/>
+    <ellipse cx="236" cy="540" rx="9" ry="5" transform="rotate(-20 236 540)"/>
+    <ellipse cx="150" cy="590" rx="9" ry="5" transform="rotate(35 150 590)"/>
+    <ellipse cx="210" cy="615" rx="9" ry="5" transform="rotate(-30 210 615)"/>
+    <ellipse cx="258" cy="645" rx="9" ry="5" transform="rotate(20 258 645)"/>
+    <ellipse cx="140" cy="655" rx="9" ry="5" transform="rotate(-10 140 655)"/>
+  </g>
+  <path d="M146 362L190 350M300 410L310 404M300 440L310 434" fill="none" stroke="#FBF7EE" stroke-width="7" stroke-linecap="round"/>
+</svg>

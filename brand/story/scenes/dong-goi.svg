@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 0 1200 600">
+  <!-- Scene 6, packing at home. Final frame: the bag is sealed inside the stainless chamber vacuum machine, the clear lid is closed,
+       the stack of finished bags is full. The bag part is the product bag drawing (same data-bag groups). -->
+  <defs>
+    <pattern id="gp" width="12" height="9" patternUnits="userSpaceOnUse">
+      <g fill="#D9A13B" fill-opacity="0.45">
+        <ellipse cx="2.5" cy="2" rx="2.2" ry="1.3" transform="rotate(-25 2.5 2)"/>
+        <ellipse cx="8.5" cy="3" rx="2.2" ry="1.3" transform="rotate(40 8.5 3)"/>
+        <ellipse cx="5" cy="7" rx="2.2" ry="1.3" transform="rotate(10 5 7)"/>
+      </g>
+    </pattern>
+    <g id="fb" stroke="#4A2C1A" stroke-width="2.5" stroke-linejoin="round">
+      <path d="M0 0H84V24H0Z" fill="#FBF7EE"/>
+      <path d="M0 0H84V24H0Z" fill="url(#gp)"/>
+      <path d="M24 3H60V21H24Z" fill="#6E8B3D" stroke-width="2"/>
+      <path d="M32 12H52" fill="none" stroke="#FBF7EE" stroke-width="3" stroke-linecap="round"/>
+      <path d="M84 2L94 6V20L84 24" fill="#E9F2F1" stroke-width="1.8"/>
+    </g>
+  </defs>
+  <rect x="-200" width="1200" height="600" fill="#FBF7EE"/>
+  <path d="M-200 0H1000V470H-200Z" fill="#F2E2B6" fill-opacity="0.55"/>
+  <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M300 70H500V230H300Z" fill="#CFE4EE"/>
+    <path d="M302 196q24 -16 48 0q24 -14 48 0q24 -16 48 0q24 -12 52 0V228H302Z" fill="#6E8B3D" fill-opacity="0.5" stroke="none"/>
+    <path d="M302 212H498V228H302Z" fill="#D9A13B" fill-opacity="0.6" stroke="none"/>
+    <path d="M300 70H500V230H300ZM400 70V230M300 150H500" fill="none" stroke="#8B5A2B" stroke-width="8"/>
+    <path d="M290 236H510" fill="none" stroke-width="6"/>
+    <!-- a wall shelf with two clay jars -->
+    <path d="M40 214H240V226H40Z" fill="#8B5A2B"/>
+    <path d="M64 226L80 248M216 226L200 248" fill="none" stroke-width="5"/>
+    <path d="M70 214Q58 186 74 166Q66 156 78 152H110Q122 156 114 166Q130 186 118 214Z" fill="#E59A84"/>
+    <path d="M70 180H118" fill="none" stroke-width="2.5" stroke-opacity="0.5"/>
+    <path d="M150 214Q140 194 152 180Q146 172 156 168H182Q192 172 186 180Q198 194 188 214Z" fill="#8B5A2B"/>
+    <path d="M152 168H186V160H152Z" fill="#F2E2B6" stroke-width="2.5"/>
+    <!-- a bamboo tray hung on the wall -->
+    <path d="M690 92V84" fill="none" stroke-width="4"/>
+    <circle cx="690" cy="160" r="70" fill="#8B5A2B"/>
+    <circle cx="690" cy="160" r="62" fill="#F2E2B6" stroke-width="2.5"/>
+    <circle cx="690" cy="160" r="66" fill="none" stroke="#F2E2B6" stroke-width="3" stroke-dasharray="3 6"/>
+    <path d="M636 130Q690 150 744 130M630 160Q690 180 750 160M636 192Q690 210 744 192" fill="none" stroke="#8B5A2B" stroke-width="2" stroke-opacity="0.5"/>
+  </g>
+  <path d="M-200 470H1000V560H-200Z" fill="#F2E2B6"/>
+  <path d="M-200 470H1000" stroke="#8B5A2B" stroke-width="3"/>
+  <!-- work table -->
+  <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M250 508V552M740 508V552" fill="none" stroke-width="14"/>
+    <path d="M250 508V552M740 508V552" fill="none" stroke="#8B5A2B" stroke-width="6"/>
+    <path d="M224 492H768V510H224Z" fill="#8B5A2B"/>
+  </g>
+  <use data-include="vacuum-machine" x="270" y="370"/>
+  <g transform="translate(256 218) scale(0.6)">
+    <use data-include="bag" x="0" y="0"/>
+  </g>
+  <g data-part="lid" stroke="#4A2C1A" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M288 388V252Q288 224 316 224H372Q400 224 400 252V388Z" fill="#E9F2F1" fill-opacity="0.35" stroke-width="3.5"/>
+    <path d="M298 260Q298 236 320 234M302 286V310" fill="none" stroke="#FBF7EE" stroke-width="5"/>
+    <path d="M282 380H406V392H282Z" fill="#F2E2B6" stroke-width="3"/>
+    <path d="M400 300H412V330H400Z" fill="#F2E2B6" stroke-width="2.5"/>
+  </g>
+  <g>
+    <use data-part="stack-bag" href="#fb" x="560" y="468"/>
+    <use data-part="stack-bag" href="#fb" x="562" y="444"/>
+    <use data-part="stack-bag" href="#fb" x="558" y="420"/>
+    <use data-part="stack-bag" href="#fb" x="561" y="396"/>
+    <use data-part="stack-bag" href="#fb" x="559" y="372"/>
+    <use data-part="stack-bag" href="#fb" x="660" y="468"/>
+    <use data-part="stack-bag" href="#fb" x="658" y="444"/>
+    <use data-part="stack-bag" href="#fb" x="661" y="420"/>
+    <use data-part="stack-bag" href="#fb" x="659" y="396"/>
+  </g>
+  <use data-person="me-trao-tui" data-slot="mother" x="56" y="326" width="230" height="230"/>
+  <use data-include="road" x="0" y="560"/>
+</svg>

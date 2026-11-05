@@ -6,11 +6,14 @@ import { formatPrice, formatWeight } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { Gallery } from "./Gallery";
+import { ProductBag } from "./ProductBag";
 
 type ProductSectionProps = {
   lang: Lang;
   dict: Dictionary;
   product: Product;
+  /** Show the drawing of the vacuum-packed bag first in the gallery (the first product only). */
+  showBag: boolean;
 };
 
 const { earth, coat, grain, sprout } = BRAND;
@@ -88,14 +91,18 @@ function FeatureIcon({ place }: { place: number }) {
 
 const SUBHEADING_CLASS = "mb-3 font-bold text-coat";
 
-export function ProductSection({ lang, dict, product }: ProductSectionProps) {
+export function ProductSection({ lang, dict, product, showBag }: ProductSectionProps) {
   // The Gallery runs in the browser, which cannot read SITE_URL, so the sources are built here.
   const images = product.images.map(({ url, ...rest }) => ({ ...rest, src: toImageSrc(url) }));
 
   return (
     <article className="grid gap-8 md:grid-cols-2 md:gap-12 [&+&]:mt-16">
       <div data-reveal>
-        <Gallery images={images} dict={dict} />
+        {showBag ? (
+          <ProductBag dict={dict} images={images} />
+        ) : (
+          <Gallery images={images} dict={dict} />
+        )}
       </div>
       <div>
         <h3 className="text-2xl font-bold md:text-3xl">{product.name}</h3>

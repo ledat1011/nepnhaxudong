@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Storyboard cảnh minh hoạ</title>
+<!-- Google Fonts is a fallback for when the page is opened outside the repo (the local brand fonts do not resolve then). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "Pacifico"; src: url("../../../brand/fonts/Pacifico-Regular.ttf"); font-display: swap; }
+  @font-face { font-family: "Quicksand"; font-weight: 400; src: url("../../../brand/fonts/Quicksand-400.ttf"); font-display: swap; }
+  @font-face { font-family: "Quicksand"; font-weight: 700; src: url("../../../brand/fonts/Quicksand-700.ttf"); font-display: swap; }
+  :root {
+    --earth: #4A2C1A; --coat: #8B5A2B; --grain: #D9A13B; --straw: #F2E2B6;
+    --rice: #FBF7EE; --blush: #E59A84; --sprout: #6E8B3D;
+    --sky: #CFE4EE; --sky-light: #E9F2F1;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--rice); color: var(--earth); font: 400 16px/1.6 "Quicksand", system-ui, sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font: 400 40px/1.3 "Pacifico", cursive; margin: 0 0 8px; }
+  h2 { font-size: 22px; margin: 48px 0 12px; }
+  .lead { max-width: 60ch; }
+  .note { background: var(--straw); border-radius: 12px; padding: 12px 16px; max-width: 70ch; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; padding: 0; list-style: none; }
+  .swatches li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .swatches span { width: 28px; height: 28px; border-radius: 6px; border: 1.5px solid var(--earth); display: inline-block; }
+  .frames { display: grid; gap: 24px; grid-template-columns: 1fr; }
+  @media (min-width: 768px) { .frames { grid-template-columns: 1fr 1fr; } }
+  figure { margin: 0; background: #fff; border: 2px solid var(--straw); border-radius: 16px; overflow: hidden; }
+  figure.wide { grid-column: 1 / -1; }
+  figure svg { display: block; width: 100%; height: auto; }
+  figcaption { padding: 12px 16px 16px; }
+  figcaption b { display: block; font-size: 18px; }
+  figcaption ul { margin: 6px 0 0; padding-left: 20px; font-size: 15px; }
+  .num { display: inline-block; min-width: 28px; height: 28px; border-radius: 14px; background: var(--earth); color: var(--rice);
+    text-align: center; line-height: 28px; font-weight: 700; margin-right: 6px; font-size: 14px; }
+  .pause { position: fixed; right: 16px; bottom: 16px; min-height: 44px; padding: 8px 18px; border-radius: 22px; border: 2px solid var(--coat);
+    background: var(--rice); color: var(--earth); font: 700 15px "Quicksand", sans-serif; cursor: pointer; }
+  .pause:focus-visible { outline: 3px solid var(--coat); outline-offset: 2px; }
+
+  /* Motion sketch only. The real site uses GSAP; these CSS loops only show the idea. */
+  .drift { animation: drift 30s linear infinite; }
+  .drift2 { animation: drift 42s linear infinite; animation-delay: -14s; }
+  .sway { transform-box: fill-box; transform-origin: 50% 100%; animation: sway 4s ease-in-out infinite alternate; }
+  .sway.d1 { animation-delay: -0.6s; } .sway.d2 { animation-delay: -1.2s; } .sway.d3 { animation-delay: -1.8s; } .sway.d4 { animation-delay: -2.4s; }
+  .spin { transform-box: fill-box; transform-origin: 50% 50%; animation: spin 1.2s linear infinite; }
+  .spin-slow { transform-box: fill-box; transform-origin: 50% 50%; animation: spin 60s linear infinite; }
+  .bob { animation: bob 8s ease-in-out infinite alternate; }
+  .rain { animation: rain 0.9s linear infinite; }
+  .rise { animation: rise 2.4s ease-in-out infinite; }
+  .rise.d1 { animation-delay: -0.8s; } .rise.d2 { animation-delay: -1.6s; }
+  .flicker { animation: flicker 1.6s ease-in-out infinite alternate; }
+  .climb { animation: climb 2s linear infinite; }
+  .climb.d1 { animation-delay: -0.66s; } .climb.d2 { animation-delay: -1.33s; }
+  .drive { animation: drive 6s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translateX(-120px); } to { transform: translateX(520px); } }
+  @keyframes sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes bob { from { transform: translateY(-3px); } to { transform: translateY(3px); } }
+  @keyframes rain { from { transform: translateY(-14px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(26px); opacity: 0; } }
+  @keyframes rise { from { transform: translateY(8px); opacity: 0; } 40% { opacity: 1; } to { transform: translateY(-16px); opacity: 0; } }
+  @keyframes flicker { from { opacity: 0.55; } to { opacity: 1; } }
+  @keyframes climb { from { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } to { transform: translateY(-120px); opacity: 0; } }
+  @keyframes drive { from { transform: translateX(0); } to { transform: translateX(120px); } }
+  .paused * { animation-play-state: paused !important; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } .pause { display: none; } }
+</style>
+</head>
+<body>
+<main id="board">
+  <h1>Nếp Nhà</h1>
+  <p class="lead"><b>Storyboard phác các cảnh minh hoạ.</b> Đây là bản phác để duyệt bố cục và ý chuyển động, không phải hình cuối cùng.
+    Người chỉ là hình khối giữ chỗ; hình thật vẽ theo quy trình mascot. Các vòng lặp ở đây là CSS đơn giản chỉ để thấy ý; trang thật dùng GSAP.</p>
+  <p class="note">Thứ tự trên trang chủ: <b>Hero</b> → <b>Sản phẩm</b> (có hình túi) → <b>Từ hạt lúa tới người dùng</b> (khối mới, 8 cảnh) → Hành trình (giữ nguyên) → Báo chí → Câu chuyện → Liên hệ.</p>
+  <ul class="swatches" aria-label="Bảng màu dùng trong hình">
+    <li><span style="background:#4A2C1A"></span>Nâu đất</li>
+    <li><span style="background:#8B5A2B"></span>Nâu áo</li>
+    <li><span style="background:#D9A13B"></span>Vàng lúa</li>
+    <li><span style="background:#F2E2B6"></span>Vàng rơm</li>
+    <li><span style="background:#FBF7EE"></span>Trắng gạo</li>
+    <li><span style="background:#6E8B3D"></span>Xanh mạ</li>
+    <li><span style="background:#CFE4EE"></span>Xanh trời (mới, chỉ trong hình)</li>
+    <li><span style="background:#E9F2F1"></span>Xanh trời nhạt (mới, chỉ trong hình)</li>
+  </ul>
+
+  <h2>1. Hero</h2>
+  <div class="frames">
+    <figure class="wide">
+      <svg viewBox="0 0 800 380" role="img" aria-label="Hero: trời xanh, mặt trời, mây, luỹ tre, ruộng lúa và mascot">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#CFE4EE"/><stop offset="0.55" stop-color="#E9F2F1"/><stop offset="0.8" stop-color="#FBF7EE"/>
+          </linearGradient>
+        </defs>
+        <rect width="800" height="380" fill="url(#sky)"/>
+        <g class="bob">
+          <g class="spin-slow"><g stroke="#F2E2B6" stroke-width="6" stroke-linecap="round">
+            <path d="M640 30v-14M640 130v14M590 80h-14M690 80h14M605 45l-10-10M675 115l10 10M675 45l10-10M605 115l-10 10"/></g>
+            <circle cx="640" cy="80" r="62" fill="none"/></g>
+          <circle cx="640" cy="80" r="34" fill="#D9A13B" stroke="#4A2C1A" stroke-width="2.5"/>
+        </g>
+        <g class="drift"><path d="M60 70q8-22 30-16q10-18 32-8q22-4 22 18q14 4 8 18H58q-14-4 2-12z" fill="#fff" stroke="#4A2C1A" stroke-width="2"/></g>
+        <g class="drift2"><path d="M0 120q6-16 22-12q8-14 24-6q16-2 16 14q10 4 6 12H-2q-10-2 2-8z" fill="#fff" stroke="#4A2C1A" stroke-width="2"/></g>
+        <g class="drift" style="animation-delay:-20s"><path d="M200 40q6-16 22-12q8-14 24-6q16-2 16 14q10 4 6 12H198q-10-2 2-8z" fill="#fff" stroke="#4A2C1A" stroke-width="2"/></g>
+        <!-- far village: bamboo line and roofs -->
+        <path d="M0 240q20-30 40-6q15-26 35-4q18-28 40-2q20-30 42 0q16-22 36 0h40l20-16 20 16h60q18-26 40-2q22-28 44 0q14-20 34 0l22-14 22 14h50q20-30 44-4q20-24 40 0q16-26 40 0q20-30 46 0v20H0z" fill="#8B5A2B" opacity="0.35"/>
+        <path d="M0 262q200-26 400 0t400 0v118H0z" fill="#F2E2B6"/>
+        <path d="M0 300q200-24 400 0t400 0v80H0z" fill="#D9A13B" opacity="0.6"/>
+        <!-- text placeholder -->
+        <text x="60" y="150" font-family="Pacifico" font-size="54" fill="#4A2C1A">Nếp Nhà</text>
+        <text x="62" y="190" font-family="Quicksand" font-weight="700" font-size="18" fill="#4A2C1A">Hạt nếp quê nhà</text>
+        <rect x="60" y="208" width="150" height="38" rx="19" fill="#8B5A2B"/><text x="135" y="232" text-anchor="middle" font-family="Quicksand" font-weight="700" font-size="14" fill="#FBF7EE">Liên hệ qua Zalo</text>
+        <!-- mascot placeholder -->
+        <g transform="translate(470 120)">
+          <path d="M-60 40 L0 0 L60 40 Z" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2.5"/>
+          <circle cx="0" cy="62" r="34" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2.5"/>
+          <path d="M-46 180q0-70 46-80q46 10 46 80z" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2.5"/>
+          <g class="sway"><path d="M-50 150q-30-40-10-80" stroke="#6E8B3D" stroke-width="5" fill="none"/><ellipse cx="-62" cy="80" rx="12" ry="22" fill="#D9A13B" stroke="#4A2C1A" stroke-width="2"/></g>
+          <text x="0" y="215" text-anchor="middle" font-size="12" fill="#4A2C1A">mascot (giữ nguyên)</text>
+        </g>
+        <!-- rice stalks in 5 groups -->
+        <g stroke="#8B5A2B" stroke-width="3" fill="#D9A13B">
+          <g class="sway"><path d="M30 380q4-40 14-70" fill="none"/><ellipse cx="46" cy="304" rx="6" ry="13"/><path d="M80 380q4-44 14-74" fill="none"/><ellipse cx="96" cy="300" rx="6" ry="13"/><path d="M130 380q4-38 14-66" fill="none"/><ellipse cx="146" cy="308" rx="6" ry="13"/></g>
+          <g class="sway d1"><path d="M180 380q4-44 14-74" fill="none"/><ellipse cx="196" cy="300" rx="6" ry="13"/><path d="M230 380q4-40 14-70" fill="none"/><ellipse cx="246" cy="304" rx="6" ry="13"/><path d="M280 380q4-46 14-76" fill="none"/><ellipse cx="296" cy="298" rx="6" ry="13"/></g>
+          <g class="sway d2"><path d="M330 380q4-40 14-70" fill="none"/><ellipse cx="346" cy="304" rx="6" ry="13"/><path d="M380 380q4-44 14-74" fill="none"/><ellipse cx="396" cy="300" rx="6" ry="13"/><path d="M430 380q4-38 14-66" fill="none"/><ellipse cx="446" cy="308" rx="6" ry="13"/></g>
+          <g class="sway d3"><path d="M480 380q4-44 14-74" fill="none"/><ellipse cx="496" cy="300" rx="6" ry="13"/><path d="M530 380q4-40 14-70" fill="none"/><ellipse cx="546" cy="304" rx="6" ry="13"/><path d="M580 380q4-46 14-76" fill="none"/><ellipse cx="596" cy="298" rx="6" ry="13"/></g>
+          <g class="sway d4"><path d="M630 380q4-40 14-70" fill="none"/><ellipse cx="646" cy="304" rx="6" ry="13"/><path d="M680 380q4-44 14-74" fill="none"/><ellipse cx="696" cy="300" rx="6" ry="13"/><path d="M730 380q4-38 14-66" fill="none"/><ellipse cx="746" cy="308" rx="6" ry="13"/><path d="M780 380q4-42 14-72" fill="none"/><ellipse cx="796" cy="302" rx="6" ry="13"/></g>
+        </g>
+        <rect x="740" y="20" width="44" height="44" rx="22" fill="#FBF7EE" stroke="#8B5A2B" stroke-width="2"/><path d="M756 32v20M768 32v20" stroke="#4A2C1A" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <figcaption><b>Nền Hero, chu kỳ chung 60 giây, lặp liền mạch</b>
+        <ul>
+          <li>Mây trôi ngang, ra mép phải ở chỗ khuất rồi vào lại từ mép trái.</li>
+          <li>Vòng tia nắng xoay một vòng mỗi 60 giây; mặt trời nhấp nhô vài pixel.</li>
+          <li>Lúa chia 5 nhóm, nghiêng ±3–5° quanh gốc, lệch nhịp từ trái sang phải như làn gió. Bó lúa của mascot lắc cùng hướng.</li>
+          <li>Nút tròn "Tạm dừng chuyển động" (góc phải trong khung này; vị trí thật ở góc dưới Hero). Dừng khi Hero ra khỏi màn hình.</li>
+          <li>Điện thoại: mascot ở trên, chữ ở dưới, trời phía sau mascot, ruộng ở đáy.</li>
+        </ul></figcaption>
+    </figure>
+  </div>
+
+  <h2>2. Hình túi gạo trong khối Sản phẩm (chạy một lần)</h2>
+  <div class="frames">
+    <figure>
+      <svg viewBox="0 0 400 300" role="img" aria-label="Túi còn phồng, hạt gạo đang rơi vào">
+        <rect width="400" height="300" fill="#FBF7EE"/>
+        <path d="M120 90q-10 100 6 170h148q16-70 6-170z" fill="#fff" stroke="#4A2C1A" stroke-width="2.5" opacity="0.9"/>
+        <path d="M128 200q72 20 144 0v60H128z" fill="#F2E2B6"/>
+        <g fill="#FBF7EE" stroke="#4A2C1A" stroke-width="1.5">
+          <ellipse cx="190" cy="60" rx="4" ry="6"/><ellipse cx="208" cy="40" rx="4" ry="6"/><ellipse cx="180" cy="20" rx="4" ry="6"/>
+          <ellipse cx="220" cy="80" rx="4" ry="6"/><ellipse cx="200" cy="110" rx="4" ry="6"/><ellipse cx="170" cy="140" rx="4" ry="6"/>
+        </g>
+        <text x="200" y="290" text-anchor="middle" font-size="13" fill="#4A2C1A">bước 1: gạo rơi vào túi còn phồng</text>
+      </svg>
+      <figcaption><b>Đầu chuyển động</b>
+        <ul><li>Khoảng 10 hạt rơi vào túi, hạt sau chậm hơn hạt trước.</li><li>Rồi túi co lại thành khối vuông, nếp nhăn hiện ra, vài vệt khí bay khỏi miệng túi.</li><li>Đường hàn miệng túi kéo từ trái sang phải.</li></ul></figcaption>
+    </figure>
+    <figure>
+      <svg viewBox="0 0 400 300" role="img" aria-label="Túi đã hút chân không, có nhãn, cạnh nong gạo">
+        <rect width="400" height="300" fill="#FBF7EE"/>
+        <!-- brick in 3/4 view -->
+        <path d="M70 110l40-26h170l-40 26z" fill="#fff" stroke="#4A2C1A" stroke-width="2"/>
+        <path d="M240 110l40-26v130l-40 26z" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/>
+        <rect x="70" y="110" width="170" height="130" fill="#fff" stroke="#4A2C1A" stroke-width="2"/>
+        <g fill="#F2E2B6"><circle cx="84" cy="230" r="2"/><circle cx="100" cy="222" r="2"/><circle cx="120" cy="232" r="2"/><circle cx="220" cy="226" r="2"/><circle cx="200" cy="234" r="2"/></g>
+        <path d="M60 110h-14M60 240h-14" stroke="#4A2C1A" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <!-- label like the real one: green frame, sky + field picture, name, 2KG -->
+        <rect x="80" y="118" width="150" height="104" rx="6" fill="#6E8B3D" stroke="#4A2C1A" stroke-width="1.5"/>
+        <rect x="86" y="124" width="138" height="44" fill="#CFE4EE"/>
+        <path d="M86 152q34-10 70 0t68 0v16H86z" fill="#D9A13B"/>
+        <text x="155" y="186" text-anchor="middle" font-family="Quicksand" font-weight="700" font-size="10" fill="#FBF7EE">GẠO NẾP CÁI HOA VÀNG</text>
+        <text x="155" y="202" text-anchor="middle" font-family="Quicksand" font-weight="700" font-size="13" fill="#FBF7EE">DUY TÂN</text>
+        <circle cx="210" cy="206" r="12" fill="#D9A13B" stroke="#FBF7EE" stroke-width="1.5"/><text x="210" y="210" text-anchor="middle" font-size="8" font-weight="700" fill="#4A2C1A">2KG</text>
+        <!-- nong -->
+        <ellipse cx="320" cy="250" rx="64" ry="22" fill="#F2E2B6" stroke="#8B5A2B" stroke-width="5"/>
+        <ellipse cx="320" cy="247" rx="50" ry="14" fill="#FBF7EE"/>
+        <g font-size="12" fill="#4A2C1A" font-weight="700">
+          <text x="70" y="26">① Túi trong — nhìn rõ hạt gạo</text>
+          <text x="70" y="46">② Hút chân không — giữ khô, thơm lâu</text>
+          <text x="70" y="66">③ Khối vuông — dễ cất, dễ làm quà</text>
+        </g>
+      </svg>
+      <figcaption><b>Cuối chuyển động (đứng yên)</b>
+        <ul><li>Nhãn giống nhãn thật: khung Xanh mạ, hình đồng lúa và trời, chữ "Gạo nếp cái hoa vàng Duy Tân", huy hiệu 2KG. Không có hotline, logo hiệp hội, mã QR.</li>
+        <li>Nhãn dán vào túi (hơi nghiêng rồi về thẳng, nảy nhẹ), rồi 3 chú thích lần lượt hiện ra.</li>
+        <li>Chú thích là chữ HTML (vi / en), không nằm trong SVG.</li></ul></figcaption>
+    </figure>
+  </div>
+
+  <h2>3. Từ hạt lúa tới người dùng (8 cảnh)</h2>
+  <div class="frames">
+    <!-- Scene 1 -->
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Cảnh 1: mẹ cấy mạ trên ruộng nước">
+        <rect width="400" height="260" fill="#E9F2F1"/>
+        <rect y="130" width="400" height="130" fill="#CFE4EE"/>
+        <g stroke="#FBF7EE" stroke-width="2" fill="none" class="flicker"><ellipse cx="120" cy="200" rx="30" ry="6"/><ellipse cx="300" cy="180" rx="22" ry="5"/></g>
+        <g stroke="#6E8B3D" stroke-width="3" stroke-linecap="round">
+          <path d="M40 170v-14M40 170l-6-10M40 170l6-10M80 170v-14M80 170l-6-10M80 170l6-10M120 170v-14M120 170l-6-10M120 170l6-10"/>
+          <path d="M40 220v-14M40 220l-6-10M40 220l6-10M80 220v-14M80 220l-6-10M80 220l6-10M120 220v-14"/>
+        </g>
+        <g transform="translate(250 110) rotate(25)">
+          <path d="M-36 20 L0 -4 L36 20 Z" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/>
+          <circle cx="0" cy="34" r="18" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/>
+          <path d="M-26 110q0-50 26-58q26 8 26 58z" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2"/>
+        </g>
+        <g transform="translate(150 118) rotate(22) scale(0.85)">
+          <path d="M-36 20 L0 -4 L36 20 Z" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/>
+          <circle cx="0" cy="34" r="18" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/>
+          <path d="M-26 110q0-50 26-58q26 8 26 58z" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/>
+        </g>
+        <g transform="translate(345 118) scale(-0.85 0.85) rotate(22)">
+          <path d="M-36 20 L0 -4 L36 20 Z" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/>
+          <circle cx="0" cy="34" r="18" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/>
+          <path d="M-26 110q0-50 26-58q26 8 26 58z" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/>
+        </g>
+        <text x="250" y="250" text-anchor="middle" font-size="12" fill="#4A2C1A">mẹ (áo nâu, giữa) cùng 2 nông dân (áo vàng rơm) cúi cấy</text>
+      </svg>
+      <figcaption><span class="num">1</span><b style="display:inline">Cấy mạ</b>
+        <ul><li>Mẹ cùng bà con nông dân cúi cấy thành một hàng. Cây mạ nhú lên theo hàng (phóng to từ gốc), mặt nước gợn vòng.</li></ul></figcaption>
+    </figure>
+    <!-- Scene 2 -->
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Cảnh 2: nắng, mưa, gió, lúa lớn dần từ xanh sang vàng">
+        <rect width="400" height="260" fill="#E9F2F1"/>
+        <circle cx="60" cy="50" r="24" fill="#D9A13B" stroke="#4A2C1A" stroke-width="2"/>
+        <path d="M160 60q6-16 22-12q8-14 24-6q16-2 16 14q10 4 6 12H158q-10-2 2-8z" fill="#fff" stroke="#4A2C1A" stroke-width="2"/>
+        <g stroke="#8B5A2B" stroke-width="2" stroke-linecap="round"><path class="rain" d="M180 84v8"/><path class="rain" style="animation-delay:-.3s" d="M196 84v8"/><path class="rain" style="animation-delay:-.6s" d="M212 84v8"/></g>
+        <g stroke="#8B5A2B" stroke-width="2" fill="none" stroke-linecap="round"><path d="M300 50q20-6 40 0M310 66q20-6 40 0M296 82q20-6 40 0"/></g>
+        <rect y="200" width="400" height="60" fill="#F2E2B6"/>
+        <g stroke-width="3" stroke-linecap="round" fill="none">
+          <path d="M40 220v-30" stroke="#6E8B3D"/><path d="M80 220v-36" stroke="#6E8B3D"/>
+          <g class="sway"><path d="M160 220v-50" stroke="#6E8B3D"/><path d="M200 220v-56" stroke="#6E8B3D"/></g>
+          <g class="sway d1"><path d="M280 220q2-40 10-66" stroke="#8B5A2B"/><path d="M330 220q2-44 10-70" stroke="#8B5A2B"/></g>
+        </g>
+        <g fill="#D9A13B" stroke="#8B5A2B" stroke-width="2"><ellipse cx="292" cy="150" rx="5" ry="11"/><ellipse cx="342" cy="146" rx="5" ry="11"/></g>
+        <text x="200" y="250" text-anchor="middle" font-size="12" fill="#4A2C1A">trái → phải: lúa non xanh → lúa chín vàng</text>
+      </svg>
+      <figcaption><span class="num">2</span><b style="display:inline">Nắng, mưa, gió</b>
+        <ul><li>Nắng lên → mây kéo tới, mưa rơi (lặp khi đang thấy) → gió thổi. Lúa lớn dần (giãn theo chiều cao) và đổi xanh sang vàng (hai lớp chồng mờ dần).</li></ul></figcaption>
+    </figure>
+    <!-- Scene 3 -->
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Cảnh 3: ba lái máy gặt, anh 2 nhận bao thóc">
+        <rect width="400" height="260" fill="#E9F2F1"/>
+        <rect y="180" width="400" height="80" fill="#F2E2B6"/>
+        <g stroke="#8B5A2B" stroke-width="3" fill="none"><path d="M300 200v-40M320 200v-44M340 200v-40M360 200v-44M380 200v-40"/></g>
+        <g transform="translate(120 100)">
+          <rect x="0" y="40" width="150" height="60" rx="8" fill="#D9A13B" stroke="#4A2C1A" stroke-width="2.5"/>
+          <rect x="100" y="0" width="50" height="44" rx="6" fill="#FBF7EE" stroke="#4A2C1A" stroke-width="2.5"/>
+          <circle cx="124" cy="22" r="10" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/><path d="M114 16h22v-6h-18z" fill="#6E8B3D" stroke="#4A2C1A" stroke-width="1.5"/>
+          <g transform="translate(176 76)"><g class="spin" style="animation-duration:2.4s"><circle r="22" fill="none" stroke="#4A2C1A" stroke-width="2.5"/><path d="M-22 0h44M0-22v44" stroke="#4A2C1A" stroke-width="2.5"/></g></g>
+          <rect x="10" y="100" width="130" height="18" rx="9" fill="#4A2C1A"/>
+        </g>
+        <g transform="translate(70 150)">
+          <circle cx="0" cy="0" r="14" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/><path d="M-12-6q12-14 24 0" fill="#222" />
+          <path d="M-18 60q0-40 18-46q18 6 18 46z" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2"/>
+          <rect x="16" y="20" width="22" height="30" rx="4" fill="#FBF7EE" stroke="#4A2C1A" stroke-width="2"/>
+        </g>
+        <text x="200" y="250" text-anchor="middle" font-size="12" fill="#4A2C1A">ba lái máy (mũ lưỡi trai, tóc bạc) · anh 2 nhận bao thóc</text>
+      </svg>
+      <figcaption><span class="num">3</span><b style="display:inline">Gặt lúa bằng máy gặt đập liên hợp</b>
+        <ul><li>Máy chạy vào ruộng, guồng phía trước quay, lúa trước máy ngả xuống. Bao thóc đầy dần rồi chuyển sang tay anh 2.</li></ul></figcaption>
+    </figure>
+    <!-- Scene 4 -->
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Cảnh 4: quạt thổi qua lò than vào gầm buồng sấy, khí nóng đi lên qua lưới sắt và lớp thóc">
+        <rect width="400" height="260" fill="#FBF7EE"/>
+        <!-- fan on stand -->
+        <rect x="20" y="150" width="56" height="44" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/>
+        <g transform="translate(48 118)"><circle r="26" fill="#FBF7EE" stroke="#4A2C1A" stroke-width="2.5"/><g class="spin"><path d="M0 0q18-6 20-22q-16 0-20 22zM0 0q-6 18-22 20q0-16 22-20zM0 0q-18 6-20 22q16 0 20-22zM0 0q6-18 22-20q0 16-22 20z" fill="#8B5A2B"/></g></g>
+        <text x="48" y="212" text-anchor="middle" font-size="11" fill="#4A2C1A">quạt</text>
+        <!-- furnace -->
+        <rect x="96" y="140" width="64" height="54" rx="4" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2"/>
+        <g class="flicker"><circle cx="114" cy="176" r="7" fill="#E59A84"/><circle cx="132" cy="170" r="8" fill="#D9A13B"/><circle cx="146" cy="180" r="6" fill="#E59A84"/></g>
+        <text x="128" y="212" text-anchor="middle" font-size="11" fill="#4A2C1A">lò than</text>
+        <!-- chamber -->
+        <rect x="170" y="80" width="214" height="120" fill="none" stroke="#4A2C1A" stroke-width="2.5"/>
+        <rect x="174" y="96" width="206" height="22" fill="#D9A13B"/>
+        <path d="M172 120h210" stroke="#4A2C1A" stroke-width="2" stroke-dasharray="5 4"/>
+        <text x="276" y="92" text-anchor="middle" font-size="11" fill="#4A2C1A">thóc</text>
+        <text x="350" y="134" text-anchor="middle" font-size="10" fill="#4A2C1A">lưới sắt</text>
+        <text x="276" y="192" text-anchor="middle" font-size="11" fill="#4A2C1A">gầm</text>
+        <!-- hot air -->
+        <g stroke="#E59A84" stroke-width="2.5" fill="none" stroke-linecap="round">
+          <path d="M76 118h20M160 166h30q20 0 20-10" />
+          <g class="rise"><path d="M220 170v-18M260 170v-18"/></g><g class="rise d1"><path d="M300 170v-18M340 170v-18"/></g>
+        </g>
+        <!-- ba -->
+        <g transform="translate(128 60)"><circle r="12" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/><path d="M-11-4h22v-6h-18z" fill="#6E8B3D" stroke="#4A2C1A" stroke-width="1.5"/></g>
+        <text x="128" y="40" text-anchor="middle" font-size="11" fill="#4A2C1A">ba</text>
+      </svg>
+      <figcaption><span class="num">4</span><b style="display:inline">Sấy thóc tại nhà (theo phác thảo của anh/chị)</b>
+        <ul><li>Cánh quạt quay, than đỏ lập loè (lặp khi đang thấy).</li><li>Mũi tên hơi nóng chạy: quạt → lò than → gầm → đi lên xuyên qua lưới sắt và lớp thóc. Ba đứng cạnh lò.</li></ul></figcaption>
+    </figure>
+    <!-- Scene 5 -->
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Cảnh 5: anh 2 đổ thóc vào máy xay, hạt chạy lên gầu tải, trấu bay ra, gạo trắng chảy xuống">
+        <rect width="400" height="260" fill="#FBF7EE"/>
+        <path d="M0 40h400" stroke="#F2E2B6" stroke-width="20"/>
+        <rect x="170" y="40" width="34" height="190" fill="#6E8B3D" stroke="#4A2C1A" stroke-width="2"/>
+        <g fill="#D9A13B"><circle class="climb" cx="187" cy="210" r="4"/><circle class="climb d1" cx="187" cy="210" r="4"/><circle class="climb d2" cx="187" cy="210" r="4"/></g>
+        <path d="M110 150l26 0l-8 26h-10z" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2"/>
+        <rect x="90" y="176" width="70" height="54" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2"/>
+        <path d="M204 70h60l20 30" stroke="#4A2C1A" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <rect x="250" y="120" width="70" height="60" fill="#E59A84" stroke="#4A2C1A" stroke-width="2"/>
+        <g fill="#D9A13B" opacity="0.7" class="rise"><circle cx="300" cy="104" r="3"/><circle cx="310" cy="96" r="2"/></g>
+        <path d="M285 180v20" stroke="#4A2C1A" stroke-width="2"/>
+        <rect x="266" y="200" width="40" height="30" fill="#fff" stroke="#4A2C1A" stroke-width="2"/>
+        <g fill="#FBF7EE" stroke="#4A2C1A"><circle class="rain" cx="285" cy="190" r="2.5"/></g>
+        <g transform="translate(56 150)"><circle r="14" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/><path d="M-12-6q12-14 24 0" fill="#222"/><path d="M-18 70q0-44 18-54q18 8 18 54z" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2"/><rect x="14" y="0" width="34" height="24" rx="6" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2" transform="rotate(-25)"/></g>
+        <text x="200" y="250" text-anchor="middle" font-size="12" fill="#4A2C1A">phễu → gầu tải xanh → máy bóc vỏ → gạo trắng</text>
+      </svg>
+      <figcaption><span class="num">5</span><b style="display:inline">Xay xát</b>
+        <ul><li>Anh 2 đổ bao thóc vào phễu. Hạt chạy lên tháp gầu tải (lặp khi đang thấy), trấu bay ra ống, gạo trắng chảy xuống bao.</li><li>Màu máy theo ảnh xưởng: tháp xanh, máy nâu / đỏ, vẽ bằng màu thương hiệu gần nhất.</li></ul></figcaption>
+    </figure>
+    <!-- Scene 6 -->
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Cảnh 6: mẹ đóng gói bằng máy hút chân không, chồng túi cao dần">
+        <rect width="400" height="260" fill="#FBF7EE"/>
+        <rect x="110" y="110" width="150" height="100" rx="6" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2.5"/>
+        <path d="M110 110l20-30h110l20 30z" fill="#fff" stroke="#4A2C1A" stroke-width="2" opacity="0.8"/>
+        <rect x="140" y="88" width="90" height="18" fill="#fff" stroke="#4A2C1A" stroke-width="1.5"/>
+        <rect x="130" y="140" width="110" height="50" rx="4" fill="#FBF7EE" stroke="#4A2C1A" stroke-width="1.5"/>
+        <circle cx="160" cy="165" r="14" fill="#CFE4EE" stroke="#4A2C1A" stroke-width="1.5"/>
+        <g fill="#fff" stroke="#4A2C1A" stroke-width="1.5"><rect x="290" y="186" width="70" height="24"/><rect x="290" y="162" width="70" height="24"/><rect x="290" y="138" width="70" height="24"/></g>
+        <g fill="#6E8B3D"><rect x="306" y="190" width="38" height="16"/><rect x="306" y="166" width="38" height="16"/><rect x="306" y="142" width="38" height="16"/></g>
+        <g transform="translate(60 100)"><path d="M-30 20 L0 -2 L30 20 Z" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/><circle cy="32" r="16" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/><path d="M-24 110q0-50 24-60q24 10 24 60z" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2"/></g>
+        <text x="200" y="250" text-anchor="middle" font-size="12" fill="#4A2C1A">máy hút chân không inox, nắp trong</text>
+      </svg>
+      <figcaption><span class="num">6</span><b style="display:inline">Đóng gói</b>
+        <ul><li>Mẹ đặt túi vào máy, nắp đóng, túi co thành khối vuông (dùng lại chuyển động của hình túi). Chồng túi cao dần.</li></ul></figcaption>
+    </figure>
+    <!-- Scene 7 -->
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Cảnh 7: xe tải nhỏ chở gạo tới kệ siêu thị, khách tới nhà nhận túi gạo, hộp quà">
+        <rect width="400" height="260" fill="#E9F2F1"/>
+        <rect y="150" width="400" height="30" fill="#F2E2B6"/>
+        <g class="drive"><rect x="20" y="104" width="70" height="44" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/><rect x="90" y="116" width="34" height="32" rx="4" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2"/>
+          <g transform="translate(44 150)"><g class="spin"><circle r="10" fill="#4A2C1A"/><path d="M-6 0h12" stroke="#FBF7EE" stroke-width="2"/></g></g>
+          <g transform="translate(108 150)"><g class="spin"><circle r="10" fill="#4A2C1A"/><path d="M-6 0h12" stroke="#FBF7EE" stroke-width="2"/></g></g></g>
+        <rect x="290" y="40" width="96" height="110" fill="#FBF7EE" stroke="#4A2C1A" stroke-width="2"/>
+        <path d="M290 76h96M290 112h96" stroke="#4A2C1A" stroke-width="2"/>
+        <g fill="#6E8B3D"><rect x="298" y="56" width="18" height="18"/><rect x="320" y="56" width="18" height="18"/><rect x="342" y="56" width="18" height="18"/><rect x="298" y="92" width="18" height="18"/><rect x="320" y="92" width="18" height="18"/></g>
+        <text x="338" y="34" text-anchor="middle" font-size="11" fill="#4A2C1A">kệ siêu thị</text>
+        <g transform="translate(110 196)"><path d="M-22 12 L0 -4 L22 12 Z" fill="#F2E2B6" stroke="#4A2C1A" stroke-width="2"/><circle cy="20" r="11" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/></g>
+        <rect x="128" y="214" width="22" height="14" fill="#6E8B3D" stroke="#4A2C1A" stroke-width="1.5"/>
+        <g transform="translate(176 210)"><circle r="11" fill="#F4CDA8" stroke="#4A2C1A" stroke-width="2"/></g>
+        <text x="146" y="252" text-anchor="middle" font-size="11" fill="#4A2C1A">mẹ trao túi cho khách tới nhà</text>
+        <g transform="translate(250 208)"><rect x="-16" y="-14" width="32" height="28" fill="#E59A84" stroke="#4A2C1A" stroke-width="2"/><path d="M0-14v28M-16 0h32" stroke="#D9A13B" stroke-width="4"/></g>
+        <text x="250" y="252" text-anchor="middle" font-size="11" fill="#4A2C1A">quà</text>
+      </svg>
+      <figcaption><span class="num">7</span><b style="display:inline">Đến tay khách</b>
+        <ul><li>Xe tải nhỏ của nhà phân phối chạy tới (bánh xe quay), kệ siêu thị đầy dần túi gạo.</li><li>Khách tới nhà, mẹ trao túi gạo. Hộp quà buộc nơ hiện ra.</li></ul></figcaption>
+    </figure>
+    <!-- Scene 8 -->
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Cảnh 8: mâm cơm với xôi, bánh chưng, chè, rượu nếp">
+        <rect width="400" height="260" fill="#FBF7EE"/>
+        <ellipse cx="200" cy="180" rx="170" ry="50" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="2.5"/>
+        <ellipse cx="200" cy="172" rx="156" ry="40" fill="#F2E2B6"/>
+        <path d="M70 172q30-40 60 0z" fill="#FBF7EE" stroke="#4A2C1A" stroke-width="2"/>
+        <rect x="150" y="128" width="54" height="40" fill="#6E8B3D" stroke="#4A2C1A" stroke-width="2"/><path d="M168 128v40M186 128v40M150 142h54M150 156h54" stroke="#F2E2B6" stroke-width="2"/>
+        <path d="M222 156h56q-4 22-28 22t-28-22z" fill="#FBF7EE" stroke="#4A2C1A" stroke-width="2"/><ellipse cx="250" cy="156" rx="28" ry="6" fill="#D9A13B"/>
+        <path d="M300 110h16v14q12 8 12 26v22h-40v-22q0-18 12-26z" fill="#fff" stroke="#4A2C1A" stroke-width="2"/><rect x="292" y="146" width="32" height="20" fill="#D9A13B"/>
+        <g stroke="#8B5A2B" stroke-width="2" fill="none" stroke-linecap="round">
+          <path class="rise" d="M100 130q-6-8 0-16t0-16"/><path class="rise d1" d="M250 140q-6-8 0-16t0-16"/><path class="rise d2" d="M177 112q-6-8 0-16t0-16"/>
+        </g>
+        <g font-size="11" fill="#4A2C1A" text-anchor="middle"><text x="100" y="246">xôi</text><text x="177" y="246">bánh chưng</text><text x="250" y="246">chè</text><text x="310" y="246">rượu nếp</text></g>
+        <rect x="140" y="12" width="120" height="34" rx="17" fill="#8B5A2B"/><text x="200" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="#FBF7EE">Liên hệ qua Zalo</text>
+      </svg>
+      <figcaption><span class="num">8</span><b style="display:inline">Mâm cơm</b>
+        <ul><li>Món lần lượt hiện trên mâm: xôi, bánh chưng, chè, rượu nếp. Hơi nóng bốc lên (lặp khi đang thấy).</li><li>Cuối câu chuyện có nút "Liên hệ qua Zalo" (nút thật, mở Zalo).</li></ul></figcaption>
+    </figure>
+  </div>
+
+  <h2>4. Cách cuộn</h2>
+  <div class="frames">
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Điện thoại: các cảnh xếp dọc">
+        <rect width="400" height="260" fill="#FBF7EE"/>
+        <rect x="140" y="10" width="120" height="240" rx="16" fill="#fff" stroke="#4A2C1A" stroke-width="2.5"/>
+        <g fill="#F2E2B6" stroke="#8B5A2B" stroke-width="1.5"><rect x="152" y="24" width="96" height="60" rx="6"/><rect x="152" y="120" width="96" height="60" rx="6"/></g>
+        <g fill="#8B5A2B"><rect x="152" y="90" width="70" height="6" rx="3"/><rect x="152" y="100" width="90" height="4" rx="2"/><rect x="152" y="186" width="70" height="6" rx="3"/><rect x="152" y="196" width="90" height="4" rx="2"/></g>
+        <path d="M290 60v140" stroke="#4A2C1A" stroke-width="2" marker-end="url(#a)"/>
+        <defs><marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0l10 5-10 5z" fill="#4A2C1A"/></marker></defs>
+        <text x="300" y="130" font-size="12" fill="#4A2C1A">cuộn dọc</text>
+      </svg>
+      <figcaption><b>Điện thoại, máy tính bảng (dưới 1024 px)</b>
+        <ul><li>Cảnh xếp dọc: hình 4:3 rồi chữ. Không ghim.</li><li>Chuyển động của cảnh chạy một lần khi cảnh vào màn hình; vòng lặp chỉ chạy khi cảnh đang thấy.</li></ul></figcaption>
+    </figure>
+    <figure>
+      <svg viewBox="0 0 400 260" role="img" aria-label="Máy tính: khối ghim, 8 cảnh trượt ngang, thanh tiến độ 8 hạt lúa">
+        <rect width="400" height="260" fill="#FBF7EE"/>
+        <rect x="20" y="30" width="360" height="200" rx="10" fill="#fff" stroke="#4A2C1A" stroke-width="2.5"/>
+        <g fill="#D9A13B" stroke="#4A2C1A" stroke-width="1.2"><ellipse cx="140" cy="50" rx="5" ry="8"/><ellipse cx="160" cy="50" rx="5" ry="8"/><ellipse cx="180" cy="50" rx="5" ry="8"/></g>
+        <g fill="#FBF7EE" stroke="#4A2C1A" stroke-width="1.2"><ellipse cx="200" cy="50" rx="5" ry="8"/><ellipse cx="220" cy="50" rx="5" ry="8"/><ellipse cx="240" cy="50" rx="5" ry="8"/><ellipse cx="260" cy="50" rx="5" ry="8"/></g>
+        <g fill="#FBF7EE" stroke="#4A2C1A" stroke-width="1.2"><ellipse cx="280" cy="50" rx="5" ry="8"/></g>
+        <g fill="#F2E2B6" stroke="#8B5A2B" stroke-width="1.5"><rect x="36" y="74" width="150" height="130" rx="6"/><rect x="200" y="74" width="150" height="130" rx="6"/><rect x="364" y="74" width="40" height="130" rx="6"/></g>
+        <path d="M30 196q180-20 360 0" stroke="#8B5A2B" stroke-width="4" fill="none" stroke-dasharray="2 8" stroke-linecap="round"/>
+        <path d="M300 246h-120" stroke="#4A2C1A" stroke-width="2" marker-end="url(#a)"/>
+        <text x="310" y="250" font-size="12" fill="#4A2C1A">cảnh trượt sang trái khi cuộn dọc</text>
+      </svg>
+      <figcaption><b>Máy tính (từ 1024 px)</b>
+        <ul><li>Khối được ghim; cuộn dọc làm 8 cảnh trượt ngang, khoảng 5 lần chiều cao màn hình.</li><li>Con đường đất chạy liền qua các cảnh. Thanh 8 hạt lúa cho biết đang ở cảnh mấy.</li><li>Link "Bỏ qua câu chuyện" hiện khi dùng bàn phím.</li></ul></figcaption>
+    </figure>
+  </div>
+</main>
+<button class="pause" type="button" aria-pressed="false" id="pause">Tạm dừng chuyển động</button>
+<script>
+  (function () {
+    var button = document.getElementById("pause");
+    button.addEventListener("click", function () {
+      var paused = document.body.classList.toggle("paused");
+      button.setAttribute("aria-pressed", String(paused));
+      button.textContent = paused ? "Chạy lại chuyển động" : "Tạm dừng chuyển động";
+    });
+  })();
+</script>
+</body>
+</html>

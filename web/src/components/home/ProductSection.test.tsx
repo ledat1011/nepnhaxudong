@@ -24,8 +24,8 @@ const PRODUCT: Product = {
   images: [],
 };
 
-function renderProduct(product: Product = PRODUCT) {
-  return render(<ProductSection lang="vi" dict={dict} product={product} />);
+function renderProduct(product: Product = PRODUCT, showBag = false) {
+  return render(<ProductSection lang="vi" dict={dict} product={product} showBag={showBag} />);
 }
 
 describe("ProductSection", () => {
@@ -99,5 +99,23 @@ describe("ProductSection", () => {
     expect(
       screen.getByRole("button", { name: dict.gallery.viewLarge }).querySelector("img"),
     ).toHaveAttribute("src", "https://cdn.example.com/a.webp");
+  });
+
+  it("shows the bag drawing in the gallery column, not next to the features, when asked", () => {
+    const { container } = renderProduct(PRODUCT, true);
+    const bag = container.querySelector("[data-product-bag]");
+    const features = screen.getByRole("heading", { name: dict.product.features });
+    expect(bag).not.toBeNull();
+    const [galleryColumn, textColumn] = [...(container.querySelector("article")?.children ?? [])];
+    expect(galleryColumn).toContainElement(bag as HTMLElement);
+    expect(textColumn).toContainElement(features);
+    expect(textColumn.querySelector("[data-product-bag]")).toBeNull();
+    // The drawing takes the place of the empty photo placeholder.
+    expect(screen.queryByRole("img", { name: dict.image.placeholder })).not.toBeInTheDocument();
+  });
+
+  it("shows no bag drawing when not asked", () => {
+    const { container } = renderProduct(PRODUCT, false);
+    expect(container.querySelector("[data-product-bag]")).toBeNull();
   });
 });

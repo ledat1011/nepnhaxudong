@@ -33,7 +33,10 @@ describe("JourneySection", () => {
 
   it("lists the events in the order of the array with year, title and description", () => {
     render(<JourneySection dict={dict} events={EVENTS} />);
-    const items = within(screen.getByRole("list")).getAllByRole("listitem");
+    const list = screen.getByRole("list");
+    // Tailwind's reset removes the list styling, and Safari then drops the list role.
+    expect(list).toHaveAttribute("role", "list");
+    const items = within(list).getAllByRole("listitem");
     expect(items).toHaveLength(3);
     expect(items[0]).toHaveTextContent("1998");
     expect(items[0]).toHaveTextContent("[MẪU] Mốc một");

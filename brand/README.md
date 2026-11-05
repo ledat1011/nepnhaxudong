@@ -13,6 +13,8 @@
 | `mascot/mascot-layered.svg` | Mascot tách lớp `#head`, `#rice`, `#hands`, `#body` (có `data-pivot` để làm hiệu ứng). |
 | `logo/mascot-logo.svg` | Mascot giản lược (ít hạt lúa hơn, hạt to hơn, nét dày hơn), cùng nhóm và `data-pivot` như mascot chi tiết; nguồn của `logo-mono.svg`. |
 | `logo/mascot-logo-head.svg` | Cả cái đầu của mascot giản lược (không bị bó lúa che), nguồn của `logo-icon.svg`. |
+| `story/people/*.svg` | 6 tư thế người cho các cảnh câu chuyện (`me-cay`, `nong-dan-cay`, `me-trao-tui`, `ba-lai-may`, `ba-canh-lo`, `anh2-be-bao`), trace từ ảnh Recraft đã duyệt bằng `tools/vectorize-pose.py`. Mỗi file `viewBox="0 0 256 256"`, đúng một nhóm `<g data-part="person">`, chân chạm đáy khung. `web/scripts/build-story.mjs` ghép chúng vào cảnh. |
+| `story/pose-fixes/` | Phần sửa tay của từng tư thế cho `vectorize-pose.py`: `<tu-the>.json` (lật ngang, đổi màu, xoá vùng) và hình vẽ tay đặt trên / dưới hình trace: `<tu-the>-face.svg` (nét mặt hợp với việc đang làm), `me-trao-tui-bag.svg` (túi 2 kg mảnh), `anh2-be-bao-sack.svg` (bao thóc trắng như bao trong cảnh). Hình vẽ tay phải nằm trong thư mục này. Giọt mồ hôi: nền Xanh trời nhạt, viền Nâu đất. |
 | `tokens/tokens.json` | Nguồn gốc màu, font, các cặp chữ / nền hợp lệ. |
 | `tokens/tokens.css` | Biến CSS sinh từ `tokens.json` (`--color-*`, `--font-*`). |
 | `fonts/` | Pacifico, Quicksand 400 / 500 / 700 (giấy phép OFL). |
@@ -22,7 +24,9 @@
 ## Quy tắc màu
 
 - Vàng lúa `#D9A13B` không dùng làm màu chữ trên nền sáng (không đủ tương phản). Chỉ dùng cho điểm nhấn, hoặc làm chữ trên nền Nâu đất.
-- Hồng má `#E59A84`, `da` `#F4CDA8` và `toc` `#222222` chỉ dùng trong mascot, không dùng làm màu chữ.
+- Hồng má `#E59A84`, `da` `#F4CDA8` và `toc` `#222222` chỉ dùng trong hình minh hoạ (mascot, người, than hồng, máy xay, hộp quà), không dùng làm màu chữ.
+- Xanh trời `#CFE4EE` và Xanh trời nhạt `#E9F2F1` chỉ dùng trong hình minh hoạ (bầu trời, mặt nước ruộng, nền cảnh ngoài trời, nền hình nhỏ trên nhãn túi). Không dùng cho chữ, nút, viền giao diện, hay làm nền của một khối giao diện. Trời chuyển dần từ Xanh trời xuống Trắng gạo ở chân trời.
+- Xanh lá nhạt `#A9C47F` chỉ dùng trong hình minh hoạ (áo của ba). Không dùng cho chữ, nút, viền giao diện. Không có cặp chữ / nền nào với màu này.
 - Xanh mạ `#6E8B3D` dùng rất ít (lá lúa).
 - Chỉ ghép chữ / nền theo `textPairs` trong `tokens.json`; mọi cặp đạt WCAG AA (4,5 : 1).
 
@@ -47,6 +51,23 @@ này (bỏ qua bước không đổi gì; mỗi bước dùng kết quả của 
 8. `npm test`: kiểm tra token, font, SVG, PNG, preview. Test báo lỗi nếu một file sinh ra cũ hơn nguồn của nó.
 
 `npm run concepts` (6 concept SVG → `concepts/concepts.png`) đứng riêng, không thuộc thứ tự trên.
+
+### Tư thế người cho câu chuyện
+
+`python vectorize-pose.py <png> ../story/people/<tu-the>.svg --fixes ../story/pose-fixes/<tu-the>.json`:
+ảnh tư thế đã duyệt (PNG 1024 px, giữ ngoài repo) → `story/people/<tu-the>.svg`. Cùng Python và
+`requirements-mascot.txt` như bước 3. Thêm `--debug <thu-muc>` để xem màu đã ép (`snapped.png`, toạ độ
+của ảnh gốc, trước khi lật) và bảng màu gốc → màu bảng (`anchors.txt`). Sau đó chạy `npm run story:build`
+trong `web/`.
+
+| Tư thế | Ảnh gốc (ngoài repo) | Sửa tay trong `story/pose-fixes/` |
+|---|---|---|
+| `me-cay` | `me-cay-recraft-v1.png` | Lật ngang; nét mặt chăm chú: xoá mắt cười, vẽ mắt mở mí khép hờ nhìn xuống cây mạ, miệng cười nhỏ khép (`me-cay-face.svg`). Nón, tóc mái, tóc, má giữ như mascot. |
+| `nong-dan-cay` | `nong-dan-cay-recraft-v1.png` | Lật ngang; áo và nón Vàng rơm, mặt / tai / tay / chân `da` (ảnh gốc dùng một màu cho cả hai); mạ Xanh mạ (tự động sẽ thành Vàng lúa); bóng quần Nâu áo; mắt mở nhìn xuống, miệng cười hiền (`nong-dan-cay-face.svg`). |
+| `me-trao-tui` | `me-trao-tui-recraft-v2.png` | Lật ngang; mặt và tay `da`, nón Vàng rơm; xoá túi dày của ảnh gốc, vẽ tay túi 2 kg mảnh (`me-trao-tui-bag.svg`) nằm dưới hai bàn tay. |
+| `ba-lai-may` | `ba-lai-may-recraft-v2.png` | Lật ngang; áo Xanh lá nhạt; vô lăng Nâu đất, lỗ giữa vô lăng trong suốt; mắt mở tròn có chấm sáng, nhìn về phía trước (về guồng gặt), miệng cười nhẹ; cằm tròn được xoá bớt và vẽ lại thon hơn; thêm nếp cười và tóc mai dưới mũ (`ba-lai-may-face.svg`); tóc muối tiêu: tóc `toc`, thái dương bạc và vài sợi bạc mảnh Trắng gạo, giống `ba-canh-lo`. |
+| `ba-canh-lo` | `ba-canh-lo-recraft-v1.png` | Lật ngang; mặt dưới vành mũ Nâu đất (tự động sẽ thành `toc`); mặt hiền, vui như lúc lái máy: mắt mở tròn có chấm sáng, giữ lông mày và nụ cười của ảnh gốc, giọt mồ hôi ở thái dương cho thấy lò nóng (`ba-canh-lo-face.svg`); tóc muối tiêu: tóc `toc`, thái dương bạc và vài sợi bạc mảnh Trắng gạo, giống `ba-lai-may`. |
+| `anh2-be-bao` | `anh2-be-bao-recraft-v2.png` | Lật ngang; quần Nâu đất (ảnh gốc màu đen như tóc); khe giữa hai chân trong suốt; xoá thúng đan, vẽ bao thóc trắng có sọc Vàng lúa như bao trong cảnh 3 và 5 (`anh2-be-bao-sack.svg`, nằm dưới đầu và tay; `fit` giữ cả bao trong khung); mặt làm việc nặng mà vẫn vui: mắt mở, miệng mím cười nhỏ, một bên má hơi phồng, giọt mồ hôi (`anh2-be-bao-face.svg`). |
 
 Hai mascot, hai việc: `logo-full` dùng mascot chi tiết (`mascot/mascot-layered.svg`) cho chỗ lớn
 (bao bì, banner, đầu trang); `logo-icon` và `logo-mono` dùng mascot giản lược (`logo/mascot-logo.svg`)

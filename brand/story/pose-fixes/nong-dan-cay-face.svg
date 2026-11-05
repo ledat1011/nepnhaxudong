@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Calm working face (source pixels, before the mirror): open eyes with the pupils low and to the front,
+       under a round upper lid with a gap, so she looks down at the seedling in her lower hand, and a gentle
+       small smile (smaller than the source smile). The source brows stay. The old dot eyes and smile are painted over with skin
+       in nong-dan-cay.json. -->
+  <g fill="#4A2C1A">
+    <ellipse cx="307" cy="369" rx="12" ry="13"/>
+    <ellipse cx="408" cy="357" rx="12" ry="13"/>
+  </g>
+  <path d="M291 355Q311 337 330 352M392 343Q412 325 431 340M357 425Q378 441 400 420" fill="none" stroke="#4A2C1A" stroke-width="9" stroke-linecap="round"/>
+</svg>

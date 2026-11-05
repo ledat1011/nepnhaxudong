@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { BRAND } from "@/lib/brand/colors";
-import { RiceEar, RiceLeaf } from "./RicePlant";
+import { RiceEar, RiceGrain, RiceLeaf } from "./RicePlant";
 
 const ALLOWED = new Set<string>(Object.values(BRAND).map((c) => c.toLowerCase()));
 
@@ -47,5 +47,20 @@ describe("RiceEar", () => {
     const colors = colorsOf(container.querySelector("svg")!);
     expect(colors).toContain(BRAND.grain);
     expect(colors.every((c) => ALLOWED.has(c.toLowerCase()))).toBe(true);
+  });
+});
+
+describe("RiceGrain", () => {
+  it("is a hidden white grain with a dark outline, the shape of the bag's grains", () => {
+    const { container } = render(<RiceGrain />);
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    expect(svg).toHaveAttribute("aria-hidden", "true");
+    expect(svg).toHaveAttribute("focusable", "false");
+    const grain = svg.querySelector("ellipse") as SVGEllipseElement;
+    expect(grain.getAttribute("fill")).toBe(BRAND.rice);
+    expect(grain.getAttribute("stroke")).toBe(BRAND.earth);
+    // The same proportions as the falling grains of ProductBag (rx 3.5, ry 5.5).
+    expect(Number(grain.getAttribute("rx")) / Number(grain.getAttribute("ry"))).toBeCloseTo(3.5 / 5.5, 2);
+    expect(colorsOf(svg).every((c) => ALLOWED.has(c.toLowerCase()))).toBe(true);
   });
 });

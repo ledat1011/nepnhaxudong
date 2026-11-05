@@ -3,8 +3,9 @@ export type GsapModules = {
   ScrollTrigger: typeof import("gsap/ScrollTrigger").ScrollTrigger;
 };
 
-/** One setup step of the home page motion. It runs inside `gsap.matchMedia().add(...)`. */
-export type MotionSetup = (modules: GsapModules, root: Document) => void;
+/** One setup step of the home page motion. It runs inside `gsap.matchMedia().add(...)`.
+ * It may return a function that undoes what the setup did outside GSAP (for example a loop). */
+export type MotionSetup = (modules: GsapModules, root: Document) => void | (() => void);
 
 let pending: Promise<GsapModules> | null = null;
 

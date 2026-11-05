@@ -8,6 +8,8 @@
   --color-rice: #fbf7ee;
   --color-blush: #e59a84;
   --color-sprout: #6e8b3d;
+  --color-sky: #cfe4ee;
+  --color-sky-light: #e9f2f1;
 
   /*
    * Short entrances for the Zalo dialog and sheet: they show where the panel comes from.
@@ -100,6 +102,77 @@ body {
     translate: 0 1px;
     text-decoration-thickness: 2px;
   }
+}
+
+/*
+ * Hero scene panel (Hero.tsx): the sky and the rice fade to transparent toward the next section
+ * and, from md, toward the left edge, so no cut line shows. A mask uses only the alpha of the
+ * gradient, so the color in it is never drawn. The mascot fades a little at its bottom edge too.
+ */
+.hero-fade-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, var(--color-earth) 90%, transparent);
+  mask-image: linear-gradient(to bottom, var(--color-earth) 90%, transparent);
+}
+
+.hero-fade-mascot {
+  -webkit-mask-image: linear-gradient(to bottom, var(--color-earth) 92%, transparent);
+  mask-image: linear-gradient(to bottom, var(--color-earth) 92%, transparent);
+}
+
+@media (width >= 48rem) {
+  /*
+   * The panel spans the full hero width, behind the text too. From the left edge to the end of
+   * the text column the scene shows at most 30 % (so every line of it, even a Nâu đất outline,
+   * keeps at least 6.6 : 1 with Nâu đất text), then it reaches full strength 10rem later, behind
+   * the mascot.
+   * The end of the text column (Hero.tsx): the grid is max-w-6xl (72rem) with px-4 and gap-10, so
+   * the column starts at the container edge + 1rem, is (container - 4.5rem) / 2 wide, and its
+   * widest line is the tagline (max-w-md, 28rem). Percentages are of the panel, the section width.
+   */
+  .hero-fade-side {
+    --hero-text-end: calc(max(0px, (100% - 72rem) / 2) + 1rem + min(28rem, (min(100%, 72rem) - 4.5rem) / 2));
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in srgb, var(--color-earth) 30%, transparent) var(--hero-text-end),
+      var(--color-earth) calc(var(--hero-text-end) + 10rem)
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in srgb, var(--color-earth) 30%, transparent) var(--hero-text-end),
+      var(--color-earth) calc(var(--hero-text-end) + 10rem)
+    );
+  }
+}
+
+/*
+ * Story scenes (RiceStory.tsx): a picture is 1200 x 600, the 800-unit drawing in the middle
+ * (16.6667 % to 83.3333 %) and 200 units of its background on each side. The drawing is shown
+ * whole; the background past it fades to transparent over --bleed-left / --bleed-right (0 shows
+ * none of it), so it goes away into the Trắng gạo section like the hero scene. A short fade at
+ * the top and bottom (sky and road) removes the cut lines there. The two gradients are
+ * intersected. The inline svg that replaces the img copies its class, so the fade stays.
+ */
+.story-scene-fade {
+  --story-scene-x: linear-gradient(
+    to right,
+    transparent calc(16.6667% - var(--bleed-left, 0px)),
+    var(--color-earth) 16.6667%,
+    var(--color-earth) 83.3333%,
+    transparent calc(83.3333% + var(--bleed-right, 0px))
+  );
+  --story-scene-y: linear-gradient(
+    to bottom,
+    transparent,
+    var(--color-earth) 3%,
+    var(--color-earth) 97%,
+    transparent
+  );
+  -webkit-mask-image: var(--story-scene-x), var(--story-scene-y);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--story-scene-x), var(--story-scene-y);
+  mask-composite: intersect;
 }
 
 @media (prefers-reduced-motion: no-preference) {

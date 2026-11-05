@@ -24,7 +24,7 @@ Cập nhật: 2026-11-04 — máy công ty
 
 ## Đang làm
 - Phần B3 (trang quản trị): nhánh `feat/phan-b3-admin` đã gộp `main`, chờ chủ dự án đồng ý mở PR.
-- Minh họa và hiệu ứng mới (nền đồng lúa ở hero, hình bịch gạo, câu chuyện "từ đồng tới mâm cơm"): spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md`, đang làm trên nhánh `feat/canh-minh-hoa` ở một session riêng.
+- Cảnh minh hoạ (nhánh `feat/canh-minh-hoa`, spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md`, plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md`): đang gộp vào `main` theo yêu cầu của chủ dự án (2026-11-05). Đã có: nền Hero trải hết bề ngang, mờ dần về mép trái, vòng lặp 60 giây và nút tạm dừng tròn; hình túi hút chân không là ảnh đầu tiên của bộ ảnh, kèm 3 chú thích; khối "Từ hạt lúa tới người dùng" dạng con đường dọc uốn với 8 cảnh (tải SVG khi gần tới, chuyển động riêng mỗi cảnh, hạt gạo đi theo cuộn, nền cảnh mờ dần ra hai bên) và 6 tư thế người. Còn làm sau khi merge, bằng PR riêng: đo Lighthouse `/vi`, `/en` (Chromium không chạy được từ công cụ dòng lệnh của agent) và ghi vào `docs/setup.md`; Delivery Gate, `inspect.mjs` ở 375 px và 1280 px, review `web-interface-guidelines`; review cả nhánh; bản cuối 6 tư thế người bằng Nano Banana trả phí trên nhánh riêng, trước khi lên web thật. Góp ý của chủ dự án: `docs/session/log/2026-11-04-may-cong-ty-canh-minh-hoa.md`.
 
 ## Việc tiếp theo
 1. Bật bảo vệ nhánh `main` với check `tools (ubuntu-latest)` và `tools (windows-latest)` (chưa xác nhận là đã bật).

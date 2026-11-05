@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 0 1200 600">
+  <!-- Scene 4, drying the paddy at home, after the owner's sketch: a fan on a stand blows through a charcoal furnace,
+       the hot air goes into the plenum under a long chamber and rises through the steel mesh and the paddy layer.
+       The chamber is drawn cut open at the front. Father stands by the furnace. -->
+  <defs>
+    <pattern id="pd" width="14" height="10" patternUnits="userSpaceOnUse">
+      <g fill="#8B5A2B" fill-opacity="0.45">
+        <ellipse cx="3" cy="2.5" rx="2.6" ry="1.5" transform="rotate(-25 3 2.5)"/>
+        <ellipse cx="10" cy="3.5" rx="2.6" ry="1.5" transform="rotate(40 10 3.5)"/>
+        <ellipse cx="6" cy="8" rx="2.6" ry="1.5" transform="rotate(10 6 8)"/>
+      </g>
+    </pattern>
+    <g id="up">
+      <path d="M0 0q-8 -12 0 -24t0 -24V-60" fill="none" stroke="#4A2C1A" stroke-width="10" stroke-linecap="round"/>
+      <path d="M0 0q-8 -12 0 -24t0 -24V-60" fill="none" stroke="#E59A84" stroke-width="5" stroke-linecap="round"/>
+      <path d="M-11 -58L0 -76L11 -58Z" fill="#E59A84" stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round"/>
+    </g>
+    <g id="rt">
+      <path d="M0 0H44" fill="none" stroke="#4A2C1A" stroke-width="10" stroke-linecap="round"/>
+      <path d="M0 0H44" fill="none" stroke="#E59A84" stroke-width="5" stroke-linecap="round"/>
+      <path d="M42 -11L60 0L42 11Z" fill="#E59A84" stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round"/>
+    </g>
+  </defs>
+  <rect x="-200" width="1200" height="600" fill="#CFE4EE"/>
+  <rect x="-200" y="230" width="1200" height="70" fill="#E9F2F1"/>
+  <path id="tl" d="M0 302V286q14 -16 28 0q17 -10 34 0q20 -18 40 0q14 -12 28 0q17 -8 34 0q20 -16 40 0q14 -10 28 0q17 -14 34 0q20 -18 40 0q14 -10 28 0q17 -12 34 0q20 -16 40 0q14 -8 28 0q17 -14 34 0q20 -10 40 0q14 -18 28 0q17 -14 34 0q20 -10 40 0q14 -16 28 0q17 -12 34 0q20 -8 40 0q14 -14 28 0q17 -18 34 0q20 -10 40 0V302Z" fill="#6E8B3D" fill-opacity="0.45"/><use href="#tl" x="-800"/><use href="#tl" x="800"/>
+  <rect x="-200" y="300" width="1200" height="260" fill="#F2E2B6"/>
+  <path d="M-200 300H1000" stroke="#8B5A2B" stroke-width="2.5"/>
+  <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <!-- shed roof over the dryer -->
+    <path d="M316 176V262M776 176V262" fill="none" stroke-width="12"/>
+    <path d="M316 176V262M776 176V262" fill="none" stroke="#8B5A2B" stroke-width="5"/>
+    <path d="M260 150L800 128V172L260 190Z" fill="#8B5A2B"/>
+    <path d="M300 148V188M340 147V187M380 145V185M420 144V184M460 142V182M500 140V180M540 139V179M580 137V177M620 136V176M660 134V174M700 133V173M740 131V171M780 130V170" fill="none" stroke="#F2E2B6" stroke-width="2.5" stroke-opacity="0.7"/>
+    <!-- the long chamber, cut open at the front -->
+    <path d="M300 262H792V532H300Z" fill="#F2E2B6"/>
+    <path d="M300 262H792V532H300Z" fill="#6E8B3D" fill-opacity="0.3"/>
+    <path d="M360 266V356M420 266V356M480 266V356M540 266V356M600 266V356M660 266V356M720 266V356" fill="none" stroke="#6E8B3D" stroke-width="3" stroke-opacity="0.6"/>
+    <path d="M300 420H792V520H300Z" fill="#8B5A2B" fill-opacity="0.25" stroke="none"/>
+    <path d="M300 410H792" fill="none" stroke-width="5"/>
+    <path d="M300 418H792" fill="none" stroke-width="2.5"/>
+    <path d="M310 410V418M330 410V418M350 410V418M370 410V418M390 410V418M410 410V418M430 410V418M450 410V418M470 410V418M490 410V418M510 410V418M530 410V418M550 410V418M570 410V418M590 410V418M610 410V418M630 410V418M650 410V418M670 410V418M690 410V418M710 410V418M730 410V418M750 410V418M770 410V418" fill="none" stroke-width="2"/>
+    <path d="M292 254H330V540H292ZM762 254H800V540H762Z" fill="#6E8B3D"/>
+    <path d="M302 258V536M312 258V536M322 258V536M772 258V536M782 258V536M792 258V536" fill="none" stroke="#4A2C1A" stroke-opacity="0.5" stroke-width="2"/>
+    <path d="M292 532H800V546H292Z" fill="#8B5A2B"/>
+    <path d="M330 262H762" fill="none" stroke-width="3"/>
+    <!-- duct from the furnace into the plenum -->
+    <path d="M240 476H296V506H240Z" fill="#8B5A2B"/>
+    <!-- the fan on its stand -->
+    <path d="M44 372L28 552M88 372L104 552M36 470H96" fill="none" stroke-width="12"/>
+    <path d="M44 372L28 552M88 372L104 552M36 470H96" fill="none" stroke="#8B5A2B" stroke-width="5"/>
+    <circle cx="66" cy="330" r="56" fill="#FBF7EE" stroke-width="4"/>
+    <circle cx="66" cy="330" r="46" fill="#E9F2F1" stroke-width="2.5"/>
+    <g data-part="fan-blades" transform="translate(66 330)">
+      <path d="M0 0Q6 -30 -4 -42Q-22 -30 0 0ZM0 0Q30 6 42 -4Q30 -22 0 0ZM0 0Q-6 30 4 42Q22 30 0 0ZM0 0Q-30 -6 -42 4Q-30 22 0 0Z" fill="#8B5A2B" stroke-width="3"/>
+      <circle r="8" fill="#D9A13B" stroke-width="3"/>
+    </g>
+    <path d="M66 274V386M10 330H122M26 290L106 370M26 370L106 290" fill="none" stroke-width="1.8" stroke-opacity="0.35"/>
+    <path d="M122 318H132V342H122Z" fill="#8B5A2B"/>
+    <!-- the charcoal furnace -->
+    <path d="M132 556V330Q132 296 186 296Q240 296 240 330V556Z" fill="#E59A84"/>
+    <path d="M132 360H240M132 400H240M132 440H240M132 480H240M132 520H240M160 330V360M200 330V360M180 360V400M220 360V400M160 400V440M200 400V440M150 480V520M226 480V520" fill="none" stroke-width="2.5" stroke-opacity="0.6"/>
+    <path d="M168 296V258H204V296" fill="#8B5A2B"/>
+    <path d="M150 548V486Q150 466 172 466H206Q226 466 226 486V548Z" fill="#4A2C1A"/>
+    <g data-part="coals" stroke-width="2.5">
+      <circle cx="166" cy="534" r="11" fill="#E59A84"/>
+      <circle cx="188" cy="530" r="13" fill="#D9A13B"/>
+      <circle cx="210" cy="534" r="11" fill="#E59A84"/>
+      <circle cx="178" cy="514" r="9" fill="#D9A13B"/>
+      <circle cx="200" cy="512" r="9" fill="#E59A84"/>
+      <path d="M176 498Q172 486 182 476Q182 490 190 496Q198 484 196 474Q208 490 200 502Z" fill="#D9A13B"/>
+    </g>
+  </g>
+  <g data-part="paddy" stroke="#4A2C1A" stroke-linejoin="round">
+    <path d="M330 360H762V408H330Z" fill="#D9A13B" stroke="none"/>
+    <path d="M330 360H762V408H330Z" fill="url(#pd)" stroke="none"/>
+    <path d="M330 360Q360 352 390 360T450 360T510 360T570 360T630 360T690 360T762 358" fill="none" stroke-width="3.5"/>
+    <g fill="#D9A13B" stroke-width="2">
+    <ellipse cx="340" cy="372" rx="4" ry="6.5" transform="rotate(60 340 372)"/>
+    <ellipse cx="452" cy="384" rx="4" ry="6.5" transform="rotate(20 452 384)"/>
+    <ellipse cx="540" cy="372" rx="4" ry="6.5" transform="rotate(-40 540 372)"/>
+    <ellipse cx="664" cy="386" rx="4" ry="6.5" transform="rotate(70 664 386)"/>
+    <ellipse cx="740" cy="374" rx="4" ry="6.5" transform="rotate(-20 740 374)"/>
+      </g>
+  </g>
+  <!-- Ba leans toward the furnace (turned about his feet), so the poker ends inside the fire door. -->
+  <g transform="translate(-16 8) rotate(-14 330 556)"><g transform="translate(408 0) scale(-1 1)">
+    <use data-person="ba-canh-lo" data-slot="father" x="0" y="350" width="206" height="206"/>
+  </g></g>
+  <!-- hot air: fan, furnace, plenum, then up through the mesh and the paddy -->
+  <g>
+    <g data-part="air" transform="translate(108 330)">
+      <path d="M0 0H44" fill="none" stroke="#4A2C1A" stroke-width="10" stroke-linecap="round"/>
+      <path d="M0 0H44" fill="none" stroke="#CFE4EE" stroke-width="5" stroke-linecap="round"/>
+      <path d="M42 -11L60 0L42 11Z" fill="#CFE4EE" stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round"/>
+    </g>
+    <use data-part="air" href="#rt" transform="translate(222 491)"/>
+    <use data-part="air" href="#rt" transform="translate(354 470)"/>
+    <use data-part="air" href="#rt" transform="translate(500 470)"/>
+    <use data-part="air" href="#rt" transform="translate(646 470)"/>
+    <use data-part="air" href="#up" transform="translate(420 444)"/>
+    <use data-part="air" href="#up" transform="translate(560 444)"/>
+    <use data-part="air" href="#up" transform="translate(700 444)"/>
+    <use data-part="air" href="#up" transform="translate(480 344) scale(0.8)"/>
+    <use data-part="air" href="#up" transform="translate(620 344) scale(0.8)"/>
+    <use data-part="air" href="#up" transform="translate(360 344) scale(0.8)"/>
+  </g>
+    <use data-include="road" x="0" y="560"/>
+</svg>

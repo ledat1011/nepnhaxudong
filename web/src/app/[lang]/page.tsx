@@ -5,6 +5,7 @@ import { Hero } from "@/components/home/Hero";
 import { JourneySection } from "@/components/home/JourneySection";
 import { PressSection } from "@/components/home/PressSection";
 import { ProductSection } from "@/components/home/ProductSection";
+import { RiceStory } from "@/components/home/RiceStory";
 import { StoriesSection } from "@/components/home/StoriesSection";
 import { HomeMotion } from "@/components/motion/HomeMotion";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -72,12 +73,19 @@ export default async function HomePage({ params }: HomePageProps) {
           <section aria-labelledby="san-pham">
             <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
               <SectionHeading id="san-pham" title={dict.sections.product} />
-              {home.products.map((product) => (
-                <ProductSection key={product.name} lang={lang} dict={dict} product={product} />
+              {home.products.map((product, place) => (
+                <ProductSection
+                  key={product.name}
+                  lang={lang}
+                  dict={dict}
+                  product={product}
+                  showBag={place === 0}
+                />
               ))}
             </div>
           </section>
         )}
+        <RiceStory dict={dict} zalo={home.contact.zalo} />
         {has("hanh-trinh") && <JourneySection dict={dict} events={home.timeline} />}
         {has("bao-chi") && <PressSection lang={lang} dict={dict} items={home.press} />}
         {has("cau-chuyen") && <StoriesSection lang={lang} dict={dict} stories={home.stories} />}

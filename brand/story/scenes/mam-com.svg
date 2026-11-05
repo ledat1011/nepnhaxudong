@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 0 1200 600">
+  <!-- Scene 8, the family tray. Four dishes in this order: xôi, bánh chưng, chè, rượu nếp. Final frame: all four are on the tray. -->
+  <defs>
+    <pattern id="gx" width="12" height="9" patternUnits="userSpaceOnUse">
+      <g fill="#FBF7EE">
+        <ellipse cx="2.5" cy="2" rx="2.2" ry="1.3" transform="rotate(-25 2.5 2)"/>
+        <ellipse cx="8.5" cy="3" rx="2.2" ry="1.3" transform="rotate(40 8.5 3)"/>
+        <ellipse cx="5" cy="7" rx="2.2" ry="1.3" transform="rotate(10 5 7)"/>
+      </g>
+    </pattern>
+    <pattern id="gy" width="12" height="9" patternUnits="userSpaceOnUse">
+      <g fill="#D9A13B" fill-opacity="0.5">
+        <ellipse cx="2.5" cy="2" rx="2.2" ry="1.3" transform="rotate(-25 2.5 2)"/>
+        <ellipse cx="8.5" cy="3" rx="2.2" ry="1.3" transform="rotate(40 8.5 3)"/>
+        <ellipse cx="5" cy="7" rx="2.2" ry="1.3" transform="rotate(10 5 7)"/>
+      </g>
+    </pattern>
+    <g id="sm" fill="none" stroke-linecap="round">
+      <path d="M0 0q-9 -12 0 -24t0 -24" stroke="#4A2C1A" stroke-width="9"/>
+      <path d="M0 0q-9 -12 0 -24t0 -24" stroke="#FBF7EE" stroke-width="4"/>
+    </g>
+  </defs>
+  <rect x="-200" width="1200" height="600" fill="#FBF7EE"/>
+  <path d="M-200 0H1000V380H-200Z" fill="#F2E2B6" fill-opacity="0.55"/>
+  <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <!-- open door to the yard and the field -->
+    <path d="M230 50H570V330H230Z" fill="#CFE4EE"/>
+    <path d="M232 250q28 -18 56 0q28 -16 56 0q28 -18 56 0q28 -14 56 0q28 -16 56 0q28 -12 56 0V328H232Z" fill="#6E8B3D" fill-opacity="0.45" stroke="none"/>
+    <path d="M232 270H568V328H232Z" fill="#D9A13B" fill-opacity="0.7" stroke="none"/>
+    <path d="M232 284H568M232 304H568" fill="none" stroke="#8B5A2B" stroke-width="2.5" stroke-opacity="0.5"/>
+    <path d="M300 110q4-16 22-12q9-14 26-6q16-4 18 12q12 4 8 12H296q-10-2 4-6z" fill="#FBF7EE" stroke-width="3"/>
+    <path d="M230 50H570V330H230Z" fill="none" stroke="#8B5A2B" stroke-width="12"/>
+    <path d="M216 36H584" fill="none" stroke="#8B5A2B" stroke-width="12"/>
+    <!-- a hanging sheaf of ripe rice beside the door, as a keepsake -->
+    <path d="M110 64V96" fill="none" stroke-width="3"/>
+    <path d="M110 96Q92 150 80 200M110 96Q101 150 95 214M110 96Q110 150 110 222M110 96Q119 150 125 214M110 96Q128 150 140 200" fill="none" stroke-width="7"/>
+    <path d="M110 96Q92 150 80 200M110 96Q101 150 95 214M110 96Q110 150 110 222M110 96Q119 150 125 214M110 96Q128 150 140 200" fill="none" stroke="#D9A13B" stroke-width="3"/>
+    <path d="M98 112H122" fill="none" stroke="#8B5A2B" stroke-width="7"/>
+    <g fill="#D9A13B" stroke-width="2"><ellipse cx="74" cy="194" rx="3.5" ry="6" transform="rotate(-50 74 194)"/><ellipse cx="86" cy="198" rx="3.5" ry="6" transform="rotate(10 86 198)"/><ellipse cx="78" cy="180" rx="3.5" ry="6" transform="rotate(-50 78 180)"/><ellipse cx="90" cy="184" rx="3.5" ry="6" transform="rotate(10 90 184)"/><ellipse cx="81" cy="166" rx="3.5" ry="6" transform="rotate(-50 81 166)"/><ellipse cx="93" cy="170" rx="3.5" ry="6" transform="rotate(10 93 170)"/><ellipse cx="85" cy="152" rx="3.5" ry="6" transform="rotate(-50 85 152)"/><ellipse cx="97" cy="156" rx="3.5" ry="6" transform="rotate(10 97 156)"/><ellipse cx="89" cy="208" rx="3.5" ry="6" transform="rotate(-38 89 208)"/><ellipse cx="101" cy="212" rx="3.5" ry="6" transform="rotate(22 101 212)"/><ellipse cx="91" cy="194" rx="3.5" ry="6" transform="rotate(-38 91 194)"/><ellipse cx="103" cy="198" rx="3.5" ry="6" transform="rotate(22 103 198)"/><ellipse cx="93" cy="180" rx="3.5" ry="6" transform="rotate(-38 93 180)"/><ellipse cx="105" cy="184" rx="3.5" ry="6" transform="rotate(22 105 184)"/><ellipse cx="94" cy="166" rx="3.5" ry="6" transform="rotate(-38 94 166)"/><ellipse cx="106" cy="170" rx="3.5" ry="6" transform="rotate(22 106 170)"/><ellipse cx="104" cy="216" rx="3.5" ry="6" transform="rotate(-30 104 216)"/><ellipse cx="116" cy="220" rx="3.5" ry="6" transform="rotate(30 116 220)"/><ellipse cx="104" cy="202" rx="3.5" ry="6" transform="rotate(-30 104 202)"/><ellipse cx="116" cy="206" rx="3.5" ry="6" transform="rotate(30 116 206)"/><ellipse cx="104" cy="188" rx="3.5" ry="6" transform="rotate(-30 104 188)"/><ellipse cx="116" cy="192" rx="3.5" ry="6" transform="rotate(30 116 192)"/><ellipse cx="104" cy="174" rx="3.5" ry="6" transform="rotate(-30 104 174)"/><ellipse cx="116" cy="178" rx="3.5" ry="6" transform="rotate(30 116 178)"/><ellipse cx="119" cy="208" rx="3.5" ry="6" transform="rotate(-22 119 208)"/><ellipse cx="131" cy="212" rx="3.5" ry="6" transform="rotate(38 131 212)"/><ellipse cx="117" cy="194" rx="3.5" ry="6" transform="rotate(-22 117 194)"/><ellipse cx="129" cy="198" rx="3.5" ry="6" transform="rotate(38 129 198)"/><ellipse cx="115" cy="180" rx="3.5" ry="6" transform="rotate(-22 115 180)"/><ellipse cx="127" cy="184" rx="3.5" ry="6" transform="rotate(38 127 184)"/><ellipse cx="114" cy="166" rx="3.5" ry="6" transform="rotate(-22 114 166)"/><ellipse cx="126" cy="170" rx="3.5" ry="6" transform="rotate(38 126 170)"/><ellipse cx="134" cy="194" rx="3.5" ry="6" transform="rotate(-10 134 194)"/><ellipse cx="146" cy="198" rx="3.5" ry="6" transform="rotate(50 146 198)"/><ellipse cx="130" cy="180" rx="3.5" ry="6" transform="rotate(-10 130 180)"/><ellipse cx="142" cy="184" rx="3.5" ry="6" transform="rotate(50 142 184)"/><ellipse cx="127" cy="166" rx="3.5" ry="6" transform="rotate(-10 127 166)"/><ellipse cx="139" cy="170" rx="3.5" ry="6" transform="rotate(50 139 170)"/><ellipse cx="123" cy="152" rx="3.5" ry="6" transform="rotate(-10 123 152)"/><ellipse cx="135" cy="156" rx="3.5" ry="6" transform="rotate(50 135 156)"/></g>
+  </g>
+  <!-- the mat on the floor -->
+  <path d="M-200 380H1000V560H-200Z" fill="#F2E2B6"/>
+  <path d="M-200 380H1000" stroke="#8B5A2B" stroke-width="3"/>
+  <path d="M40 400H760V552H40Z" fill="#D9A13B" fill-opacity="0.35" stroke="#8B5A2B" stroke-width="3"/>
+  <path d="M40 420H760M40 440H760M40 460H760M40 480H760M40 500H760M40 520H760M40 540H760" fill="none" stroke="#8B5A2B" stroke-width="1.8" stroke-opacity="0.4"/>
+  <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <!-- the tray -->
+    <ellipse cx="400" cy="474" rx="352" ry="78" fill="#4A2C1A" fill-opacity="0.25" stroke="none"/>
+    <ellipse cx="400" cy="464" rx="350" ry="76" fill="#8B5A2B"/>
+    <ellipse cx="400" cy="458" rx="330" ry="64" fill="#F2E2B6"/>
+    <g data-part="dish" data-dish="xoi">
+      <ellipse cx="160" cy="462" rx="74" ry="20" fill="#FBF7EE"/>
+      <path d="M98 460Q100 400 160 392Q220 400 222 460Q160 472 98 460Z" fill="#D9A13B"/>
+      <path d="M98 460Q100 400 160 392Q220 400 222 460Q160 472 98 460Z" fill="url(#gx)" stroke="none"/>
+      <path d="M132 410Q150 400 170 404" fill="none" stroke="#FBF7EE" stroke-width="4"/>
+      <g fill="#6E8B3D" stroke="none"><circle cx="146" cy="420" r="3.5"/><circle cx="174" cy="414" r="3.5"/><circle cx="160" cy="430" r="3.5"/></g>
+    </g>
+    <g data-part="dish" data-dish="banh-chung">
+      <path d="M264 410L292 390H372L344 410Z" fill="#6E8B3D"/>
+      <path d="M264 410H344V466H264Z" fill="#6E8B3D"/>
+      <path d="M344 410L372 390V446L344 466Z" fill="#6E8B3D"/>
+      <path d="M344 410L372 390V446L344 466Z" fill="#4A2C1A" fill-opacity="0.25" stroke="none"/>
+      <path d="M290 410V466M318 410V466M278 400L358 400M290 410L318 390M318 410L346 390" fill="none" stroke="#F2E2B6" stroke-width="4"/>
+      <path d="M344 428L372 408M344 448L372 428" fill="none" stroke="#F2E2B6" stroke-width="4"/>
+      <path d="M264 410L292 390H372L344 410ZM264 410H344V466H264ZM344 410L372 390V446L344 466" fill="none"/>
+    </g>
+    <g data-part="dish" data-dish="che">
+      <path d="M426 430H534Q530 478 480 482Q430 478 426 430Z" fill="#FBF7EE"/>
+      <ellipse cx="480" cy="430" rx="54" ry="12" fill="#D9A13B"/>
+      <g fill="#FBF7EE" stroke-width="2"><circle cx="462" cy="430" r="6"/><circle cx="484" cy="426" r="6"/><circle cx="500" cy="432" r="6"/></g>
+      <path d="M454 470Q480 476 506 470" fill="none" stroke="#6E8B3D" stroke-width="4"/>
+      <path d="M512 428L548 392" fill="none" stroke-width="10"/>
+      <path d="M512 428L548 392" fill="none" stroke="#FBF7EE" stroke-width="4"/>
+    </g>
+    <g data-part="dish" data-dish="ruou-nep">
+      <path d="M608 474Q596 424 618 398V372H662V398Q684 424 672 474Q640 482 608 474Z" fill="#E9F2F1"/>
+      <path d="M604 440Q640 446 676 440Q678 460 672 474Q640 482 608 474Q602 458 604 440Z" fill="#FBF7EE" stroke="none"/>
+      <path d="M604 440Q640 446 676 440Q678 460 672 474Q640 482 608 474Q602 458 604 440Z" fill="url(#gy)" stroke="none"/>
+      <path d="M612 412Q640 418 668 412Q676 426 676 440Q640 446 604 440Q606 426 612 412Z" fill="#F2E2B6" stroke="none"/>
+      <path d="M608 474Q596 424 618 398V372H662V398Q684 424 672 474Q640 482 608 474Z" fill="none"/>
+      <path d="M614 372H666V358H614Z" fill="#8B5A2B"/>
+      <path d="M624 404Q614 424 616 450" fill="none" stroke="#FBF7EE" stroke-width="5"/>
+      <path d="M690 450H718L714 478Q704 484 694 478Z" fill="#FBF7EE"/>
+      <path d="M692 456H716" fill="none" stroke="#F2E2B6" stroke-width="5"/>
+    </g>
+    <!-- two small bowls of rice and chopsticks at the front -->
+    <path d="M250 492H310Q306 520 280 522Q254 520 250 492Z" fill="#FBF7EE"/>
+    <path d="M252 492Q280 476 308 492Z" fill="#FBF7EE"/>
+    <path d="M490 492H550Q546 520 520 522Q494 520 490 492Z" fill="#FBF7EE"/>
+    <path d="M492 492Q520 476 548 492Z" fill="#FBF7EE"/>
+    <path d="M330 516L440 498M334 524L444 508" fill="none" stroke="#8B5A2B" stroke-width="5"/>
+  </g>
+  <g>
+    <use data-part="steam" href="#sm" transform="translate(146 382)"/>
+    <use data-part="steam" href="#sm" transform="translate(176 378)"/>
+    <use data-part="steam" href="#sm" transform="translate(318 380) scale(0.85)"/>
+    <use data-part="steam" href="#sm" transform="translate(470 412) scale(0.85)"/>
+  </g>
+  <use data-include="road" x="0" y="560"/>
+</svg>

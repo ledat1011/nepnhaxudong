@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Response } from "@playwright/test";
+import { BRAND } from "../src/lib/brand/colors";
 
 const MOTION_ON = "html[data-motion='on']";
 const SCROLL_STEP_PX = 400;
@@ -151,9 +152,7 @@ async function openWithClock(page: Page) {
 async function wheelStep(page: Page, deltaY: number) {
   const before = await page.evaluate(() => window.scrollY);
   await page.mouse.wheel(0, deltaY);
-  await expect
-    .poll(() => page.evaluate(() => window.scrollY))
-    .toBe(Math.max(0, before + deltaY));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(Math.max(0, before + deltaY));
   await page.clock.runFor(WHEEL_GAP_MS);
 }
 
@@ -184,7 +183,9 @@ async function recordFirstWrites(page: Page) {
     }
   });
   return () =>
-    page.evaluate(() => (window as unknown as { __firstAngle: Record<string, number> }).__firstAngle);
+    page.evaluate(
+      () => (window as unknown as { __firstAngle: Record<string, number> }).__firstAngle,
+    );
 }
 
 test("motion starts and nothing stays hidden after scrolling to the end", async ({ page }) => {
@@ -266,7 +267,10 @@ test("a deep link into the journey lands on it and keeps what is in view visible
   expect(events.every((opacity) => opacity === "1")).toBe(true);
   const leafScales = await page.$$eval("[data-journey-leaf]", (els) =>
     els
-      .filter((el) => el.closest("[data-journey-event]")!.getBoundingClientRect().top < window.innerHeight)
+      .filter(
+        (el) =>
+          el.closest("[data-journey-event]")!.getBoundingClientRect().top < window.innerHeight,
+      )
       .map((el) => {
         const transform = getComputedStyle(el).transform;
         return transform === "none" ? 1 : new DOMMatrix(transform).a;
@@ -282,10 +286,11 @@ test("the contact block at the end of the page appears", async ({ page }) => {
   const contact = "section[aria-labelledby='lien-he'] [data-reveal]";
   expect((await revealOpacities(page, contact)).every((opacity) => opacity === "0")).toBe(true);
   await page.keyboard.press("End");
-  await page.waitForTimeout(1500);
-  const opacities = await revealOpacities(page, "section[aria-labelledby='lien-he'] [data-reveal]");
-  expect(opacities.length).toBeGreaterThan(0);
-  expect(opacities.every((opacity) => opacity === "1")).toBe(true);
+  // The reveal runs when the scroll reaches the block; on a busy machine that takes a while.
+  await expect
+    .poll(async () => (await revealOpacities(page, contact)).every((opacity) => opacity === "1"))
+    .toBe(true);
+  expect((await revealOpacities(page, contact)).length).toBeGreaterThan(0);
 });
 
 const SCROLL_TARGET_FROM_END_PX = 200;
@@ -352,7 +357,9 @@ test("a journey leaf grows out of the stem tip, not below it", async ({ page }) 
 // The mock content has no product image, so the lightbox cannot be opened here. The lightbox is a
 // non-portal `fixed inset-0` element inside the revealed block, so this test puts the same kind
 // of element in that block and checks that it still covers the whole screen.
-test("a fixed overlay inside the revealed gallery block covers the whole screen", async ({ page }) => {
+test("a fixed overlay inside the revealed gallery block covers the whole screen", async ({
+  page,
+}) => {
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);
   await scrollThroughPage(page);
@@ -367,8 +374,42 @@ test("a fixed overlay inside the revealed gallery block covers the whole screen"
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   });
   const viewport = page.viewportSize();
-  expect(box).toEqual({ x: 0, y: 0, width: viewport?.width, height: viewport?.height });
+  expect(box).toEqual({
+    x: 0,
+    y: 0,
+    width: viewport?.width,
+    height: viewport?.height,
+  });
 });
+
+// The spec asks that the LCP stays the brand name. The hero scene must not take it: inline svg
+// is not an LCP candidate, an <img> or a CSS background image would be.
+for (const viewport of [
+  { width: 375, height: 812 },
+  { width: 1280, height: 800 },
+]) {
+  test(`the largest contentful paint is the brand name at ${viewport.width} px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/vi");
+    await page.waitForSelector(MOTION_ON);
+    const lcp = await page.evaluate(
+      () =>
+        new Promise<{ tag: string; inH1: boolean; text: string }>((resolve) => {
+          new PerformanceObserver((list) => {
+            const entries = list.getEntries() as (PerformanceEntry & { element: Element | null })[];
+            const last = entries.at(-1);
+            const el = last?.element ?? null;
+            resolve({
+              tag: el?.tagName.toLowerCase() ?? "none",
+              inH1: el?.closest("h1") !== null && el !== null,
+              text: el?.textContent?.trim().slice(0, 20) ?? "",
+            });
+          }).observe({ type: "largest-contentful-paint", buffered: true });
+        }),
+    );
+    expect(lcp.inH1, JSON.stringify(lcp)).toBe(true);
+  });
+}
 
 test("no layout shift while scrolling", async ({ page }) => {
   await page.addInitScript(() => {
@@ -409,8 +450,8 @@ test("turning reduced motion on while the page is open reverts the motion", asyn
   await page.waitForSelector(MOTION_ON);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForSelector("html:not([data-motion])");
-  // The attribute goes before GSAP has put every inline style back, so on a slow CI machine the first read can
-  // still see a block mid-revert. Wait for the end state instead of reading once.
+  // The attribute goes before GSAP has put every inline style back, and with reduced motion globals.css gives
+  // every property a 0.01 ms CSS transition, so the first read can still see a block mid-revert. Poll for the end state.
   await expect
     .poll(async () => (await revealOpacities(page)).every((opacity) => opacity === "1"))
     .toBe(true);
@@ -478,7 +519,9 @@ test("a new scroll after the mascot settled starts from the current angle", asyn
   expect(Math.abs(first.rice)).toBeLessThan(0.1);
 });
 
-test("turning reduced motion off again tilts the mascot about the same pivots", async ({ page }) => {
+test("turning reduced motion off again tilts the mascot about the same pivots", async ({
+  page,
+}) => {
   await openWithClock(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.waitForSelector("html:not([data-motion])");
@@ -522,12 +565,242 @@ test("turning reduced motion on makes the plant fully grown", async ({ page }) =
 });
 
 test("the plant does not widen the page at 320 px", async ({ page }) => {
+  // The page is long at 320 px (the story scenes stack), so the slow scroll needs more time.
+  test.setTimeout(90_000);
   await page.setViewportSize({ width: 320, height: 640 });
   await page.goto("/vi");
   await page.waitForSelector(MOTION_ON);
   await scrollThroughPage(page);
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(320);
+});
+
+const FIRST_CLOUD = "[data-hero-cloud]";
+
+function cloudTransform(page: Page) {
+  return page.$eval(FIRST_CLOUD, (el) => getComputedStyle(el).transform);
+}
+
+test("the hero clouds move and the pause button stops them", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  const pause = page.getByRole("button", { name: "Tạm dừng chuyển động" }).first();
+  await expect(pause).toBeVisible();
+  const first = await cloudTransform(page);
+  await page.waitForTimeout(1000);
+  expect(await cloudTransform(page)).not.toBe(first);
+
+  await pause.click();
+  // A toggle button keeps its name; aria-pressed carries the state, the title follows it.
+  await expect(pause).toHaveAttribute("aria-pressed", "true");
+  await expect(pause).toHaveAttribute("title", "Chạy lại chuyển động");
+  const stopped = await cloudTransform(page);
+  await page.waitForTimeout(1000);
+  expect(await cloudTransform(page)).toBe(stopped);
+});
+
+test("the paused choice survives a reload", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await page.getByRole("button", { name: "Tạm dừng chuyển động" }).first().click();
+  await page.reload();
+  await page.waitForSelector(MOTION_ON);
+  await expect(
+    page.getByRole("button", { name: "Tạm dừng chuyển động", pressed: true }).first(),
+  ).toBeVisible();
+  const before = await cloudTransform(page);
+  await page.waitForTimeout(1000);
+  expect(await cloudTransform(page)).toBe(before);
+});
+
+test("the pause button has a Nâu đất focus ring between two Trắng gạo bands", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  const pause = page.getByRole("button", { name: "Tạm dừng chuyển động" }).first();
+  // Reach the button with the keyboard, so :focus-visible applies.
+  await pause.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  const ring = await pause.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return {
+      focusVisible: el.matches(":focus-visible"),
+      outlineStyle: style.outlineStyle,
+      outlineColor: style.outlineColor,
+      outlineWidth: style.outlineWidth,
+      outlineOffset: style.outlineOffset,
+      boxShadow: style.boxShadow,
+    };
+  });
+  expect(ring.focusVisible).toBe(true);
+  expect(ring.outlineStyle).toBe("solid");
+  expect(ring.outlineColor).toBe("rgb(74, 44, 26)");
+  expect(ring.outlineWidth).toBe("2px");
+  expect(ring.outlineOffset).toBe("2px");
+  expect(ring.boxShadow).toContain("rgb(251, 247, 238) 0px 0px 0px 6px");
+});
+
+type Box = { left: number; top: number; right: number; bottom: number };
+
+function overlaps(a: Box, b: Box) {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+async function heroBoxes(page: Page) {
+  return page.evaluate(() => {
+    const box = (el: Element | null) => {
+      if (!el) throw new Error("hero element not found");
+      const r = el.getBoundingClientRect();
+      return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+    };
+    const hero = document.querySelector("[data-hero-scene]");
+    return {
+      hero: box(hero),
+      panel: box(document.querySelector("[data-hero-panel]")),
+      mascot: box(document.querySelector("svg[data-mascot]")),
+      pause: box(hero?.querySelector("button[aria-pressed]") ?? null),
+      links: Array.from(hero?.querySelectorAll("a[href]") ?? []).map(box),
+    };
+  });
+}
+
+for (const viewport of [
+  { width: 320, height: 640 },
+  { width: 375, height: 812 },
+  { width: 767, height: 1024 },
+]) {
+  test(`on a ${viewport.width} px phone the pause button sits in the scene corner`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/vi");
+    await page.waitForSelector(MOTION_ON);
+    const { panel, mascot, pause, links } = await heroBoxes(page);
+    // Inside the bottom-right corner of the scene band.
+    expect(pause.top).toBeGreaterThanOrEqual(panel.top + (panel.bottom - panel.top) / 2);
+    expect(pause.bottom).toBeLessThanOrEqual(panel.bottom);
+    expect(pause.right).toBeLessThanOrEqual(panel.right);
+    expect(pause.left).toBeGreaterThanOrEqual((panel.left + panel.right) / 2);
+    // Never over the mascot or a button.
+    expect(overlaps(pause, mascot)).toBe(false);
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) expect(overlaps(pause, link)).toBe(false);
+  });
+}
+
+test("on a desktop the pause button stays in the bottom-right corner of the hero", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  const { hero, mascot, pause, links } = await heroBoxes(page);
+  expect(hero.bottom - pause.bottom).toBeCloseTo(16, 0);
+  expect(hero.right - pause.right).toBeGreaterThanOrEqual(16);
+  expect(overlaps(pause, mascot)).toBe(false);
+  for (const link of links) expect(overlaps(pause, link)).toBe(false);
+});
+
+test("reduced motion hides the pause button and leaves the clouds still", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/vi");
+  await page.waitForTimeout(1500);
+  await expect(page.getByRole("button", { name: /chuyển động/ })).toBeHidden();
+  expect(await cloudTransform(page)).toBe("none");
+});
+
+const IDENTITY = ["none", "matrix(1, 0, 0, 1, 0, 0)"];
+
+function bagState(page: Page) {
+  return page.evaluate(() => {
+    const style = (name: string) => {
+      const el = document.querySelector(`[data-product-bag] [data-bag='${name}']`);
+      if (!el) throw new Error(`bag part ${name} not found`);
+      return getComputedStyle(el);
+    };
+    const figure = document.querySelector("[data-product-bag]") as HTMLElement;
+    return {
+      top: figure.getBoundingClientRect().top,
+      line: window.innerHeight * 0.75,
+      puffy: style("puffy").opacity,
+      label: style("label").transform,
+      notes: Array.from(document.querySelectorAll("[data-bag-note]")).map(
+        (el) => getComputedStyle(el).opacity,
+      ),
+    };
+  });
+}
+
+async function expectBagFinalFrame(page: Page) {
+  const state = await bagState(page);
+  expect(state.puffy).toBe("0");
+  expect(IDENTITY).toContain(state.label);
+  expect(state.notes).toHaveLength(3);
+  expect(state.notes.every((o) => o === "1")).toBe(true);
+}
+
+/** Records the bag's `puffy` opacity on every frame from the first paint on. */
+async function recordPuffy(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __puffy: number[] };
+    w.__puffy = [];
+    const tick = () => {
+      const el = document.querySelector("[data-product-bag] [data-bag='puffy']");
+      if (el) w.__puffy.push(Number(getComputedStyle(el).opacity));
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  return () => page.evaluate(() => (window as unknown as { __puffy: number[] }).__puffy);
+}
+
+// The bag shows its final frame from the first paint; the motion unpacks it and packs it back,
+// so the first and the last frame are the same and no frame jumps. At 1440x900 the bag is
+// already past the trigger line when the motion starts, so it plays at once.
+for (const viewport of [
+  { width: 1280, height: 720 },
+  { width: 1280, height: 800 },
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+  { width: 375, height: 812 },
+]) {
+  test(`the bag plays from and back to its final frame at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    const puffy = await recordPuffy(page);
+    await page.goto("/vi");
+    await page.waitForSelector(MOTION_ON);
+    await page.evaluate(() => {
+      const figure = document.querySelector("[data-product-bag]") as HTMLElement;
+      const down = figure.getBoundingClientRect().top - window.innerHeight * 0.5;
+      if (down > 0) window.scrollBy({ top: down, behavior: "instant" });
+    });
+    await page.waitForTimeout(4000);
+    await expectBagFinalFrame(page);
+    const samples = await puffy();
+    expect(samples.length).toBeGreaterThan(30);
+    // The first painted frame is the final frame: the loose bag is hidden.
+    expect(samples[0]).toBe(0);
+    // The motion ran: the loose bag showed in the middle of it.
+    expect(Math.max(...samples)).toBeGreaterThan(0.9);
+    // No jump: a 0.35 s fade moves less than half of its range between two frames.
+    for (let i = 1; i < samples.length; i++) {
+      expect(Math.abs(samples[i] - samples[i - 1]), `frame ${i}`).toBeLessThan(0.5);
+    }
+  });
+}
+
+test("the bag animation ends in the static final frame", async ({ page }) => {
+  await page.goto("/vi");
+  await page.waitForSelector(MOTION_ON);
+  await page.locator("[data-product-bag]").first().scrollIntoViewIfNeeded();
+  await page.waitForTimeout(4000);
+  await expectBagFinalFrame(page);
+  // The falling grains keep their own rotation: grain 0 is turned -20 degrees.
+  const grain = await page.$eval(
+    "[data-bag='grains'] ellipse",
+    (el) => getComputedStyle(el).transform,
+  );
+  const [a, b] = grain
+    .replace(/matrix\(|\)/g, "")
+    .split(",")
+    .map(Number);
+  expect(Math.atan2(b, a) * (180 / Math.PI)).toBeCloseTo(-20, 0);
 });
 
 test.describe("reduced motion", () => {
@@ -567,7 +840,245 @@ test.describe("reduced motion", () => {
     expect(await page.$eval("[data-journey-line]", (el) => getComputedStyle(el).transform)).toBe(
       "none",
     );
-    expect((await revealOpacities(page, "[data-journey-event]")).every((o) => o === "1")).toBe(true);
+    expect((await revealOpacities(page, "[data-journey-event]")).every((o) => o === "1")).toBe(
+      true,
+    );
     expect((await plantScales(page)).every((scale) => scale === 1)).toBe(true);
+  });
+  test("reduced motion: the bag notes are visible at once", async ({ page }) => {
+    await page.goto("/vi");
+    await page.locator("[data-product-bag]").first().scrollIntoViewIfNeeded();
+    const notes = await revealOpacities(page, "[data-bag-note]");
+    expect(notes).toHaveLength(3);
+    expect(notes.every((o) => o === "1")).toBe(true);
+  });
+});
+
+test.describe("the rice story road", () => {
+  const PHONE = { width: 390, height: 844 };
+  const DESKTOP = { width: 1280, height: 800 };
+  const SCENES = "li[data-story-scene]";
+
+  async function openStory(page: Page, viewport: { width: number; height: number }) {
+    await page.setViewportSize(viewport);
+    await page.goto("/vi");
+    await page.waitForSelector(MOTION_ON, { state: "attached" });
+  }
+
+  /** Scrolls through the story in steps, so every scene passes its trigger line. */
+  async function scrollThroughStory(page: Page) {
+    const { top, height } = await page.$eval("[data-rice-story]", (el) => {
+      const box = el.getBoundingClientRect();
+      return { top: box.top + window.scrollY, height: box.height };
+    });
+    for (let y = top - 1000; y <= top + height; y += 300) {
+      await page.evaluate((to) => window.scrollTo({ top: to, behavior: "instant" }), y);
+      await page.waitForTimeout(120);
+    }
+  }
+
+  /** Scrolls until scene `index` has its top at 40 % of the screen. */
+  async function scrollToScene(page: Page, index: number) {
+    await page.evaluate((i) => {
+      const li = document.querySelectorAll("li[data-story-scene]")[i];
+      window.scrollBy({ top: li.getBoundingClientRect().top - window.innerHeight * 0.4, behavior: "instant" });
+    }, index);
+  }
+
+  const boxes = (page: Page, selector: string) =>
+    page.$$eval(selector, (els) =>
+      els.map((el) => {
+        const r = el.getBoundingClientRect();
+        return { left: r.left, right: r.right, top: r.top, center: r.left + r.width / 2 };
+      }),
+    );
+
+  test("phone: the road runs on the left and the scenes stack to its right", async ({ page }) => {
+    await openStory(page, PHONE);
+    await scrollThroughStory(page);
+    expect(await page.locator(".pin-spacer").count()).toBe(0);
+    const labels = await boxes(page, `${SCENES} [data-story-step]`);
+    const stops = await boxes(page, `${SCENES} > [data-story-stop]`);
+    expect(labels).toHaveLength(8);
+    for (let i = 0; i < 8; i++) {
+      expect(stops[i].right).toBeLessThan(labels[i].left);
+      expect(labels[i].left).toBeCloseTo(labels[0].left, 0);
+      if (i > 0) expect(labels[i].top).toBeGreaterThan(labels[i - 1].top);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(PHONE.width);
+    await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(8);
+    // The fourth dish is the last one to come to the table.
+    await page.locator("[data-dish='ruou-nep']").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(3000);
+    expect(await page.$eval("[data-dish='ruou-nep']", (el) => getComputedStyle(el).opacity)).toBe("1");
+  });
+
+  test("desktop: the scenes take turns left and right of the road, nothing is pinned", async ({
+    page,
+  }) => {
+    await openStory(page, DESKTOP);
+    await scrollThroughStory(page);
+    expect(await page.locator(".pin-spacer").count()).toBe(0);
+    const scenes = await boxes(page, SCENES);
+    scenes.forEach((scene, i) => {
+      if (i % 2 === 0) expect(scene.center).toBeLessThan(DESKTOP.width / 2);
+      else expect(scene.center).toBeGreaterThan(DESKTOP.width / 2);
+    });
+    // Each scene stands next to the road, on its own side, 64 px from the middle.
+    const contents = await boxes(page, `${SCENES} [data-story-content]`);
+    contents.forEach((content, i) => {
+      const gap = i % 2 === 0 ? DESKTOP.width / 2 - content.right : content.left - DESKTOP.width / 2;
+      expect(gap).toBeGreaterThan(40);
+      expect(gap).toBeLessThan(90);
+    });
+    // The owner asked for a shorter section (it was about 4800 px at 1280), then for wider pictures.
+    const height = await page.$eval("[data-rice-story]", (el) => el.getBoundingClientRect().height);
+    expect(height).toBeLessThan(4500);
+  });
+
+  test("desktop: the grain moves down the road and the stop in view fills", async ({ page }) => {
+    await openStory(page, DESKTOP);
+    const grainY = () =>
+      page.$eval("[data-story-grain]", (el) => {
+        const wrap = el.parentElement?.getBoundingClientRect().top ?? 0;
+        return el.getBoundingClientRect().top - wrap;
+      });
+    const activeStop = () =>
+      page.$$eval("[data-story-stop]", (els) => els.findIndex((el) => el.hasAttribute("data-active")));
+    await scrollToScene(page, 1);
+    await page.waitForTimeout(1500);
+    expect(await page.$eval("[data-story-grain]", (el) => getComputedStyle(el).opacity)).toBe("1");
+    const first = await grainY();
+    expect(await activeStop()).toBe(1);
+    await scrollToScene(page, 4);
+    await page.waitForTimeout(1500);
+    expect(await grainY()).toBeGreaterThan(first + 500);
+    expect(await activeStop()).toBe(4);
+    // The road above the grain is darker: the passed layer of an earlier stretch is shown whole.
+    const passed = await page.$eval(
+      "li[data-story-scene]:nth-child(2) [data-story-road-passed]",
+      (el) => getComputedStyle(el).transform,
+    );
+    expect(IDENTITY).toContain(passed);
+    // The darker road is Vàng lúa, inside the Vàng rơm road.
+    const passedStroke = await page.$eval(
+      "li[data-story-scene]:nth-child(2) [data-story-road-passed] path",
+      (el) => el.getAttribute("stroke"),
+    );
+    expect(passedStroke?.toUpperCase()).toBe(BRAND.grain.toUpperCase());
+
+    // Back up the page, the grain goes back up the road.
+    const down = await grainY();
+    await scrollToScene(page, 1);
+    await page.waitForTimeout(1500);
+    expect(await grainY()).toBeLessThan(down - 500);
+    expect(await activeStop()).toBe(1);
+  });
+
+  test("resizing from desktop to phone keeps the road timeline", async ({ page }) => {
+    await openStory(page, DESKTOP);
+    await scrollToScene(page, 3);
+    await page.waitForTimeout(500);
+    await page.setViewportSize(PHONE);
+    await page.waitForTimeout(800);
+    expect(await page.locator(".pin-spacer").count()).toBe(0);
+    const labels = await boxes(page, `${SCENES} [data-story-step]`);
+    labels.forEach((label) => expect(label.left).toBeCloseTo(labels[0].left, 0));
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(PHONE.width);
+    await page.evaluate(() =>
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }),
+    );
+    await expect(page.locator("footer")).toBeInViewport();
+  });
+
+  test("a broken scene file keeps the static image", async ({ page }) => {
+    let calls = 0;
+    // The first request is the <img>; the second one is the fetch of the inline swap.
+    await page.route("**/story/canh-4-say.svg", async (route) => {
+      calls += 1;
+      if (calls === 1) await route.continue();
+      else await route.fulfill({ status: 500, body: "" });
+    });
+    await openStory(page, PHONE);
+    await scrollThroughStory(page);
+    await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(7);
+    await expect(page.locator("li[data-story-scene='say'] img")).toHaveCount(1);
+    await expect(page.locator("li[data-story-scene='say'] svg[data-scene]")).toHaveCount(0);
+  });
+
+  test("the skip link jumps past the story", async ({ page }) => {
+    await openStory(page, DESKTOP);
+    const skip = page.locator("[data-story-skip]");
+    await page.locator("#tu-hat-lua").scrollIntoViewIfNeeded();
+    await skip.focus();
+    await expect(skip).toBeVisible();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#sau-cau-chuyen")).toBeFocused();
+    await expect(page.locator("#sau-cau-chuyen")).toBeInViewport();
+  });
+
+  test("opening #hanh-trinh lands on the journey", async ({ page }) => {
+    await page.setViewportSize(DESKTOP);
+    await page.goto("/vi#hanh-trinh");
+    await page.waitForSelector(MOTION_ON, { state: "attached" });
+    await page.waitForTimeout(2000);
+    await expect(page.locator("#hanh-trinh")).toBeInViewport();
+  });
+
+  test("sections after the story still reveal", async ({ page }) => {
+    await openStory(page, DESKTOP);
+    await scrollThroughStory(page);
+    await page.locator("#bao-chi").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1500);
+    const press = await page.$$eval("section[aria-labelledby='bao-chi'] [data-reveal]", (els) =>
+      els.map((el) => getComputedStyle(el).opacity),
+    );
+    expect(press.length).toBeGreaterThan(0);
+    expect(press.every((o) => o === "1")).toBe(true);
+  });
+
+  test("the pause button also stops the story loops", async ({ page }) => {
+    await openStory(page, PHONE);
+    await page.evaluate(() => {
+      const li = document.querySelector("li[data-story-scene='say']") as HTMLElement;
+      window.scrollBy({ top: li.getBoundingClientRect().top - 120, behavior: "instant" });
+    });
+    // The intro plays first (about 2.3 s); the loop runs after it.
+    await page.waitForTimeout(3500);
+    const fan = () =>
+      page.$eval(
+        "[data-part='fan-blades']",
+        (el) => el.getAttribute("transform") ?? getComputedStyle(el).transform,
+      );
+    const turning = await fan();
+    await page.waitForTimeout(400);
+    expect(await fan()).not.toBe(turning);
+    // A click without scrolling, so the scene stays on screen.
+    await page
+      .getByRole("button", { name: "Tạm dừng chuyển động" })
+      .first()
+      .evaluate((button: HTMLButtonElement) => button.click());
+    const stopped = await fan();
+    await page.waitForTimeout(1000);
+    expect(await fan()).toBe(stopped);
+  });
+
+  test.describe("with reduced motion", () => {
+    test.use({ reducedMotion: "reduce" });
+
+    test("shows the whole road and eight static images", async ({ page }) => {
+      await page.setViewportSize(DESKTOP);
+      await page.goto("/vi");
+      await page.waitForTimeout(2000);
+      await scrollThroughStory(page);
+      await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(0);
+      await expect(page.locator(`${SCENES} img`)).toHaveCount(8);
+      await expect(page.locator("[data-story-road]")).toHaveCount(8);
+      expect(await page.$eval("[data-story-grain]", (el) => getComputedStyle(el).opacity)).toBe("0");
+      const titles = await page.$$eval(`${SCENES} h3`, (els) =>
+        els.map((el) => getComputedStyle(el).opacity),
+      );
+      expect(titles).toEqual(Array(8).fill("1"));
+    });
   });
 });

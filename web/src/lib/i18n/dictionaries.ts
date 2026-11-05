@@ -31,6 +31,10 @@ const vi = {
     zaloCta: "Liên hệ qua Zalo",
     journeyCta: "Xem hành trình",
   },
+  motion: {
+    pause: "Tạm dừng chuyển động",
+    resume: "Chạy lại chuyển động",
+  },
   sections: {
     product: "Sản phẩm",
     journey: "Hành trình",
@@ -38,11 +42,39 @@ const vi = {
     story: "Câu chuyện Nếp Nhà",
     contact: "Liên hệ",
   },
+  story: {
+    title: "Từ hạt lúa tới người dùng",
+    skip: "Bỏ qua câu chuyện",
+    step: "Bước",
+    cayMaTitle: "Cấy mạ",
+    cayMaText: "Cấy từng khóm mạ nếp cái hoa vàng xuống ruộng nước.",
+    nangMuaGioTitle: "Nắng, mưa, gió",
+    nangMuaGioText: "Lúa lớn lên qua nắng, mưa và gió của xứ Đông, từ xanh mạ đến vàng óng.",
+    gatTitle: "Gặt lúa",
+    gatText: "Máy gặt cắt lúa, tách hạt, rồi đổ thóc vào từng bao.",
+    sayTitle: "Sấy thóc tại nhà",
+    sayText:
+      "Quạt thổi hơi nóng từ lò than vào gầm, hơi nóng đi lên qua lưới sắt và làm khô lớp thóc.",
+    xayXatTitle: "Xay xát",
+    xayXatText: "Cho thóc vào máy; vỏ trấu bay ra, hạt gạo trắng chảy xuống.",
+    dongGoiTitle: "Đóng gói",
+    dongGoiText: "Hút chân không từng túi 2 kg cho gạo giữ khô và thơm.",
+    denTayKhachTitle: "Đến tay khách",
+    denTayKhachText:
+      "Xe của nhà phân phối chở gạo tới siêu thị; khách cũng tới tận nhà lấy gạo, làm quà.",
+    mamComTitle: "Mâm cơm",
+    mamComText: "Xôi, bánh chưng, chè, rượu nếp: nếp nhà lên mâm cơm của mọi nhà.",
+  },
   product: {
     features: "Đặc điểm",
     packaging: "Quy cách đóng gói",
     dishes: "Gợi ý món",
     contactPrice: "Giá liên hệ",
+  },
+  bag: {
+    note1: "Túi trong: nhìn rõ từng hạt gạo",
+    note2: "Hút chân không: gạo giữ khô và thơm lâu",
+    note3: "Túi gọn: dễ cất, dễ làm quà",
   },
   contact: {
     phone: "Điện thoại",
@@ -75,6 +107,7 @@ const vi = {
     previous: "Ảnh trước",
     next: "Ảnh sau",
     close: "Đóng",
+    bag: "Hình túi gạo",
   },
   stories: {
     readMore: "Đọc tiếp",
@@ -134,6 +167,10 @@ const en: Dictionary = {
     zaloCta: "Contact us on Zalo",
     journeyCta: "See the journey",
   },
+  motion: {
+    pause: "Pause motion",
+    resume: "Play motion",
+  },
   sections: {
     product: "Product",
     journey: "Journey",
@@ -141,11 +178,43 @@ const en: Dictionary = {
     story: "Nếp Nhà stories",
     contact: "Contact",
   },
+  story: {
+    title: "From the rice seed to your table",
+    skip: "Skip the story",
+    step: "Step",
+    cayMaTitle: "Planting seedlings",
+    cayMaText:
+      "Bunch by bunch, the yellow-flower sticky rice seedlings go into the flooded field.",
+    nangMuaGioTitle: "Sun, rain and wind",
+    nangMuaGioText:
+      "The rice grows through the sun, rain and wind of the xứ Đông region, from green seedling to golden grain.",
+    gatTitle: "Harvest",
+    gatText: "The harvester cuts the rice, threshes it and fills one sack after another.",
+    sayTitle: "Drying the rice at home",
+    sayText:
+      "A fan blows hot air from the coal stove under the floor. The air rises through the iron mesh and dries the rice.",
+    xayXatTitle: "Milling",
+    xayXatText:
+      "The rice goes into the machine. The husks fly out and white grains pour down.",
+    dongGoiTitle: "Packing",
+    dongGoiText: "Each 2 kg bag is vacuum-sealed so the rice stays dry and fragrant.",
+    denTayKhachTitle: "Reaching the customer",
+    denTayKhachText:
+      "The distributor's truck takes the rice to the supermarket. Customers also come to our home to pick up rice, as gifts.",
+    mamComTitle: "The meal tray",
+    mamComText:
+      "Sticky rice, bánh chưng, sweet soup and rice wine: our rice goes onto every family's tray.",
+  },
   product: {
     features: "Features",
     packaging: "Packaging",
     dishes: "Serving ideas",
     contactPrice: "Contact for price",
+  },
+  bag: {
+    note1: "Clear bag: you can see every grain",
+    note2: "Vacuum packed: the rice stays dry and fragrant for longer",
+    note3: "Compact bag: easy to store and to give",
   },
   contact: {
     phone: "Phone",
@@ -178,6 +247,7 @@ const en: Dictionary = {
     previous: "Previous image",
     next: "Next image",
     close: "Close",
+    bag: "Drawing of the rice bag",
   },
   stories: {
     readMore: "Read more",
