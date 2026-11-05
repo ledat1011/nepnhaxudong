@@ -114,6 +114,7 @@ test("a family member sees no account management, and the API refuses it with 40
 });
 
 test("after a lost phone the owner switches off the member's 2FA, and the member must set it up again", async () => {
+  await member.goto(ADMIN_ROUTES.accounts);
   await switchOnTwoFactor(member);
   await expect(member.getByText("Đang bật")).toBeVisible();
 
