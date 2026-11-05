@@ -1,8 +1,18 @@
-# Bản phác cảnh hành trình (phong cách phẳng)
+# Bản phác cảnh hành trình (màu phẳng, nét mực manhua)
 
-Ảnh Nano Banana Pro sửa từ cảnh SVG hiện tại, màu phẳng với nét mực kiểu manhua (chủ dự án chọn), (`web/public/story/canh-*.svg`), chỉ để duyệt bố cục.
-Sau khi chủ dự án duyệt, cảnh được dựng lại bằng SVG tách lớp trong `brand/story/scenes/` để làm chuyển động.
-Prompt và ảnh đầu vào: `prompts.json`.
+Chủ dự án đã duyệt kiểu vẽ: màu phẳng, nét viền bằng mực bút lông kiểu manhua, trời loang mực.
+Các ảnh do Nano Banana Pro vẽ, bằng cách sửa từ cảnh SVG hiện tại (`web/public/story/canh-*.svg`). Bố cục và vị trí người giữ như cảnh cũ.
+Ảnh chỉ dùng để duyệt. Cảnh trên web sẽ được dựng lại bằng SVG tách lớp trong `brand/story/scenes/`, để làm chuyển động.
+Prompt và ảnh đầu vào của từng ảnh nằm trong `prompts.json`.
 
-- `2-nang-mua-gio-ngay.webp`: bước 2, đồng lúa dày hơn, ba mẹ đứng chăm lúa (ban ngày).
-- `4-say.webp`: bước 4, quạt thấp, ba đứng sau quạt cho than vào lò.
+| File | Bước |
+|---|---|
+| `1-cay-ma.webp` | 1. Cấy mạ |
+| `2-nang-mua-gio-ngay.webp` | 2. Nắng, mưa, gió (ngày): đồng lúa dày, ba mẹ chăm lúa |
+| `2-nang-mua-gio-dem.webp` | 2. Cùng cảnh, đêm trăng (cùng bố cục, để chuyển ngày sang đêm) |
+| `3-gat.webp` | 3. Gặt lúa |
+| `4-say.webp` | 4. Sấy thóc: quạt thấp, ba đứng sau quạt cho than vào lò |
+| `5-xay-xat.webp` | 5. Xay xát |
+| `6-dong-goi.webp` | 6. Đóng gói |
+| `7-den-tay-khach.webp` | 7. Đến tay khách |
+| `8-mam-com.webp` | 8. Mâm cơm |

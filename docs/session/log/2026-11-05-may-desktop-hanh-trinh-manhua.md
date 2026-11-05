@@ -11,13 +11,14 @@
 - Xem bản phác bước 2 và 4, chủ dự án: "ba mặt đầy đặn hơn xíu, tóc không bạc quá" → ba: mặt đầy đặn hơn, ít nếp nhăn, tóc muối tiêu (đen nhiều hơn bạc).
 - Chủ dự án chọn: "phẳng nét mực manhua đi đẹp đó" → cảnh hành trình giữ màu phẳng và bố cục tách lớp được, nhưng nét viền là nét mực bút lông kiểu manhua (đậm nhạt, đầu nét khô); nền trời có thể loang mực nhẹ vì là lớp riêng.
 - Chủ dự án: "còn đồng lúa chưa sửa hả" → đồng lúa bước 2 phải dày hẳn: lúa mọc kín, chen nhau thành một biển lúa, không còn từng khóm rời có khoảng trống.
+- Xem bản phác thứ 3 (màu phẳng, nét mực manhua) của bước 2 và 4, chủ dự án: "okay đẹp đó duyệt" → duyệt kiểu vẽ và bố cục 2 cảnh; vẽ tiếp cảnh đêm của bước 2 và 6 cảnh còn lại theo cùng kiểu, sửa từ cảnh hiện tại.
 
 ## Quyết định
 - Không dùng tranh manhua cho hành trình (chủ dự án thấy chi tiết quá). Các cảnh mới vẽ theo phong cách phẳng hiện tại, chờ chủ dự án duyệt.
 
 ## Còn mở
-- Chủ dự án xem 9 tranh và góp ý.
-- Tranh ngày và đêm của bước 2 chưa cùng bố cục (ba mẹ đứng khác chỗ); muốn chuyển từ ngày sang đêm mượt thì phải vẽ lại tranh đêm từ tranh ngày.
+- Chủ dự án xem 7 cảnh mới và góp ý.
+- Dựng lại 9 cảnh bằng SVG tách lớp theo bản phác (sửa `brand/story/scenes/`, trace người mới), giữ chữ trên túi và biển hiệu nếu có thì xoá.
 - Nối tranh vào web và làm chuyển động: làm sau.
 
 ## Đã làm
@@ -26,3 +27,4 @@
 - Sửa ba ở bước 2 và 4: tóc muối tiêu, mặt đầy hơn một chút. Mẹ ở bước 2 vẫn như bé gái (lần sửa không đổi được). Thêm 2 ảnh, khoảng 0,27 USD.
 - Chủ dự án hỏi "không làm style manhua hả" → giải thích: hành trình theo kiểu phẳng để làm chuyển động; manhua dùng cho tranh phần Câu chuyện; có thể làm kiểu phẳng với nét mực. Chờ chủ dự án chọn.
 - Bản phác thứ 3 (màu phẳng, nét mực manhua): đồng lúa bước 2 đã dày kín; trời thành loang mực xám (mất màu Xanh trời). Mẹ vẫn như bé gái sau 2 lần sửa → khi dựng SVG sẽ dùng tư thế mẹ người lớn đã trace. Thêm 2 ảnh, khoảng 0,27 USD; tổng phần hành trình 14 ảnh, khoảng 1,9 USD.
+- Vẽ cảnh đêm bước 2 (từ cảnh ngày, cùng bố cục) và 6 cảnh còn lại theo kiểu đã duyệt, lưu cả 9 ảnh trong `brand/story/phac/`. Mẹ vẫn dáng tròn như bé gái (giống người đã trace ở cảnh cũ). Thêm 7 ảnh, khoảng 0,95 USD; tổng phần hành trình 21 ảnh, khoảng 2,8 USD.
