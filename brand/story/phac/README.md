@@ -1,6 +1,6 @@
 # Bản phác cảnh hành trình (phong cách phẳng)
 
-Ảnh Nano Banana Pro sửa từ cảnh SVG hiện tại (`web/public/story/canh-*.svg`), chỉ để duyệt bố cục.
+Ảnh Nano Banana Pro sửa từ cảnh SVG hiện tại, màu phẳng với nét mực kiểu manhua (chủ dự án chọn), (`web/public/story/canh-*.svg`), chỉ để duyệt bố cục.
 Sau khi chủ dự án duyệt, cảnh được dựng lại bằng SVG tách lớp trong `brand/story/scenes/` để làm chuyển động.
 Prompt và ảnh đầu vào: `prompts.json`.
 
