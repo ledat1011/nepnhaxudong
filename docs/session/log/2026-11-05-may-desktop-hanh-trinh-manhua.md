@@ -18,7 +18,7 @@
 
 ## Còn mở
 - Chủ dự án xem 7 cảnh mới và góp ý.
-- Dựng lại 9 cảnh bằng SVG tách lớp theo bản phác (sửa `brand/story/scenes/`, trace người mới), giữ chữ trên túi và biển hiệu nếu có thì xoá.
+- Dựng lại 9 cảnh bằng SVG tách lớp theo bản phác (sửa `brand/story/scenes/`, trace người mới). Xoá chữ lạ trên túi, máy và biển hiệu nếu có.
 - Nối tranh vào web và làm chuyển động: làm sau.
 
 ## Đã làm
