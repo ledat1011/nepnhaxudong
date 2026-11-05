@@ -37,7 +37,7 @@ test.describe("home page", () => {
     await page.goto("/vi");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Nếp Nhà");
     await expect(page.getByText("[MẪU]").first()).toBeVisible();
-    await expect(page.locator('a[href="https://zalo.me/0000000000"]').first()).toBeVisible();
+    await expect(page.locator('a[href="https://zalo.me/0967598629"]').first()).toBeVisible();
   });
 
   test("the language switch goes to /en and sets html lang", async ({ page }) => {

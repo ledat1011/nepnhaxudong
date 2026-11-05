@@ -19,6 +19,7 @@
 - Xem chữ "Từ đồng tới mâm cơm", chủ dự án: "từ cánh đồng tới mâm cơm ỏ ngắn hơn i" → chủ dự án gợi ý thêm "câu chuyện ..." → chữ nút hero: "Chuyện hạt nếp" (tiếng Anh "A grain's story"); không dùng "Câu chuyện" ở đầu vì trùng tên mục blog "Câu chuyện" trên menu.
 
 - Chủ dự án: vẽ lại cảnh bước 7 (Đến tay khách): ngôi nhà trong tranh phải là xưởng sản xuất gạo của gia đình, theo ảnh chủ dự án gửi (nhà một tầng tường xi măng xám, cửa sổ trắng, cổng sắt xanh hai cánh, biển hiệu xanh trắng trên cổng, xưởng mái tôn xanh phía sau, đồi cây sau lưng). Ảnh có tên hợp tác xã và số điện thoại: không vẽ chữ, không đưa ảnh vào repo, không gửi ảnh lên dịch vụ vẽ.
+- Chủ dự án cập nhật thông tin thật cho web: khẩu hiệu "Gạo nếp cái hoa vàng từ vùng quê Hải Dương" (lúc đầu nói "vùng quê Duy Tân", sau đổi thành Hải Dương); Zalo và điện thoại 0967 598 629; địa chỉ Duy Tân, Kinh Môn, Hải Dương (nay thuộc Hải Phòng); bỏ Messenger (gia đình không dùng). "Xong rồi merge nhé".
 ## Quyết định
 - Cảnh hành trình: màu phẳng, nét mực manhua, 9 bản phác đã duyệt — `docs/decisions/0014-hanh-trinh-net-muc.md`.
 

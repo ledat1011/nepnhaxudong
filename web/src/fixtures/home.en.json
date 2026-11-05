@@ -1,7 +1,7 @@
 {
   "lang": "en",
   "brand": {
-    "tagline": "[MẪU] Golden-flower sticky rice from one family in xứ Đông"
+    "tagline": "Golden-flower sticky rice from the Hải Dương countryside"
   },
   "products": [
     {
@@ -58,10 +58,10 @@
     }
   ],
   "contact": {
-    "phone": "0000 000 000",
-    "zalo": "0000 000 000",
-    "messenger": "https://example.com/messenger",
-    "address": "[MẪU] Xứ Đông, tỉnh Hải Dương",
+    "phone": "0967 598 629",
+    "zalo": "0967 598 629",
+    "messenger": null,
+    "address": "Duy Tân, Kinh Môn, Hải Dương (now part of Hải Phòng)",
     "mapUrl": "https://example.com/ban-do",
     "hours": "[MẪU] Every day, 8:00 to 20:00"
   },

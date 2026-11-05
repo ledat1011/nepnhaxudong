@@ -4,7 +4,7 @@ import { getDictionary } from "../src/lib/i18n/dictionaries";
 const vi = getDictionary("vi");
 const PHONE = { width: 375, height: 812 };
 // The sample number in the mock content (src/fixtures/home.vi.json).
-const ZALO_URL = "https://zalo.me/0000000000";
+const ZALO_URL = "https://zalo.me/0967598629";
 
 const headerZalo = (page: Page) =>
   page.getByRole("banner").getByRole("link", { name: vi.contact.zalo, exact: true });
@@ -19,7 +19,7 @@ test.describe("Zalo contact on a wide screen", () => {
     await expect(dialog).toBeVisible();
     await expect(page).toHaveURL(/\/vi$/);
     await expect(dialog.getByRole("img", { name: vi.zalo.qrAlt })).toBeVisible();
-    await expect(dialog).toContainText("0000 000 000");
+    await expect(dialog).toContainText("0967 598 629");
     const open = dialog.getByRole("link", { name: new RegExp(vi.zalo.open) });
     await expect(open).toHaveAttribute("href", ZALO_URL);
     await expect(open).toHaveAttribute("target", "_blank");
@@ -65,7 +65,7 @@ test.describe("Zalo contact on a wide screen", () => {
     await headerZalo(page).click();
     await page.getByRole("button", { name: vi.zalo.copy }).click();
     await expect(page.getByRole("status").filter({ hasText: vi.zalo.copied })).toBeVisible();
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("0000000000");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("0967598629");
   });
 });
 
