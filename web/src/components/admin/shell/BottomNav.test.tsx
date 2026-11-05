@@ -20,9 +20,9 @@ describe("BottomNav", () => {
     const nav = screen.getByRole("navigation", { name: "Menu chính" });
     expect(within(nav).getAllByRole("link").map((a) => a.textContent)).toEqual([
       "Tổng quan",
+      "Sản phẩm",
       "Câu chuyện",
       "Ảnh",
-      "Lịch sử",
     ]);
     expect(within(nav).getAllByRole("button")).toHaveLength(1);
     expect(within(nav).getByRole("button", { name: "Thêm" })).toBeInTheDocument();
@@ -43,10 +43,27 @@ describe("BottomNav", () => {
   });
 
   it("marks More when a screen of the More list is open", () => {
-    pathname.value = "/admin/san-pham";
+    pathname.value = "/admin/lich-su";
     render(<BottomNav />);
     expect(screen.getByRole("button", { name: "Thêm" })).toHaveAttribute("aria-current", "page");
     expect(screen.getAllByRole("link").some((a) => a.hasAttribute("aria-current"))).toBe(false);
+  });
+
+  it("marks Sản phẩm on a product page", () => {
+    pathname.value = "/admin/san-pham/3";
+    render(<BottomNav />);
+    const current = screen.getAllByRole("link").filter((a) => a.getAttribute("aria-current") === "page");
+    expect(current.map((a) => a.textContent)).toEqual(["Sản phẩm"]);
+  });
+
+  it("writes its labels at 13 px, not 12 px, and keeps them off the screen edge", () => {
+    render(<BottomNav />);
+    const nav = screen.getByRole("navigation", { name: "Menu chính" });
+    for (const item of [...within(nav).getAllByRole("link"), within(nav).getByRole("button", { name: "Thêm" })]) {
+      expect(item.className).toContain("text-[13px]");
+      expect(item.className).not.toMatch(/(^| )text-xs( |$)/);
+    }
+    expect(within(nav).getByRole("list").className).toMatch(/(^| )px-\d/);
   });
 
   it("is fixed to the bottom and respects the safe area", () => {
@@ -62,9 +79,9 @@ describe("BottomNav", () => {
     await events.click(screen.getByRole("button", { name: "Thêm" }));
     const sheet = await screen.findByRole("dialog");
     expect(within(sheet).getAllByRole("link").map((a) => a.textContent)).toEqual([
-      "Sản phẩm",
       "Hành trình",
       "Báo chí",
+      "Lịch sử",
       "Liên hệ & cài đặt",
       "Tài khoản",
     ]);

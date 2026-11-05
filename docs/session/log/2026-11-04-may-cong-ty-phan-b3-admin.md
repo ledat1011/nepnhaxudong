@@ -24,6 +24,7 @@
 - Hộp tải ảnh: API bắt buộc đủ mô tả vi và en, nên không tải lên ngay khi chọn được. Chủ dự án chọn "Giữ điền đủ mô tả": ảnh tải lên khi đã có đủ 2 mô tả, không sửa API. Đã sửa dòng đó trong quyết định 0008.
 - (2026-11-05) "Merge luôn nhé, làm gì merge luôn, tôi là người coi sản phẩm cuối sẽ feedback lại, hoặc trong quá trình làm tôi coi bản phác thảo sẽ feedback" → tự merge PR khi CI đạt hết và không xung đột, không hỏi. Báo lại những gì đã merge, giữ bản xem thử ở local luôn mới. Đã ghi vào `CLAUDE.md`.
 - (2026-11-05) "Sau khi merge xong hết, làm xong UI, admin hiện tại dùng skill UI để review lại website coi sao, có suggest sửa gì không nữa list ra" → rà trang quản trị ngay (đã merge xong); rà trang công khai sau khi nhánh minh họa merge; gộp thành một danh sách đề xuất.
+- (2026-11-05) Chủ dự án "Duyệt cả 5" việc tiếp theo của trang quản trị (báo cáo `docs/reviews/2026-11-05-ui-admin.md` mục 6) → quyết định 0010; ba nhánh làm song song.
 - (2026-11-05) "Merge luôn PR khi được đi" → merge ngay khi phần còn lại của CI chỉ là thứ đã chạy qua ở máy (ví dụ unit test trên Windows), không chờ hàng đợi CI.
 - PR #11 (B3): "merge luôn nếu nó không phức tạp" → merge khi CI đạt hết và không có xung đột (repo không cho bật auto-merge của GitHub).
 - "Commit push hết đi, tôi muốn coi sản phẩm để feedback" → commit và push nhánh B3 và B4 ngay khi vòng sửa cuối commit xong; mở server local để chủ dự án xem cả trang quản trị (B3) và hiệu ứng (B4). Mở PR / merge: vẫn hỏi trước.

@@ -104,12 +104,36 @@ function shorten(text: string): string {
 
 const COLLATOR = new Intl.Collator("en", { numeric: true });
 
+type FieldLabel = { label: string; value(text: string): string };
+
+const YES_NO: FieldLabel["value"] = (text) => (text === "true" ? "Có" : text === "false" ? "Không" : text);
+
+/**
+ * Paths shown with a name and a value a family member reads, by entity type. Every other path keeps its raw name,
+ * as before. A product's "visible" is the "Hiện trên web" switch.
+ */
+const FIELD_LABELS: Record<string, Record<string, FieldLabel>> = {
+  product: { visible: { label: "Hiện trên web", value: YES_NO } },
+};
+
+function labelled(row: DiffRow, entityType: string | undefined): DiffRow {
+  const labels = entityType !== undefined && Object.hasOwn(FIELD_LABELS, entityType) ? FIELD_LABELS[entityType] : null;
+  const field = labels !== null && Object.hasOwn(labels, row.path) ? labels[row.path] : null;
+  if (field === null) return row;
+  return {
+    path: field.label,
+    before: row.before === null ? null : field.value(row.before),
+    after: row.after === null ? null : field.value(row.after),
+  };
+}
+
 /**
  * Compares two stored copies of one entity and lists the paths whose value differs, sorted by path.
  * A path that exists on one side only has `null` on the other side; a JSON `null` is the text "null".
  * Values are text only. A text longer than 200 characters is cut and ends with "…".
+ * With `entityType`, a path listed in FIELD_LABELS gets its readable name and values (sorted by the raw path still).
  */
-export function diffSnapshots(before: unknown, after: unknown): DiffRow[] {
+export function diffSnapshots(before: unknown, after: unknown, entityType?: string): DiffRow[] {
   const left = flatten(before);
   const right = flatten(after);
   const rows: DiffRow[] = [];
@@ -120,8 +144,9 @@ export function diffSnapshots(before: unknown, after: unknown): DiffRow[] {
     rows.push({ path, before: a === undefined ? null : shorten(a), after: b === undefined ? null : shorten(b) });
   }
   rows.sort((x, y) => COLLATOR.compare(x.path, y.path));
+  const named = rows.map((row) => labelled(row, entityType));
   if (left.truncated || right.truncated) {
-    rows.push({ path: TRUNCATED_PATH, before: TRUNCATED_NOTE, after: TRUNCATED_NOTE });
+    named.push({ path: TRUNCATED_PATH, before: TRUNCATED_NOTE, after: TRUNCATED_NOTE });
   }
-  return rows;
+  return named;
 }

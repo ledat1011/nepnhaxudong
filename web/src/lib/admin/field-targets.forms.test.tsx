@@ -27,6 +27,7 @@ const product: ProductAdminDto = {
   id: 3,
   sortOrder: 1,
   showPrice: true,
+  visible: false,
   name: missing,
   description: missing,
   features: { vi: ["Thơm"], en: [] },
@@ -65,7 +66,15 @@ const press: PressMentionAdminDto = {
 const SCREENS: { name: string; keys: FieldKey[]; ui: () => ReactNode }[] = [
   {
     name: "product form",
-    keys: ["product.name.en", "product.description.en", "product.features.en", "product.cookingTips.en", "product.images"],
+    keys: [
+      "product.visible",
+      "product.name.en",
+      "product.description.en",
+      "product.features.en",
+      "product.cookingTips.en",
+      "product.packagings",
+      "product.images",
+    ],
     ui: () => <ProductForm initial={product} />,
   },
   {

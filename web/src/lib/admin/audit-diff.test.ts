@@ -2,6 +2,19 @@ import { afterEach, describe, expect, it } from "vitest";
 import { actionLabel, diffSnapshots, entityTypeLabel, formatVnTime } from "./audit-diff";
 
 describe("diffSnapshots", () => {
+  it("names the Hiện trên web switch of a product and says Có or Không", () => {
+    const rows = diffSnapshots({ visible: false, name: { vi: "A" } }, { visible: true, name: { vi: "A" } }, "product");
+    expect(rows).toEqual([{ path: "Hiện trên web", before: "Không", after: "Có" }]);
+    expect(diffSnapshots(null, { visible: false }, "product")).toEqual([{ path: "Hiện trên web", before: null, after: "Không" }]);
+  });
+
+  it("leaves a field named visible of another kind as it is", () => {
+    expect(diffSnapshots({ visible: false }, { visible: true }, "story")).toEqual([
+      { path: "visible", before: "false", after: "true" },
+    ]);
+    expect(diffSnapshots({ visible: false }, { visible: true })).toEqual([{ path: "visible", before: "false", after: "true" }]);
+  });
+
   it("returns only the paths whose value changed", () => {
     const rows = diffSnapshots({ name: { vi: "A", en: null } }, { name: { vi: "B", en: null } });
     expect(rows).toEqual([{ path: "name.vi", before: "A", after: "B" }]);

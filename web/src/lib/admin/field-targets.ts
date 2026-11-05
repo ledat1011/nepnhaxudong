@@ -14,6 +14,8 @@ export const FIELD_TARGETS = {
   "product.features.en": { group: "Đặc điểm", label: "Đặc điểm 1 (English)" },
   "product.cookingTips.en": { group: "Mẹo nấu", label: "English" },
   "product.images": { group: "Ảnh", label: "Chọn ảnh" },
+  "product.packagings": { group: "Quy cách đóng gói", label: "Thêm quy cách" },
+  "product.visible": { label: "Hiện trên web" },
   "story.publish": { label: "Đăng bài" },
   "story.cover": { group: "Ảnh bìa", label: "Chọn ảnh" },
   "story.title.en": { tab: "English", label: "Tiêu đề" },

@@ -62,7 +62,7 @@ export function HistoryDetail({ id, onRestored, onClose }: Props) {
     { successMessage: "Đã khôi phục." },
   );
 
-  const rows = useMemo(() => (line === null ? [] : diffSnapshots(line.before, line.after)), [line]);
+  const rows = useMemo(() => (line === null ? [] : diffSnapshots(line.before, line.after, line.entityType)), [line]);
 
   async function onConfirm() {
     const done = await restore.save();

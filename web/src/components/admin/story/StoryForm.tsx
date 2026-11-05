@@ -9,6 +9,7 @@ import { MissingEnBadge } from "@/components/admin/form/MissingEnBadge";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
 import { SingleImageSection } from "@/components/admin/media/SingleImageSection";
+import { useScreenDetail } from "@/components/admin/shell/screen-detail";
 import { Badge } from "@/components/admin/ui/badge";
 import { Button } from "@/components/admin/ui/button";
 import { Input } from "@/components/admin/ui/input";
@@ -22,6 +23,7 @@ import { toRequestText } from "@/lib/admin/localized";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import { useAdminSession } from "@/lib/admin/session";
 import { publishChecks, type PublishCheckKey } from "@/lib/admin/publish-checks";
+import { storyPublicHref } from "@/lib/admin/public-links";
 import { slugify } from "@/lib/admin/slugify";
 import type { StoryAdminDto, StoryRequest } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
@@ -166,6 +168,11 @@ const NO_CONFLICTS: SlugConflicts = { vi: null, en: null };
 export function StoryForm({ initial }: { initial?: StoryAdminDto }) {
   const router = useRouter();
   const [baseline, setBaseline] = useState<StoryAdminDto | undefined>(initial);
+  // The header names the story as it is saved, and links to its public page once it is published.
+  useScreenDetail({
+    name: baseline === undefined ? "Bài viết mới" : (baseline.title.vi ?? "Bài chưa có tiêu đề"),
+    publicHref: storyPublicHref(baseline),
+  });
   const [state, setState] = useState<FormState>(() => stateFrom(initial));
   const [baselineState, setBaselineState] = useState(() => stateFrom(initial));
   // Per language: the API body had an image that the editor cannot show.

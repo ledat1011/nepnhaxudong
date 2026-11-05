@@ -11,6 +11,7 @@ const run = String(Math.floor(Math.random() * 1_000_000));
 const EVENT_TITLE = `[E2E] Mốc ${run}`;
 const EDITED_TITLE = `${EVENT_TITLE} đã sửa`;
 const STORY_TITLE = `[E2E] Câu chuyện ${run}`;
+const PRODUCT_NAME = `[E2E] Nếp ${run}`;
 const ALT_VI = `[E2E] Ảnh thử ${run}`;
 const ALT_EN = `[E2E] Test image ${run}`;
 const PRESS_TITLE = `[E2E] Bài báo ${run}`;
@@ -109,6 +110,42 @@ test("a draft story is hidden until it is published", async () => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(STORY_TITLE);
 });
 
+test("a new product stays off the public site until Hiện trên web is turned on", async () => {
+  await page.goto(`${ADMIN_ROUTES.products}/moi`);
+  await page.getByRole("group", { name: /^Tên sản phẩm/ }).getByLabel(/^Tiếng Việt/).fill(PRODUCT_NAME);
+  await page.getByRole("button", { name: "Thêm đặc điểm" }).click();
+  await page.getByLabel(/^Đặc điểm 1 \(tiếng Việt\)/).fill("Dẻo thơm");
+  await page.getByRole("button", { name: "Lưu", exact: true }).click();
+
+  // After the create, the page goes to the edit page of the new product. The product is hidden.
+  await expect(page).toHaveURL(new RegExp(`${ADMIN_ROUTES.products}/[0-9]+$`));
+  const toggle = page.getByRole("switch", { name: "Hiện trên web" });
+  await expect(toggle).not.toBeChecked();
+  await expect(page.getByText("Khách chưa thấy sản phẩm này trên website.")).toBeVisible();
+  await page.goto(ADMIN_ROUTES.products);
+  await expect(page.getByRole("link", { name: new RegExp(`^${escapeRegExp(PRODUCT_NAME)} ?Đang ẩn`) })).toBeVisible();
+  await expectPublicText(page, "/vi", PRODUCT_NAME, false);
+
+  // Turned on from the list: the check panel lists the gaps, and the product can still be shown.
+  const rowToggle = page.getByRole("switch", { name: `Hiện trên web: ${PRODUCT_NAME}` });
+  await expect(rowToggle).toBeEnabled();
+  await rowToggle.click();
+  const panel = page.getByRole("alertdialog", { name: "Kiểm tra trước khi hiện trên web" });
+  await expect(panel.getByText("Chưa có ảnh")).toBeVisible();
+  await expect(panel.getByText("Chưa có bản tiếng Anh")).toBeVisible();
+  await expect(panel.getByText("Chưa có quy cách đóng gói")).toBeVisible();
+  await panel.getByRole("button", { name: "Vẫn hiện" }).click();
+  await expect(rowToggle).toBeChecked();
+  await expect(page.getByRole("link", { name: new RegExp(`^${escapeRegExp(PRODUCT_NAME)}`) })).not.toContainText("Đang ẩn");
+  await expectPublicText(page, "/vi", PRODUCT_NAME);
+
+  // Turned off again: it asks first, then the product leaves the public site.
+  await rowToggle.click();
+  await page.getByRole("alertdialog", { name: "Ẩn sản phẩm khỏi website?" }).getByRole("button", { name: "Ẩn sản phẩm" }).click();
+  await expect(rowToggle).not.toBeChecked();
+  await expectPublicText(page, "/vi", PRODUCT_NAME, false);
+});
+
 test("a story typed but not saved is offered back after a reload", async () => {
   await page.goto(ADMIN_ROUTES.stories);
   await page.getByRole("link", { name: new RegExp(escapeRegExp(STORY_TITLE)) }).first().click();
@@ -125,7 +162,10 @@ test("a story typed but not saved is offered back after a reload", async () => {
   await page.reload();
   const offer = page.getByRole("alertdialog", { name: "Có bài đang viết dở" });
   await expect(offer).toBeVisible();
-  await offer.getByRole("button", { name: "Khôi phục" }).click();
+  // "Khôi phục" is the chosen button: Enter (or a quick tap on the chosen button) brings the text back.
+  await expect(offer.getByRole("button", { name: "Khôi phục" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(offer).toBeHidden();
   await expect(title).toHaveValue(`${STORY_TITLE} viết dở`);
 
   // "Bỏ thay đổi" asks first, then drops the text and the draft.

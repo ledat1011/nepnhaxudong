@@ -2,27 +2,33 @@
 
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
+import { useScreenDetail } from "@/components/admin/shell/screen-detail";
 import { MediaPicker } from "@/components/admin/media/MediaPicker";
+import { focusWhenReady } from "@/components/admin/shell/FieldFocus";
 import { Button } from "@/components/admin/ui/button";
 import { Switch } from "@/components/admin/ui/switch";
 import { adminFetch } from "@/lib/admin/api";
 import { apiRest, langOfDetail, NOT_SAVED_NOTICE, type FieldErrors, type FieldRule } from "@/lib/admin/field-errors";
+import { FIELD_TARGETS, type FieldKey } from "@/lib/admin/field-targets";
 import { toRequestText } from "@/lib/admin/localized";
+import { productPublicHref } from "@/lib/admin/public-links";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
 import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
+import { UndoGroupContext, useRemoveWithUndo, useUndoGroup } from "@/lib/admin/use-remove-with-undo";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 import { FeatureList, newFeatureRow, type FeatureRow } from "./FeatureList";
 import { PackagingList, newPackagingRow, packagingErrorKey, type PackagingRow } from "./PackagingList";
 import { moved } from "./rows";
+import { VisibilitySwitch } from "./VisibilitySwitch";
 
 /** Most images one product can have (the API refuses more). */
 const MAX_IMAGES = 30;
@@ -141,15 +147,29 @@ function toRequest(state: FormState, sortOrder: number | undefined): ProductRequ
 export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const router = useRouter();
   const [baseline, setBaseline] = useState<ProductAdminDto | undefined>(initial);
+  // The header names the product as it is saved, and links to where it shows on the public site.
+  useScreenDetail({
+    name: baseline === undefined ? "Sản phẩm mới" : (baseline.name.vi ?? "Sản phẩm chưa có tên"),
+    publicHref: productPublicHref(baseline),
+  });
   const [state, setState] = useState<FormState>(() => stateFrom(initial));
   const [baselineSnapshot, setBaselineSnapshot] = useState(() => snapshot(stateFrom(initial)));
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // A show or hide request runs: Lưu waits, so the two writes never cross.
+  const [switching, setSwitching] = useState(false);
   // True after a create or delete succeeded, until the page changes: no second tap may write again.
   const [leaving, setLeaving] = useState(false);
   const dirty = snapshot(state) !== baselineSnapshot;
   useUnsavedChanges(dirty && !leaving);
   const leavePage = useLeavePage();
   const fields = useFieldErrors();
+  const rootRef = useRef<HTMLFieldSetElement>(null);
+  // Stops the search for the field that "Quay lại sửa" goes to (a newer request or leaving the page).
+  const stopFix = useRef<(() => void) | null>(null);
+  useEffect(() => () => stopFix.current?.(), []);
+  // The "Hoàn tác" messages of the lists below. They close on "Bỏ thay đổi" and when a save starts: after that,
+  // a row put back would come on top of a list that was reset or saved (or locked while a new product is created).
+  const undo = useUndoGroup();
 
   // The form as it was when the running save was sent, to tell later whether the user typed something else meanwhile.
   const sent = useRef<string | null>(null);
@@ -186,6 +206,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
       return;
     }
     fields.reset();
+    undo.dismissAll();
     const saved = await saving.save();
     if (saved === undefined) return;
     if (baseline === undefined) {
@@ -207,7 +228,19 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
     }
   }
 
+  /** "Quay lại sửa" in the check panel: the cursor goes to the field of the first gap, as a to-do link does. */
+  function fixGap(key: FieldKey) {
+    stopFix.current?.();
+    stopFix.current = rootRef.current === null ? null : focusWhenReady(rootRef.current, FIELD_TARGETS[key]);
+  }
+
+  /** Only the switch changed. The form text is left as it is: the user may have typed meanwhile. */
+  function visibilityChanged(result: ProductAdminDto) {
+    setBaseline((current) => (current === undefined ? current : { ...current, visible: result.visible }));
+  }
+
   function cancel() {
+    undo.dismissAll();
     const original = stateFrom(baseline);
     setState(original);
     setBaselineSnapshot(snapshot(original));
@@ -241,7 +274,26 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
   const saveError = [apiRest(saving.error, FIELD_RULES), ...fields.unshown].filter(Boolean).join(" ") || null;
 
   return (
-    <fieldset {...fields.rootProps} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
+    <UndoGroupContext.Provider value={undo}>
+    <fieldset ref={rootRef} {...fields.rootProps} disabled={locked} className="flex min-w-0 flex-col gap-6 p-4 pb-44">
+      <section aria-label="Trạng thái" className="flex flex-col gap-1 rounded-md border p-3">
+        <VisibilitySwitch
+          product={baseline}
+          disabled={dirty || saving.pending || deleting.pending || leaving}
+          onChanged={visibilityChanged}
+          onFix={fixGap}
+          onBusyChange={setSwitching}
+        />
+        <p className="text-sm text-muted-foreground">
+          {baseline === undefined
+            ? "Sản phẩm mới chưa hiện trên web. Hãy lưu sản phẩm, rồi bật Hiện trên web."
+            : dirty
+              ? "Hãy lưu thay đổi trước khi bật hoặc tắt Hiện trên web."
+              : baseline.visible
+                ? "Khách đang thấy sản phẩm này trên website."
+                : "Khách chưa thấy sản phẩm này trên website."}
+        </p>
+      </section>
       <RequiredNote />
       <BilingualField
         label="Tên sản phẩm"
@@ -306,16 +358,19 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
       <SaveBar
         dirty={dirty}
         pending={saving.pending || leaving}
+        waiting={switching}
         onSave={() => void save()}
         onDiscard={cancel}
         notice={fields.hasErrors ? NOT_SAVED_NOTICE : null}
       />
     </fieldset>
+    </UndoGroupContext.Provider>
   );
 }
 
 function ImageSection({ ids, onChange }: { ids: number[]; onChange(ids: number[]): void }) {
   const { items } = useMediaByIds(ids);
+  const remove = useRemoveWithUndo(ids, onChange, { keyOf: (id) => id, max: MAX_IMAGES });
   return (
     <fieldset className="flex min-w-0 flex-col gap-3">
       <legend className="mb-2 text-base font-semibold">Ảnh</legend>
@@ -363,7 +418,8 @@ function ImageSection({ ids, onChange }: { ids: number[]; onChange(ids: number[]
                 variant="outline"
                 size="icon"
                 aria-label={`Bỏ ảnh ${name}`}
-                onClick={() => onChange(ids.filter((other) => other !== id))}
+                className="ml-2"
+                onClick={() => remove(index, `Đã bỏ ảnh ${index + 1} khỏi sản phẩm.`)}
               >
                 <X />
               </Button>

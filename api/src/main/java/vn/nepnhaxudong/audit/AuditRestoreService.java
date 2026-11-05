@@ -70,7 +70,7 @@ public class AuditRestoreService {
     // an existing one is overwritten. The RESTORE line keeps what was overwritten, so a restore can
     // itself be restored.
     try {
-      handler.restore(entityId, line.getBeforeJson());
+      handler.restore(entityId, line.getBeforeJson(), line.getAfterJson());
       // Send the inserts now, so that a clash with a parallel restore shows up here.
       lines.flush();
     } catch (DataIntegrityViolationException e) {

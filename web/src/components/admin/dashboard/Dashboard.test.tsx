@@ -87,6 +87,7 @@ describe("TodoList", () => {
     id,
     sortOrder: id,
     showPrice: true,
+    visible: true,
     name: { vi: `Gạo ${id}`, en: `Rice ${id}` },
     description: { vi: null, en: null },
     features: { vi: [], en: [] },

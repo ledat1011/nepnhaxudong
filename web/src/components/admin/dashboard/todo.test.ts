@@ -23,6 +23,7 @@ function product(over: Partial<ProductAdminDto> = {}): ProductAdminDto {
     id: 3,
     sortOrder: 1,
     showPrice: true,
+    visible: true,
     name: { vi: "Gạo nếp", en: "Sticky rice" },
     description: { vi: "Hạt tròn", en: "Round grains" },
     features: { vi: ["Thơm"], en: ["Fragrant"] },
@@ -115,6 +116,13 @@ describe("buildTodos", () => {
 
   it("lists a product without a photo", () => {
     expect(buildTodos({ ...complete, products: [product({ mediaIds: [] })] })).toEqual([
+      { id: "product-3-images", section: "products", text: "Sản phẩm “Gạo nếp” chưa có ảnh.", href: "/admin/san-pham/3?o=product.images" },
+    ]);
+  });
+
+  it("lists a hidden product first, then what it is missing", () => {
+    expect(buildTodos({ ...complete, products: [product({ visible: false, mediaIds: [] })] })).toEqual([
+      { id: "product-3-hidden", section: "products", text: "Sản phẩm “Gạo nếp” đang ẩn, chưa hiện trên web.", href: "/admin/san-pham/3?o=product.visible" },
       { id: "product-3-images", section: "products", text: "Sản phẩm “Gạo nếp” chưa có ảnh.", href: "/admin/san-pham/3?o=product.images" },
     ]);
   });
