@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ImgHTMLAttributes } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ContentImage } from "./ContentImage";
@@ -43,5 +43,17 @@ describe("ContentImage", () => {
     const img = screen.getByRole("img", { name: "Cánh đồng lúa" });
     expect(img).not.toHaveAttribute("fetchpriority");
     expect(img).not.toHaveAttribute("loading");
+  });
+});
+
+describe("ContentImage when the file does not load", () => {
+  it("shows the calm 'photo coming soon' box instead of the broken image icon", () => {
+    render(
+      <ContentImage image={IMAGE} sizes="100vw" placeholderLabel="Ảnh sắp được cập nhật" className="h-full w-full" />,
+    );
+    fireEvent.error(screen.getByRole("img", { name: "Cánh đồng lúa" }));
+    expect(screen.queryByRole("img", { name: "Cánh đồng lúa" })).not.toBeInTheDocument();
+    const box = screen.getByRole("img", { name: "Ảnh sắp được cập nhật" });
+    expect(box).toHaveClass("h-full", "w-full");
   });
 });

@@ -51,7 +51,7 @@ describe("StoriesSection", () => {
     );
     expect(screen.getAllByRole("article")).toHaveLength(3);
     expect(screen.queryByText("[MẪU] Bài 4")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: dict.stories.viewAll })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Xem tất cả câu chuyện" })).toHaveAttribute(
       "href",
       "/vi/cau-chuyen",
     );

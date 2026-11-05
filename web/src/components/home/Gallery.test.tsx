@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ImgHTMLAttributes } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -189,5 +189,36 @@ describe("Gallery", () => {
       await user.click(mainImage());
       expect(screen.queryByRole("button", { name: dict.gallery.next })).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("Gallery when a photo does not load", () => {
+  it("shows the 'photo coming soon' box in the large box, with no zoom button", () => {
+    render(<Gallery images={IMAGES} dict={dict} />);
+    fireEvent.error(mainImage().querySelector("img") as HTMLImageElement);
+    expect(screen.queryByRole("button", { name: dict.gallery.viewLarge })).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: dict.image.placeholder })).toBeInTheDocument();
+  });
+
+  it("keeps a labelled thumbnail for the photo that did not load", async () => {
+    const user = userEvent.setup();
+    render(<Gallery images={IMAGES} dict={dict} />);
+    const thumb = screen.getByRole("button", { name: "Ảnh số 2" });
+    fireEvent.error(thumb.querySelector("img") as HTMLImageElement);
+    const broken = screen.getByRole("button", { name: dict.image.placeholder });
+    expect(broken.querySelector("img")).toBeNull();
+    await user.click(broken);
+    expect(broken).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("shows the box in the open lightbox when the next photo does not load", async () => {
+    const user = userEvent.setup();
+    render(<Gallery images={IMAGES} dict={dict} />);
+    await user.click(mainImage());
+    await user.keyboard("{ArrowRight}");
+    const dialog = screen.getByRole("dialog");
+    fireEvent.error(dialog.querySelector("img") as HTMLImageElement);
+    expect(dialog.querySelector("img")).toBeNull();
+    expect(screen.getAllByRole("img", { name: dict.image.placeholder }).length).toBeGreaterThan(0);
   });
 });

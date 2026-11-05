@@ -1,4 +1,5 @@
 import { ZaloLink } from "@/components/contact/ZaloLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { Contact } from "@/lib/content/types";
 import { telHref } from "@/lib/format";
@@ -28,7 +29,7 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
               {phone !== null && (
                 <li>
                   <a href={telHref(phone)} className={BUTTON_CLASS}>
-                    {phone}
+                    {`${dict.contact.call} ${phone}`}
                   </a>
                 </li>
               )}
@@ -41,14 +42,13 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
               )}
               {messenger !== null && (
                 <li>
-                  <a
+                  <ExternalLink
                     href={messenger}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    newTabLabel={dict.link.newTab}
                     className={BUTTON_CLASS}
                   >
                     {dict.contact.messenger}
-                  </a>
+                  </ExternalLink>
                 </li>
               )}
             </ul>
@@ -63,14 +63,13 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
                   <dd className="mt-1 text-lg font-medium">{address}</dd>
                   {mapUrl !== null && (
                     <dd className="mt-1">
-                      <a
+                      <ExternalLink
                         href={mapUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        newTabLabel={dict.link.newTab}
                         className="inline-flex min-h-11 items-center rounded font-bold underline underline-offset-4 hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
                       >
                         {dict.contact.viewMap}
-                      </a>
+                      </ExternalLink>
                     </dd>
                   )}
                 </div>

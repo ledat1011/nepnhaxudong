@@ -45,9 +45,17 @@ describe("site description", () => {
     }
   });
 
-  it("names the region the same way in both languages, with no province name", () => {
-    expect(getDictionary("vi").site.description).toContain("xứ Đông");
-    expect(getDictionary("en").site.description).toContain("xứ Đông");
-    expect(getDictionary("en").site.description).not.toContain("Hải Dương");
+  it("names the region so each reader knows it: xứ Đông in Vietnamese, the province in English", () => {
+    const vi = getDictionary("vi");
+    const en = getDictionary("en");
+    expect(vi.site.description).toContain("xứ Đông");
+    expect(en.site.description).toContain("Hải Dương province, northern Vietnam");
+    // A visitor from abroad does not know the name xứ Đông (decision 0011, item 7).
+    expect(JSON.stringify(en)).not.toContain("xứ Đông");
+  });
+
+  it("says on the first screen what is sold and where it comes from", () => {
+    expect(getDictionary("vi").hero.what).toBe("Gạo nếp cái hoa vàng · Hải Dương");
+    expect(getDictionary("en").hero.what).toBe("Yellow-flower sticky rice · Hải Dương, Vietnam");
   });
 });

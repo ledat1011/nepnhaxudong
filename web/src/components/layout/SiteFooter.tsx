@@ -1,5 +1,6 @@
 import { LogoMark } from "@/components/brand/LogoMark";
 import { ZaloLink } from "@/components/contact/ZaloLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import type { Contact, Social } from "@/lib/content/types";
 import { telHref, zaloHref } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -91,7 +92,9 @@ export function SiteFooter({
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-2">
         <div className="flex items-center gap-3">
           <LogoMark className="h-12 w-12" />
-          <span className="font-display text-3xl">{dict.site.name}</span>
+          <span translate="no" className="font-display text-3xl">
+            {dict.site.name}
+          </span>
         </div>
         <div className="space-y-6">
           {rows.length > 0 && (
@@ -120,14 +123,9 @@ export function SiteFooter({
             <ul className="flex flex-wrap gap-x-6 gap-y-1">
               {networks.map(({ key, name, url }) => (
                 <li key={key}>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={LINK_CLASS}
-                  >
+                  <ExternalLink href={url} newTabLabel={dict.link.newTab} className={LINK_CLASS}>
                     {name}
-                  </a>
+                  </ExternalLink>
                 </li>
               ))}
             </ul>

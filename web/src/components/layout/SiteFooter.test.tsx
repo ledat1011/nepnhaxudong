@@ -34,7 +34,8 @@ describe("SiteFooter", () => {
   it("opens social links safely in a new tab", () => {
     renderFooter();
     for (const name of ["Facebook", "YouTube"]) {
-      const link = screen.getByRole("link", { name });
+      // The link says that it opens a new tab, for screen reader users.
+      const link = screen.getByRole("link", { name: `${name} (mở trong tab mới)` });
       expect(link).toHaveAttribute("target", "_blank");
       expect(link.getAttribute("rel")).toContain("noopener");
       expect(link.getAttribute("rel")).toContain("noreferrer");
@@ -71,5 +72,12 @@ describe("SiteFooter", () => {
     render(<SiteFooter dict={getDictionary("vi")} contact={CONTACT} social={SOCIAL} />);
     const year = new Date().getFullYear();
     expect(screen.getByText(`Bản quyền © ${year} Nếp Nhà`)).toBeInTheDocument();
+  });
+});
+
+describe("SiteFooter brand name", () => {
+  it("keeps the brand name out of page translation", () => {
+    renderFooter();
+    expect(screen.getAllByText("Nếp Nhà")[0]).toHaveAttribute("translate", "no");
   });
 });

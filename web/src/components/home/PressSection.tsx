@@ -1,4 +1,5 @@
 import { ContentImage } from "@/components/ui/ContentImage";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { PressMention } from "@/lib/content/types";
 import { formatDate } from "@/lib/format";
@@ -19,10 +20,9 @@ export function PressSection({ lang, dict, items }: PressSectionProps) {
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <li key={item.url} data-reveal>
-              <a
+              <ExternalLink
                 href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                newTabLabel={dict.link.newTab}
                 className="group flex h-full flex-col overflow-hidden rounded-2xl border-2 border-straw bg-rice hover:border-coat focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat"
               >
                 {item.image !== null && (
@@ -39,7 +39,7 @@ export function PressSection({ lang, dict, items }: PressSectionProps) {
                   <p className="text-sm font-bold text-coat">
                     {item.sourceName}
                   </p>
-                  <p className="text-lg font-bold leading-snug group-hover:underline">
+                  <p className="text-lg font-bold leading-snug text-balance group-hover:underline">
                     {item.title}
                   </p>
                   {item.publishedOn !== null && (
@@ -48,7 +48,7 @@ export function PressSection({ lang, dict, items }: PressSectionProps) {
                     </time>
                   )}
                 </div>
-              </a>
+              </ExternalLink>
             </li>
           ))}
         </ul>

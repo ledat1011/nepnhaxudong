@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ContactInvite } from "@/components/contact/ContactInvite";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { StoryBody } from "@/components/story/StoryBody";
@@ -61,7 +62,7 @@ export default async function StoryPage({ params }: StoryPageProps) {
       />
       <main id="noi-dung">
         <article className="mx-auto max-w-3xl px-4 py-12 md:py-20">
-          <h1 className="font-sans text-3xl font-bold leading-tight text-earth [overflow-wrap:anywhere] md:text-5xl md:leading-tight">
+          <h1 className="font-sans text-3xl font-bold leading-tight text-balance text-earth [overflow-wrap:anywhere] md:text-5xl md:leading-tight">
             {story.title}
           </h1>
           <time dateTime={story.publishedAt} className="mt-4 block font-bold text-coat">
@@ -84,6 +85,7 @@ export default async function StoryPage({ params }: StoryPageProps) {
           <div className="mt-8">
             <StoryBody html={story.bodyHtml} />
           </div>
+          <ContactInvite lang={lang} dict={dict} contact={home.contact} />
           <p className="mt-12">
             <Link
               href={storiesPath(lang)}

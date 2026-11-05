@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { ImagePlaceholder } from "@/components/brand/ImagePlaceholder";
 import type { ImageRef } from "@/lib/content/types";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -74,6 +75,13 @@ export function Gallery({ images, dict, lead }: GalleryProps) {
   const openerRef = useRef<HTMLElement | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  // Sources of photos that did not load: they show the "photo coming soon" box instead.
+  const [failed, setFailed] = useState<ReadonlySet<string>>(() => new Set());
+  const markFailed = useCallback(
+    (src: string) =>
+      setFailed((current) => (current.has(src) ? current : new Set(current).add(src))),
+    [],
+  );
   const count = images.length;
   // With a lead drawing, item 0 is the drawing and the photos are items 1..count.
   const offset = lead ? 1 : 0;
@@ -134,6 +142,7 @@ export function Gallery({ images, dict, lead }: GalleryProps) {
   if (count === 0 && !lead) return null;
 
   const current = photoIndex >= 0 ? images[photoIndex] : undefined;
+  const currentFailed = current !== undefined && failed.has(current.src);
 
   return (
     <div>
@@ -143,7 +152,13 @@ export function Gallery({ images, dict, lead }: GalleryProps) {
           {lead.main}
         </div>
       )}
-      {current && (
+      {current && currentFailed && (
+        <ImagePlaceholder
+          label={dict.image.placeholder}
+          className="aspect-[4/3] w-full overflow-hidden rounded-2xl"
+        />
+      )}
+      {current && !currentFailed && (
         <button
           type="button"
           aria-label={dict.gallery.viewLarge}
@@ -159,6 +174,7 @@ export function Gallery({ images, dict, lead }: GalleryProps) {
             width={current.width}
             height={current.height}
             sizes="(min-width: 768px) 50vw, 100vw"
+            onError={() => markFailed(current.src)}
             className="h-full w-full object-cover"
           />
         </button>
@@ -184,17 +200,23 @@ export function Gallery({ images, dict, lead }: GalleryProps) {
               <button
                 type="button"
                 aria-pressed={i + offset === index}
+                aria-label={failed.has(image.src) ? dict.image.placeholder : undefined}
                 onClick={() => setIndex(i + offset)}
                 className={`${THUMB_CLASS} ${FOCUS_CLASS} ${THUMB_STATE_CLASS(i + offset === index)}`}
               >
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  width={image.width}
-                  height={image.height}
-                  sizes="80px"
-                  className="h-full w-full object-cover"
-                />
+                {failed.has(image.src) ? (
+                  <span aria-hidden="true" className="block h-full w-full bg-straw" />
+                ) : (
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    width={image.width}
+                    height={image.height}
+                    sizes="80px"
+                    onError={() => markFailed(image.src)}
+                    className="h-full w-full object-cover"
+                  />
+                )}
               </button>
             </li>
           ))}
@@ -212,14 +234,22 @@ export function Gallery({ images, dict, lead }: GalleryProps) {
           }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-earth/90 p-4"
         >
-          <Image
-            src={current.src}
-            alt={current.alt}
-            width={current.width}
-            height={current.height}
-            sizes="100vw"
-            className="max-h-[85vh] w-auto max-w-full rounded-lg object-contain"
-          />
+          {currentFailed ? (
+            <ImagePlaceholder
+              label={dict.image.placeholder}
+              className="aspect-[4/3] w-full max-w-lg rounded-lg"
+            />
+          ) : (
+            <Image
+              src={current.src}
+              alt={current.alt}
+              width={current.width}
+              height={current.height}
+              sizes="100vw"
+              onError={() => markFailed(current.src)}
+              className="max-h-[85vh] w-auto max-w-full rounded-lg object-contain"
+            />
+          )}
           <button
             ref={closeRef}
             type="button"

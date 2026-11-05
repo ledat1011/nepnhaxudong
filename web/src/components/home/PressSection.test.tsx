@@ -54,6 +54,8 @@ describe("PressSection", () => {
     render(<PressSection lang="vi" dict={dict} items={ITEMS} />);
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(2);
+    // Screen reader users hear that the link opens a new tab.
+    expect(links[0]).toHaveAccessibleName(/\(mở trong tab mới\)$/);
     expect(links[0]).toHaveAttribute("href", "https://example.com/bai-1");
     for (const link of links) {
       expect(link).toHaveAttribute("target", "_blank");

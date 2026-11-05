@@ -6,13 +6,70 @@ import { Hero } from "./Hero";
 
 const dict = getDictionary("vi");
 
-function renderHero(zalo: string | null, hasJourney = true) {
+function renderHero(zalo: string | null, hasJourney = true, messenger: string | null = null) {
   return render(
-    <Hero lang="vi" dict={dict} tagline="[MẪU] Khẩu hiệu" zalo={zalo} hasJourney={hasJourney} />,
+    <Hero
+      lang="vi"
+      dict={dict}
+      tagline="[MẪU] Khẩu hiệu"
+      zalo={zalo}
+      messenger={messenger}
+      hasJourney={hasJourney}
+    />,
+  );
+}
+
+const en = getDictionary("en");
+
+function renderEnglishHero(messenger: string | null) {
+  return render(
+    <Hero
+      lang="en"
+      dict={en}
+      tagline="[MẪU] Tagline"
+      zalo="0000 000 000"
+      messenger={messenger}
+      hasJourney
+    />,
   );
 }
 
 describe("Hero", () => {
+  it("says under the name what is sold and where it comes from, above the tagline", () => {
+    renderHero("0000 000 000");
+    const what = screen.getByText("Gạo nếp cái hoa vàng · Hải Dương");
+    const tagline = screen.getByText("[MẪU] Khẩu hiệu");
+    expect(what.compareDocumentPosition(tagline) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps the brand name out of page translation", () => {
+    renderHero(null);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveAttribute("translate", "no");
+  });
+
+  it("has no Messenger button on the Vietnamese page", () => {
+    renderHero("0000 000 000", true, "https://example.com/messenger");
+    expect(screen.queryByRole("link", { name: /Messenger/ })).not.toBeInTheDocument();
+  });
+
+  it("puts a Messenger button next to Zalo on the English page, opening a new tab", () => {
+    renderEnglishHero("https://example.com/messenger");
+    const links = screen.getAllByRole("link");
+    const zalo = links.findIndex((link) => link.textContent === en.hero.zaloCta);
+    const messenger = screen.getByRole("link", {
+      name: `${en.hero.messengerCta} ${en.link.newTab}`,
+    });
+    expect(links[zalo + 1]).toBe(messenger);
+    expect(messenger).toHaveAttribute("href", "https://example.com/messenger");
+    expect(messenger).toHaveAttribute("target", "_blank");
+    expect(messenger).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("has no Messenger button on the English page when there is no Messenger link", () => {
+    renderEnglishHero(null);
+    expect(screen.queryByRole("link", { name: /Messenger/ })).not.toBeInTheDocument();
+  });
+
   it("has the brand name as the only h1 and shows the tagline", () => {
     renderHero("0000 000 000");
     expect(screen.getByRole("heading", { level: 1, name: "Nếp Nhà" })).toBeInTheDocument();

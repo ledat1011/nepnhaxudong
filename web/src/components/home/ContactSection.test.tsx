@@ -39,7 +39,7 @@ describe("ContactSection", () => {
 
   it("links the phone, Zalo and Messenger", () => {
     renderContact();
-    expect(screen.getByRole("link", { name: /0000 000 000/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Gọi 0000 000 000" })).toHaveAttribute(
       "href",
       "tel:0000000000",
     );
@@ -47,7 +47,9 @@ describe("ContactSection", () => {
       "href",
       "https://zalo.me/0000000001",
     );
-    expect(screen.getByRole("link", { name: dict.contact.messenger })).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: `${dict.contact.messenger} ${dict.link.newTab}` }),
+    ).toHaveAttribute(
       "href",
       "https://example.com/messenger",
     );
@@ -65,7 +67,7 @@ describe("ContactSection", () => {
     renderContact();
     expect(screen.getByText("[MẪU] Xứ Đông")).toBeInTheDocument();
     expect(screen.getByText("[MẪU] 8:00 đến 20:00")).toBeInTheDocument();
-    const map = screen.getByRole("link", { name: dict.contact.viewMap });
+    const map = screen.getByRole("link", { name: `${dict.contact.viewMap} ${dict.link.newTab}` });
     expect(map).toHaveAttribute("href", "https://example.com/ban-do");
     expect(map).toHaveAttribute("target", "_blank");
     expect(map).toHaveAttribute("rel", "noopener noreferrer");

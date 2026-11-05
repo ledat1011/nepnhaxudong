@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { HomeData, StoryDetail } from "@/lib/content/types";
 import StoryPage from "./page";
@@ -8,7 +8,7 @@ vi.mock("next/image", () => ({
   default: (props: Record<string, unknown>) => <img {...props} />,
 }));
 
-const home: HomeData = {
+const BASE_HOME: HomeData = {
   lang: "vi",
   brand: { tagline: "t" },
   products: [],
@@ -19,6 +19,7 @@ const home: HomeData = {
   social: { facebook: null, youtube: null, tiktok: null },
 };
 
+let home: HomeData;
 let story: StoryDetail;
 
 const STORY: StoryDetail = {
@@ -41,6 +42,7 @@ vi.mock("@/lib/content/client", () => ({
 
 describe("StoryPage", () => {
   beforeEach(() => {
+    home = BASE_HOME;
     story = STORY;
   });
 
@@ -78,5 +80,50 @@ describe("StoryPage", () => {
     const cover = screen.getByRole("img", { name: "Ảnh bìa" });
     expect(cover).toHaveAttribute("fetchpriority", "high");
     expect(cover).toHaveAttribute("loading", "eager");
+  });
+});
+
+describe("StoryPage invitation to order", () => {
+  const CONTACT = {
+    ...BASE_HOME.contact,
+    zalo: "0000 000 000",
+    messenger: "https://example.com/messenger",
+  };
+
+  beforeEach(() => {
+    home = { ...BASE_HOME, contact: CONTACT };
+    story = STORY;
+  });
+
+  async function renderStory(lang: "vi" | "en") {
+    const section = lang === "vi" ? "cau-chuyen" : "stories";
+    const page = await StoryPage({ params: Promise.resolve({ lang, section, slug: "bai-1" }) });
+    return render(page);
+  }
+
+  it("ends the story with an invitation that opens the Zalo panel, before the back link", async () => {
+    await renderStory("vi");
+    const invite = screen.getByRole("complementary", { name: "Muốn đặt gạo nếp?" });
+    const zalo = within(invite).getByRole("link", { name: "Nhắn Zalo cho Nếp Nhà" });
+    expect(zalo).toHaveAttribute("href", "https://zalo.me/0000000000");
+    expect(zalo).toHaveAttribute("aria-haspopup", "dialog");
+    expect(within(invite).queryByRole("link", { name: /Messenger/ })).not.toBeInTheDocument();
+    const back = screen.getByRole("link", { name: /Quay lại danh sách/ });
+    expect(invite.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("adds Messenger next to Zalo on the English page", async () => {
+    await renderStory("en");
+    const invite = screen.getByRole("complementary", { name: "Would you like to order sticky rice?" });
+    expect(within(invite).getByRole("link", { name: "Message on Zalo" })).toBeInTheDocument();
+    expect(
+      within(invite).getByRole("link", { name: "Message on Messenger (opens in a new tab)" }),
+    ).toHaveAttribute("href", "https://example.com/messenger");
+  });
+
+  it("has no invitation when there is no way to message", async () => {
+    home = BASE_HOME;
+    await renderStory("vi");
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
   });
 });

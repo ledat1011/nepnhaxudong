@@ -98,3 +98,10 @@ describe("SiteHeader", () => {
     expect(reordered).toEqual([]);
   });
 });
+
+describe("SiteHeader brand name", () => {
+  it("keeps the brand name out of page translation", () => {
+    renderHeader(null);
+    expect(screen.getByText("Nếp Nhà")).toHaveAttribute("translate", "no");
+  });
+});

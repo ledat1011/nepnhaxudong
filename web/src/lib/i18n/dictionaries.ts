@@ -28,7 +28,9 @@ const vi = {
     en: "English",
   },
   hero: {
+    what: "Gạo nếp cái hoa vàng · Hải Dương",
     zaloCta: "Liên hệ qua Zalo",
+    messengerCta: "Nhắn qua Messenger",
     journeyCta: "Xem hành trình",
   },
   motion: {
@@ -78,6 +80,7 @@ const vi = {
   },
   contact: {
     phone: "Điện thoại",
+    call: "Gọi",
     zalo: "Zalo",
     messenger: "Messenger",
     address: "Địa chỉ",
@@ -111,12 +114,21 @@ const vi = {
   },
   stories: {
     readMore: "Đọc tiếp",
-    viewAll: "Xem tất cả",
+    viewAll: "Xem tất cả câu chuyện",
     backToList: "Quay lại danh sách",
     previousPage: "Trang trước",
     nextPage: "Trang sau",
     pagination: "Phân trang",
     empty: "Chưa có câu chuyện nào.",
+  },
+  invite: {
+    title: "Muốn đặt gạo nếp?",
+    text: "Nhắn cho Nếp Nhà để hỏi giá và cách nhận gạo.",
+    zalo: "Nhắn Zalo cho Nếp Nhà",
+    messenger: "Nhắn qua Messenger",
+  },
+  link: {
+    newTab: "(mở trong tab mới)",
   },
   image: {
     placeholder: "Ảnh sắp được cập nhật",
@@ -145,7 +157,7 @@ const en: Dictionary = {
     name: "Nếp Nhà",
     tagline: "Yellow-flower sticky rice",
     description:
-      "Nếp Nhà is yellow-flower sticky rice from a family in the xứ Đông region of northern Vietnam, grown their own way: soft, fragrant and full of country flavour.",
+      "Nếp Nhà is yellow-flower sticky rice from a family in Hải Dương province, northern Vietnam, grown their own way: soft, fragrant and full of country flavour.",
     ogImageAlt: "The Nếp Nhà mascot beside a sticky rice field",
   },
   nav: {
@@ -164,7 +176,9 @@ const en: Dictionary = {
     en: "English",
   },
   hero: {
+    what: "Yellow-flower sticky rice · Hải Dương, Vietnam",
     zaloCta: "Contact us on Zalo",
+    messengerCta: "Message us on Messenger",
     journeyCta: "See the journey",
   },
   motion: {
@@ -187,7 +201,7 @@ const en: Dictionary = {
       "Bunch by bunch, the yellow-flower sticky rice seedlings go into the flooded field.",
     nangMuaGioTitle: "Sun, rain and wind",
     nangMuaGioText:
-      "The rice grows through the sun, rain and wind of the xứ Đông region, from green seedling to golden grain.",
+      "The rice grows through the sun, rain and wind of Hải Dương province, from green seedling to golden grain.",
     gatTitle: "Harvest",
     gatText: "The harvester cuts the rice, threshes it and fills one sack after another.",
     sayTitle: "Drying the rice at home",
@@ -218,6 +232,7 @@ const en: Dictionary = {
   },
   contact: {
     phone: "Phone",
+    call: "Call",
     zalo: "Zalo",
     messenger: "Messenger",
     address: "Address",
@@ -251,12 +266,21 @@ const en: Dictionary = {
   },
   stories: {
     readMore: "Read more",
-    viewAll: "View all",
+    viewAll: "All stories",
     backToList: "Back to the list",
     previousPage: "Previous page",
     nextPage: "Next page",
     pagination: "Pagination",
     empty: "There are no stories yet.",
+  },
+  invite: {
+    title: "Would you like to order sticky rice?",
+    text: "Message Nếp Nhà to ask about prices and how to get the rice.",
+    zalo: "Message on Zalo",
+    messenger: "Message on Messenger",
+  },
+  link: {
+    newTab: "(opens in a new tab)",
   },
   image: {
     placeholder: "Photo coming soon",

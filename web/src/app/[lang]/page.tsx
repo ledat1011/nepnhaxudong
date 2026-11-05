@@ -67,11 +67,13 @@ export default async function HomePage({ params }: HomePageProps) {
           dict={dict}
           tagline={home.brand.tagline}
           zalo={home.contact.zalo}
+          messenger={home.contact.messenger}
           hasJourney={has("hanh-trinh")}
         />
         {has("san-pham") && (
           <section aria-labelledby="san-pham">
-            <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
+            {/* Less space at the top on a phone, so the bag shows on the first screen (CK 4.2). */}
+            <div className="mx-auto max-w-6xl px-4 pt-8 pb-16 md:py-24">
               <SectionHeading id="san-pham" title={dict.sections.product} />
               {home.products.map((product, place) => (
                 <ProductSection
