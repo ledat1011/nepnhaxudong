@@ -13,12 +13,12 @@
 - Chủ dự án: "còn đồng lúa chưa sửa hả" → đồng lúa bước 2 phải dày hẳn: lúa mọc kín, chen nhau thành một biển lúa, không còn từng khóm rời có khoảng trống.
 - Xem bản phác thứ 3 (màu phẳng, nét mực manhua) của bước 2 và 4, chủ dự án: "okay đẹp đó duyệt" → duyệt kiểu vẽ và bố cục 2 cảnh; vẽ tiếp cảnh đêm của bước 2 và 6 cảnh còn lại theo cùng kiểu, sửa từ cảnh hiện tại.
 - Xem 7 cảnh mới, chủ dự án: cảnh xay xát chỉ có anh 2 (bỏ ba); cảnh đóng gói thì mẹ ngồi ghế đóng gạo; các cảnh còn lại OK.
+- Chủ dự án duyệt 9 bản phác; hẹn dựng SVG và thay vào web vào tuần sau ("Để tuần sau").
 
 ## Quyết định
-- Không dùng tranh manhua cho hành trình (chủ dự án thấy chi tiết quá). Các cảnh mới vẽ theo phong cách phẳng hiện tại, chờ chủ dự án duyệt.
+- Cảnh hành trình: màu phẳng, nét mực manhua, 9 bản phác đã duyệt — `docs/decisions/0014-hanh-trinh-net-muc.md`.
 
 ## Còn mở
-- Chủ dự án xem lại cảnh xay xát và đóng gói đã sửa.
 - Dựng lại 9 cảnh bằng SVG tách lớp theo bản phác (sửa `brand/story/scenes/`, trace người mới). Xoá chữ lạ trên túi, máy và biển hiệu nếu có.
 - Nối tranh vào web và làm chuyển động: làm sau.
 

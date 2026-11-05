@@ -1,0 +1,35 @@
+# 0014 — Cảnh hành trình: màu phẳng, nét mực manhua
+
+Ngày: 2026-11-05. Người quyết định: chủ dự án.
+
+## Bối cảnh
+Chủ dự án muốn vẽ lại 8 cảnh của khối "Từ hạt lúa tới người dùng" theo phong cách manhua.
+Bản manhua bán thực tế đầy đủ "chi tiết quá"; chủ dự án muốn giữ vẻ "đơn sơ mộc mạc như hiện tại"
+và giữ kiểu phẳng "để sau này còn làm chuyển động".
+
+## Quyết định
+- Giữ bố cục và màu phẳng của các cảnh hiện tại, để có thể tách thành từng lớp (người, máy, trời, mây) và làm chuyển động.
+- Nét viền dùng mực bút lông kiểu manhua: có chỗ đậm chỗ nhạt, đầu nét khô. Trời có thể loang mực nhẹ.
+- Bước 2 có hai cảnh cùng bố cục: ban ngày và đêm trăng, để sau này chuyển từ ngày sang đêm.
+- Các sửa của chủ dự án:
+  - Bước 2: đồng lúa dày kín, ba mẹ đứng giữa ruộng chăm lúa.
+  - Bước 4: quạt thấp, ba đứng sau quạt cho than vào lò.
+  - Bước 5: chỉ có anh 2.
+  - Bước 6: mẹ ngồi ghế đóng gạo.
+- Ba và anh 2 vẽ theo ảnh chủ dự án gửi:
+  - Ba khoảng 62–65 tuổi, mặt hơi đầy, tóc muối tiêu.
+  - Anh 2 khoảng 40 tuổi, tóc đen ngắn, mặt tròn.
+  - Ảnh chân dung không vào repo và không được gửi lên dịch vụ vẽ.
+- Bản phác đã duyệt nằm trong `brand/story/phac/` (WebP 1600 px, kèm `prompts.json`).
+- 9 tranh manhua bán thực tế đầy đủ nằm trong `brand/story/manhua/`. Không dùng cho hành trình; có thể dùng cho tranh của phần Câu chuyện.
+
+## Còn phải làm
+Chủ dự án chọn làm tuần sau:
+- Dựng lại 9 cảnh bằng SVG tách lớp theo bản phác: sửa `brand/story/scenes/`, trace người mới bằng `brand/tools/vectorize-pose.py`.
+- Chạy `npm run story:build` trong `web/`.
+- Làm chuyển động: ngày sang đêm ở bước 2, và các chuyển động khác.
+- Kiểm tra ở 375 px và 1280 px.
+- Mở PR.
+
+## Hệ quả
+Đã dùng 23 ảnh Nano Banana Pro cho phần này, khoảng 3,1 USD theo bảng giá.
