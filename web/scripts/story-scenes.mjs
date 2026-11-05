@@ -13,6 +13,16 @@ export const SCENE_SLUGS = [
 export const SCENE_BUDGET_BYTES = 18 * 1024;
 export const STORY_BUDGET_BYTES = 140 * 1024;
 
+/**
+ * The drawing is 800 x 600. Its background (sky, field, wall, floor, road) goes on 200 units to
+ * each side, so the page can show it fading away beside the drawing; the people, machines and
+ * buildings stay inside the middle 800.
+ */
+export const SCENE_BLEED = 200;
+export const SCENE_WIDTH = 800 + 2 * SCENE_BLEED;
+export const SCENE_HEIGHT = 600;
+export const SCENE_VIEWBOX = `${-SCENE_BLEED} 0 ${SCENE_WIDTH} ${SCENE_HEIGHT}`;
+
 function attr(tag, name) {
   const match = tag.match(new RegExp(String.raw`\s${name}=(["'])(.*?)\1`));
   return match === null ? null : match[2];
@@ -95,7 +105,7 @@ export function composeScene({ slug, sceneSvg, people, parts }) {
   assertSafe(sceneSvg, `scene ${slug}`);
   const { openTag, inner } = splitSvg(sceneSvg, `scene ${slug}`);
   const viewBox = requireAttr(openTag, "viewBox", `scene ${slug}`);
-  if (viewBox !== "0 0 800 600") throw new Error(`scene ${slug} must have viewBox="0 0 800 600"`);
+  if (viewBox !== SCENE_VIEWBOX) throw new Error(`scene ${slug} must have viewBox="${SCENE_VIEWBOX}"`);
 
   let body = includeParts(placePeople(inner, people), parts);
   assertSafe(body, `scene ${slug} (composed)`);
@@ -104,7 +114,7 @@ export function composeScene({ slug, sceneSvg, people, parts }) {
 
   const xmlns = attr(openTag, "xmlns") ?? "http://www.w3.org/2000/svg";
   const root =
-    `<svg xmlns="${xmlns}" viewBox="${viewBox}" width="800" height="600"` +
+    `<svg xmlns="${xmlns}" viewBox="${viewBox}" width="${SCENE_WIDTH}" height="${SCENE_HEIGHT}"` +
     ` data-scene="${slug}" aria-hidden="true" focusable="false">`;
   return `${root}${body}</svg>`;
 }

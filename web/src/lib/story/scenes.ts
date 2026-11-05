@@ -8,7 +8,8 @@ export type SceneSlug =
   | "den-tay-khach"
   | "mam-com";
 
-export type StoryScene = { slug: SceneSlug; src: string; width: 800; height: 600 };
+/** A scene file: the 800 x 600 drawing with a 200-unit background bleed on each side. */
+export type StoryScene = { slug: SceneSlug; src: string; width: 1200; height: 600 };
 
 const SLUGS: readonly SceneSlug[] = [
   "cay-ma",
@@ -24,6 +25,6 @@ const SLUGS: readonly SceneSlug[] = [
 export const STORY_SCENES: readonly StoryScene[] = SLUGS.map((slug, i) => ({
   slug,
   src: `/story/canh-${i + 1}-${slug}.svg`,
-  width: 800,
+  width: 1200,
   height: 600,
 }));

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 0 1200 600">
   <!-- Scene 4, drying the paddy at home, after the owner's sketch: a fan on a stand blows through a charcoal furnace,
        the hot air goes into the plenum under a long chamber and rises through the steel mesh and the paddy layer.
        The chamber is drawn cut open at the front. Father stands by the furnace. -->
@@ -21,11 +21,11 @@
       <path d="M42 -11L60 0L42 11Z" fill="#E59A84" stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round"/>
     </g>
   </defs>
-  <rect width="800" height="600" fill="#CFE4EE"/>
-  <rect y="230" width="800" height="70" fill="#E9F2F1"/>
-  <path d="M0 302V286q14 -16 28 0q17 -10 34 0q20 -18 40 0q14 -12 28 0q17 -8 34 0q20 -16 40 0q14 -10 28 0q17 -14 34 0q20 -18 40 0q14 -10 28 0q17 -12 34 0q20 -16 40 0q14 -8 28 0q17 -14 34 0q20 -10 40 0q14 -18 28 0q17 -14 34 0q20 -10 40 0q14 -16 28 0q17 -12 34 0q20 -8 40 0q14 -14 28 0q17 -18 34 0q20 -10 40 0V302Z" fill="#6E8B3D" fill-opacity="0.45"/>
-  <rect y="300" width="800" height="260" fill="#F2E2B6"/>
-  <path d="M0 300H800" stroke="#8B5A2B" stroke-width="2.5"/>
+  <rect x="-200" width="1200" height="600" fill="#CFE4EE"/>
+  <rect x="-200" y="230" width="1200" height="70" fill="#E9F2F1"/>
+  <path id="tl" d="M0 302V286q14 -16 28 0q17 -10 34 0q20 -18 40 0q14 -12 28 0q17 -8 34 0q20 -16 40 0q14 -10 28 0q17 -14 34 0q20 -18 40 0q14 -10 28 0q17 -12 34 0q20 -16 40 0q14 -8 28 0q17 -14 34 0q20 -10 40 0q14 -18 28 0q17 -14 34 0q20 -10 40 0q14 -16 28 0q17 -12 34 0q20 -8 40 0q14 -14 28 0q17 -18 34 0q20 -10 40 0V302Z" fill="#6E8B3D" fill-opacity="0.45"/><use href="#tl" x="-800"/><use href="#tl" x="800"/>
+  <rect x="-200" y="300" width="1200" height="260" fill="#F2E2B6"/>
+  <path d="M-200 300H1000" stroke="#8B5A2B" stroke-width="2.5"/>
   <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
     <!-- shed roof over the dryer -->
     <path d="M316 176V262M776 176V262" fill="none" stroke-width="12"/>

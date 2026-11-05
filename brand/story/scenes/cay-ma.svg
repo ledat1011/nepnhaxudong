@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 0 1200 600">
   <!-- Scene 1, transplanting. Final frame: the rows are planted. Mother in the middle, two farmers in one row. -->
   <defs>
     <g id="sd">
@@ -6,8 +6,8 @@
       <path d="M0 0q-3-14-12-22M0 0q-1-17 1-30M0 0q4-14 12-20M0 0q-2-10-7-15" fill="none" stroke="#6E8B3D" stroke-width="3.5" stroke-linecap="round"/>
     </g>
   </defs>
-  <rect width="800" height="600" fill="#CFE4EE"/>
-  <rect y="230" width="800" height="70" fill="#E9F2F1"/>
+  <rect x="-200" width="1200" height="600" fill="#CFE4EE"/>
+  <rect x="-200" y="230" width="1200" height="70" fill="#E9F2F1"/>
   <g fill="#FBF7EE" stroke="#4A2C1A" stroke-width="3" stroke-linejoin="round">
     <path d="M96 112q4-20 26-16q10-18 32-8q20-4 22 16q16 4 10 16H92q-12-2 4-8z"/>
     <path d="M560 84q4-16 22-13q9-14 26-6q16-3 18 12q12 4 8 13H556q-10-2 4-6z"/>
@@ -19,8 +19,8 @@
     <path d="M196 286l26-16 26 16zM630 286l22-14 22 14z"/>
     <path d="M202 286h40v14h-40zM635 286h34v14h-34z" fill-opacity="0.6"/>
   </g>
-  <path d="M0 302V286q14 -16 28 0q17 -10 34 0q20 -18 40 0q14 -12 28 0q17 -8 34 0q20 -16 40 0q14 -10 28 0q17 -14 34 0q20 -18 40 0q14 -10 28 0q17 -12 34 0q20 -16 40 0q14 -8 28 0q17 -14 34 0q20 -10 40 0q14 -18 28 0q17 -14 34 0q20 -10 40 0q14 -16 28 0q17 -12 34 0q20 -8 40 0q14 -14 28 0q17 -18 34 0q20 -10 40 0V302Z" fill="#6E8B3D" fill-opacity="0.45"/>
-  <path d="M0 300H800V312H0Z" fill="#F2E2B6" stroke="#8B5A2B" stroke-width="2.5"/>
+  <path id="tl" d="M0 302V286q14 -16 28 0q17 -10 34 0q20 -18 40 0q14 -12 28 0q17 -8 34 0q20 -16 40 0q14 -10 28 0q17 -14 34 0q20 -18 40 0q14 -10 28 0q17 -12 34 0q20 -16 40 0q14 -8 28 0q17 -14 34 0q20 -10 40 0q14 -18 28 0q17 -14 34 0q20 -10 40 0q14 -16 28 0q17 -12 34 0q20 -8 40 0q14 -14 28 0q17 -18 34 0q20 -10 40 0V302Z" fill="#6E8B3D" fill-opacity="0.45"/><use href="#tl" x="-800"/><use href="#tl" x="800"/>
+  <path d="M-200 300H1000V312H-200Z" fill="#F2E2B6" stroke="#8B5A2B" stroke-width="2.5"/>
   <g fill="none" stroke="#FBF7EE" stroke-width="3" stroke-linecap="round" stroke-opacity="0.8">
     <path d="M40 338h90M520 334h120M260 424h70M610 520h110M80 532h60"/>
   </g>

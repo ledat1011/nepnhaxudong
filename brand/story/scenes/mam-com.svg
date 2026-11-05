@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 0 1200 600">
   <!-- Scene 8, the family tray. Four dishes in this order: xôi, bánh chưng, chè, rượu nếp. Final frame: all four are on the tray. -->
   <defs>
     <pattern id="gx" width="12" height="9" patternUnits="userSpaceOnUse">
@@ -20,8 +20,8 @@
       <path d="M0 0q-9 -12 0 -24t0 -24" stroke="#FBF7EE" stroke-width="4"/>
     </g>
   </defs>
-  <rect width="800" height="600" fill="#FBF7EE"/>
-  <path d="M0 0H800V380H0Z" fill="#F2E2B6" fill-opacity="0.55"/>
+  <rect x="-200" width="1200" height="600" fill="#FBF7EE"/>
+  <path d="M-200 0H1000V380H-200Z" fill="#F2E2B6" fill-opacity="0.55"/>
   <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
     <!-- open door to the yard and the field -->
     <path d="M230 50H570V330H230Z" fill="#CFE4EE"/>
@@ -39,8 +39,8 @@
     <g fill="#D9A13B" stroke-width="2"><ellipse cx="74" cy="194" rx="3.5" ry="6" transform="rotate(-50 74 194)"/><ellipse cx="86" cy="198" rx="3.5" ry="6" transform="rotate(10 86 198)"/><ellipse cx="78" cy="180" rx="3.5" ry="6" transform="rotate(-50 78 180)"/><ellipse cx="90" cy="184" rx="3.5" ry="6" transform="rotate(10 90 184)"/><ellipse cx="81" cy="166" rx="3.5" ry="6" transform="rotate(-50 81 166)"/><ellipse cx="93" cy="170" rx="3.5" ry="6" transform="rotate(10 93 170)"/><ellipse cx="85" cy="152" rx="3.5" ry="6" transform="rotate(-50 85 152)"/><ellipse cx="97" cy="156" rx="3.5" ry="6" transform="rotate(10 97 156)"/><ellipse cx="89" cy="208" rx="3.5" ry="6" transform="rotate(-38 89 208)"/><ellipse cx="101" cy="212" rx="3.5" ry="6" transform="rotate(22 101 212)"/><ellipse cx="91" cy="194" rx="3.5" ry="6" transform="rotate(-38 91 194)"/><ellipse cx="103" cy="198" rx="3.5" ry="6" transform="rotate(22 103 198)"/><ellipse cx="93" cy="180" rx="3.5" ry="6" transform="rotate(-38 93 180)"/><ellipse cx="105" cy="184" rx="3.5" ry="6" transform="rotate(22 105 184)"/><ellipse cx="94" cy="166" rx="3.5" ry="6" transform="rotate(-38 94 166)"/><ellipse cx="106" cy="170" rx="3.5" ry="6" transform="rotate(22 106 170)"/><ellipse cx="104" cy="216" rx="3.5" ry="6" transform="rotate(-30 104 216)"/><ellipse cx="116" cy="220" rx="3.5" ry="6" transform="rotate(30 116 220)"/><ellipse cx="104" cy="202" rx="3.5" ry="6" transform="rotate(-30 104 202)"/><ellipse cx="116" cy="206" rx="3.5" ry="6" transform="rotate(30 116 206)"/><ellipse cx="104" cy="188" rx="3.5" ry="6" transform="rotate(-30 104 188)"/><ellipse cx="116" cy="192" rx="3.5" ry="6" transform="rotate(30 116 192)"/><ellipse cx="104" cy="174" rx="3.5" ry="6" transform="rotate(-30 104 174)"/><ellipse cx="116" cy="178" rx="3.5" ry="6" transform="rotate(30 116 178)"/><ellipse cx="119" cy="208" rx="3.5" ry="6" transform="rotate(-22 119 208)"/><ellipse cx="131" cy="212" rx="3.5" ry="6" transform="rotate(38 131 212)"/><ellipse cx="117" cy="194" rx="3.5" ry="6" transform="rotate(-22 117 194)"/><ellipse cx="129" cy="198" rx="3.5" ry="6" transform="rotate(38 129 198)"/><ellipse cx="115" cy="180" rx="3.5" ry="6" transform="rotate(-22 115 180)"/><ellipse cx="127" cy="184" rx="3.5" ry="6" transform="rotate(38 127 184)"/><ellipse cx="114" cy="166" rx="3.5" ry="6" transform="rotate(-22 114 166)"/><ellipse cx="126" cy="170" rx="3.5" ry="6" transform="rotate(38 126 170)"/><ellipse cx="134" cy="194" rx="3.5" ry="6" transform="rotate(-10 134 194)"/><ellipse cx="146" cy="198" rx="3.5" ry="6" transform="rotate(50 146 198)"/><ellipse cx="130" cy="180" rx="3.5" ry="6" transform="rotate(-10 130 180)"/><ellipse cx="142" cy="184" rx="3.5" ry="6" transform="rotate(50 142 184)"/><ellipse cx="127" cy="166" rx="3.5" ry="6" transform="rotate(-10 127 166)"/><ellipse cx="139" cy="170" rx="3.5" ry="6" transform="rotate(50 139 170)"/><ellipse cx="123" cy="152" rx="3.5" ry="6" transform="rotate(-10 123 152)"/><ellipse cx="135" cy="156" rx="3.5" ry="6" transform="rotate(50 135 156)"/></g>
   </g>
   <!-- the mat on the floor -->
-  <path d="M0 380H800V560H0Z" fill="#F2E2B6"/>
-  <path d="M0 380H800" stroke="#8B5A2B" stroke-width="3"/>
+  <path d="M-200 380H1000V560H-200Z" fill="#F2E2B6"/>
+  <path d="M-200 380H1000" stroke="#8B5A2B" stroke-width="3"/>
   <path d="M40 400H760V552H40Z" fill="#D9A13B" fill-opacity="0.35" stroke="#8B5A2B" stroke-width="3"/>
   <path d="M40 420H760M40 440H760M40 460H760M40 480H760M40 500H760M40 520H760M40 540H760" fill="none" stroke="#8B5A2B" stroke-width="1.8" stroke-opacity="0.4"/>
   <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">

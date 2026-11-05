@@ -125,7 +125,7 @@ describe("RiceStory", () => {
     items.forEach((li, i) => {
       const img = li.querySelector("img");
       expect(img).toHaveAttribute("src", STORY_SCENES[i].src);
-      expect(img).toHaveAttribute("width", "800");
+      expect(img).toHaveAttribute("width", "1200");
       expect(img).toHaveAttribute("height", "600");
       expect(img).toHaveAttribute("loading", "lazy");
       expect(img).toHaveAttribute("decoding", "async");

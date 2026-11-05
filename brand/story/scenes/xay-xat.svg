@@ -1,26 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 0 1200 600">
   <!-- Scene 5, milling in the family mill (after the mill photo): tall green bucket elevator, brown husker with a hopper,
        red machine below, green corrugated dryer chamber at the right, corrugated-iron shed. -->
   <defs>
     <ellipse id="gr" rx="4" ry="6.5"/>
     <path id="hk" d="M0 0Q8 -8 16 -2Q8 2 0 0Z"/>
   </defs>
-  <rect width="800" height="600" fill="#FBF7EE"/>
+  <rect x="-200" width="1200" height="600" fill="#FBF7EE"/>
   <g fill="none" stroke="#F2E2B6" stroke-width="6">
-    <path d="M14 80V470M42 80V470M70 80V470M98 80V470M126 80V470M154 80V470M182 80V470M210 80V470M238 80V470M266 80V470M294 80V470M322 80V470M350 80V470M378 80V470M406 80V470M434 80V470M462 80V470M490 80V470M518 80V470M546 80V470M574 80V470M602 80V470M630 80V470M658 80V470M686 80V470"/>
+    <path d="M-182 80V470M-154 80V470M-126 80V470M-98 80V470M-70 80V470M-42 80V470M-14 80V470M14 80V470M42 80V470M70 80V470M98 80V470M126 80V470M154 80V470M182 80V470M210 80V470M238 80V470M266 80V470M294 80V470M322 80V470M350 80V470M378 80V470M406 80V470M434 80V470M462 80V470M490 80V470M518 80V470M546 80V470M574 80V470M602 80V470M630 80V470M658 80V470M686 80V470M826 80V470M854 80V470M882 80V470M910 80V470M938 80V470M966 80V470M994 80V470"/>
   </g>
   <path d="M30 96H190V200H30Z" fill="#E9F2F1"/>
   <path d="M32 176q20 -14 40 0q20 -12 40 0q20 -14 40 0q18 -10 36 0V198H32Z" fill="#6E8B3D" fill-opacity="0.45"/>
   <path d="M30 96H190V200H30ZM110 96V200" fill="none" stroke="#8B5A2B" stroke-width="4"/>
-  <path d="M0 0H800V64L0 88Z" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round"/>
-  <path d="M0 58L800 34M120 0V72M300 0V66M480 0V56M660 0V46" fill="none" stroke="#4A2C1A" stroke-width="3" stroke-opacity="0.5"/>
-  <path d="M0 470H800V560H0Z" fill="#F2E2B6"/>
-  <path d="M0 470H800" stroke="#8B5A2B" stroke-width="2.5"/>
+  <path d="M-200 0H1000V58L-200 94Z" fill="#8B5A2B" stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M-200 64L1000 28M-60 0V78M120 0V72M300 0V66M480 0V56M660 0V46M900 0V49" fill="none" stroke="#4A2C1A" stroke-width="3" stroke-opacity="0.5"/>
+  <path d="M-200 470H1000V560H-200Z" fill="#F2E2B6"/>
+  <path d="M-200 470H1000" stroke="#8B5A2B" stroke-width="2.5"/>
   <g stroke="#4A2C1A" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
     <!-- green dryer chamber, corrugated -->
-    <path d="M700 96H800V512H700Z" fill="#6E8B3D"/>
-    <path d="M714 100V508M730 100V508M746 100V508M762 100V508M778 100V508M794 100V508" fill="none" stroke-width="2" stroke-opacity="0.45"/>
-    <path d="M708 300H800" fill="none" stroke="#F2E2B6" stroke-width="3"/>
+    <path d="M700 96H820V512H700Z" fill="#6E8B3D"/>
+    <path d="M714 100V508M730 100V508M746 100V508M762 100V508M778 100V508M794 100V508M810 100V508" fill="none" stroke-width="2" stroke-opacity="0.45"/>
+    <path d="M708 300H812" fill="none" stroke="#F2E2B6" stroke-width="3"/>
     <!-- intake hopper at the foot of the elevator -->
     <path d="M222 470L292 470L282 520H232Z" fill="#6E8B3D"/>
     <!-- bucket elevator tower -->

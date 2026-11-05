@@ -6,6 +6,9 @@ import {
   assertComposed,
   composeScene,
   SCENE_BUDGET_BYTES,
+  SCENE_HEIGHT,
+  SCENE_VIEWBOX,
+  SCENE_WIDTH,
   SCENE_SLUGS,
   STORY_BUDGET_BYTES,
 } from "../../../scripts/story-scenes.mjs";
@@ -26,7 +29,7 @@ const PERSON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
 const PART = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect id="box" width="10" height="10"/></svg>`;
 
 function scene(body: string): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">\n  ${body}\n</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${SCENE_VIEWBOX}">\n  ${body}\n</svg>`;
 }
 const people = { "me-cay": PERSON };
 const run = (body: string, p: Record<string, string> = people, parts: Record<string, string> = { machine: PART }) =>
@@ -64,9 +67,20 @@ describe("composeScene", () => {
     expect(root).toContain('data-scene="cay-ma"');
     expect(root).toContain('aria-hidden="true"');
     expect(root).toContain('focusable="false"');
-    expect(root).toContain('width="800"');
+    expect(root).toContain('width="1200"');
+    expect(root).toContain('viewBox="-200 0 1200 600"');
     expect(root).toContain('height="600"');
     expect(out).not.toMatch(/>\s+</);
+  });
+
+  it("has a 200-unit bleed on each side of the 800 x 600 drawing", () => {
+    expect(SCENE_VIEWBOX).toBe("-200 0 1200 600");
+    expect([SCENE_WIDTH, SCENE_HEIGHT]).toEqual([1200, 600]);
+  });
+
+  it("rejects a scene without the bleed", () => {
+    const old = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><g/></svg>`;
+    expect(() => compose({ slug: "cay-ma", sceneSvg: old, people, parts: {} })).toThrow(/viewBox/);
   });
 
   it.each([
@@ -177,7 +191,7 @@ describe("story scene list", () => {
     expect(STORY_SCENES.map((s) => s.slug)).toEqual(SCENE_SLUGS);
     STORY_SCENES.forEach((s, i) => {
       expect(s.src).toBe(`/story/canh-${i + 1}-${s.slug}.svg`);
-      expect([s.width, s.height]).toEqual([800, 600]);
+      expect([s.width, s.height]).toEqual([SCENE_WIDTH, SCENE_HEIGHT]);
     });
   });
 });

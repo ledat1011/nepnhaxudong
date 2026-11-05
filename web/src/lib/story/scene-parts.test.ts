@@ -44,6 +44,21 @@ describe("story scene parts", () => {
     expect(hidden.map((el) => el.getAttribute("data-part")).filter((name) => name !== "rice-green")).toEqual([]);
   });
 
+  it.each(SCENE_SLUGS)("%s has a background across the whole bleed, and the road too", (slug) => {
+    const doc = load(slug);
+    expect(doc.documentElement.getAttribute("viewBox")).toBe("-200 0 1200 600");
+    // The first layer (the sky or the wall) covers the whole box.
+    const first = doc.documentElement.querySelector(":scope > rect");
+    expect([first?.getAttribute("x"), first?.getAttribute("width"), first?.getAttribute("height")]).toEqual([
+      "-200",
+      "1200",
+      "600",
+    ]);
+    const road = parts(doc, "road")[0];
+    const surface = road.querySelector("rect");
+    expect([surface?.getAttribute("x"), surface?.getAttribute("width")]).toEqual(["-200", "1200"]);
+  });
+
   it.each(SCENE_SLUGS)("%s has the shared road at y 560", (slug) => {
     const road = parts(load(slug), "road");
     expect(road).toHaveLength(1);
