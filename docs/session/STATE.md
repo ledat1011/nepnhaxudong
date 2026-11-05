@@ -1,6 +1,6 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-04 — máy công ty
+Cập nhật: 2026-11-05 — máy công ty
 
 ## Giai đoạn hiện tại
 `main` đã có API (B1, PR #3), web công khai (B2, PR #4) và logo, mascot (phần A, PR #5). Hiệu ứng GSAP (B4) đã xong trên nhánh `feat/phan-b4-gsap`, đã push, đang chờ PR. Trang quản trị (B3) làm song song trên nhánh `feat/phan-b3-admin`.
@@ -20,7 +20,7 @@ Cập nhật: 2026-11-04 — máy công ty
 - Rà soát prompt các file hướng dẫn Claude (nhánh `hacka/workspace-prompt-audit-1ff3bc`): báo cáo `docs/session/prompt-audit-2026-11-04.md`. Đã sửa 5 lỗi trong skill `call-chain` và `visual-deck`; 4 mục chỉ ghi nhận (6–9 trong báo cáo) chờ chủ dự án quyết định.
 
 ## Đang làm
-- Cảnh minh hoạ (nền Hero, hình túi gạo, khối "Từ hạt lúa tới người dùng" 8 cảnh): spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md` và plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md` đã duyệt; đang làm theo plan (subagent-driven) trên nhánh `feat/canh-minh-hoa`. Ngày 2026-11-05 đã xong Task 1–11 và Task 7 (6 tư thế người, đã duyệt biểu cảm); nền mỗi cảnh đã kéo rộng ra hai bên và mờ dần (chờ chủ dự án duyệt). Còn: Task 12 (kiểm tra cuối), review cả nhánh, PR. Góp ý của chủ dự án: `docs/session/log/2026-11-04-may-cong-ty-canh-minh-hoa.md`.
+- Cảnh minh hoạ (nền Hero, hình túi gạo, khối "Từ hạt lúa tới người dùng" 8 cảnh): spec `docs/superpowers/specs/2026-11-04-canh-minh-hoa-design.md` và plan `docs/superpowers/plans/2026-11-04-canh-minh-hoa.md` đã duyệt; đang làm theo plan (subagent-driven) trên nhánh `feat/canh-minh-hoa`. Ngày 2026-11-05 đã xong Task 1–11 và Task 7 (6 tư thế người, đã duyệt biểu cảm); nền mỗi cảnh đã kéo rộng ra hai bên và mờ dần (chủ dự án đã duyệt). Nhánh đã có: nền Hero trải hết bề ngang, mờ dần về mép trái, vòng lặp 60 giây và nút tạm dừng tròn; hình túi hút chân không là ảnh đầu tiên của bộ ảnh, kèm 3 chú thích; khối "Từ hạt lúa tới người dùng" dạng con đường dọc uốn với 8 cảnh (tải SVG khi gần tới, chuyển động riêng mỗi cảnh, hạt gạo đi theo cuộn, nền cảnh mờ dần ra hai bên) và 6 tư thế người. Task 12 (kiểm tra cuối) dừng giữa chừng ngày 2026-11-05 vì chủ dự án muốn gộp vào `main` ngay: chưa đo được Lighthouse (Chromium không chạy được từ công cụ dòng lệnh của agent, lỗi `spawn UNKNOWN`), chưa chạy Delivery Gate, `inspect.mjs` và review `web-interface-guidelines`. Còn: đo Lighthouse `/vi`, `/en` (3 lần mỗi trang, gồm cả Best Practices) và ghi vào `docs/setup.md`; Delivery Gate, `inspect.mjs` ở 375 px và 1280 px, review `web-interface-guidelines`; review cả nhánh; PR; bản cuối 6 tư thế người bằng Recraft gói trả phí hoặc Nano Banana trả phí trước khi lên web thật. Góp ý của chủ dự án: `docs/session/log/2026-11-04-may-cong-ty-canh-minh-hoa.md`.
 - Phần B4: nhánh `feat/phan-b4-gsap` đã push. Chủ dự án đồng ý mở PR; chủ dự án quyết định merge. Các dòng "(đề xuất, chờ chủ dự án xác nhận)" trong spec (mục 2.2, 3.0, 3.3) chờ chủ dự án đọc và xác nhận.
 
 ## Việc tiếp theo
