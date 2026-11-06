@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { config, NOT_FOUND_PATH, proxy } from "./proxy";
 
 function request(path = "/", acceptLanguage?: string): NextRequest {
@@ -13,21 +13,13 @@ describe("proxy", () => {
     expect(config.matcher).toEqual(["/((?!_next/|api/).*)"]);
   });
 
-  it("redirects / to /en for an English browser", () => {
-    const response = proxy(request("/", "en-US,en;q=0.9"));
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost:3000/en");
-  });
-
-  it("redirects / to /vi when there is no Accept-Language", () => {
-    const response = proxy(request());
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("http://localhost:3000/vi");
-  });
-
-  it("tells shared caches that the redirect depends on Accept-Language", () => {
-    expect(proxy(request("/", "en")).headers.get("vary")).toBe("Accept-Language");
-    expect(proxy(request()).headers.get("vary")).toBe("Accept-Language");
+  it("redirects / to /vi, whatever the browser's language", () => {
+    for (const acceptLanguage of [undefined, "en-US,en;q=0.9", "vi-VN,vi;q=0.9"]) {
+      const response = proxy(request("/", acceptLanguage));
+      expect(response.status, acceptLanguage).toBe(307);
+      expect(response.headers.get("location"), acceptLanguage).toBe("http://localhost:3000/vi");
+      expect(response.headers.get("vary"), acceptLanguage).toBeNull();
+    }
   });
 
   it("rewrites a path no page serves to the 404 page", () => {
@@ -51,5 +43,23 @@ describe("proxy", () => {
       expect(response.headers.get("x-middleware-rewrite"), path).toBeNull();
       expect(response.headers.get("x-middleware-next"), path).toBe("1");
     }
+  });
+
+  describe("X-Robots-Tag", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("marks every served path noindex on a preview copy (SITE_NOINDEX=1)", () => {
+      vi.stubEnv("SITE_NOINDEX", "1");
+      for (const path of ["/vi", "/en/stories/x", "/vi/opengraph-image/default"]) {
+        expect(proxy(request(path)).headers.get("x-robots-tag"), path).toBe("noindex, nofollow");
+      }
+    });
+
+    it("is not set on the real site", () => {
+      vi.stubEnv("SITE_NOINDEX", "");
+      expect(proxy(request("/vi")).headers.get("x-robots-tag")).toBeNull();
+    });
   });
 });

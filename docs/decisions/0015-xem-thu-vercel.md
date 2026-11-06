@@ -14,8 +14,9 @@ người vào. Oracle Cloud Always Free cần thẻ và hay bị từ chối ho�
 1. **Bản xem thử chạy trên Vercel, gói Hobby (miễn phí)**, lấy code từ GitHub, thư mục gốc `web`. Mỗi lần merge vào
    `main` thì tự cập nhật; mỗi PR có link xem thử riêng.
 2. **Chỉ chạy giao diện với dữ liệu mẫu** (`CONTENT_SOURCE=mock`). API và cơ sở dữ liệu vẫn chờ VPS (quyết định 0012).
-3. **Không cho máy tìm kiếm index bản xem thử**: biến `SITE_NOINDEX=1` làm `robots.txt` chặn mọi đường dẫn và thêm
-   `noindex, nofollow` vào mọi trang công khai.
+3. **Không cho máy tìm kiếm index bản xem thử**: biến `SITE_NOINDEX=1` thêm `noindex, nofollow` vào mọi trang công khai
+   (thẻ meta và header `X-Robots-Tag`, cả ảnh OG). `robots.txt` không chặn trang công khai (sửa ngày 2026-11-06): bot
+   tạo thẻ link của Zalo và Messenger tuân theo `robots.txt`, nên khi bị chặn thì thẻ link không có hình và tiêu đề.
 
 ## Hệ quả
 - Không đổi cách build: Vercel đọc `next.config.ts` như cũ, bản Docker cho VPS vẫn dùng `output: "standalone"`.

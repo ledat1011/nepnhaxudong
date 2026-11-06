@@ -61,6 +61,7 @@ Cảnh hành trình mới (nhánh `feat/hanh-trinh-manhua`, PR #34 đã merge v�
 8. Phần D (hạ tầng): code và CI đã merge (PR #31, #33). Còn lại là việc chủ dự án tự làm, theo checklist `docs/deploy.md`: thuê VPS 2 vCPU / 2 GB, chạy `setup.sh` và `init-env.sh`, đặt GitHub Variables (`VPS_HOST`, `SITE_HOST`) và Secrets (`VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`), chạy workflow `deploy`, tạo UptimeRobot, healthchecks.io và Backblaze B2; tên miền và Cloudflare làm sau cùng. Sau lần deploy đầu: thử tải ảnh thật và xem `/_next/image` với tên miền thật.
 9. Khi có ảnh thật (gia đình chụp 6 đến 12 ảnh: túi 2 kg thật, hạt gạo cận cảnh, ruộng, máy sấy, máy xát, mâm xôi, người nhà): xem bộ ảnh sản phẩm và lightbox với ảnh thật, đo lại Lighthouse.
 10. Trên bản xem thử: tắt "Hiện trên web" của sản phẩm thử "[THỬ REVIEW]". Tài khoản thử `ra-soat@example.test` (đã khóa) còn trong database `nepnha_b3`.
+11. Giấy chứng nhận an toàn thực phẩm lên web: chờ giấy mới còn hạn (giấy cũ 05/2021/NNPTNT-HD hết hạn 27/6/2024). Chủ dự án chụp lại; chỉ cắt, làm thẳng, tăng tương phản, không dùng AI vẽ lại (log `docs/session/log/2026-11-06-may-cong-ty-link-chia-se.md`).
 
 ## Vướng mắc
 - Chưa đặt `GEMINI_API_KEY`.
