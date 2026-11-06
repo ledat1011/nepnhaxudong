@@ -102,7 +102,7 @@ Ba mức dial được suy ra từ spec này (mục 0 đến 3), chờ chủ d�
 - **MOTION 2**: hiệu ứng theo cuộn đã chọn ở mục 1 và 3.3 (khối trượt lên, mascot, cây lúa). Không ghim khối, không parallax, vì khách cần đọc nhanh rồi liên hệ, và trang phải đạt mục tiêu đo Lighthouse mobile (mục 0).
 
 ### 3.1 Đường dẫn
-- `/` → chuyển sang `/vi` hoặc `/en` theo `Accept-Language`, mặc định `/vi`.
+- `/` → luôn chuyển sang `/vi` (chủ dự án, 2026-11-06). Muốn xem tiếng Anh thì bấm nút đổi ngôn ngữ.
 - Blog: `/vi/cau-chuyen/<slug>`, `/en/stories/<slug>`.
 - Nội dung chưa có bản EN: trang `/en` hiện bản VI cho mục đó.
 

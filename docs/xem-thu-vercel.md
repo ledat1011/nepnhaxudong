@@ -33,6 +33,7 @@ Khi web chạy thật trên VPS, làm theo `docs/deploy.md`.
 ## Sau đó
 - Mỗi lần merge vào `main`, Vercel tự build và cập nhật link trên.
 - Mỗi PR có một link xem thử riêng (Vercel ghi vào PR trên GitHub). Mặc định link này cần đăng nhập Vercel mới xem được.
-- Kiểm tra bản xem thử không bị Google index: mở `https://nepnha-xem-thu.vercel.app/robots.txt`, phải thấy `Disallow: /`.
+- Kiểm tra bản xem thử không bị Google index: mở trang `/vi`, xem mã nguồn trang (Ctrl+U), phải thấy
+  `<meta name="robots" content="noindex, nofollow"/>`. `robots.txt` cố ý không chặn trang công khai, để thẻ link khi gửi qua Zalo hay Messenger có hình.
 - Gói Hobby chỉ dành cho dùng cá nhân, không thương mại. Khi web bán hàng thật trên VPS, xóa project này trong
   **Settings → Advanced → Delete Project**.

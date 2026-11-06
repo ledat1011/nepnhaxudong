@@ -17,9 +17,9 @@ describe("robots", () => {
     expect(disallow).toContain("/api/");
   });
 
-  it("keeps every crawler out of a preview copy (SITE_NOINDEX=1)", () => {
+  it("lets link-preview bots read a preview copy (SITE_NOINDEX=1), without a sitemap", () => {
     vi.stubEnv("SITE_NOINDEX", "1");
-    expect(firstRule()).toEqual({ userAgent: "*", disallow: "/" });
+    expect(firstRule()).toEqual({ userAgent: "*", allow: "/", disallow: ["/admin", "/api/"] });
     expect(robots().sitemap).toBeUndefined();
   });
 });

@@ -5,30 +5,20 @@ const vi = getDictionary("vi");
 const NARROW = { width: 320, height: 640 };
 const PHONE = { width: 375, height: 812 };
 
-test.describe("language redirect from /", () => {
-  test("an English browser lands on /en", async ({ browser, baseURL }) => {
+test.describe("redirect from /", () => {
+  test("an English browser still lands on /vi", async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL, locale: "en-US" });
-    const page = await context.newPage();
-    await page.goto("/");
-    await expect(page).toHaveURL(/\/en$/);
-    await context.close();
-  });
-
-  test("a Vietnamese browser lands on /vi", async ({ browser, baseURL }) => {
-    const context = await browser.newContext({ baseURL, locale: "vi-VN" });
     const page = await context.newPage();
     await page.goto("/");
     await expect(page).toHaveURL(/\/vi$/);
     await context.close();
   });
 
-  test("no Accept-Language header redirects to /vi and varies on the header", async ({
-    request,
-  }) => {
+  test("/ answers 307 to /vi and does not vary on Accept-Language", async ({ request }) => {
     const response = await request.get("/", { maxRedirects: 0 });
     expect(response.status()).toBe(307);
     expect(new URL(response.headers()["location"], response.url()).pathname).toBe("/vi");
-    expect(response.headers()["vary"]).toContain("Accept-Language");
+    expect(response.headers()["vary"] ?? "").not.toContain("Accept-Language");
   });
 });
 
