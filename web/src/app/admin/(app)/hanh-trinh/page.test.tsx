@@ -22,7 +22,7 @@ function event(id: number, year: number): TimelineEventAdminDto {
     sortOrder: id,
     title: { vi: `Mốc ${id}`, en: `Event ${id}` },
     description: { vi: null, en: null },
-    mediaId: null,
+    mediaIds: [],
     missingEn: false,
   };
 }

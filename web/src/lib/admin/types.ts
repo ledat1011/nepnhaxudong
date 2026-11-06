@@ -55,7 +55,8 @@ export type TimelineEventAdminDto = {
   sortOrder: number;
   title: LocalizedText;
   description: LocalizedText;
-  mediaId: number | null;
+  /** The photos in the order they show, at most 3. */
+  mediaIds: number[];
   missingEn: boolean;
 };
 
@@ -64,7 +65,7 @@ export type TimelineEventRequest = {
   sortOrder?: number | null;
   title: LocalizedText;
   description?: LocalizedText | null;
-  mediaId?: number | null;
+  mediaIds?: number[] | null;
 };
 
 // --- press ---

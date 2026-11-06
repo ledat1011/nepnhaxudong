@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BilingualField } from "@/components/admin/form/BilingualField";
@@ -9,7 +8,7 @@ import { RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { SaveBar } from "@/components/admin/form/SaveBar";
 import { useScreenDetail } from "@/components/admin/shell/screen-detail";
-import { MediaPicker } from "@/components/admin/media/MediaPicker";
+import { ImageListSection } from "@/components/admin/media/ImageListSection";
 import { focusWhenReady } from "@/components/admin/shell/FieldFocus";
 import { Button } from "@/components/admin/ui/button";
 import { Switch } from "@/components/admin/ui/switch";
@@ -20,14 +19,12 @@ import { toRequestText } from "@/lib/admin/localized";
 import { productPublicHref } from "@/lib/admin/public-links";
 import { ADMIN_ROUTES } from "@/lib/admin/routes";
 import type { LocalizedText, PackagingDto, ProductAdminDto, ProductRequest } from "@/lib/admin/types";
-import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
-import { UndoGroupContext, useRemoveWithUndo, useUndoGroup } from "@/lib/admin/use-remove-with-undo";
+import { UndoGroupContext, useUndoGroup } from "@/lib/admin/use-remove-with-undo";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
 import { useSave } from "@/lib/admin/use-save";
 import { useLeavePage, useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 import { FeatureList, newFeatureRow, type FeatureRow } from "./FeatureList";
 import { PackagingList, newPackagingRow, packagingErrorKey, type PackagingRow } from "./PackagingList";
-import { moved } from "./rows";
 import { VisibilitySwitch } from "./VisibilitySwitch";
 
 /** Most images one product can have (the API refuses more). */
@@ -331,7 +328,7 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
         errors={fields.errors}
       />
 
-      <ImageSection ids={state.mediaIds} onChange={(mediaIds) => patch({ mediaIds })} />
+      <ImageListSection ids={state.mediaIds} onChange={(mediaIds) => patch({ mediaIds })} max={MAX_IMAGES} owner="sản phẩm" />
 
       <ProblemMessage message={saveError} error={deleting.error} />
 
@@ -365,72 +362,5 @@ export function ProductForm({ initial }: { initial?: ProductAdminDto }) {
       />
     </fieldset>
     </UndoGroupContext.Provider>
-  );
-}
-
-function ImageSection({ ids, onChange }: { ids: number[]; onChange(ids: number[]): void }) {
-  const { items } = useMediaByIds(ids);
-  const remove = useRemoveWithUndo(ids, onChange, { keyOf: (id) => id, max: MAX_IMAGES });
-  return (
-    <fieldset className="flex min-w-0 flex-col gap-3">
-      <legend className="mb-2 text-base font-semibold">Ảnh</legend>
-      <ul className="flex flex-col gap-2">
-        {ids.map((id, index) => {
-          const media = items.find((item) => item.id === id);
-          const name = media?.altVi ?? `số ${id}`;
-          return (
-            <li key={id} className="flex items-center gap-2 rounded-md border p-2">
-              {media !== undefined ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={media.url}
-                  alt={name}
-                  width={media.width}
-                  height={media.height}
-                  className="size-16 rounded object-cover"
-                />
-              ) : (
-                <span className="size-16 rounded bg-muted" aria-hidden />
-              )}
-              <span className="min-w-0 flex-1 truncate text-sm">{name}</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label={`Đưa ảnh ${name} lên`}
-                disabled={index === 0}
-                onClick={() => onChange(moved(ids, index, -1))}
-              >
-                <ArrowUp />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label={`Đưa ảnh ${name} xuống`}
-                disabled={index === ids.length - 1}
-                onClick={() => onChange(moved(ids, index, 1))}
-              >
-                <ArrowDown />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label={`Bỏ ảnh ${name}`}
-                className="ml-2"
-                onClick={() => remove(index, `Đã bỏ ảnh ${index + 1} khỏi sản phẩm.`)}
-              >
-                <X />
-              </Button>
-            </li>
-          );
-        })}
-      </ul>
-      <MediaPicker mode="multiple" value={ids} onChange={onChange} max={MAX_IMAGES} />
-      {ids.length >= MAX_IMAGES ? (
-        <p className="text-sm text-muted-foreground">Một sản phẩm có tối đa {MAX_IMAGES} ảnh.</p>
-      ) : null}
-    </fieldset>
   );
 }

@@ -49,7 +49,7 @@ const story: StoryAdminDto = {
   missingEn: true,
 };
 
-const event: TimelineEventAdminDto = { id: 7, year: 1990, sortOrder: 1, title: missing, description: missing, mediaId: null, missingEn: true };
+const event: TimelineEventAdminDto = { id: 7, year: 1990, sortOrder: 1, title: missing, description: missing, mediaIds: [], missingEn: true };
 
 const press: PressMentionAdminDto = {
   id: 9,

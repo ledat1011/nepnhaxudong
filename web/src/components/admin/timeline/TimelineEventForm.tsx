@@ -5,7 +5,7 @@ import { BilingualField } from "@/components/admin/form/BilingualField";
 import { ConfirmDialog } from "@/components/admin/form/ConfirmDialog";
 import { FieldError, NotSavedNotice, RequiredMark, RequiredNote } from "@/components/admin/form/FieldError";
 import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
-import { SingleImageSection } from "@/components/admin/media/SingleImageSection";
+import { ImageListSection } from "@/components/admin/media/ImageListSection";
 import { Button } from "@/components/admin/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/admin/ui/dialog";
 import { Input } from "@/components/admin/ui/input";
@@ -15,6 +15,7 @@ import { apiRest, invalidProps, langOfDetail, type FieldErrors, type FieldRule }
 import { toRequestText } from "@/lib/admin/localized";
 import type { LocalizedText, TimelineEventAdminDto, TimelineEventRequest } from "@/lib/admin/types";
 import { useFieldErrors } from "@/lib/admin/use-field-errors";
+import { UndoGroupContext, useUndoGroup } from "@/lib/admin/use-remove-with-undo";
 import { useSave } from "@/lib/admin/use-save";
 import { useUnsavedChanges } from "@/lib/admin/use-unsaved-changes";
 
@@ -24,6 +25,8 @@ const MAX_YEAR = 2100;
 const YEAR_RANGE_MESSAGE = "Năm phải nằm trong khoảng 1900 đến 2100.";
 const YEAR_MISSING_MESSAGE = "Hãy nhập năm.";
 const TITLE_MISSING_MESSAGE = "Hãy nhập tiêu đề tiếng Việt.";
+/** Most photos one event can have (the API refuses more). */
+const MAX_IMAGES = 3;
 
 /** The API messages that name a field of this form (see `TimelineService` and `TimelineEventRequest`). */
 const FIELD_RULES: FieldRule[] = [
@@ -37,12 +40,12 @@ type FormState = {
   year: string;
   title: LocalizedText;
   description: LocalizedText;
-  mediaId: number | null;
+  mediaIds: number[];
 };
 
 function stateFrom(event: TimelineEventAdminDto | undefined): FormState {
-  if (event === undefined) return { year: "", title: EMPTY_TEXT, description: EMPTY_TEXT, mediaId: null };
-  return { year: String(event.year), title: event.title, description: event.description, mediaId: event.mediaId };
+  if (event === undefined) return { year: "", title: EMPTY_TEXT, description: EMPTY_TEXT, mediaIds: [] };
+  return { year: String(event.year), title: event.title, description: event.description, mediaIds: event.mediaIds };
 }
 
 /** An integer year in range, or null. */
@@ -71,7 +74,7 @@ function toRequest(state: FormState): TimelineEventRequest {
     year: parseYear(state.year) ?? 0,
     title: toRequestText(state.title),
     description: toRequestText(state.description),
-    mediaId: state.mediaId,
+    mediaIds: state.mediaIds,
   };
 }
 
@@ -95,6 +98,9 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
   const dirty = JSON.stringify(state) !== baseline;
   useUnsavedChanges(dirty && !leaving);
   const fields = useFieldErrors();
+  // The "Hoàn tác" messages of the photo list. They close when a save starts: a photo put back after that would
+  // change a form that is being saved, and the dialog closes after the save.
+  const undo = useUndoGroup();
 
   const saving = useSave(async () => {
     const body = toRequest(state);
@@ -131,6 +137,7 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
       return;
     }
     fields.reset();
+    undo.dismissAll();
     if ((await saving.save()) === undefined) return;
     setLeaving(true);
     onChanged();
@@ -197,7 +204,15 @@ export function TimelineEventForm({ initial, onClose, onChanged }: Props) {
               onChange={(description) => patch({ description })}
               multiline
             />
-            <SingleImageSection mediaId={state.mediaId} onChange={(mediaId) => patch({ mediaId })} />
+            <UndoGroupContext.Provider value={undo}>
+              <ImageListSection
+                ids={state.mediaIds}
+                onChange={(mediaIds) => patch({ mediaIds })}
+                max={MAX_IMAGES}
+                owner="mốc"
+                lockPickerWhenFull
+              />
+            </UndoGroupContext.Provider>
 
             <ProblemMessage message={saveError} error={deleting.error} />
             <NotSavedNotice show={fields.hasErrors} />
