@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Lightbox, type LightboxImage } from "@/components/ui/Lightbox";
+import { frameShape, staggerLayout } from "./journey-stagger";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type JourneyPhotosProps = {
@@ -20,58 +21,32 @@ const LIFT = "shadow-[0_10px_24px_-10px_rgb(74_44_26/0.45)]";
 // The same shadow plus a ring in the section colour: the groove where this photo overlaps the one below.
 const LIFT_WITH_GROOVE = "shadow-[0_0_0_6px_var(--color-straw),0_10px_24px_-10px_rgb(74_44_26/0.45)]";
 
-type Frame = {
-  shape: "square" | "wide";
-  sizes: string;
-  /** Position inside the stage, in percent: left and width of the stage width, top and height of its height. */
-  box?: { left: number; top: number; width: number; height: number };
-};
-
-const SINGLE: Frame = { shape: "wide", sizes: "(min-width: 768px) 24rem, 80vw" };
-
-/*
- * Two or three photos overlap at their corners (the owner's sketch, option A of 2026-11-06).
- * Every frame has the same height, 46% of the stage width: the squares are 46% wide and the
- * 4:3 frame 61.33%, so a square and a wide photo look the same size. Each next frame starts
- * 74% down the one before and overlaps it by 7.33% of the width; a ring in the section colour
- * around it cuts a rounded groove into the frame below, so the photos never touch.
- * The numbers below are those sizes as percentages of each stage.
- */
-const STAGGER_2: { aspect: string; frames: Frame[] } = {
-  aspect: "aspect-[100/80.04]",
-  frames: [
-    { shape: "square", sizes: "(min-width: 768px) 15rem, 46vw", box: { left: 0, top: 0, width: 46, height: 57.47 } },
-    { shape: "wide", sizes: "(min-width: 768px) 20rem, 62vw", box: { left: 38.67, top: 42.53, width: 61.33, height: 57.47 } },
-  ],
-};
-const STAGGER_3: { aspect: string; frames: Frame[] } = {
-  aspect: "aspect-[100/114.08]",
-  frames: [
-    { shape: "square", sizes: "(min-width: 768px) 15rem, 46vw", box: { left: 0, top: 0, width: 46, height: 40.32 } },
-    { shape: "wide", sizes: "(min-width: 768px) 20rem, 62vw", box: { left: 38.67, top: 29.84, width: 61.33, height: 40.32 } },
-    { shape: "square", sizes: "(min-width: 768px) 15rem, 46vw", box: { left: 0, top: 59.68, width: 46, height: 40.32 } },
-  ],
-};
+/** Width of the stage (`max-w-lg`), used to tell the browser how wide each photo is shown. */
+const STAGE_REM = 32;
+const SINGLE_SIZES = "(min-width: 768px) 24rem, 80vw";
 
 /** The photos of one journey milestone. A click on a photo shows it large in the lightbox. */
 export function JourneyPhotos({ images: all, dict }: JourneyPhotosProps) {
   const [index, setIndex] = useState<number | null>(null);
   // The API allows at most 3 photos per milestone, which is all the stage has places for.
-  const images = all.slice(0, STAGGER_3.frames.length);
+  const images = all.slice(0, 3);
   if (images.length === 0) return null;
-  const stage = images.length === 2 ? STAGGER_2 : images.length === 3 ? STAGGER_3 : null;
-  const frames = stage === null ? [SINGLE] : stage.frames;
+  // One photo keeps the plain 4:3 frame; two or three overlap at their corners (journey-stagger.ts).
+  const stage = images.length === 1 ? null : staggerLayout(images.map((image) => frameShape(image.width, image.height)));
 
   return (
-    <div className={stage === null ? "mt-4 max-w-sm" : `relative mt-6 w-full max-w-lg ${stage.aspect}`}>
+    <div
+      className={stage === null ? "mt-4 max-w-sm" : "relative mt-6 w-full max-w-lg"}
+      style={stage === null ? undefined : { aspectRatio: stage.aspectRatio }}
+    >
       {images.map((image, i) => {
-        const frame = frames[i];
+        const box = stage?.frames[i];
         return (
           <button
             key={image.src}
             type="button"
             data-journey-photo
-            data-journey-shape={frame.shape}
+            data-journey-shape={box?.shape ?? "wide"}
             aria-haspopup="dialog"
             // The photo's alt text names the button; a photo without one gets the generic label.
             aria-label={image.alt ? undefined : dict.gallery.viewLarge}
@@ -81,15 +56,10 @@ export function JourneyPhotos({ images: all, dict }: JourneyPhotosProps) {
               setIndex(i);
             }}
             style={
-              frame.box && {
-                left: `${frame.box.left}%`,
-                top: `${frame.box.top}%`,
-                width: `${frame.box.width}%`,
-                height: `${frame.box.height}%`,
-              }
+              box && { left: `${box.left}%`, top: `${box.top}%`, width: `${box.width}%`, height: `${box.height}%` }
             }
             className={`${FRAME_CLASS} ${
-              frame.box
+              box
                 ? // Later frames sit on top; the straw ring is the groove that separates them.
                   `absolute transition-transform duration-200 hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
                     i > 0 ? LIFT_WITH_GROOVE : LIFT
@@ -102,8 +72,10 @@ export function JourneyPhotos({ images: all, dict }: JourneyPhotosProps) {
               alt={image.alt}
               width={image.width}
               height={image.height}
-              sizes={frame.sizes}
-              // Top-aligned: a portrait document keeps its heading when the frame crops it.
+              sizes={
+                box ? `(min-width: 768px) ${Math.ceil((STAGE_REM * box.width) / 100)}rem, ${Math.ceil(box.width)}vw` : SINGLE_SIZES
+              }
+              // Top-aligned: when a frame crops a little, a document keeps its heading.
               className="h-full w-full object-cover object-top"
             />
           </button>

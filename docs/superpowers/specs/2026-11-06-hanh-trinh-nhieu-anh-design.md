@@ -33,9 +33,8 @@ Ngày: 2026-11-06. Chủ dự án duyệt thiết kế trong chat và nói làm 
 - Khối Hành trình:
   - 0 ảnh: không có khung.
   - 1 ảnh: khung 4:3 như hiện nay.
-  - 2 ảnh: so le theo hình chủ dự án vẽ. Ảnh 1 trong khung vuông, rộng khoảng 45% cột, ở trên bên trái. Ảnh 2 trong khung 4:3, rộng khoảng 60% cột, ở dưới bên phải. Góc dưới phải của khung 1 chạm góc trên trái của khung 2.
-  - 3 ảnh: ảnh 3 trong khung vuông ở dưới khung 2, lệch về trái, theo cùng kiểu so le.
-  - Mọi khung giữ viền và bo góc như hiện nay. Ở 375 px vẫn so le, khung co theo chiều rộng cột, không tràn ngang.
+  - 2 hoặc 3 ảnh (sửa theo chủ dự án, 2026-11-06): các khung chồng nhẹ ở góc, theo hình chủ dự án vẽ. Mỗi khung theo chiều của ảnh: ảnh dọc khung 3:4, ảnh ngang khung 4:3, ảnh gần vuông khung vuông. Mọi khung cao bằng nhau. Khung 1 và 3 sát mép trái, khung 2 sát mép phải, mỗi cặp liền nhau chồng ít nhất 7,33% chiều rộng. Khung nằm trên có viền màu nền tạo rãnh khoét lõm. Cụm nhiều ảnh không có viền vàng, thay bằng bóng đổ nhẹ màu nâu đất. Cách tính: `web/src/components/home/journey-stagger.ts`.
+  - Mốc 1 ảnh giữ viền vàng và bo góc như cũ. Ở 375 px vẫn so le, khung co theo chiều rộng cột, không tràn ngang.
 - Mỗi ảnh là một nút. Bấm (hoặc Enter, Space) mở cửa sổ xem ảnh lớn, bắt đầu ở ảnh đó:
   - ảnh hiện đủ, không cắt (`object-contain`);
   - có nút ảnh trước và ảnh sau khi mốc có từ 2 ảnh;

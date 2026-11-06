@@ -38,3 +38,4 @@
 - Chủ dự án chọn phương án A "Ghép góc" cho mốc 2–3 ảnh: khung vuông và khung 4:3 cao bằng nhau, chồng nhẹ ở góc, khung trên có viền màu nền tạo rãnh khoét lõm; ảnh 3 vuông, quay về bên trái.
 - Chủ dự án: viền vàng ở chỗ hai ảnh chồng nhau "không được prety" → bỏ viền ở cụm nhiều ảnh, thay bằng bóng đổ nhẹ màu nâu đất, giữ rãnh màu nền; "cho 2021 thôi": mốc 1 ảnh giữ viền vàng.
 - Chủ dự án bảo cài plugin taste-skill và antislop → đã cài antislop, taste-skill, gsap-skills (phạm vi project, đúng phiên bản ghim trong `.claude/settings.json`); có hiệu lực từ session sau.
+- Chủ dự án: ảnh giấy chứng nhận "trông thiếu thiếu trống trống" (khung vuông cắt mất con dấu) → chọn phương án C: khung theo chiều ảnh (ảnh dọc khung 3:4, ảnh ngang 4:3, gần vuông thì vuông), các khung cao bằng nhau, vẫn chồng góc.

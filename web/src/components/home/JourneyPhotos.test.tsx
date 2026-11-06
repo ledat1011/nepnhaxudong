@@ -15,11 +15,17 @@ vi.mock("next/image", () => ({
 
 const dict = getDictionary("vi");
 
-const PHOTOS: LightboxImage[] = [1, 2, 3].map((n) => ({
-  src: `/journey/${n}.webp`,
-  width: 1200,
-  height: 900,
-  alt: `Ảnh mốc ${n}`,
+// A portrait document, a landscape photo and a square photo, like the real 2021 milestone plus one.
+const SIZES = [
+  [797, 1165],
+  [1200, 900],
+  [1000, 1000],
+];
+const PHOTOS: LightboxImage[] = SIZES.map(([width, height], i) => ({
+  src: `/journey/${i + 1}.webp`,
+  width,
+  height,
+  alt: `Ảnh mốc ${i + 1}`,
 }));
 
 function frames(container: HTMLElement): HTMLElement[] {
@@ -40,30 +46,29 @@ describe("JourneyPhotos", () => {
     expect(frame.parentElement).toHaveClass("max-w-sm");
   });
 
-  it("overlaps two photos at the corner: a square, then a 4:3 frame of the same height", () => {
+  it("overlaps two photos at the corner, each in a frame of its own shape and the same height", () => {
     const { container } = render(<JourneyPhotos images={PHOTOS.slice(0, 2)} dict={dict} />);
     const [first, second] = frames(container);
     expect(frames(container)).toHaveLength(2);
-    expect(first).toHaveAttribute("data-journey-shape", "square");
+    expect(first).toHaveAttribute("data-journey-shape", "portrait");
     expect(second).toHaveAttribute("data-journey-shape", "wide");
     expect(first.style.height).toBe(second.style.height);
     // The second frame starts left of the first one's right edge and below its top: they overlap.
     expect(parseFloat(second.style.left)).toBeLessThan(parseFloat(first.style.width));
     expect(parseFloat(second.style.top)).toBeLessThan(parseFloat(first.style.height));
-    expect(parseFloat(second.style.left) + parseFloat(second.style.width)).toBeLessThanOrEqual(100);
+    expect(first.parentElement?.style.aspectRatio).not.toBe("");
     // The frame on top carries the ring that cuts the groove; the first one does not.
     expect(second.className).toContain("shadow-[0_0_0_6px_var(--color-straw),");
     expect(first.className).not.toContain("shadow-[0_0_0_6px");
   });
 
-  it("puts a third photo in a square below the second, back on the left", () => {
+  it("puts a third photo below the second, back on the left", () => {
     const { container } = render(<JourneyPhotos images={PHOTOS} dict={dict} />);
     const all = frames(container);
     expect(all).toHaveLength(3);
-    expect(all.map((f) => f.getAttribute("data-journey-shape"))).toEqual(["square", "wide", "square"]);
+    expect(all.map((f) => f.getAttribute("data-journey-shape"))).toEqual(["portrait", "wide", "square"]);
     expect(all[2].style.left).toBe("0%");
-    expect(parseFloat(all[2].style.top)).toBeLessThan(parseFloat(all[1].style.top) + parseFloat(all[1].style.height));
-    expect(parseFloat(all[2].style.top) + parseFloat(all[2].style.height)).toBeCloseTo(100, 0);
+    expect(parseFloat(all[2].style.top)).toBeGreaterThan(parseFloat(all[1].style.top));
     for (const frame of all) {
       expect(frame).toHaveClass("rounded-2xl");
       expect(frame).not.toHaveClass("border-2");
