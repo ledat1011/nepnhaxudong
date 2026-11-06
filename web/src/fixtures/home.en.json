@@ -89,18 +89,16 @@
   ],
   "press": [
     {
-      "title": "[MẪU] Hạt nếp cái hoa vàng giữ nghề của xứ Đông",
-      "sourceName": "[MẪU] Báo Mẫu Một",
-      "url": "https://example.com/bao-chi/nep-cai-hoa-vang",
-      "publishedOn": "2026-03-20",
-      "image": null
-    },
-    {
-      "title": "[MẪU] A small family and the new rice season",
-      "sourceName": "[MẪU] Tạp chí Mẫu Hai",
-      "url": "https://example.com/bao-chi/mua-nep-moi",
+      "title": "Yellow-flower sticky rice of Nhị Chiểu ward: spreading the taste of a local specialty",
+      "sourceName": "Nhị Chiểu Ward People's Committee, Hải Phòng",
+      "url": "https://www.facebook.com/reel/2585570238579411",
       "publishedOn": null,
-      "image": null
+      "image": {
+        "url": "/press/2025-nhi-chieu-nep-cai-hoa-vang.webp",
+        "width": 1200,
+        "height": 675,
+        "alt": "A combine harvester in a yellow-flower sticky rice field in Nhị Chiểu ward, a frame from the Nhị Chiểu Television report"
+      }
     }
   ],
   "contact": {

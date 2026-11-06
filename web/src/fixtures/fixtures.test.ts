@@ -26,8 +26,9 @@ const TEXT_FIELDS = new Set([
 
 // The owner gave the real tagline, address and phone number (2026-11-05), so these are not
 // sample text any more and are left out of the [MẪU] check. The same holds for the journey
-// (timeline): the owner gave its real story and photos (2026-11-06).
-const REAL_CONTENT_KEYS = new Set(["timeline"]);
+// (timeline): the owner gave its real story and photos (2026-11-06), and for the press: the
+// owner gave the real report of the Nhị Chiểu ward (2026-11-06), with its real link.
+const REAL_CONTENT_KEYS = new Set(["timeline", "press"]);
 type Visit = (s: string, key: string | null, inText: boolean) => void;
 
 function walk(value: unknown, key: string | null, inText: boolean, visit: Visit): void {
@@ -83,11 +84,11 @@ describe.each(Object.entries(FIXTURES))("fixture %s", (_name, data) => {
     expect(checked).toBeGreaterThan(0);
   });
 
-  it("has no images outside the journey", () => {
+  it("has no images outside the journey and the press", () => {
     walk(data, null, false, (s, key) => {
       if (key === "bodyHtml") expect(s).not.toMatch(/<img/i);
     });
-    const withoutJourney = Array.isArray(data) ? data : { ...data, timeline: [] };
+    const withoutJourney = Array.isArray(data) ? data : { ...data, timeline: [], press: [] };
     expect(JSON.stringify(withoutJourney)).not.toMatch(
       /"url":"[^"]*\.(png|jpe?g|webp|gif|svg)/i,
     );
@@ -134,8 +135,14 @@ describe("home fixtures", () => {
       expect([image.width, image.height], image.url).toEqual(webpSize(file));
       expect(image.alt, image.url).not.toBe("");
     }
-    expect(home.press).toHaveLength(2);
-    expect(home.press.every((p) => p.image === null)).toBe(true);
+    // The one real report so far; the sample reports were removed (owner, 2026-11-06).
+    expect(home.press).toHaveLength(1);
+    const [report] = home.press;
+    expect(report.url).toBe("https://www.facebook.com/reel/2585570238579411");
+    expect(report.title).not.toMatch(/\[MẪU\]/);
+    expect(report.image?.url).toBe("/press/2025-nhi-chieu-nep-cai-hoa-vang.webp");
+    const pressFile = join(process.cwd(), "public", report.image!.url);
+    expect([report.image?.width, report.image?.height]).toEqual(webpSize(pressFile));
     const { messenger: _messenger, ...rest } = home.contact;
     for (const v of Object.values(rest)) expect(v).not.toBeNull();
   });

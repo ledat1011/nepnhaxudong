@@ -46,6 +46,12 @@ describe("classifyPath", () => {
     expect(classifyPath("/journey")).toBe("not-found");
   });
 
+  it("lets the press photos through, and nothing else under /press", () => {
+    expect(classifyPath("/press/2025-nhi-chieu-nep-cai-hoa-vang.webp")).toBe("pass");
+    expect(classifyPath("/press/a.svg")).toBe("not-found");
+    expect(classifyPath("/press")).toBe("not-found");
+  });
+
   it("does not treat a name of the object prototype as a picture folder", () => {
     expect(classifyPath("/constructor/a.webp")).toBe("not-found");
   });

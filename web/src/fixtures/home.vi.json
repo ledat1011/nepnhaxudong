@@ -89,18 +89,16 @@
   ],
   "press": [
     {
-      "title": "[MẪU] Hạt nếp cái hoa vàng giữ nghề của xứ Đông",
-      "sourceName": "[MẪU] Báo Mẫu Một",
-      "url": "https://example.com/bao-chi/nep-cai-hoa-vang",
-      "publishedOn": "2026-03-20",
-      "image": null
-    },
-    {
-      "title": "[MẪU] Gia đình nhỏ và mùa nếp mới",
-      "sourceName": "[MẪU] Tạp chí Mẫu Hai",
-      "url": "https://example.com/bao-chi/mua-nep-moi",
+      "title": "Nếp cái hoa vàng phường Nhị Chiểu – lan tỏa hương vị đặc sản quê hương",
+      "sourceName": "UBND phường Nhị Chiểu, TP. Hải Phòng",
+      "url": "https://www.facebook.com/reel/2585570238579411",
       "publishedOn": null,
-      "image": null
+      "image": {
+        "url": "/press/2025-nhi-chieu-nep-cai-hoa-vang.webp",
+        "width": 1200,
+        "height": 675,
+        "alt": "Máy gặt trên cánh đồng nếp cái hoa vàng ở phường Nhị Chiểu, khung hình từ phóng sự của Truyền hình Nhị Chiểu"
+      }
     }
   ],
   "contact": {
