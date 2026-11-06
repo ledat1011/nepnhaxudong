@@ -32,7 +32,7 @@ const round = (n: number) => Math.round(n * 10) / 10;
 type Cloud = { body: string; belly: string; width: string; maxWidth: string; top: string };
 
 /** Three cloud shapes in a 120 x 60 box with a flat base. The second one is drawn smaller. */
-const CLOUDS: readonly Cloud[] = [
+export const HERO_CLOUDS: readonly Cloud[] = [
   {
     body: "M16 50C4 50 3 35 15 33C13 21 28 15 38 22C42 9 63 5 72 18C80 10 98 14 98 28C111 27 117 43 105 50Z",
     belly: "M14 50C30 44 52 46 66 49C80 45 96 45 105 50Z",
@@ -60,7 +60,7 @@ const CLOUDS: readonly Cloud[] = [
 export function HeroSky() {
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2" aria-hidden="true">
-      {CLOUDS.map((cloud, i) => (
+      {HERO_CLOUDS.map((cloud, i) => (
         <svg
           key={HERO_CLOUD_STARTS[i]}
           data-hero-cloud=""
@@ -95,8 +95,8 @@ export function HeroSky() {
 // Sun
 // ---------------------------------------------------------------------------------------------
 
-const SUN_RAY = "M74 30L80 9L86 30Z";
-const SUN_RAY_ANGLES = Array.from({ length: 12 }, (_, i) => i * 30);
+export const SUN_RAY = "M74 30L80 9L86 30Z";
+export const SUN_RAY_ANGLES = Array.from({ length: 12 }, (_, i) => i * 30);
 
 const SUN_CLASS =
   "pointer-events-none absolute -top-6 -right-14 z-[1] w-28 will-change-transform md:-top-10 md:-right-6 md:w-40 lg:-right-24 lg:w-44";
@@ -373,7 +373,7 @@ export function HeroField() {
   return (
     <>
       <div data-hero-field-layer="" className={`${FIELD_BOX_WIDE} will-change-transform contain-paint`}>
-        <StaticField />
+        <HeroFieldStatic />
       </div>
       <div className={FIELD_BOX} aria-hidden="true">
         {GUSTS.map((stalks) => {
@@ -411,9 +411,9 @@ export function HeroField() {
  * The village, the ground and the far and mid rows: nothing in this svg ever moves. The drawing is
  * one 1440 wide tile, repeated once on each side (its edges meet: the ground lines start and end at
  * the same height), so the field covers the whole width of a wide hero. The middle tile is the one
- * on the gust layer's scale.
+ * on the gust layer's scale. The share image (opengraph-image.tsx) draws it too.
  */
-function StaticField() {
+export function HeroFieldStatic() {
   return (
     <svg
       data-hero-field=""
