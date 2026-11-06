@@ -49,3 +49,5 @@
 - Chủ dự án hỏi đưa 2 giấy chứng nhận nhỏ xuống chân trang, "có thể dùng nano" → đề xuất dùng ảnh thật nhỏ (không dùng AI cho giấy tờ thật); chủ dự án đồng ý: ảnh thật nhỏ ở chân trang, không dùng Nano Banana.
 - Chủ dự án: "convert qua bản in" cho 2 giấy 2024 "phẳng đẹp, vừa vặn" → làm ảnh giống bản scan từ chính ảnh chụp (xóa bóng và ánh sáng không đều, giấy trắng phẳng, giữ nguyên chữ, con dấu, chữ ký); không gõ lại hay vẽ lại giấy.
 - Đã làm (`3c2327a`): chân trang có 2 ảnh giấy nhỏ dưới logo ("OCOP 3 sao / Công nhận năm 2024", "Đủ điều kiện ATTP / Hiệu lực đến 12/2027"), bấm mở popup; 2 ảnh giấy 2024 làm giống bản scan, dùng chung cho mốc 2024. Xem ở 375 px và 1280 px.
+- Chủ dự án xem và nói "Looks good, merge" → PR #41 merge (`defdc2b`) sau khi mọi check CI qua (repo không bật auto-merge).
+- Làm giấy 2021 giống bản scan như 2 giấy 2024: chủ dự án nói "Not now" → chưa làm.
