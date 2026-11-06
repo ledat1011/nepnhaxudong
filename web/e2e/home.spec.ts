@@ -135,7 +135,14 @@ test.describe("journey photos", () => {
 
     const dialog = page.getByRole("dialog", { name: vi.gallery.viewLarge });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("img", { name: CERTIFICATE })).toBeVisible();
+    const certificate = dialog.getByRole("img", { name: CERTIFICATE });
+    await expect(certificate).toBeVisible();
+    // The whole photo fits the screen: no part of it is cut off.
+    const box = (await certificate.boundingBox())!;
+    const viewport = page.viewportSize()!;
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+    expect(box.height / box.width).toBeCloseTo(1165 / 797, 1);
     await dialog.getByRole("button", { name: vi.gallery.next }).click();
     await expect(dialog.getByRole("img", { name: BAG })).toBeVisible();
 

@@ -60,6 +60,8 @@ describe("Lightbox", () => {
     expect(dialogImage()).toHaveAttribute("alt", "Ảnh số 2");
     // The whole photo is shown, never cropped.
     expect(dialogImage()).toHaveClass("object-contain");
+    // The user asked to see it now. Its size before load is checked in the browser (e2e).
+    expect(dialogImage()).toHaveAttribute("loading", "eager");
     expect(screen.getByRole("button", { name: dict.gallery.close })).toHaveFocus();
   });
 

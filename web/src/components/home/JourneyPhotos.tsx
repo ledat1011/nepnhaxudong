@@ -12,7 +12,7 @@ type JourneyPhotosProps = {
 };
 
 const FRAME_CLASS =
-  "block cursor-zoom-in overflow-hidden rounded-2xl border-2 border-grain bg-rice focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
+  "block overflow-hidden rounded-2xl border-2 border-grain bg-rice focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
 
 type Frame = { className: string; sizes: string };
 

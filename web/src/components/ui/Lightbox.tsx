@@ -150,12 +150,20 @@ export function Lightbox({ images, index, onClose, onIndexChange, dict }: Lightb
       className="fixed inset-0 z-50 flex items-center justify-center bg-earth/90 p-4"
     >
       <Image
+        key={current.src}
         src={current.src}
         alt={current.alt}
         width={current.width}
         height={current.height}
         sizes="100vw"
-        className="max-h-[85vh] w-auto max-w-full rounded-lg object-contain"
+        // The user asked to see this image now, so it is not lazy.
+        loading="eager"
+        // The box is set from the image's size before the file arrives, so the dialog does
+        // not start empty and then jump: as wide as fits 100%, 85vh tall and the file itself.
+        style={{
+          width: `min(100%, ${current.width}px, calc(85vh * ${current.width} / ${current.height}))`,
+        }}
+        className="h-auto max-h-[85vh] rounded-lg object-contain"
       />
       <button
         ref={closeRef}
