@@ -15,7 +15,7 @@ Dòng giới thiệu dưới chữ "Hành trình" nằm trong code (`web/src/lib
 ## 2021 · Mẻ gạo đầu tiên mang tên quê
 - Tiếng Việt: Được hợp tác xã nông nghiệp địa phương động viên và hỗ trợ, gia đình đưa nếp cái hoa vàng của quê ra thị trường. Giống được chọn kỹ, từng thửa ruộng do người nhà tự tay chăm. Hợp tác xã tư vấn, giúp đầu tư máy hút chân không nhỏ và thiết kế bao bì. Năm đầu đóng được 10 tấn gạo, khoảng 5.000 bịch 2 kg. Cùng năm, cơ sở được Sở Nông nghiệp tỉnh Hải Dương cấp giấy chứng nhận đủ điều kiện an toàn thực phẩm.
 - Tiếng Anh (*The first rice with the home village's name*): With encouragement and support from the local farming cooperative, the family brought the village's yellow-flower sticky rice to market. The seed is chosen with care, and family members tend each field by hand. The cooperative gave advice, helped buy a small vacuum sealer and designed the bag. The first year packed 10 tonnes of rice, about 5,000 bags of 2 kg. The same year, the Hải Dương Department of Agriculture certified the producer as meeting food safety conditions.
-- Ảnh: `2021-bao-dau-tien.webp` — "Bao gạo nếp cái hoa vàng Duy Tân 2 kg đầu tiên, năm 2021".
+- Ảnh: `2021-bao-2kg-dau-tien.webp` — "Bao gạo nếp cái hoa vàng Duy Tân 2 kg đầu tiên, năm 2021".
 
 ## 2022 · Lò sấy 20 tấn, máy xay mới
 - Tiếng Việt: Khách đặt nhiều hơn, gia đình đầu tư lò sấy thóc mỗi mẻ 20 tấn, máy xay xát, và máy hút chân không mỗi lần đóng 4 bịch thay vì 1. Năm đó có 30 tấn gạo tới tay khách, khoảng 15.000 bịch. Cách sấy và xay có trong phần “Chuyện hạt nếp”.
@@ -25,7 +25,7 @@ Dòng giới thiệu dưới chữ "Hành trình" nằm trong code (`web/src/lib
 ## 2023 · Bịch gạo vuông vức, lên kệ siêu thị
 - Tiếng Việt: Năm 2023–2024, gạo được đóng trong bịch ép khuôn vuông vức, nhãn dán tay từng bịch. Mỗi năm 40 tấn gạo, khoảng 20.000 bịch, và gạo bắt đầu có mặt trên kệ siêu thị.
 - Tiếng Anh (*Neat square packs, on supermarket shelves*): In 2023–2024, the rice moved to neat, square vacuum-pressed packs, each labelled by hand. Each year brought 40 tonnes of rice, about 20,000 bags, and the rice reached supermarket shelves.
-- Ảnh: `2023-bich-vuong.webp` — "Những bịch gạo 2 kg vuông vức, nhãn dán tay từng bịch, xếp thành hàng".
+- Ảnh: `2023-bich-vuong-dan-tay.webp` — "Những bịch gạo 2 kg vuông vức, nhãn dán tay từng bịch, xếp thành hàng".
 
 ## 2025 · Bao in tên, 50 tấn gạo
 - Tiếng Việt: Logo và thông tin được in thẳng lên bao, không còn dán nhãn như những năm trước. Năm 2025, gia đình làm được 50 tấn gạo, khoảng 25.000 bịch.

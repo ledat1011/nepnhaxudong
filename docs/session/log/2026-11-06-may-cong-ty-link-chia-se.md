@@ -27,3 +27,4 @@
 - PR #39 merge (`a42027b`): ảnh chia sẻ mới đã lên bản xem thử.
 - Nhánh `feat/hanh-trinh-that` (chưa commit): 4 ảnh thật, 5 mốc vi/en, dòng giới thiệu, ẩn khung ảnh trống. Chủ dự án dừng lúc đang chạy test; việc còn lại ghi trong STATE.
 - Chủ dự án gửi lại 2 ảnh: "mẫu đầu tiên với mẫu vuông vức dán tay" → thay ảnh mốc 2021 và 2023; mốc 2023 thêm ý "nhãn dán tay từng bịch".
+- Xem web ở máy, chủ dự án: mốc 2021 đặt thêm giấy chứng nhận, bố cục hai khung so le (khung vuông nhỏ trên trái, khung chữ nhật lớn dưới phải, theo hình vẽ); "lấy ảnh mới gửi đi" (ảnh bao ở mốc 2021 vẫn là ảnh cũ do web lưu tạm ảnh cùng tên) → đổi tên file ảnh mới. Quyết định cũ "chưa đưa giấy lên web" đổi thành: đưa giấy lên như một mốc lịch sử năm 2021.
