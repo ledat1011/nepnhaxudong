@@ -3,7 +3,7 @@
 Chủ dự án duyệt câu chữ ngày 2026-11-06. Bản xem thử trên Vercel lấy nội dung này từ dữ liệu mẫu
 (`web/src/fixtures/home.vi.json`, `web/src/fixtures/home.en.json`). Khi web chạy thật, nhập từng mốc dưới đây
 trong trang quản trị, mục **Hành trình**; mỗi mốc có tối đa 3 ảnh, theo thứ tự ghi dưới đây. Ảnh nằm trong
-`web/public/journey/` (WebP; ảnh giấy chứng nhận 797 × 1165, các ảnh khác 1200 × 900).
+`web/public/journey/` (WebP; ảnh giấy chứng nhận chỉ còn tờ giấy, khổ dọc: 2021 là 797 × 1165, 2024 là 700 × 975 và 704 × 1006; các ảnh khác 1200 × 900).
 
 Dòng giới thiệu dưới chữ "Hành trình" nằm trong code (`web/src/lib/i18n/dictionaries.ts`, `journeyIntro`) và có số
 "50 tấn". Khi số liệu đổi, nhờ sửa dòng này.
@@ -34,7 +34,7 @@ Dòng giới thiệu dưới chữ "Hành trình" nằm trong code (`web/src/lib
 ## 2024 · OCOP 3 sao, giấy chứng nhận mới
 - Tiếng Việt: Cuối năm 2024, gạo nếp cái hoa vàng Duy Tân được UBND thị xã Kinh Môn công nhận là sản phẩm OCOP 3 sao (Chương trình Mỗi xã một sản phẩm). Cùng tháng, Hợp tác xã Nông sản sạch Duy Tân được Sở Nông nghiệp tỉnh Hải Dương cấp giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm mới, có hiệu lực tới tháng 12/2027.
 - Tiếng Anh (*OCOP 3 stars, a new certificate*): At the end of 2024, Duy Tân yellow-flower sticky rice was recognised by the Kinh Môn town People's Committee as a 3-star OCOP product (the One Commune One Product programme). The same month, the Duy Tân Clean Farm Produce Cooperative received a new food safety certificate from the Hải Dương Department of Agriculture, valid until December 2027.
-- Ảnh (theo thứ tự): `2024-ocop-3-sao.webp` — "Giấy chứng nhận OCOP 3 sao năm 2024 của gạo nếp cái hoa vàng Duy Tân"; `2024-giay-attp-moi.webp` — "Giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm năm 2024, hiệu lực tới tháng 12/2027".
+- Ảnh (theo thứ tự): `2024-chung-nhan-ocop.webp` — "Giấy chứng nhận OCOP 3 sao năm 2024 của gạo nếp cái hoa vàng Duy Tân"; `2024-chung-nhan-attp.webp` — "Giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm năm 2024, hiệu lực tới tháng 12/2027".
 
 ## 2025 · Bao in tên, 50 tấn gạo
 - Tiếng Việt: Logo và thông tin được in thẳng lên bao, không còn dán nhãn như những năm trước. Năm 2025, gia đình làm được 50 tấn gạo, khoảng 25.000 bịch.
