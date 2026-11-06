@@ -26,51 +26,65 @@
       "year": 2008,
       "title": "A farm supply shop at home",
       "description": "Since 2008, the family has run a shop that sells farm supplies and yellow-flower sticky rice seed to farmers in the area.",
-      "image": null
+      "images": []
     },
     {
       "year": 2021,
       "title": "The first rice with the home village's name",
       "description": "With encouragement and support from the local farming cooperative, the family brought the village's yellow-flower sticky rice to market. The seed is chosen with care, and family members tend each field by hand. The cooperative gave advice, helped buy a small vacuum sealer and designed the bag. The first year packed 10 tonnes of rice, about 5,000 bags of 2 kg. The same year, the Hải Dương Department of Agriculture certified the producer as meeting food safety conditions.",
-      "image": {
-        "url": "/journey/2021-bao-2kg-dau-tien.webp",
-        "width": 1200,
-        "height": 900,
-        "alt": "The first 2 kg bag of Duy Tân yellow-flower sticky rice, 2021"
-      }
+      "images": [
+        {
+          "url": "/journey/2021-giay-chung-nhan-attp.webp",
+          "width": 797,
+          "height": 1165,
+          "alt": "Food safety certificate of the producer, issued in 2021"
+        },
+        {
+          "url": "/journey/2021-bao-2kg-dau-tien.webp",
+          "width": 1200,
+          "height": 900,
+          "alt": "The first 2 kg bag of Duy Tân yellow-flower sticky rice, 2021"
+        }
+      ]
     },
     {
       "year": 2022,
       "title": "A 20-tonne dryer and a new mill",
       "description": "As orders grew, the family invested in a paddy dryer that takes 20 tonnes per batch, a rice mill, and a vacuum sealer that packs 4 bags at a time instead of 1. That year, 30 tonnes of rice reached customers, about 15,000 bags. The drying and milling steps are in “A grain's story”.",
-      "image": {
-        "url": "/journey/2022-may-say-may-xay.webp",
-        "width": 1200,
-        "height": 900,
-        "alt": "The rice mill and the paddy dryer in the family workshop"
-      }
+      "images": [
+        {
+          "url": "/journey/2022-may-say-may-xay.webp",
+          "width": 1200,
+          "height": 900,
+          "alt": "The rice mill and the paddy dryer in the family workshop"
+        }
+      ]
     },
     {
       "year": 2023,
       "title": "Neat square packs, on supermarket shelves",
       "description": "In 2023–2024, the rice moved to neat, square vacuum-pressed packs, each labelled by hand. Each year brought 40 tonnes of rice, about 20,000 bags, and the rice reached supermarket shelves.",
-      "image": {
-        "url": "/journey/2023-bich-vuong-dan-tay.webp",
-        "width": 1200,
-        "height": 900,
-        "alt": "Rows of square 2 kg packs, each with a label stuck on by hand"
-      }
+      "images": [
+        {
+          "url": "/journey/2023-bich-vuong-dan-tay.webp",
+          "width": 1200,
+          "height": 900,
+          "alt": "Rows of square 2 kg packs, each with a label stuck on by hand"
+        }
+      ]
     },
     {
       "year": 2025,
       "title": "A printed bag, 50 tonnes",
       "description": "The logo and product details are now printed on the bag, instead of the stick-on labels of earlier years. In 2025, the family produced 50 tonnes of rice, about 25,000 bags.",
-      "image": {
-        "url": "/journey/2025-bao-in-logo.webp",
-        "width": 1200,
-        "height": 900,
-        "alt": "A stack of Duy Tân yellow-flower sticky rice bags with the printed logo, 2025"
-      }
+      "images": [
+        {
+          "url": "/journey/2025-bao-in-logo.webp",
+          "width": 1200,
+          "height": 900,
+          "alt": "A stack of Duy Tân yellow-flower sticky rice bags with the printed logo, 2025"
+        }
+      ]
     }
   ],
   "press": [
