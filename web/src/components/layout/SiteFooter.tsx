@@ -1,5 +1,6 @@
 import { LogoMark } from "@/components/brand/LogoMark";
 import { ZaloLink } from "@/components/contact/ZaloLink";
+import { FooterCertificates } from "@/components/layout/FooterCertificates";
 import type { Contact, Social } from "@/lib/content/types";
 import { telHref, zaloHref } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -89,9 +90,12 @@ export function SiteFooter({
   return (
     <footer className="bg-earth text-rice">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-2">
-        <div className="flex items-center gap-3">
-          <LogoMark className="h-12 w-12" />
-          <span className="font-display text-3xl">{dict.site.name}</span>
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <LogoMark className="h-12 w-12" />
+            <span className="font-display text-3xl">{dict.site.name}</span>
+          </div>
+          <FooterCertificates dict={dict} />
         </div>
         <div className="space-y-6">
           {rows.length > 0 && (

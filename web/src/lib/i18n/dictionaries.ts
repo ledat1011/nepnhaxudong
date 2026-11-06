@@ -104,6 +104,13 @@ const vi = {
   },
   footer: {
     copyright: "Bản quyền",
+    certificates: "Chứng nhận",
+    ocopTitle: "OCOP 3 sao",
+    ocopDetail: "Công nhận năm 2024",
+    ocopAlt: "Giấy chứng nhận OCOP 3 sao năm 2024 của gạo nếp cái hoa vàng Duy Tân",
+    foodSafetyTitle: "Đủ điều kiện ATTP",
+    foodSafetyDetail: "Hiệu lực đến 12/2027",
+    foodSafetyAlt: "Giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm năm 2024, hiệu lực tới tháng 12/2027",
   },
   gallery: {
     viewLarge: "Xem ảnh lớn",
@@ -246,6 +253,13 @@ const en: Dictionary = {
   },
   footer: {
     copyright: "Copyright",
+    certificates: "Certificates",
+    ocopTitle: "OCOP 3 stars",
+    ocopDetail: "Awarded in 2024",
+    ocopAlt: "The 2024 OCOP 3-star certificate of Duy Tân yellow-flower sticky rice",
+    foodSafetyTitle: "Food safety certified",
+    foodSafetyDetail: "Valid until 12/2027",
+    foodSafetyAlt: "The 2024 food safety certificate of the producer, valid until December 2027",
   },
   gallery: {
     viewLarge: "View larger image",
