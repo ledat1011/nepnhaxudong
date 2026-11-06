@@ -54,3 +54,5 @@
 - Chủ dự án gửi ảnh núi đá thật sau cánh đồng lúa ở quê (ảnh Google Street View, có dây điện) và ảnh hero hiện tại → muốn thêm núi phía sau đồng lúa ở hero, mây ở trên và bay qua đỉnh núi, phong cách manhua (như quyết định `0014`), dùng Nano Banana để vẽ. Ảnh gốc không đưa vào repo.
 - Chủ dự án: "gửi ảnh trước để tôi coi thôi" → vẽ bản xem thử bằng Nano Banana và gửi trước, chưa sửa web.
 - Đã vẽ 3 bản xem thử bằng Nano Banana Pro (21:9, 2K, khoảng 0,4 USD): A mây manhua + dải sương qua đỉnh, B giữ 3 mây cũ + sương mỏng, C biển mây cuộn quanh núi (kiểu thủy mặc). Chờ chủ dự án chọn. Chưa sửa web.
+- Chủ dự án chọn bản B (giữ 3 mây cũ, sương mỏng qua núi), nhưng "sao cho chân núi cao vậy" → chân núi phải nằm sát đồng lúa như ảnh thật, bỏ gò đất màu be dưới chân núi.
+- Đã vẽ lại bản B (`b2`): chân núi nằm sát đồng lúa, bỏ gò đất be. Nano Banana tự thêm 2 bụi tre ở 2 mép và vẽ nhà làng chi tiết hơn. Chờ chủ dự án xem.
