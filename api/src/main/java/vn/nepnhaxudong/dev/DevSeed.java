@@ -140,21 +140,21 @@ public class DevSeed implements ApplicationRunner {
             null,
             text("Mốc thứ nhất", "First milestone"),
             text("Gia đình bắt đầu trồng nếp.", "The family started growing sticky rice."),
-            null));
+            List.of()));
     timeline.create(
         new TimelineEventRequest(
             2005,
             null,
             text("Mốc thứ hai", "Second milestone"),
             text("Mở rộng ruộng nếp.", "The rice fields grew."),
-            null));
+            List.of()));
     timeline.create(
         new TimelineEventRequest(
             2022,
             null,
             text("Mốc thứ ba", "Third milestone"),
             text("Bán gạo qua mạng.", "Selling rice online."),
-            null));
+            List.of()));
   }
 
   private void seedPress() {

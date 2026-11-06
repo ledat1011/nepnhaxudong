@@ -70,7 +70,7 @@ public class PublicContentService {
 
     List<Long> mediaIds = new ArrayList<>();
     productList.forEach(product -> mediaIds.addAll(product.mediaIds()));
-    eventList.forEach(event -> mediaIds.add(event.getMediaId()));
+    eventList.forEach(event -> mediaIds.addAll(event.mediaIds()));
     mentionList.forEach(mention -> mediaIds.add(mention.getMediaId()));
     storyList.forEach(story -> mediaIds.add(story.getCoverMediaId()));
     ImageRefs images = ImageRefs.load(media, mediaIds, lang);

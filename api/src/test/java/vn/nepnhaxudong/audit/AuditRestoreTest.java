@@ -235,6 +235,137 @@ class AuditRestoreTest extends AuthTestSupport {
     assertThat(after.path("mediaIds")).isEqualTo(original.path("mediaIds"));
   }
 
+  // ---- timeline images -----------------------------------------------------------------------
+
+  @Test
+  void aDeletedEventComesBackWithItsImagesInOrder() {
+    var client = loggedInClient();
+    long one = newMedia("one.webp");
+    long two = newMedia("two.webp");
+    var body = timeline(2021, "Giấy chứng nhận", "Certificate");
+    body.put("mediaIds", List.of(two, one));
+    long id = ApiClient.json(client.post("/admin/timeline", body)).path("id").asLong();
+    client.delete("/admin/timeline/" + id);
+    assertThat(count("timeline_event_media")).isZero();
+    long deleteRow = auditId("timeline_event", id, "DELETE", 0);
+
+    var response = client.post("/admin/audit/" + deleteRow + "/restore", Map.of());
+
+    assertThat(response.getStatusCode().value()).isEqualTo(204);
+    assertThat(timelineMediaIds(ApiClient.json(client.get("/admin/timeline/" + id))))
+        .containsExactly(two, one);
+    assertThat(storedTimelineMediaIds(id)).containsExactly(two, one);
+  }
+
+  @Test
+  void restoringAnEditPutsTheOldImageListBack() {
+    var client = loggedInClient();
+    long a = newMedia("a.webp");
+    long b = newMedia("b.webp");
+    long c = newMedia("c.webp");
+    var original = timeline(2021, "A", "A");
+    original.put("mediaIds", List.of(a, b));
+    long id = ApiClient.json(client.post("/admin/timeline", original)).path("id").asLong();
+    var edited = timeline(2021, "A", "A");
+    edited.put("mediaIds", List.of(c, b));
+    client.put("/admin/timeline/" + id, edited);
+    long edit = auditId("timeline_event", id, "UPDATE", 0);
+
+    var response = client.post("/admin/audit/" + edit + "/restore", Map.of());
+
+    assertThat(response.getStatusCode().value()).isEqualTo(204);
+    assertThat(storedTimelineMediaIds(id)).containsExactly(a, b);
+  }
+
+  @Test
+  void anOldSnapshotWithOneImageIdIsRestoredAsAListOfOne() {
+    var client = loggedInClient();
+    long image = newMedia("old.webp");
+    long id = createTimeline(client, 2000, "A", "A");
+    client.delete("/admin/timeline/" + id);
+    long deleteRow = auditId("timeline_event", id, "DELETE", 0);
+    jdbc.update(
+        "update audit_log set before_json = ?::jsonb where id = ?",
+        oldTimelineSnapshot(id, Long.toString(image)),
+        deleteRow);
+
+    var response = client.post("/admin/audit/" + deleteRow + "/restore", Map.of());
+
+    assertThat(response.getStatusCode().value()).isEqualTo(204);
+    JsonNode json = ApiClient.json(client.get("/admin/timeline/" + id));
+    assertThat(json.path("title").path("vi").asString()).isEqualTo("Cũ");
+    assertThat(timelineMediaIds(json)).containsExactly(image);
+    assertThat(storedTimelineMediaIds(id)).containsExactly(image);
+  }
+
+  @Test
+  void anOldSnapshotWithANullImageIdIsRestoredWithoutImages() {
+    var client = loggedInClient();
+    long image = newMedia("now.webp");
+    var body = timeline(2000, "A", "A");
+    body.put("mediaIds", List.of(image));
+    long id = ApiClient.json(client.post("/admin/timeline", body)).path("id").asLong();
+    client.put("/admin/timeline/" + id, body);
+    long edit = auditId("timeline_event", id, "UPDATE", 0);
+    jdbc.update(
+        "update audit_log set before_json = ?::jsonb where id = ?",
+        oldTimelineSnapshot(id, "null"),
+        edit);
+
+    var response = client.post("/admin/audit/" + edit + "/restore", Map.of());
+
+    assertThat(response.getStatusCode().value()).isEqualTo(204);
+    JsonNode json = ApiClient.json(client.get("/admin/timeline/" + id));
+    assertThat(json.path("title").path("vi").asString()).isEqualTo("Cũ");
+    assertThat(json.path("mediaIds").isArray()).isTrue();
+    assertThat(json.path("mediaIds")).isEmpty();
+    assertThat(count("timeline_event_media")).isZero();
+  }
+
+  @Test
+  void restoringAnEventWhoseImageWasDeletedIsRefusedAndChangesNothing() {
+    var client = loggedInClient();
+    long kept = newMedia("kept.webp");
+    long gone = newMedia("gone.webp");
+    var body = timeline(2000, "A", "A");
+    body.put("mediaIds", List.of(kept, gone));
+    long id = ApiClient.json(client.post("/admin/timeline", body)).path("id").asLong();
+    client.delete("/admin/timeline/" + id);
+    long deleteRow = auditId("timeline_event", id, "DELETE", 0);
+    jdbc.update("delete from media where id = ?", gone);
+    int auditRows = count("audit_log");
+
+    var response = client.post("/admin/audit/" + deleteRow + "/restore", Map.of());
+
+    assertDetail(response, 409, MEDIA_GONE);
+    assertThat(count("timeline_event")).isZero();
+    assertThat(count("audit_log")).isEqualTo(auditRows);
+  }
+
+  @Test
+  void aTimelineSnapshotWithADamagedImageListIsRefused() {
+    var client = loggedInClient();
+    long a = newMedia("a.webp");
+    long id = createTimeline(client, 2000, "A", "A");
+    client.delete("/admin/timeline/" + id);
+    long deleteRow = auditId("timeline_event", id, "DELETE", 0);
+    String start =
+        "{\"id\":" + id + ",\"year\":2000,\"sortOrder\":0,\"missingEn\":false,"
+            + "\"title\":{\"vi\":\"A\",\"en\":null},\"mediaIds\":";
+    var damaged =
+        List.of(
+            start + "[null]}",
+            start + "[" + a + "," + a + "]}",
+            start + "[" + a + "," + a + "," + a + "," + a + "]}");
+    for (String snapshot : damaged) {
+      jdbc.update("update audit_log set before_json = ?::jsonb where id = ?", snapshot, deleteRow);
+
+      assertDetail(
+          client.post("/admin/audit/" + deleteRow + "/restore", Map.of()), 409, BAD_SNAPSHOT);
+      assertThat(count("timeline_event")).isZero();
+    }
+  }
+
   // ---- refusals ------------------------------------------------------------------------------
 
   @Test
@@ -591,6 +722,29 @@ class AuditRestoreTest extends AuthTestSupport {
     var response = client.post("/admin/products", product(nameVi, mediaIds));
     assertThat(response.getStatusCode().value()).isEqualTo(201);
     return ApiClient.json(response).path("id").asLong();
+  }
+
+  /** A timeline snapshot as it was written before the image list: one {@code mediaId} field. */
+  private static String oldTimelineSnapshot(long id, String mediaIdJson) {
+    return "{\"id\":" + id + ",\"year\":1999,\"sortOrder\":0,"
+        + "\"title\":{\"vi\":\"Cũ\",\"en\":\"Old\"},"
+        + "\"description\":{\"vi\":null,\"en\":null},"
+        + "\"mediaId\":" + mediaIdJson + ",\"missingEn\":false}";
+  }
+
+  private static List<Long> timelineMediaIds(JsonNode event) {
+    var ids = new ArrayList<Long>();
+    for (JsonNode node : event.path("mediaIds")) {
+      ids.add(node.asLong());
+    }
+    return ids;
+  }
+
+  private List<Long> storedTimelineMediaIds(long eventId) {
+    return jdbc.queryForList(
+        "select media_id from timeline_event_media where timeline_event_id = ? order by sort_order",
+        Long.class,
+        eventId);
   }
 
   private static Map<String, Object> timeline(int year, String vi, String en) {

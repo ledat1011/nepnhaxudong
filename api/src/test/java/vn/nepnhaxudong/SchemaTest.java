@@ -28,6 +28,7 @@ class SchemaTest {
           "product_media",
           "timeline_event",
           "timeline_event_translation",
+          "timeline_event_media",
           "press_mention",
           "press_mention_translation",
           "story",

@@ -2,6 +2,7 @@ package vn.nepnhaxudong.timeline;
 
 import java.sql.Timestamp;
 import java.time.Clock;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,7 +14,7 @@ import vn.nepnhaxudong.media.MediaReferences;
 
 /**
  * Reads and restores timeline events for the audit log. A deleted event is inserted again with its
- * old id; its translations are then created through the normal entity code.
+ * old id; its translations and image links are then created through the normal entity code.
  */
 @Component
 class TimelineAuditedHandler extends JsonAuditedHandler<TimelineEventAdminDto> {
@@ -49,21 +50,29 @@ class TimelineAuditedHandler extends JsonAuditedHandler<TimelineEventAdminDto> {
     if (snapshot.id() != entityId) {
       throw badSnapshot();
     }
+    List<Long> mediaIds = snapshot.mediaIds();
+    if (mediaIds.size() > TimelineEventRequest.MAX_IMAGES) {
+      throw badSnapshot();
+    }
+    var seen = new HashSet<Long>();
+    for (Long mediaId : mediaIds) {
+      if (mediaId == null || !seen.add(mediaId)) {
+        throw badSnapshot();
+      }
+    }
     var request =
         new TimelineEventRequest(
             snapshot.year(),
             snapshot.sortOrder(),
             snapshot.title(),
             snapshot.description(),
-            snapshot.mediaId());
+            mediaIds);
     try {
       service.validateContent(request);
     } catch (ApiException e) {
       throw badSnapshot();
     }
-    if (snapshot.mediaId() != null) {
-      mediaReferences.requireAllExist(List.of(snapshot.mediaId()));
-    }
+    mediaReferences.requireAllExist(mediaIds);
     TimelineEvent event =
         events.findById(entityId).orElseGet(() -> insertWithId(entityId, snapshot));
     service.apply(event, request, snapshot.sortOrder());
@@ -72,12 +81,11 @@ class TimelineAuditedHandler extends JsonAuditedHandler<TimelineEventAdminDto> {
   private TimelineEvent insertWithId(long id, TimelineEventAdminDto snapshot) {
     Timestamp now = Timestamp.from(clock.instant());
     jdbc.update(
-        "insert into timeline_event (id, year, sort_order, media_id, created_at, updated_at)"
-            + " values (?, ?, ?, ?, ?, ?)",
+        "insert into timeline_event (id, year, sort_order, created_at, updated_at)"
+            + " values (?, ?, ?, ?, ?)",
         id,
         snapshot.year(),
         snapshot.sortOrder(),
-        snapshot.mediaId(),
         now,
         now);
     return events.findById(id).orElseThrow();
