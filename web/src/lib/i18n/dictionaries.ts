@@ -10,7 +10,7 @@ const vi = {
     tagline: "Gạo nếp cái hoa vàng",
     description:
       "Nếp Nhà là gạo nếp cái hoa vàng của một gia đình ở xứ Đông, trồng và chăm theo cách của nhà mình: dẻo, thơm và đậm vị quê.",
-    ogImageAlt: "Linh vật Nếp Nhà đứng bên cánh đồng lúa nếp",
+    ogImageAlt: "Nếp Nhà, gạo nếp cái hoa vàng: linh vật ôm bó lúa bên cánh đồng lúa nếp",
   },
   nav: {
     label: "Điều hướng chính",
@@ -147,7 +147,7 @@ const en: Dictionary = {
     tagline: "Yellow-flower sticky rice",
     description:
       "Nếp Nhà is yellow-flower sticky rice from a family in the xứ Đông region of northern Vietnam, grown their own way: soft, fragrant and full of country flavour.",
-    ogImageAlt: "The Nếp Nhà mascot beside a sticky rice field",
+    ogImageAlt: "Nếp Nhà, yellow-flower sticky rice: the mascot holding a sheaf of rice beside a rice field",
   },
   nav: {
     label: "Main navigation",

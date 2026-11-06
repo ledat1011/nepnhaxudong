@@ -29,6 +29,21 @@ test.describe("page metadata", () => {
     expect(types).toContain("LocalBusiness");
   });
 
+  test("the share image of each language is a 1200 x 630 PNG", async ({ page, request }) => {
+    for (const lang of ["vi", "en"]) {
+      await page.goto(`/${lang}`);
+      const imageUrl = await page.locator('meta[property="og:image"]').getAttribute("content");
+      expect(imageUrl, lang).not.toBeNull();
+      await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute("content", "1200");
+      await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute("content", "630");
+      const response = await request.get(new URL(imageUrl!).pathname);
+      expect(response.status(), lang).toBe(200);
+      expect(response.headers()["content-type"], lang).toBe("image/png");
+      // A PNG file starts with these 8 bytes.
+      expect([...(await response.body()).subarray(0, 8)], lang).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+    }
+  });
+
   test("a story links to its own translation, or to the shared slug", async ({ page }) => {
     await page.goto("/vi/cau-chuyen/mua-gat-dau-tien-o-xu-dong");
     await expect(page.locator("link[rel=alternate][hreflang=en]")).toHaveAttribute(
