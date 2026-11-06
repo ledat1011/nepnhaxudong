@@ -34,3 +34,7 @@
 - PR #40 (Hành trình thật, chữ sản phẩm thật): chủ dự án tự merge (`3b3e236`).
 - Nhiều ảnh mỗi mốc: 3 agent làm song song (API, trang quản trị, web), đã gộp vào `feat/hanh-trinh-nhieu-anh`; test web 1645, API toàn bộ, full-stack 39 đều qua. Lưu ý: test API và full-stack ở máy công ty cần `JAVA_HOME` trỏ tới JDK 21 (mặc định là Java 8).
 - Xem mốc 2021 có 2 ảnh, chủ dự án: "cái to cái nhỏ nhìn không đều lắm" → các khung so le bằng nhau (vuông, mỗi khung nửa cột), ảnh căn theo mép trên.
+- Chủ dự án gửi hình vẽ mới: khung vuông trên trái và khung chữ nhật dưới phải chồng lên nhau ở góc, chỗ chồng có góc khoét lõm (hai khung không dính vào nhau); muốn dùng skill UI thiết kế cho đẹp, tính cả trường hợp 3 ảnh. Skill taste-skill và antislop không có trên máy công ty → đưa phương án để chủ dự án chọn.
+- Chủ dự án chọn phương án A "Ghép góc" cho mốc 2–3 ảnh: khung vuông và khung 4:3 cao bằng nhau, chồng nhẹ ở góc, khung trên có viền màu nền tạo rãnh khoét lõm; ảnh 3 vuông, quay về bên trái.
+- Chủ dự án: viền vàng ở chỗ hai ảnh chồng nhau "không được prety" → bỏ viền ở cụm nhiều ảnh, thay bằng bóng đổ nhẹ màu nâu đất, giữ rãnh màu nền; "cho 2021 thôi": mốc 1 ảnh giữ viền vàng.
+- Chủ dự án bảo cài plugin taste-skill và antislop → đã cài antislop, taste-skill, gsap-skills (phạm vi project, đúng phiên bản ghim trong `.claude/settings.json`); có hiệu lực từ session sau.

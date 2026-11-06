@@ -40,24 +40,33 @@ describe("JourneyPhotos", () => {
     expect(frame.parentElement).toHaveClass("max-w-sm");
   });
 
-  it("staggers two photos: a square at the top left, a 4:3 frame from its right edge", () => {
+  it("overlaps two photos at the corner: a square, then a 4:3 frame of the same height", () => {
     const { container } = render(<JourneyPhotos images={PHOTOS.slice(0, 2)} dict={dict} />);
     const [first, second] = frames(container);
     expect(frames(container)).toHaveLength(2);
-    expect(first).toHaveClass("aspect-square", "w-1/2");
-    expect(first).not.toHaveClass("ml-[50%]");
-    // The second frame starts where the first one ends, so their corners meet.
-    expect(second).toHaveClass("aspect-square", "ml-[50%]", "w-1/2");
+    expect(first).toHaveAttribute("data-journey-shape", "square");
+    expect(second).toHaveAttribute("data-journey-shape", "wide");
+    expect(first.style.height).toBe(second.style.height);
+    // The second frame starts left of the first one's right edge and below its top: they overlap.
+    expect(parseFloat(second.style.left)).toBeLessThan(parseFloat(first.style.width));
+    expect(parseFloat(second.style.top)).toBeLessThan(parseFloat(first.style.height));
+    expect(parseFloat(second.style.left) + parseFloat(second.style.width)).toBeLessThanOrEqual(100);
+    // The frame on top carries the ring that cuts the groove; the first one does not.
+    expect(second.className).toContain("shadow-[0_0_0_6px_var(--color-straw),");
+    expect(first.className).not.toContain("shadow-[0_0_0_6px");
   });
 
   it("puts a third photo in a square below the second, back on the left", () => {
     const { container } = render(<JourneyPhotos images={PHOTOS} dict={dict} />);
     const all = frames(container);
     expect(all).toHaveLength(3);
-    expect(all[2]).toHaveClass("aspect-square", "w-1/2");
-    expect(all[2]).not.toHaveClass("ml-[50%]");
+    expect(all.map((f) => f.getAttribute("data-journey-shape"))).toEqual(["square", "wide", "square"]);
+    expect(all[2].style.left).toBe("0%");
+    expect(parseFloat(all[2].style.top)).toBeLessThan(parseFloat(all[1].style.top) + parseFloat(all[1].style.height));
+    expect(parseFloat(all[2].style.top) + parseFloat(all[2].style.height)).toBeCloseTo(100, 0);
     for (const frame of all) {
-      expect(frame).toHaveClass("rounded-2xl", "border-2", "border-grain");
+      expect(frame).toHaveClass("rounded-2xl");
+      expect(frame).not.toHaveClass("border-2");
     }
   });
 
