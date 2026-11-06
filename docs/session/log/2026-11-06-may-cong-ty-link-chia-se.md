@@ -51,3 +51,4 @@
 - Đã làm (`3c2327a`): chân trang có 2 ảnh giấy nhỏ dưới logo ("OCOP 3 sao / Công nhận năm 2024", "Đủ điều kiện ATTP / Hiệu lực đến 12/2027"), bấm mở popup; 2 ảnh giấy 2024 làm giống bản scan, dùng chung cho mốc 2024. Xem ở 375 px và 1280 px.
 - Chủ dự án xem và nói "Looks good, merge" → PR #41 merge (`defdc2b`) sau khi mọi check CI qua (repo không bật auto-merge).
 - Làm giấy 2021 giống bản scan như 2 giấy 2024: chủ dự án nói "Not now" → chưa làm.
+- Chủ dự án gửi ảnh núi đá thật sau cánh đồng lúa ở quê (ảnh Google Street View, có dây điện) và ảnh hero hiện tại → muốn thêm núi phía sau đồng lúa ở hero, mây ở trên và bay qua đỉnh núi, phong cách manhua (như quyết định `0014`), dùng Nano Banana để vẽ. Ảnh gốc không đưa vào repo.
