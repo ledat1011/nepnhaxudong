@@ -19,14 +19,15 @@ type Frame = { className: string; sizes: string };
 const SINGLE: Frame = { className: "aspect-[4/3] w-full", sizes: "(min-width: 768px) 24rem, 80vw" };
 
 /**
- * Two or three photos step down the column in a zigzag. The widths add up to 100%, so the
- * bottom-right corner of the first square meets the top-left corner of the 4:3 frame, and
- * the third square comes back to the left under it.
+ * Two or three photos step down the column in a zigzag of equal squares (the owner found a
+ * small and a large frame uneven). Each square is half the column, so the bottom-right corner
+ * of one meets the top-left corner of the next, and the third comes back to the left.
  */
+const STAGGER_SQUARE: Frame = { className: "aspect-square w-1/2", sizes: "(min-width: 768px) 14rem, 50vw" };
 const STAGGER: Frame[] = [
-  { className: "aspect-square w-[40%]", sizes: "(min-width: 768px) 12rem, 40vw" },
-  { className: "ml-[40%] aspect-[4/3] w-[60%]", sizes: "(min-width: 768px) 17rem, 60vw" },
-  { className: "aspect-square w-[40%]", sizes: "(min-width: 768px) 12rem, 40vw" },
+  STAGGER_SQUARE,
+  { ...STAGGER_SQUARE, className: `${STAGGER_SQUARE.className} ml-[50%]` },
+  STAGGER_SQUARE,
 ];
 
 /** The photos of one journey milestone. A click on a photo shows it large in the lightbox. */
@@ -60,7 +61,8 @@ export function JourneyPhotos({ images: all, dict }: JourneyPhotosProps) {
             width={image.width}
             height={image.height}
             sizes={frames[i].sizes}
-            className="h-full w-full object-cover"
+            // Top-aligned: a portrait document keeps its heading when the square crops it.
+            className="h-full w-full object-cover object-top"
           />
         </button>
       ))}

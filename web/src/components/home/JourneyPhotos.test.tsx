@@ -44,18 +44,18 @@ describe("JourneyPhotos", () => {
     const { container } = render(<JourneyPhotos images={PHOTOS.slice(0, 2)} dict={dict} />);
     const [first, second] = frames(container);
     expect(frames(container)).toHaveLength(2);
-    expect(first).toHaveClass("aspect-square", "w-[40%]");
-    expect(first).not.toHaveClass("ml-[40%]");
+    expect(first).toHaveClass("aspect-square", "w-1/2");
+    expect(first).not.toHaveClass("ml-[50%]");
     // The second frame starts where the first one ends, so their corners meet.
-    expect(second).toHaveClass("aspect-[4/3]", "ml-[40%]", "w-[60%]");
+    expect(second).toHaveClass("aspect-square", "ml-[50%]", "w-1/2");
   });
 
   it("puts a third photo in a square below the second, back on the left", () => {
     const { container } = render(<JourneyPhotos images={PHOTOS} dict={dict} />);
     const all = frames(container);
     expect(all).toHaveLength(3);
-    expect(all[2]).toHaveClass("aspect-square", "w-[40%]");
-    expect(all[2]).not.toHaveClass("ml-[40%]");
+    expect(all[2]).toHaveClass("aspect-square", "w-1/2");
+    expect(all[2]).not.toHaveClass("ml-[50%]");
     for (const frame of all) {
       expect(frame).toHaveClass("rounded-2xl", "border-2", "border-grain");
     }
