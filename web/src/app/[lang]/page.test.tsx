@@ -68,7 +68,7 @@ describe("home page rice story", () => {
   it("sits after the product section and before the journey section", async () => {
     const withTimeline: HomeData = {
       ...home,
-      timeline: [{ year: 2020, title: "[MẪU]", description: "[MẪU]", image: null }],
+      timeline: [{ year: 2020, title: "[MẪU]", description: "[MẪU]", images: [] }],
     };
     home = withTimeline;
     try {

@@ -512,7 +512,14 @@ class MediaUploadTest extends AuthTestSupport {
   void anImageOfATimelineEventCannotBeDeleted() {
     var client = loggedInClient();
     long id = upload(client, "a.jpg");
-    jdbc.update("insert into timeline_event (year, media_id) values (2001, ?)", id);
+    long eventId =
+        jdbc.queryForObject(
+            "insert into timeline_event (year) values (2001) returning id", Long.class);
+    jdbc.update(
+        "insert into timeline_event_media (timeline_event_id, media_id, sort_order)"
+            + " values (?, ?, 2)",
+        eventId,
+        id);
 
     assertStillUsed(client, id);
   }

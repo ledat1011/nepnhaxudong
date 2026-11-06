@@ -251,6 +251,33 @@ test("two photos picked at once are shrunk and turned upright in the browser, de
   expect(sent[1]).toEqual({ type: "image/jpeg", size: makeTinyJpeg().length, width: 64, height: 64 });
 });
 
+test("a timeline event with two photos shows both on the public home page", async () => {
+  await openTimelineEvent(EVENT_TITLE);
+  const form = dialog("Sửa mốc");
+  await form.getByRole("button", { name: "Chọn ảnh" }).click();
+  const picker = dialog("Chọn ảnh");
+  // The two photos uploaded by the test before this one share their description.
+  const uploaded = picker.locator(`img[alt="${ALT_VI}"]`);
+  await expect(uploaded).toHaveCount(2);
+  await uploaded.nth(0).click();
+  await uploaded.nth(1).click();
+  await picker.getByRole("button", { name: "Xong" }).click();
+  await expect(picker).toBeHidden();
+  await expect(form.getByRole("button", { name: `Bỏ ảnh ${ALT_VI}` })).toHaveCount(2);
+  await form.getByRole("button", { name: "Lưu", exact: true }).click();
+  await expect(form).toBeHidden();
+
+  // The event's place on the public page shows both photos, each its own file.
+  const event = page.getByRole("listitem").filter({ hasText: EVENT_TITLE });
+  const photos = event.locator(`img[alt="${ALT_VI}"]`);
+  await expect(async () => {
+    await page.goto("/vi");
+    await expect(photos).toHaveCount(2, { timeout: 1_000 });
+  }).toPass({ timeout: PUBLIC_WAIT_MS });
+  const sources = await photos.evaluateAll((images) => images.map((image) => (image as HTMLImageElement).currentSrc || image.getAttribute("src")));
+  expect(new Set(sources).size).toBe(2);
+});
+
 test("restoring the earlier copy of an edit brings the old title back", async () => {
   await openTimelineEvent(EVENT_TITLE);
   const form = dialog("Sửa mốc");

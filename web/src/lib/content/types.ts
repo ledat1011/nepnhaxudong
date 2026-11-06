@@ -22,7 +22,8 @@ export type TimelineEvent = {
   year: number;
   title: string;
   description: string;
-  image: ImageRef | null;
+  /** 0 to 3 photos, in the order the admin set. */
+  images: ImageRef[];
 };
 
 export type PressMention = {

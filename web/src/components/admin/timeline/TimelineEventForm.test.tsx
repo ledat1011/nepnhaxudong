@@ -2,30 +2,42 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AdminApiError } from "@/lib/admin/errors";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { TimelineEventAdminDto } from "@/lib/admin/types";
+import type { MediaAdminDto, TimelineEventAdminDto } from "@/lib/admin/types";
+import { invalidateMediaCache } from "@/lib/admin/use-media-by-ids";
 
-const { adminFetch, requireReLogin } = vi.hoisted(() => ({
+const { adminFetch, requireReLogin, toast } = vi.hoisted(() => ({
   adminFetch: vi.fn(),
   requireReLogin: vi.fn(),
+  toast: Object.assign(vi.fn(), { success: vi.fn(), dismiss: vi.fn() }),
 }));
 vi.mock("@/lib/admin/api", () => ({ adminFetch, adminUpload: vi.fn() }));
 vi.mock("@/lib/admin/session", () => ({
   useAdminSession: () => ({ requireReLogin }),
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
+vi.mock("sonner", () => ({ toast }));
 
 import { TimelineEventForm } from "./TimelineEventForm";
 
-function existing(): TimelineEventAdminDto {
+function existing(overrides: Partial<TimelineEventAdminDto> = {}): TimelineEventAdminDto {
   return {
     id: 5,
     year: 2005,
     sortOrder: 2,
     title: { vi: "Thành lập", en: "Founded" },
     description: { vi: null, en: null },
-    mediaId: null,
+    mediaIds: [],
     missingEn: false,
+    ...overrides,
   };
+}
+
+function media(id: number): MediaAdminDto {
+  return { id, url: `/media/${id}.webp`, width: 10, height: 10, mime: "image/webp", altVi: `Ảnh ${id}`, altEn: `Image ${id}` };
+}
+
+/** The aria-labels of the "Bỏ ảnh" buttons, in the order shown. */
+function photoNames(): (string | null)[] {
+  return screen.queryAllByRole("button", { name: /^Bỏ ảnh/ }).map((button) => button.getAttribute("aria-label"));
 }
 
 function writes() {
@@ -43,11 +55,104 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = scrollIntoView;
   adminFetch.mockReset();
   requireReLogin.mockReset();
+  toast.mockReset();
+  // The images found by id stay cached for the page load; each test starts with an empty cache.
+  invalidateMediaCache();
   adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
     if (path.startsWith("/admin/media")) return [];
     if (init?.method === "POST" || init?.method === "PUT") return existing();
     return undefined;
   });
+});
+
+describe("TimelineEventForm photos", () => {
+  beforeEach(() => {
+    adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+      if (path.startsWith("/admin/media")) return [media(1), media(2), media(3), media(4)];
+      if (init?.method === "POST" || init?.method === "PUT") return existing();
+      return undefined;
+    });
+  });
+
+  it("adds up to 3 photos in the order they are picked, then locks Chọn ảnh and says why", async () => {
+    const user = userEvent.setup();
+    render(<TimelineEventForm initial={existing()} onClose={vi.fn()} onChanged={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Chọn ảnh" }));
+    const picker = await screen.findByRole("dialog", { name: "Chọn ảnh" });
+    await user.click(await within(picker).findByAltText("Ảnh 2"));
+    await user.click(within(picker).getByAltText("Ảnh 1"));
+    await user.click(within(picker).getByAltText("Ảnh 3"));
+    expect(within(picker).getByText("Tối đa 3 ảnh")).toBeInTheDocument();
+    await user.click(within(picker).getByAltText("Ảnh 4"));
+    await user.click(within(picker).getByRole("button", { name: "Xong" }));
+
+    await waitFor(() => expect(photoNames()).toEqual(["Bỏ ảnh Ảnh 2", "Bỏ ảnh Ảnh 1", "Bỏ ảnh Ảnh 3"]));
+    const pick = screen.getByRole("button", { name: "Chọn ảnh" });
+    expect(pick).toBeDisabled();
+    expect(pick).toHaveAccessibleDescription("Một mốc có tối đa 3 ảnh.");
+    expect(screen.getByText("Một mốc có tối đa 3 ảnh.")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    expect(writes()[0][1].body.mediaIds).toEqual([2, 1, 3]);
+  });
+
+  it("moves photos up and down and sends the new order", async () => {
+    const user = userEvent.setup();
+    render(<TimelineEventForm initial={existing({ mediaIds: [1, 2, 3] })} onClose={vi.fn()} onChanged={vi.fn()} />);
+    await screen.findByAltText("Ảnh 3");
+    expect(screen.getByRole("button", { name: "Đưa ảnh Ảnh 1 lên" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Đưa ảnh Ảnh 3 xuống" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Đưa ảnh Ảnh 3 lên" }));
+    await user.click(screen.getByRole("button", { name: "Đưa ảnh Ảnh 1 xuống" }));
+    expect(photoNames()).toEqual(["Bỏ ảnh Ảnh 3", "Bỏ ảnh Ảnh 1", "Bỏ ảnh Ảnh 2"]);
+
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    expect(writes()[0]).toEqual([
+      "/admin/timeline/5",
+      {
+        method: "PUT",
+        body: { year: 2005, title: { vi: "Thành lập", en: "Founded" }, description: { vi: null, en: null }, mediaIds: [3, 1, 2] },
+      },
+    ]);
+  });
+
+  it("removes a photo with a Hoàn tác message and opens Chọn ảnh again", async () => {
+    const user = userEvent.setup();
+    render(<TimelineEventForm initial={existing({ mediaIds: [1, 2, 3] })} onClose={vi.fn()} onChanged={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Chọn ảnh" })).toBeDisabled();
+    await user.click(await screen.findByRole("button", { name: "Bỏ ảnh Ảnh 2" }));
+    expect(photoNames()).toEqual(["Bỏ ảnh Ảnh 1", "Bỏ ảnh Ảnh 3"]);
+    expect(toast).toHaveBeenCalledWith(
+      "Đã bỏ ảnh 2 khỏi mốc.",
+      expect.objectContaining({ action: expect.objectContaining({ label: "Hoàn tác" }) }),
+    );
+    const pick = screen.getByRole("button", { name: "Chọn ảnh" });
+    expect(pick).toBeEnabled();
+    expect(pick).not.toHaveAccessibleDescription();
+    expect(screen.queryByText("Một mốc có tối đa 3 ảnh.")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    expect(writes()[0][1].body.mediaIds).toEqual([1, 3]);
+  });
+
+  it.each(["Một mốc có tối đa 3 ảnh.", "Ảnh bị chọn hai lần: 2.", "Ảnh không tồn tại: 9."])(
+    "shows the API photo error %s above the buttons",
+    async (message) => {
+      adminFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
+        if (path.startsWith("/admin/media")) return [media(1), media(2)];
+        if (init?.method === "PUT") throw new AdminApiError(400, message);
+        return undefined;
+      });
+      const user = userEvent.setup();
+      render(<TimelineEventForm initial={existing({ mediaIds: [1] })} onClose={vi.fn()} onChanged={vi.fn()} />);
+      await user.type(screen.getAllByLabelText("English")[0], " 2");
+      await user.click(screen.getByRole("button", { name: "Lưu" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    },
+  );
 });
 
 describe("TimelineEventForm", () => {
@@ -127,7 +232,7 @@ describe("TimelineEventForm", () => {
             year: 2020,
             title: { vi: "Mốc mới", en: null },
             description: { vi: null, en: null },
-            mediaId: null,
+            mediaIds: [],
           },
         },
       ],

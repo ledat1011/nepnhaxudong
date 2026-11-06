@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { TimelineEvent } from "@/lib/content/types";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -12,14 +13,16 @@ vi.mock("next/image", () => ({
 const dict = getDictionary("vi");
 
 const EVENTS: TimelineEvent[] = [
-  { year: 1998, title: "[MẪU] Mốc một", description: "[MẪU] Mô tả một", image: null },
+  { year: 1998, title: "[MẪU] Mốc một", description: "[MẪU] Mô tả một", images: [] },
   {
     year: 2015,
     title: "[MẪU] Mốc hai",
     description: "[MẪU] Mô tả hai",
-    image: { url: "https://cdn.example.com/b.webp", width: 800, height: 600, alt: "Ảnh mốc hai" },
+    images: [
+      { url: "https://cdn.example.com/b.webp", width: 800, height: 600, alt: "Ảnh mốc hai" },
+    ],
   },
-  { year: 2026, title: "[MẪU] Mốc ba", description: "[MẪU] Mô tả ba", image: null },
+  { year: 2026, title: "[MẪU] Mốc ba", description: "[MẪU] Mô tả ba", images: [] },
 ];
 
 describe("JourneySection", () => {
@@ -50,6 +53,31 @@ describe("JourneySection", () => {
     expect(screen.queryByRole("img", { name: dict.image.placeholder })).not.toBeInTheDocument();
     expect(container.querySelectorAll("[data-journey-photo]")).toHaveLength(1);
     expect(screen.getByRole("img", { name: "Ảnh mốc hai" })).toBeInTheDocument();
+  });
+
+  it("shows every photo of a milestone in order, each one a button that opens the lightbox", async () => {
+    const user = userEvent.setup();
+    const events: TimelineEvent[] = [
+      {
+        ...EVENTS[1],
+        images: [
+          { url: "/journey/giay.webp", width: 797, height: 1165, alt: "Giấy chứng nhận" },
+          { url: "/journey/bao.webp", width: 1200, height: 900, alt: "Bao gạo" },
+        ],
+      },
+    ];
+    const { container } = render(<JourneySection dict={dict} events={events} />);
+    const event = container.querySelector("[data-journey-event]") as HTMLElement;
+    const photos = within(event).getAllByRole("button");
+    expect(photos.map((b) => b.querySelector("img")?.getAttribute("alt"))).toEqual([
+      "Giấy chứng nhận",
+      "Bao gạo",
+    ]);
+    // A file in web/public keeps its path as the image source.
+    expect(photos[0].querySelector("img")).toHaveAttribute("src", "/journey/giay.webp");
+    expect(event.querySelectorAll("[data-journey-photo]")).toHaveLength(2);
+    await user.click(photos[1]);
+    expect(screen.getByRole("dialog").querySelector("img")).toHaveAttribute("alt", "Bao gạo");
   });
 
   it("shows the intro line under the title", () => {

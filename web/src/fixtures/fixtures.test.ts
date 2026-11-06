@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import homeVi from "./home.vi.json";
@@ -6,28 +6,22 @@ import homeEn from "./home.en.json";
 import storiesVi from "./stories.vi.json";
 import storiesEn from "./stories.en.json";
 
+// The stories are real content (owner, 2026-11-06), so only the home fixtures are checked for
+// sample text here; the stories have their own checks below.
 const FIXTURES = {
   "home.vi": homeVi,
   "home.en": homeEn,
-  "stories.vi": storiesVi,
-  "stories.en": storiesEn,
 };
 
 // The product's name, description and features are real (2026-11-06: from the real bag and the
 // owner's story), so they are not in this list; its cooking tips are still sample text.
-const TEXT_FIELDS = new Set([
-  "cookingTips",
-  "title",
-  "excerpt",
-  "bodyHtml",
-  "sourceName",
-  "hours",
-]);
+const TEXT_FIELDS = new Set(["cookingTips", "hours"]);
 
 // The owner gave the real tagline, address and phone number (2026-11-05), so these are not
 // sample text any more and are left out of the [MẪU] check. The same holds for the journey
-// (timeline): the owner gave its real story and photos (2026-11-06).
-const REAL_CONTENT_KEYS = new Set(["timeline"]);
+// (timeline): the owner gave its real story and photos (2026-11-06), and for the press: the
+// owner gave the real report of the Nhị Chiểu ward (2026-11-06), with its real link.
+const REAL_CONTENT_KEYS = new Set(["timeline", "press"]);
 type Visit = (s: string, key: string | null, inText: boolean) => void;
 
 function walk(value: unknown, key: string | null, inText: boolean, visit: Visit): void {
@@ -43,18 +37,24 @@ function walk(value: unknown, key: string | null, inText: boolean, visit: Visit)
   }
 }
 
-const stripTags = (html: string) => html.replace(/<[^>]*>/g, "").trim();
+/** Width and height of a WebP file, read from its header. */
+function webpSize(file: string): [number, number] {
+  const data = readFileSync(file);
+  const format = data.toString("ascii", 12, 16);
+  if (format === "VP8 ") return [data.readUInt16LE(26) & 0x3fff, data.readUInt16LE(28) & 0x3fff];
+  if (format === "VP8L") {
+    const bits = data.readUInt32LE(21);
+    return [(bits & 0x3fff) + 1, ((bits >> 14) & 0x3fff) + 1];
+  }
+  if (format === "VP8X") return [data.readUIntLE(24, 3) + 1, data.readUIntLE(27, 3) + 1];
+  throw new Error(`${file} is not a WebP file`);
+}
 
 describe.each(Object.entries(FIXTURES))("fixture %s", (_name, data) => {
   it("uses only example.com URLs", () => {
     walk(data, null, false, (s, key) => {
       if (s.startsWith("http")) {
         expect(s, `field ${key}`).toMatch(/^https:\/\/example\.com\//);
-      }
-      if (key === "bodyHtml") {
-        for (const m of s.matchAll(/href="([^"]*)"/g)) {
-          expect(m[1]).toMatch(/^https:\/\/example\.com\//);
-        }
       }
     });
   });
@@ -64,24 +64,15 @@ describe.each(Object.entries(FIXTURES))("fixture %s", (_name, data) => {
     walk(data, null, false, (s, key, inText) => {
       if (!inText) return;
       checked += 1;
-      const text = key === "bodyHtml" ? stripTags(s) : s;
-      expect(text, `field ${key}`).toMatch(/^\[MẪU\]/);
+      expect(s, `field ${key}`).toMatch(/^\[MẪU\]/);
     });
     expect(checked).toBeGreaterThan(0);
   });
 
-  it("has no images outside the journey", () => {
-    walk(data, null, false, (s, key) => {
-      if (key === "bodyHtml") expect(s).not.toMatch(/<img/i);
-    });
-    const withoutJourney = Array.isArray(data) ? data : { ...data, timeline: [] };
-    expect(JSON.stringify(withoutJourney)).not.toMatch(
+  it("has no images outside the journey and the press", () => {
+    expect(JSON.stringify({ ...data, timeline: [], press: [] })).not.toMatch(
       /"url":"[^"]*\.(png|jpe?g|webp|gif|svg)/i,
     );
-    for (const item of Array.isArray(data) ? data : [data]) {
-      const o = item as Record<string, unknown>;
-      if ("cover" in o) expect(o.cover).toBeNull();
-    }
   });
 });
 
@@ -105,15 +96,30 @@ describe("home fixtures", () => {
     expect(product.packagings.map((p) => p.weightGrams)).toEqual([1000, 2000]);
     expect(product.packagings.every((p) => p.priceVnd === null)).toBe(true);
     expect(product.images).toEqual([]);
-    expect(home.timeline.map((t) => t.year)).toEqual([2008, 2021, 2022, 2023, 2025]);
-    expect(home.timeline[0].image).toBeNull();
-    for (const { image } of home.timeline.slice(1)) {
-      expect(image?.url).toMatch(/^\/journey\/[a-z0-9-]+\.webp$/);
-      expect(existsSync(join(process.cwd(), "public", image!.url)), image?.url).toBe(true);
-      expect([image?.width, image?.height]).toEqual([1200, 900]);
+    expect(home.timeline.map((t) => t.year)).toEqual([2008, 2021, 2022, 2023, 2024, 2025]);
+    expect(home.timeline.map((t) => t.images.length)).toEqual([0, 2, 1, 1, 2, 1]);
+    // 2021: the food safety certificate first, then the first bag.
+    expect(home.timeline[1].images.map((image) => image.url)).toEqual([
+      "/journey/2021-giay-chung-nhan-attp.webp",
+      "/journey/2021-bao-2kg-dau-tien.webp",
+    ]);
+    const images: { url: string; width: number; height: number; alt: string }[] =
+      home.timeline.flatMap((t) => t.images);
+    for (const image of images) {
+      expect(image.url).toMatch(/^\/journey\/[a-z0-9-]+\.webp$/);
+      const file = join(process.cwd(), "public", image.url);
+      expect(existsSync(file), image.url).toBe(true);
+      expect([image.width, image.height], image.url).toEqual(webpSize(file));
+      expect(image.alt, image.url).not.toBe("");
     }
-    expect(home.press).toHaveLength(2);
-    expect(home.press.every((p) => p.image === null)).toBe(true);
+    // The one real report so far; the sample reports were removed (owner, 2026-11-06).
+    expect(home.press).toHaveLength(1);
+    const [report] = home.press;
+    expect(report.url).toBe("https://www.facebook.com/reel/2585570238579411");
+    expect(report.title).not.toMatch(/\[MẪU\]/);
+    expect(report.image?.url).toBe("/press/2025-nhi-chieu-nep-cai-hoa-vang.webp");
+    const pressFile = join(process.cwd(), "public", report.image!.url);
+    expect([report.image?.width, report.image?.height]).toEqual(webpSize(pressFile));
     const { messenger: _messenger, ...rest } = home.contact;
     for (const v of Object.values(rest)) expect(v).not.toBeNull();
   });
@@ -123,10 +129,36 @@ describe("stories fixtures", () => {
   it.each([
     ["vi", storiesVi],
     ["en", storiesEn],
-  ])("has 4 stories with ISO dates in %s", (_lang, stories) => {
-    expect(stories).toHaveLength(4);
-    for (const s of stories) {
-      expect(s.publishedAt).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);
+  ])("has the 5 real stories, newest first, with ISO dates in %s", (_lang, stories) => {
+    expect(stories).toHaveLength(5);
+    const dates = stories.map((s) => s.publishedAt);
+    for (const date of dates) expect(date).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);
+    expect(dates).toEqual([...dates].sort().reverse());
+  });
+
+  it.each([
+    ["vi", storiesVi],
+    ["en", storiesEn],
+  ])("has no sample text, no example.com link, no em dash and no body image in %s", (_lang, stories) => {
+    const text = JSON.stringify(stories);
+    expect(text).not.toMatch(/\[MẪU\]/);
+    expect(text).not.toMatch(/example\.com/);
+    // The site text uses no em dash (owner's style rule).
+    expect(text).not.toContain("—");
+    for (const s of stories) expect(s.bodyHtml).not.toMatch(/<img/i);
+  });
+
+  it.each([
+    ["vi", storiesVi],
+    ["en", storiesEn],
+  ])("gives each cover a real file, its real size and an alt text in %s", (_lang, stories) => {
+    for (const { cover } of stories) {
+      if (cover === null) continue;
+      expect(cover.url).toMatch(/^\/(journey|press)\/[a-z0-9-]+\.webp$/);
+      const file = join(process.cwd(), "public", cover.url);
+      expect(existsSync(file), cover.url).toBe(true);
+      expect([cover.width, cover.height], cover.url).toEqual(webpSize(file));
+      expect(cover.alt, cover.url).not.toBe("");
     }
   });
 
@@ -136,8 +168,11 @@ describe("stories fixtures", () => {
     expect(storiesEn.some((s) => !viSlugs.has(s.slug))).toBe(true);
   });
 
-  it("has a story with a long unbroken URL-like word in a paragraph", () => {
-    const long = storiesVi.some((s) => /<p>[^<]*[^\s<]{60,}/.test(s.bodyHtml));
-    expect(long).toBe(true);
+  it("links each translated story to its translation in both directions", () => {
+    for (const en of storiesEn) {
+      if (en.alternateSlug === null) continue;
+      const vi = storiesVi.find((s) => s.slug === en.alternateSlug);
+      expect(vi?.alternateSlug, en.slug).toBe(en.slug);
+    }
   });
 });

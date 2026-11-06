@@ -10,10 +10,11 @@ const INTERNAL_PREFIXES = ["_next", "_not-found", "api", "admin", "media"];
 const OWN_FILES = new Set(["robots.txt", "sitemap.xml", "icon.svg"]);
 // Folders of pictures in `public/`, one level deep, with the file types each may hold:
 // the story scenes, `.svg` (layered scenes kept for motion) and `.webp` (the sketches the page
-// shows now, decision 0014), and the journey photos of the sample content.
+// shows now, decision 0014), and the journey and press photos of the sample content.
 const ASSET_DIRS: Record<string, readonly string[]> = {
   story: [".svg", ".webp"],
   journey: [".webp"],
+  press: [".webp"],
 };
 // Folder of the generated image routes, under a language and under its story section.
 const IMAGE_ROUTE = "opengraph-image";

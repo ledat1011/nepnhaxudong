@@ -57,7 +57,7 @@ function event(over: Partial<TimelineEventAdminDto> = {}): TimelineEventAdminDto
     sortOrder: 1,
     title: { vi: "Ông trồng lúa", en: "Grandfather plants rice" },
     description: { vi: null, en: null },
-    mediaId: null,
+    mediaIds: [],
     missingEn: false,
     ...over,
   };

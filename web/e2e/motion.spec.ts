@@ -6,6 +6,9 @@ const SCROLL_STEP_PX = 400;
 
 async function scrollThroughPage(page: Page) {
   const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  // The scroll takes longer as the home page grows, so the test gets that time on top of its limit.
+  const steps = Math.floor(height / SCROLL_STEP_PX) + 1;
+  test.info().setTimeout(test.info().timeout + steps * 250 + 1000);
   for (let y = 0; y <= height; y += SCROLL_STEP_PX) {
     await page.evaluate((top) => window.scrollTo(0, top), y);
     await page.waitForTimeout(100);

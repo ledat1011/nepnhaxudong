@@ -14,6 +14,14 @@ describe("StoryBody", () => {
     );
   });
 
+  it("lets a long unbroken word wrap anywhere, so it never widens the page on a phone", () => {
+    const longWord =
+      "https://example.com/cau-chuyen/bao-quan-gao-nep/huong-dan-day-du-cho-moi-gia-dinh/phien-ban-2026";
+    const { container } = render(<StoryBody html={`<p>Địa chỉ: ${longWord}</p>`} />);
+    expect(container.firstElementChild).toHaveClass("[overflow-wrap:anywhere]");
+    expect(container.querySelector("p")).toHaveTextContent(longWord);
+  });
+
   it("puts a small margin on lists nested in a list item", () => {
     const { container } = render(<StoryBody html="<ul><li>a<ul><li>b</li></ul></li></ul>" />);
     expect(container.firstElementChild).toHaveClass("[&_li_ul]:my-1", "[&_li_ol]:my-1");

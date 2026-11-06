@@ -1,0 +1,116 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { ImgHTMLAttributes } from "react";
+import { describe, expect, it, vi } from "vitest";
+import type { LightboxImage } from "@/components/ui/Lightbox";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { JourneyPhotos } from "./JourneyPhotos";
+
+vi.mock("next/image", () => ({
+  default: (props: ImgHTMLAttributes<HTMLImageElement>) => (
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    <img {...props} />
+  ),
+}));
+
+const dict = getDictionary("vi");
+
+// A portrait document, a landscape photo and a square photo, like the real 2021 milestone plus one.
+const SIZES = [
+  [797, 1165],
+  [1200, 900],
+  [1000, 1000],
+];
+const PHOTOS: LightboxImage[] = SIZES.map(([width, height], i) => ({
+  src: `/journey/${i + 1}.webp`,
+  width,
+  height,
+  alt: `Ảnh mốc ${i + 1}`,
+}));
+
+function frames(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>("[data-journey-photo]"));
+}
+
+describe("JourneyPhotos", () => {
+  it("renders nothing without photos", () => {
+    const { container } = render(<JourneyPhotos images={[]} dict={dict} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("shows one photo in the full-width 4:3 frame", () => {
+    const { container } = render(<JourneyPhotos images={PHOTOS.slice(0, 1)} dict={dict} />);
+    const [frame, ...rest] = frames(container);
+    expect(rest).toHaveLength(0);
+    expect(frame).toHaveClass("aspect-[4/3]", "w-full", "rounded-2xl", "border-2", "border-grain");
+    expect(frame.parentElement).toHaveClass("max-w-sm");
+  });
+
+  it("overlaps two photos at the corner, each in a frame of its own shape and the same height", () => {
+    const { container } = render(<JourneyPhotos images={PHOTOS.slice(0, 2)} dict={dict} />);
+    const [first, second] = frames(container);
+    expect(frames(container)).toHaveLength(2);
+    expect(first).toHaveAttribute("data-journey-shape", "portrait");
+    expect(second).toHaveAttribute("data-journey-shape", "wide");
+    expect(first.style.height).toBe(second.style.height);
+    // The second frame starts left of the first one's right edge and below its top: they overlap.
+    expect(parseFloat(second.style.left)).toBeLessThan(parseFloat(first.style.width));
+    expect(parseFloat(second.style.top)).toBeLessThan(parseFloat(first.style.height));
+    expect(first.parentElement?.style.aspectRatio).not.toBe("");
+    // The frame on top carries the ring that cuts the groove; the first one does not.
+    expect(second.className).toContain("shadow-[0_0_0_6px_var(--color-straw),");
+    expect(first.className).not.toContain("shadow-[0_0_0_6px");
+  });
+
+  it("puts a third photo below the second, back on the left", () => {
+    const { container } = render(<JourneyPhotos images={PHOTOS} dict={dict} />);
+    const all = frames(container);
+    expect(all).toHaveLength(3);
+    expect(all.map((f) => f.getAttribute("data-journey-shape"))).toEqual(["portrait", "wide", "square"]);
+    expect(all[2].style.left).toBe("0%");
+    expect(parseFloat(all[2].style.top)).toBeGreaterThan(parseFloat(all[1].style.top));
+    for (const frame of all) {
+      expect(frame).toHaveClass("rounded-2xl");
+      expect(frame).not.toHaveClass("border-2");
+    }
+  });
+
+  it("makes each photo a button named by its alt text", () => {
+    render(<JourneyPhotos images={PHOTOS} dict={dict} />);
+    for (const photo of PHOTOS) {
+      const button = screen.getByRole("button", { name: photo.alt });
+      expect(button).toHaveAttribute("type", "button");
+      expect(button).toHaveAttribute("aria-haspopup", "dialog");
+      expect(button.querySelector("img")).toHaveClass("object-cover");
+    }
+  });
+
+  it("names a photo without alt text with the dictionary label", () => {
+    render(<JourneyPhotos images={[{ ...PHOTOS[0], alt: "" }]} dict={dict} />);
+    expect(screen.getByRole("button", { name: dict.gallery.viewLarge })).toBeInTheDocument();
+  });
+
+  it("opens the lightbox at the clicked photo and steps through the milestone's photos", async () => {
+    const user = userEvent.setup();
+    render(<JourneyPhotos images={PHOTOS} dict={dict} />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Ảnh mốc 2" }));
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.querySelector("img")).toHaveAttribute("alt", "Ảnh mốc 2");
+    expect(dialog.querySelector("img")).toHaveClass("object-contain");
+    await user.click(screen.getByRole("button", { name: dict.gallery.next }));
+    expect(dialog.querySelector("img")).toHaveAttribute("alt", "Ảnh mốc 3");
+  });
+
+  it("opens with Enter and gives focus back to the same photo on Escape", async () => {
+    const user = userEvent.setup();
+    render(<JourneyPhotos images={PHOTOS} dict={dict} />);
+    const button = screen.getByRole("button", { name: "Ảnh mốc 3" });
+    button.focus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("dialog").querySelector("img")).toHaveAttribute("alt", "Ảnh mốc 3");
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(button).toHaveFocus();
+  });
+});

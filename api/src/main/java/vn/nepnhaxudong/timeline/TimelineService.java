@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import vn.nepnhaxudong.audit.AuditAction;
 import vn.nepnhaxudong.audit.AuditService;
 import vn.nepnhaxudong.common.ApiException;
 import vn.nepnhaxudong.common.Lang;
+import vn.nepnhaxudong.media.Media;
 import vn.nepnhaxudong.media.MediaRepository;
 import vn.nepnhaxudong.publish.ContentChangedEvent;
 
@@ -146,25 +148,23 @@ public class TimelineService {
   void apply(TimelineEvent event, TimelineEventRequest request, int sortOrder) {
     event.setEventYear(request.year());
     event.setSortOrder(sortOrder);
-    event.setMediaId(request.mediaId());
     event.putTranslation(Lang.VI, request.title().vi(), request.description().vi());
     if (request.title().en() == null) {
       event.removeTranslation(Lang.EN);
     } else {
       event.putTranslation(Lang.EN, request.title().en(), request.description().en());
     }
+    event.replaceMedia(request.mediaIds());
     // The event row may be unchanged while its texts changed; the change time still moves.
     event.touch(clock.instant());
   }
 
   private void validate(TimelineEventRequest request) {
     validateContent(request);
-    if (request.mediaId() != null && !media.existsById(request.mediaId())) {
-      throw invalid("Ảnh không tồn tại: " + request.mediaId() + ".");
-    }
+    validateMedia(request.mediaIds());
   }
 
-  /** The rules that do not need the database. The image is checked separately. */
+  /** The rules that do not need the database. The images are checked separately. */
   void validateContent(TimelineEventRequest request) {
     if (request.year() == null
         || request.year() < TimelineEventRequest.MIN_YEAR
@@ -176,6 +176,23 @@ public class TimelineService {
     }
     if (request.title().en() == null && request.description().en() != null) {
       throw invalid("Tiêu đề mốc (tiếng Anh) không được để trống khi đã có nội dung tiếng Anh.");
+    }
+  }
+
+  /** The number of images is checked on the request ({@code @Size}), like for a product. */
+  private void validateMedia(List<Long> ids) {
+    Set<Long> seen = new HashSet<>();
+    for (Long id : ids) {
+      if (!seen.add(id)) {
+        throw invalid("Ảnh bị chọn hai lần: " + id + ".");
+      }
+    }
+    Set<Long> existing =
+        media.findAllById(ids).stream().map(Media::getId).collect(Collectors.toSet());
+    for (Long id : ids) {
+      if (!existing.contains(id)) {
+        throw invalid("Ảnh không tồn tại: " + id + ".");
+      }
     }
   }
 

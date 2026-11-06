@@ -45,11 +45,12 @@ class TimelineAdminTest extends AuthTestSupport {
   @Test
   void createdEventReadsBackWithTheContractShape() {
     var client = loggedInClient();
-    long mediaId = newMedia("t1.webp");
+    long first = newMedia("t1.webp");
+    long second = newMedia("t2.webp");
     var body = body(1998, "Khởi đầu 🌾", "The beginning");
     body.put("description", text("Mô tả: à á ả ã ạ", "Description"));
     body.put("sortOrder", 4);
-    body.put("mediaId", mediaId);
+    body.put("mediaIds", List.of(second, first));
 
     var created = client.post("/admin/timeline", body);
 
@@ -62,7 +63,8 @@ class TimelineAdminTest extends AuthTestSupport {
     assertThat(json.path("title").path("vi").asString()).isEqualTo("Khởi đầu 🌾");
     assertThat(json.path("title").path("en").asString()).isEqualTo("The beginning");
     assertThat(json.path("description").path("vi").asString()).isEqualTo("Mô tả: à á ả ã ạ");
-    assertThat(json.path("mediaId").asLong()).isEqualTo(mediaId);
+    assertThat(mediaIds(json)).containsExactly(second, first);
+    assertThat(json.has("mediaId")).isFalse();
     assertThat(json.path("missingEn").asBoolean()).isFalse();
     assertThat(ApiClient.json(client.get("/admin/timeline/" + id))).isEqualTo(json);
     String stored =
@@ -130,13 +132,112 @@ class TimelineAdminTest extends AuthTestSupport {
     assertThat(json.path("missingEn").asBoolean()).isFalse();
   }
 
+  // ---- images -------------------------------------------------------------------------------
+
+  @Test
+  void anEventWithoutImagesHasAnEmptyList() {
+    var client = loggedInClient();
+
+    JsonNode json = ApiClient.json(client.post("/admin/timeline", body(2003, "A", "A")));
+
+    assertThat(json.path("mediaIds").isArray()).isTrue();
+    assertThat(json.path("mediaIds")).isEmpty();
+    assertThat(count("timeline_event_media")).isZero();
+  }
+
+  @Test
+  void zeroOneOrThreeImagesAreSavedInTheOrderOfTheRequest() {
+    var client = loggedInClient();
+    long a = newMedia("a.webp");
+    long b = newMedia("b.webp");
+    long c = newMedia("c.webp");
+    var three = body(2003, "A", "A");
+    three.put("mediaIds", List.of(c, a, b));
+
+    long id = ApiClient.json(client.post("/admin/timeline", three)).path("id").asLong();
+
+    assertThat(mediaIds(ApiClient.json(client.get("/admin/timeline/" + id))))
+        .containsExactly(c, a, b);
+    assertThat(storedMediaIds(id)).containsExactly(c, a, b);
+
+    var one = body(2003, "A", "A");
+    one.put("mediaIds", List.of(b));
+    assertThat(mediaIds(ApiClient.json(client.put("/admin/timeline/" + id, one))))
+        .containsExactly(b);
+    assertThat(storedMediaIds(id)).containsExactly(b);
+
+    var none = body(2003, "A", "A");
+    none.put("mediaIds", List.of());
+    assertThat(mediaIds(ApiClient.json(client.put("/admin/timeline/" + id, none)))).isEmpty();
+    assertThat(count("timeline_event_media")).isZero();
+  }
+
+  @Test
+  void anUpdateCanReorderKeepAndDropImages() {
+    var client = loggedInClient();
+    long a = newMedia("a.webp");
+    long b = newMedia("b.webp");
+    long c = newMedia("c.webp");
+    var created = body(2003, "A", "A");
+    created.put("mediaIds", List.of(a, b, c));
+    long id = ApiClient.json(client.post("/admin/timeline", created)).path("id").asLong();
+
+    var reordered = body(2003, "A", "A");
+    reordered.put("mediaIds", List.of(c, a));
+    var response = client.put("/admin/timeline/" + id, reordered);
+
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    assertThat(mediaIds(ApiClient.json(response))).containsExactly(c, a);
+    assertThat(storedMediaIds(id)).containsExactly(c, a);
+    assertThat(
+            jdbc.queryForList(
+                "select sort_order from timeline_event_media where timeline_event_id = ?"
+                    + " order by sort_order",
+                Integer.class,
+                id))
+        .containsExactly(0, 1);
+  }
+
+  @Test
+  void moreThanThreeImagesAreRefused() {
+    var client = loggedInClient();
+    var body = body(2003, "A", "A");
+    body.put(
+        "mediaIds",
+        List.of(newMedia("a.webp"), newMedia("b.webp"), newMedia("c.webp"), newMedia("d.webp")));
+
+    assertDetail(client.post("/admin/timeline", body), 400, "Một mốc có tối đa 3 ảnh.");
+    assertThat(count("timeline_event")).isZero();
+  }
+
+  @Test
+  void anImageChosenTwiceIsRefused() {
+    var client = loggedInClient();
+    long a = newMedia("a.webp");
+    var body = body(2003, "A", "A");
+    body.put("mediaIds", List.of(a, a));
+
+    assertDetail(client.post("/admin/timeline", body), 400, "Ảnh bị chọn hai lần: " + a + ".");
+    assertThat(count("timeline_event")).isZero();
+  }
+
   @Test
   void anUnknownImageIsRefused() {
     var client = loggedInClient();
     var body = body(2003, "A", "A");
-    body.put("mediaId", 999999L);
+    body.put("mediaIds", List.of(newMedia("a.webp"), 999999L));
 
     assertDetail(client.post("/admin/timeline", body), 400, "Ảnh không tồn tại: 999999.");
+    assertThat(count("timeline_event")).isZero();
+  }
+
+  @Test
+  void anEmptyImageIdIsRefused() {
+    var client = loggedInClient();
+    var body = body(2003, "A", "A");
+    body.put("mediaIds", Arrays.asList(newMedia("a.webp"), null));
+
+    assertDetail(client.post("/admin/timeline", body), 400, "Mã ảnh không được để trống.");
   }
 
   @Test
@@ -309,6 +410,21 @@ class TimelineAdminTest extends AuthTestSupport {
       ids.add(node.path("id").asLong());
     }
     return ids;
+  }
+
+  private static List<Long> mediaIds(JsonNode event) {
+    var ids = new ArrayList<Long>();
+    for (JsonNode node : event.path("mediaIds")) {
+      ids.add(node.asLong());
+    }
+    return ids;
+  }
+
+  private List<Long> storedMediaIds(long eventId) {
+    return jdbc.queryForList(
+        "select media_id from timeline_event_media where timeline_event_id = ? order by sort_order",
+        Long.class,
+        eventId);
   }
 
   private static Map<String, Object> body(Integer year, String titleVi, String titleEn) {
