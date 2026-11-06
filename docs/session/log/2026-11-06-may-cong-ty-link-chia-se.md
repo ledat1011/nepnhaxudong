@@ -31,3 +31,5 @@
 - Chủ dự án chọn "cho mỗi mốc nhiều ảnh" (sửa API, cơ sở dữ liệu, trang quản trị, web) thay vì ghép ảnh; thêm: bấm vào ảnh thì hiện popup xem ảnh lớn; nhớ chỉnh ảnh cho đẹp (giấy chứng nhận: cắt, làm thẳng, tăng tương phản, không vẽ lại).
 - Chủ dự án duyệt thiết kế "nhiều ảnh cho mỗi mốc" (bảng `timeline_event_media`, tối đa 3 ảnh, khung so le, popup xem ảnh dùng chung với khối Sản phẩm, ảnh giấy chứng nhận chỉ cắt/làm thẳng/tăng tương phản) và nói "implement it" → viết spec và plan rồi làm luôn, không dừng chờ duyệt spec/plan.
 - Viết spec và plan cho "nhiều ảnh mỗi mốc"; chỉnh ảnh giấy chứng nhận (cắt, giấy trắng lại, chữ rõ hơn, không dùng AI).
+- PR #40 (Hành trình thật, chữ sản phẩm thật): chủ dự án tự merge (`3b3e236`).
+- Nhiều ảnh mỗi mốc: 3 agent làm song song (API, trang quản trị, web), đã gộp vào `feat/hanh-trinh-nhieu-anh`; test web 1645, API toàn bộ, full-stack 39 đều qua. Lưu ý: test API và full-stack ở máy công ty cần `JAVA_HOME` trỏ tới JDK 21 (mặc định là Java 8).
