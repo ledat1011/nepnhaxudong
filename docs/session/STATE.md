@@ -1,11 +1,12 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-05 — máy `C:\Users\Admin\Desktop\nepnhaxudong` (phần D, hạ tầng)
+Cập nhật: 2026-11-06 — máy công ty (link chia sẻ, ảnh chia sẻ, Hành trình thật)
 
 ## Giai đoạn hiện tại
 `main` (`9e5eb42`) đã có đủ phần B: API (B1), web công khai (B2), trang quản trị (B3, PR #11), hiệu ứng GSAP (B4), logo và mascot (phần A), popup Zalo và thanh đang tải (PR #12), 10 việc cải tiến trang quản trị (quyết định `0008` và `0010`), cảnh minh họa (PR #21, #24), hai báo cáo rà giao diện và danh sách đề xuất chung (PR #16, #22, #23), luật Rancher Desktop và luật làm việc chung (PR #25). Đang làm dở: nhóm A và B của danh sách đề xuất (3 nhánh) và việc 9 cuộn mượt khối câu chuyện (1 nhánh). Cả 4 nhánh đã push lên GitHub; thư mục làm việc ở máy đã xóa. Xem mục "Đang làm". Phần D (hạ tầng): code, test và tài liệu đã merge (PR #31; sửa theo review ở PR #33; plan `docs/superpowers/plans/2026-11-05-phan-d-ha-tang.md`, quyết định `0012`). Web chưa lên VPS: còn chờ chủ dự án làm checklist `docs/deploy.md`.
 
 ## Đã xong
+- 2026-11-06: `/` luôn về `/vi`, bản xem thử không chặn bot tạo thẻ link (PR #38); ảnh chia sẻ dùng mascot mới (PR #39). Messenger cần "Scrape Again" ở Facebook Sharing Debugger.
 - Spec thiết kế: `docs/superpowers/specs/2026-11-03-nepnhaxudong-design.md`.
 - Phần C (nền tảng làm việc) đã merge vào `main` (PR #1).
 - Phần B1 (API và cơ sở dữ liệu) đã merge vào `main` (PR #3): 11 task đã review, 492 test, API đã chạy thật ở local và đã thử bằng `curl` (xem "Thử API" trong `docs/setup.md`).
@@ -36,6 +37,8 @@ Chủ dự án duyệt nhóm A và B (việc 1 đến 16) của danh sách `docs
 | `feat/admin-noi-dung-nhom-ab` (`636b601`) | Các màn nội dung của trang quản trị: việc 4, 5, 6, 10, 14, 16, và "Xem trên web / Chia sẻ sau khi đăng" của việc 15 | Cỡ túi hiện cách đọc quen (cảnh báo dưới 100 g); Số Zalo có ví dụ và nút "Thử mở Zalo"; Hành trình tự xếp theo năm sau khi lưu; màn đăng nhập có logo, nút "Hiện" mật khẩu và hướng dẫn khi quên; mật khẩu tạm là các nhóm từ, có "Gửi qua Zalo"; trình soạn câu chuyện đưa tiêu đề, ảnh bìa, nội dung lên đầu, hỏi trước khi "Xóa bài", có "Xem trên web" và "Chia sẻ" sau khi đăng; test full-stack đi theo nhãn mới | Gộp lại `main` (thiếu 5 commit mới), rồi làm các bước chung |
 | `feat/admin-khung-nhom-ab` (`b215fc8`) | Khung và Lịch sử của trang quản trị: việc 8, 11, 13, và gợi ý micro, chấm số việc trên menu của việc 15 | Lịch sử ghi tên trường bằng tiếng Việt và có dòng cho tài khoản đã xóa; mở dòng Lịch sử từ Tổng quan; ô nhập chữ 16 px ở mọi cỡ màn hình, hộp thoại cuộn được; menu trái từ 1024 px, cột trang 960 px, số việc cần làm trên Tổng quan; gợi ý một lần về micro của bàn phím điện thoại; nút bị tắt nói lý do, mục chưa có tên ghi "(chưa có tiêu đề)"; test full-stack cho màn hình rộng | Gộp lại `main` (thiếu 5 commit mới), rồi làm các bước chung |
 | `feat/cuon-muot-cau-chuyen` (`433cf47`) | Việc 9: cuộn khối câu chuyện mượt hơn | Hình câu chuyện đổi sang SVG nhúng thẳng khi trình duyệt rảnh (chưa đo) | Làm mờ mép trên ở khung ngoài; đo trước và sau; gộp `main` (thiếu 6 commit); chạy đủ test đầu-cuối; mở PR |
+| `feat/hanh-trinh-that` (`5f33d60`, chưa push) | Khối Hành trình với chuyện thật 2008–2025; tên, mô tả, đặc điểm sản phẩm thật | 5 mốc vi/en, 4 ảnh thật (2021 và 2023 đã thay ảnh rõ hơn), dòng giới thiệu, không vẽ khung ảnh trống, `docs/noi-dung/hanh-trinh.md`; 1617 test web qua | Chờ e2e trang chủ, rồi push, PR, merge |
+| `feat/hanh-trinh-nhieu-anh` (chưa tạo) | Mỗi mốc 0–3 ảnh, khung so le, bấm ảnh mở cửa sổ xem lớn; mốc 2021 thêm giấy chứng nhận | Spec `docs/superpowers/specs/2026-11-06-hanh-trinh-nhieu-anh-design.md`, plan `docs/superpowers/plans/2026-11-06-hanh-trinh-nhieu-anh.md` (chưa commit); ảnh giấy chứng nhận đã chỉnh (chỉ ở thư mục nháp của máy công ty) | Làm 4 task của plan sau khi PR Hành trình merge |
 
 Các bước chung còn lại cho mỗi nhánh nhóm A, B: chạy đủ `npm test`, `npm run typecheck`, `npm run lint` sau khi gộp `main`; chạy Delivery Gate của antislop và tự xem bằng trình duyệt ở 375 px và 1280 px; review cả nhánh; mở PR; merge khi CI (gồm test đầu-cuối) đạt. Ba nhánh có thể chạm chung vài file của trang quản trị (ví dụ test full-stack, nhãn chung): merge từng nhánh một và gộp lại `main` trước nhánh tiếp theo.
 

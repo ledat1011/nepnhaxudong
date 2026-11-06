@@ -5,6 +5,12 @@
 - Gửi link bản xem thử qua tin nhắn thì thẻ link không có hình (cũng không có tiêu đề) → nguyên nhân có khả năng cao: `robots.txt` của bản xem thử chặn mọi bot (`Disallow: /`), nên bot tạo thẻ link không đọc trang. Sửa: bản xem thử vẫn `noindex` bằng thẻ meta, nhưng `robots.txt` không chặn trang công khai nữa.
 - Sản phẩm có giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm (Sở NN&PTNT Hải Dương, số 05/2021/NNPTNT-HD, cấp cho Chi hội nông dân nghề nghiệp sản xuất và tiêu thụ gạo nếp cái hoa vàng phường Duy Tân) → chủ dự án muốn dùng "nano banana" làm ảnh đẹp và rõ hơn rồi đưa lên web cho khách an tâm. Giấy ghi hiệu lực đến 27/6/2024 nên đã hết hạn; chủ dự án nói chưa có giấy mới → chưa đưa giấy lên web, chờ giấy mới.
 - Sau PR #38: Zalo và bài đăng Facebook đã hiện thẻ có hình; Messenger vẫn chưa (có thể Messenger còn giữ kết quả cũ của link). Ảnh trong thẻ là mascot tạm cũ (cậu bé đội nón), không phải mascot mới (cô gái ôm bó lúa) → vẽ lại ảnh chia sẻ theo đầu trang hiện tại.
+- "Merge luôn đi khỏi đợi", rồi "cho lần này thôi" → chỉ PR #39 được merge không chờ CI. Luật chung trong `CLAUDE.md` giữ nguyên: chờ CI, trừ khi đã chạy đủ test, typecheck, lint ở máy trên code cuối.
+- Chủ dự án gửi câu chuyện thật cho khối "Hành trình" kèm 5 ảnh (bao đầu tiên 2021, giấy chứng nhận, máy sấy và xay xát, bịch hút chân không vuông, bao in logo 2025), muốn thiết kế cho hay, hấp dẫn và soát câu chữ; có thể bo tròn ảnh sản phẩm hoặc dùng Nano Banana nếu cần. Mốc: 2008 nhà bán phân bón, thuốc BVTV, hạt giống nếp cái hoa vàng; 2021 được hợp tác xã nông nghiệp địa phương động viên, hỗ trợ đưa nếp ra thị trường, tự chọn giống và chăm ruộng, HTX hỗ trợ máy hút chân không nhỏ (1 bịch 2 kg mỗi lần) và thiết kế bao bì, 10 tấn (~5.000 bịch), Sở Nông nghiệp cấp giấy chứng nhận ATTP; 2022 đầu tư lò sấy thóc 20 tấn/mẻ, máy xay xát, máy hút chân không 4 bịch/lần, 30 tấn (~15.000 bịch); 2023–2024 bao bì ép khuôn vuông, 40 tấn/năm, có mặt trên kệ siêu thị; 2025 in logo thẳng lên bao thay vì dán nhãn, 50 tấn.
+- Duyệt nháp Hành trình: mốc 2008 viết "vật tư nông nghiệp" (không nêu "thuốc bảo vệ thực vật"); giữ nguyên số điện thoại và mã QR trên ảnh bao; dừng ở mốc 2025; ảnh thật, chỉ cắt và chỉnh sáng, không dùng AI.
+- "Nhà mình chỉ tôi nói với bạn thôi" → câu chữ trên web không dùng "nhà mình"; viết theo giọng của web: "gia đình" hoặc "Nếp Nhà".
+- Chủ dự án gửi thêm 2 ảnh ("thêm thông tin ảnh"): mặt trước bao 2 kg đầu tiên chụp rõ, và nhiều bịch vuông hút chân không xếp hàng → mốc 2021 dùng ảnh bao rõ, mốc 2023 dùng ảnh nhiều bịch xếp hàng.
+- "Xong rồi review lại những chỗ [MẪU] bạn biết thông tin rồi thì sửa lại" → sau PR Hành trình, thay các chữ [MẪU] mà đã có thông tin thật (từ chủ dự án) bằng nội dung thật; chỗ chưa có thông tin thì giữ [MẪU].
 
 ## Quyết định
 - `/` luôn chuyển sang `/vi` — khách chủ yếu là người Việt, nhiều người dùng điện thoại cài tiếng Anh.
@@ -18,3 +24,10 @@
 - Nhánh `feat/link-chia-se`: `/` luôn về `/vi`; bản xem thử không chặn bot trong `robots.txt`, giữ `noindex` bằng thẻ meta và header `X-Robots-Tag`. Test đơn vị và e2e trang chủ, SEO đều qua.
 - PR #38 merge (`ee04e10`, chủ dự án tự merge).
 - Nhánh `feat/anh-chia-se-mascot-moi`: ảnh chia sẻ vẽ lại theo đầu trang (chữ "Nếp Nhà" + dòng phụ theo ngôn ngữ, cô gái ôm bó lúa, mặt trời, mây, cánh đồng của trang chủ).
+- PR #39 merge (`a42027b`): ảnh chia sẻ mới đã lên bản xem thử.
+- Nhánh `feat/hanh-trinh-that` (chưa commit): 4 ảnh thật, 5 mốc vi/en, dòng giới thiệu, ẩn khung ảnh trống. Chủ dự án dừng lúc đang chạy test; việc còn lại ghi trong STATE.
+- Chủ dự án gửi lại 2 ảnh: "mẫu đầu tiên với mẫu vuông vức dán tay" → thay ảnh mốc 2021 và 2023; mốc 2023 thêm ý "nhãn dán tay từng bịch".
+- Xem web ở máy, chủ dự án: mốc 2021 đặt thêm giấy chứng nhận, bố cục hai khung so le (khung vuông nhỏ trên trái, khung chữ nhật lớn dưới phải, theo hình vẽ); "lấy ảnh mới gửi đi" (ảnh bao ở mốc 2021 vẫn là ảnh cũ do web lưu tạm ảnh cùng tên) → đổi tên file ảnh mới. Quyết định cũ "chưa đưa giấy lên web" đổi thành: đưa giấy lên như một mốc lịch sử năm 2021.
+- Chủ dự án chọn "cho mỗi mốc nhiều ảnh" (sửa API, cơ sở dữ liệu, trang quản trị, web) thay vì ghép ảnh; thêm: bấm vào ảnh thì hiện popup xem ảnh lớn; nhớ chỉnh ảnh cho đẹp (giấy chứng nhận: cắt, làm thẳng, tăng tương phản, không vẽ lại).
+- Chủ dự án duyệt thiết kế "nhiều ảnh cho mỗi mốc" (bảng `timeline_event_media`, tối đa 3 ảnh, khung so le, popup xem ảnh dùng chung với khối Sản phẩm, ảnh giấy chứng nhận chỉ cắt/làm thẳng/tăng tương phản) và nói "implement it" → viết spec và plan rồi làm luôn, không dừng chờ duyệt spec/plan.
+- Viết spec và plan cho "nhiều ảnh mỗi mốc"; chỉnh ảnh giấy chứng nhận (cắt, giấy trắng lại, chữ rõ hơn, không dùng AI).

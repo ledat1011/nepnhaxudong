@@ -1,4 +1,3 @@
-import { toImageSrc } from "@/lib/content/image-src";
 import type { HomeData, Product } from "@/lib/content/types";
 import { homePath } from "@/lib/i18n/routes";
 import { SITE_NAME } from "./metadata";
@@ -35,7 +34,7 @@ export function productJsonLd(product: Product, home: HomeData, siteUrl: URL): J
     description: product.description,
     brand: { "@type": "Brand", name: SITE_NAME },
     url: new URL(homePath(home.lang), siteUrl).href,
-    ...(firstImage && { image: toImageSrc(firstImage.url, siteUrl.href) }),
+    ...(firstImage && { image: new URL(firstImage.url, siteUrl).href }),
     ...(offers && { offers }),
   };
 }

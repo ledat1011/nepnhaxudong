@@ -8,10 +8,13 @@ export type PathDecision = "redirect-root" | "pass" | "not-found";
 const INTERNAL_PREFIXES = ["_next", "_not-found", "api", "admin", "media"];
 // Files the app serves itself.
 const OWN_FILES = new Set(["robots.txt", "sitemap.xml", "icon.svg"]);
-// Folder of the story scene pictures in `public/`: one level of `.svg` (layered scenes kept for
-// motion) and `.webp` (the sketches the page shows now, decision 0014) files.
-const STORY_ASSET_DIR = "story";
-const STORY_ASSET_TYPES = [".svg", ".webp"];
+// Folders of pictures in `public/`, one level deep, with the file types each may hold:
+// the story scenes, `.svg` (layered scenes kept for motion) and `.webp` (the sketches the page
+// shows now, decision 0014), and the journey photos of the sample content.
+const ASSET_DIRS: Record<string, readonly string[]> = {
+  story: [".svg", ".webp"],
+  journey: [".webp"],
+};
 // Folder of the generated image routes, under a language and under its story section.
 const IMAGE_ROUTE = "opengraph-image";
 
@@ -30,8 +33,9 @@ export function classifyPath(pathname: string): PathDecision {
   }
 
   if (INTERNAL_PREFIXES.includes(first)) return "pass";
-  if (first === STORY_ASSET_DIR) {
-    const isAsset = STORY_ASSET_TYPES.some((type) => second?.endsWith(type));
+  const assetTypes = Object.hasOwn(ASSET_DIRS, first) ? ASSET_DIRS[first] : undefined;
+  if (assetTypes !== undefined) {
+    const isAsset = assetTypes.some((type) => second?.endsWith(type));
     return isAsset && third === undefined ? "pass" : "not-found";
   }
   return OWN_FILES.has(first) && second === undefined ? "pass" : "not-found";

@@ -5,12 +5,12 @@
   },
   "products": [
     {
-      "name": "[MẪU] Gạo nếp cái hoa vàng",
-      "description": "[MẪU] Hạt nếp tròn đều, màu trắng ngà, được gia đình trồng và xay xát ở xứ Đông (Hải Dương). Nấu xôi dẻo, thơm mùi lúa mới.",
+      "name": "Gạo nếp cái hoa vàng",
+      "description": "Gạo nếp cái hoa vàng do gia đình trồng, sấy, xay xát và đóng gói tại Duy Tân, Kinh Môn, Hải Dương. Nấu xôi mềm dẻo, thơm ngon, đậm vị quê.",
       "features": [
-        "[MẪU] Hạt tròn mẩy, trắng ngà",
-        "[MẪU] Nấu xôi dẻo",
-        "[MẪU] Thơm mùi lúa mới"
+        "Hạt tròn mẩy",
+        "Mềm dẻo",
+        "Thơm ngon, đậm vị quê"
       ],
       "cookingTips": "[MẪU] Ngâm nếp 6 đến 8 tiếng, để ráo rồi đồ xôi khoảng 30 phút. Rắc chút muối và đảo đều giữa chừng cho xôi chín đều.",
       "showPrice": false,
@@ -23,22 +23,54 @@
   ],
   "timeline": [
     {
-      "year": 1998,
-      "title": "[MẪU] Mảnh ruộng đầu tiên",
-      "description": "[MẪU] Ông bà bắt đầu trồng nếp cái hoa vàng trên mảnh ruộng nhỏ của gia đình.",
+      "year": 2008,
+      "title": "Cửa hàng vật tư ở quê",
+      "description": "Từ năm 2008, gia đình mở cửa hàng vật tư nông nghiệp và hạt giống nếp cái hoa vàng cho bà con trong vùng.",
       "image": null
     },
     {
-      "year": 2015,
-      "title": "[MẪU] Xay xát tại nhà",
-      "description": "[MẪU] Gia đình tự xay xát để giữ trọn hương vị và chọn từng mẻ gạo.",
-      "image": null
+      "year": 2021,
+      "title": "Mẻ gạo đầu tiên mang tên quê",
+      "description": "Được hợp tác xã nông nghiệp địa phương động viên và hỗ trợ, gia đình đưa nếp cái hoa vàng của quê ra thị trường. Giống được chọn kỹ, từng thửa ruộng do người nhà tự tay chăm. Hợp tác xã tư vấn, giúp đầu tư máy hút chân không nhỏ và thiết kế bao bì. Năm đầu đóng được 10 tấn gạo, khoảng 5.000 bịch 2 kg. Cùng năm, cơ sở được Sở Nông nghiệp tỉnh Hải Dương cấp giấy chứng nhận đủ điều kiện an toàn thực phẩm.",
+      "image": {
+        "url": "/journey/2021-bao-2kg-dau-tien.webp",
+        "width": 1200,
+        "height": 900,
+        "alt": "Bao gạo nếp cái hoa vàng Duy Tân 2 kg đầu tiên, năm 2021"
+      }
     },
     {
-      "year": 2026,
-      "title": "[MẪU] Nếp Nhà ra mắt",
-      "description": "[MẪU] Nếp Nhà đưa gạo nếp của gia đình đến nhiều bếp ăn hơn.",
-      "image": null
+      "year": 2022,
+      "title": "Lò sấy 20 tấn, máy xay mới",
+      "description": "Khách đặt nhiều hơn, gia đình đầu tư lò sấy thóc mỗi mẻ 20 tấn, máy xay xát, và máy hút chân không mỗi lần đóng 4 bịch thay vì 1. Năm đó có 30 tấn gạo tới tay khách, khoảng 15.000 bịch. Cách sấy và xay có trong phần “Chuyện hạt nếp”.",
+      "image": {
+        "url": "/journey/2022-may-say-may-xay.webp",
+        "width": 1200,
+        "height": 900,
+        "alt": "Máy xay xát và lò sấy thóc trong xưởng của gia đình"
+      }
+    },
+    {
+      "year": 2023,
+      "title": "Bịch gạo vuông vức, lên kệ siêu thị",
+      "description": "Năm 2023–2024, gạo được đóng trong bịch ép khuôn vuông vức, nhãn dán tay từng bịch. Mỗi năm 40 tấn gạo, khoảng 20.000 bịch, và gạo bắt đầu có mặt trên kệ siêu thị.",
+      "image": {
+        "url": "/journey/2023-bich-vuong-dan-tay.webp",
+        "width": 1200,
+        "height": 900,
+        "alt": "Những bịch gạo 2 kg vuông vức, nhãn dán tay từng bịch, xếp thành hàng"
+      }
+    },
+    {
+      "year": 2025,
+      "title": "Bao in tên, 50 tấn gạo",
+      "description": "Logo và thông tin được in thẳng lên bao, không còn dán nhãn như những năm trước. Năm 2025, gia đình làm được 50 tấn gạo, khoảng 25.000 bịch.",
+      "image": {
+        "url": "/journey/2025-bao-in-logo.webp",
+        "width": 1200,
+        "height": 900,
+        "alt": "Chồng bao gạo nếp cái hoa vàng Duy Tân in logo, năm 2025"
+      }
     }
   ],
   "press": [

@@ -39,6 +39,17 @@ describe("classifyPath", () => {
     }
   });
 
+  it("lets the journey photos through, and nothing else under /journey", () => {
+    expect(classifyPath("/journey/2021-bao-dau-tien.webp")).toBe("pass");
+    expect(classifyPath("/journey/a.svg")).toBe("not-found");
+    expect(classifyPath("/journey/a/b.webp")).toBe("not-found");
+    expect(classifyPath("/journey")).toBe("not-found");
+  });
+
+  it("does not treat a name of the object prototype as a picture folder", () => {
+    expect(classifyPath("/constructor/a.webp")).toBe("not-found");
+  });
+
   it("lets the story scene files through, and nothing else under /story", () => {
     expect(classifyPath("/story/canh-1-cay-ma.svg")).toBe("pass");
     expect(classifyPath("/story/canh-1-cay-ma.webp")).toBe("pass");
