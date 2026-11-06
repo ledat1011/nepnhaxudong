@@ -21,7 +21,7 @@ Thứ tự dưới đây là thứ tự đăng, mới nhất trước. Ngày đ�
 
 ## 1 · Từ cửa hàng vật tư tới bịch gạo mang tên quê
 - Đường dẫn: `/vi/cau-chuyen/tu-cua-hang-vat-tu-toi-bich-gao`; tiếng Anh `/en/stories/from-farm-shop-to-rice-bag`
-  (*From a farm supply shop to a bag of rice with our village's name*).
+  (*From a farm supply shop to a bag of rice with the village's name*).
 - Đoạn trích: Mười ba năm bán hạt giống cho bà con, rồi một ngày gia đình tự mang nếp quê ra chợ.
 - Nội dung:
   - Từ năm 2008, gia đình mở cửa hàng vật tư nông nghiệp và hạt giống nếp cái hoa vàng cho bà con trong vùng.
