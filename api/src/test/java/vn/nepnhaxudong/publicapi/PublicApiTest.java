@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import tools.jackson.databind.JsonNode;
 import vn.nepnhaxudong.auth.ApiClient;
@@ -147,7 +148,7 @@ class PublicApiTest extends AuthTestSupport {
             List.of(imageId)));
     timeline.create(
         new TimelineEventRequest(
-            1998, 0, new LocalizedText("Khởi đầu", "Start"), null, imageId));
+            1998, 0, new LocalizedText("Khởi đầu", "Start"), null, List.of(imageId)));
     press.create(
         new PressMentionRequest(
             "https://example.com/a",
@@ -176,9 +177,10 @@ class PublicApiTest extends AuthTestSupport {
     assertThat(names(product.path("images").get(0)))
         .containsExactlyInAnyOrder("url", "width", "height", "alt");
     JsonNode event = home.path("timeline").get(0);
-    assertThat(names(event)).containsExactlyInAnyOrder("year", "title", "description", "image");
+    assertThat(names(event)).containsExactlyInAnyOrder("year", "title", "description", "images");
     assertThat(event.path("year").isInt()).isTrue();
-    assertThat(names(event.path("image"))).containsExactlyInAnyOrder("url", "width", "height", "alt");
+    assertThat(names(event.path("images").get(0)))
+        .containsExactlyInAnyOrder("url", "width", "height", "alt");
     JsonNode mention = home.path("press").get(0);
     assertThat(names(mention))
         .containsExactlyInAnyOrder("title", "sourceName", "url", "publishedOn", "image");
@@ -394,19 +396,44 @@ class PublicApiTest extends AuthTestSupport {
     assertThat(mention.path("image").isNull()).isTrue();
     assertThat(mention.path("url").asString()).isEqualTo("https://example.com/x");
     assertThat(mention.path("sourceName").asString()).isEqualTo("Báo X");
-    assertThat(home.path("timeline").get(0).path("image").isNull()).isTrue();
+    assertThat(home.path("timeline").get(0).path("images").isArray()).isTrue();
+    assertThat(home.path("timeline").get(0).path("images")).isEmpty();
   }
 
   @Test
-  void timelineImageUsesTheAltOfTheLanguage() {
-    long imageId = newMedia("t.webp");
+  void timelineImagesAreInOrderAndAltFollowsTheLanguage() {
+    long one = newMedia("one.webp");
+    long two = newMedia("two.webp");
+    long three = newMedia("three.webp");
     timeline.create(
-        new TimelineEventRequest(2001, 0, new LocalizedText("Mốc", "Milestone"), null, imageId));
+        new TimelineEventRequest(
+            2001, 0, new LocalizedText("Mốc", "Milestone"), null, List.of(three, one, two)));
 
+    JsonNode vi = ApiClient.json(newClient().get("/public/vi/home")).path("timeline").get(0);
     JsonNode en = ApiClient.json(newClient().get("/public/en/home")).path("timeline").get(0);
 
-    assertThat(en.path("image").path("url").asString()).isEqualTo("/media/t.webp");
-    assertThat(en.path("image").path("alt").asString()).isEqualTo("Image description");
+    assertThat(texts(en.path("images"), "url"))
+        .containsExactly("/media/three.webp", "/media/one.webp", "/media/two.webp");
+    assertThat(en.path("images").get(0).path("width").asInt()).isEqualTo(800);
+    assertThat(en.path("images").get(0).path("height").asInt()).isEqualTo(600);
+    assertThat(en.path("images").get(0).path("alt").asString()).isEqualTo("Image description");
+    assertThat(vi.path("images").get(0).path("alt").asString()).isEqualTo("Ảnh mô tả");
+  }
+
+  @Test
+  void aTimelineImageWhoseRowIsGoneIsLeftOutAndThePageStillAnswers() {
+    long kept = newMedia("kept.webp");
+    long gone = newMedia("gone.webp");
+    timeline.create(
+        new TimelineEventRequest(
+            2001, 0, new LocalizedText("Mốc", null), null, List.of(gone, kept)));
+    deleteMediaPastTheForeignKey(gone);
+
+    var response = newClient().get("/public/vi/home");
+
+    assertThat(response.getStatusCode().value()).isEqualTo(200);
+    JsonNode event = ApiClient.json(response).path("timeline").get(0);
+    assertThat(texts(event.path("images"), "url")).containsExactly("/media/kept.webp");
   }
 
   // ---- stories on the home page --------------------------------------------------------------
@@ -768,6 +795,26 @@ class PublicApiTest extends AuthTestSupport {
     return mediaRepository
         .save(Media.create(path, "image/webp", 800, 600, 12345L, "Ảnh mô tả", "Image description"))
         .getId();
+  }
+
+  /**
+   * The foreign key keeps a used image row in place, so the test switches the key checks off for
+   * one connection (the Testcontainers user is a superuser) to make the broken state on purpose.
+   */
+  private void deleteMediaPastTheForeignKey(long mediaId) {
+    jdbc.execute(
+        (ConnectionCallback<Void>)
+            connection -> {
+              try (var statement = connection.createStatement()) {
+                statement.execute("set session_replication_role = replica");
+                try {
+                  statement.execute("delete from media where id = " + mediaId);
+                } finally {
+                  statement.execute("set session_replication_role = origin");
+                }
+              }
+              return null;
+            });
   }
 
   private int count(String table) {

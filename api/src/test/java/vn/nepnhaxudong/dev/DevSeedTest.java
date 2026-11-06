@@ -90,7 +90,7 @@ class DevSeedTest {
     assertThat(count("product where visible")).isEqualTo(1);
     assertThat(count("media")).isZero();
     assertThat(count("product_media")).isZero();
-    assertThat(count("timeline_event where media_id is not null")).isZero();
+    assertThat(count("timeline_event_media")).isZero();
     assertThat(count("press_mention where media_id is not null")).isZero();
     assertThat(count("story where cover_media_id is not null")).isZero();
   }

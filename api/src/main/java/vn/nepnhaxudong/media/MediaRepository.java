@@ -21,7 +21,7 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
       value =
           """
           select exists (select 1 from product_media where media_id = :id)
-              or exists (select 1 from timeline_event where media_id = :id)
+              or exists (select 1 from timeline_event_media where media_id = :id)
               or exists (select 1 from press_mention where media_id = :id)
               or exists (select 1 from story where cover_media_id = :id)
               or exists (
