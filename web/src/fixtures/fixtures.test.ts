@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import homeVi from "./home.vi.json";
 import homeEn from "./home.en.json";
@@ -11,10 +13,9 @@ const FIXTURES = {
   "stories.en": storiesEn,
 };
 
+// The product's name, description and features are real (2026-11-06: from the real bag and the
+// owner's story), so they are not in this list; its cooking tips are still sample text.
 const TEXT_FIELDS = new Set([
-  "name",
-  "description",
-  "features",
   "cookingTips",
   "title",
   "excerpt",
@@ -24,7 +25,9 @@ const TEXT_FIELDS = new Set([
 ]);
 
 // The owner gave the real tagline, address and phone number (2026-11-05), so these are not
-// sample text any more and are left out of the [MẪU] check.
+// sample text any more and are left out of the [MẪU] check. The same holds for the journey
+// (timeline): the owner gave its real story and photos (2026-11-06).
+const REAL_CONTENT_KEYS = new Set(["timeline"]);
 type Visit = (s: string, key: string | null, inText: boolean) => void;
 
 function walk(value: unknown, key: string | null, inText: boolean, visit: Visit): void {
@@ -34,6 +37,7 @@ function walk(value: unknown, key: string | null, inText: boolean, visit: Visit)
     value.forEach((v) => walk(v, key, inText, visit));
   } else if (value && typeof value === "object") {
     for (const [k, v] of Object.entries(value)) {
+      if (REAL_CONTENT_KEYS.has(k)) continue;
       walk(v, k, TEXT_FIELDS.has(k), visit);
     }
   }
@@ -66,11 +70,12 @@ describe.each(Object.entries(FIXTURES))("fixture %s", (_name, data) => {
     expect(checked).toBeGreaterThan(0);
   });
 
-  it("has no images", () => {
+  it("has no images outside the journey", () => {
     walk(data, null, false, (s, key) => {
       if (key === "bodyHtml") expect(s).not.toMatch(/<img/i);
     });
-    expect(JSON.stringify(data)).not.toMatch(
+    const withoutJourney = Array.isArray(data) ? data : { ...data, timeline: [] };
+    expect(JSON.stringify(withoutJourney)).not.toMatch(
       /"url":"[^"]*\.(png|jpe?g|webp|gif|svg)/i,
     );
     for (const item of Array.isArray(data) ? data : [data]) {
@@ -100,8 +105,13 @@ describe("home fixtures", () => {
     expect(product.packagings.map((p) => p.weightGrams)).toEqual([1000, 2000]);
     expect(product.packagings.every((p) => p.priceVnd === null)).toBe(true);
     expect(product.images).toEqual([]);
-    expect(home.timeline).toHaveLength(3);
-    expect(home.timeline.every((t) => t.image === null)).toBe(true);
+    expect(home.timeline.map((t) => t.year)).toEqual([2008, 2021, 2022, 2023, 2025]);
+    expect(home.timeline[0].image).toBeNull();
+    for (const { image } of home.timeline.slice(1)) {
+      expect(image?.url).toMatch(/^\/journey\/[a-z0-9-]+\.webp$/);
+      expect(existsSync(join(process.cwd(), "public", image!.url)), image?.url).toBe(true);
+      expect([image?.width, image?.height]).toEqual([1200, 900]);
+    }
     expect(home.press).toHaveLength(2);
     expect(home.press.every((p) => p.image === null)).toBe(true);
     const { messenger: _messenger, ...rest } = home.contact;

@@ -18,6 +18,10 @@ describe("toImageSrc", () => {
     expect(toImageSrc("/media/a.webp", "https://x.vn/")).toBe("https://x.vn/media/a.webp");
   });
 
+  it("keeps a file of web/public as a root-relative path", () => {
+    expect(toImageSrc("/journey/2021.webp", "https://x.vn")).toBe("/journey/2021.webp");
+  });
+
   it("fails clearly when a relative path has no site URL", () => {
     expect(() => toImageSrc("/media/a.webp", undefined)).toThrow(/SITE_URL/);
   });

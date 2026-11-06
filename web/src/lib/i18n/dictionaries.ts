@@ -38,6 +38,8 @@ const vi = {
   sections: {
     product: "Sản phẩm",
     journey: "Hành trình",
+    // Names numbers from the journey content (admin: Hành trình); update it when they change.
+    journeyIntro: "Từ cửa hàng vật tư nhỏ ở quê tới 50 tấn gạo mỗi năm.",
     press: "Báo chí nói về Nếp Nhà",
     story: "Câu chuyện Nếp Nhà",
     contact: "Liên hệ",
@@ -175,6 +177,7 @@ const en: Dictionary = {
   sections: {
     product: "Product",
     journey: "Journey",
+    journeyIntro: "From a small farm supply shop to 50 tonnes of rice a year.",
     press: "Nếp Nhà in the press",
     story: "Nếp Nhà stories",
     contact: "Contact",

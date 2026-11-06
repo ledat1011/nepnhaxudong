@@ -18,7 +18,7 @@ export function JourneySection({ dict, events }: JourneySectionProps) {
   return (
     <section aria-labelledby="hanh-trinh" className="bg-straw">
       <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-        <SectionHeading id="hanh-trinh" title={dict.sections.journey} />
+        <SectionHeading id="hanh-trinh" title={dict.sections.journey} intro={dict.sections.journeyIntro} />
         <div className="relative">
           <div
             data-journey-line
@@ -59,14 +59,19 @@ export function JourneySection({ dict, events }: JourneySectionProps) {
                   <p className="text-xl font-bold text-coat">{event.year}</p>
                   <h3 className="mt-1 text-xl font-bold">{event.title}</h3>
                   <p className="mt-2 leading-relaxed">{event.description}</p>
-                  <div className="mt-4 aspect-[4/3] max-w-sm overflow-hidden rounded-2xl border-2 border-grain">
-                    <ContentImage
-                      image={event.image}
-                      sizes="(min-width: 768px) 24rem, 80vw"
-                      placeholderLabel={dict.image.placeholder}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
+                  {event.image !== null && (
+                    <div
+                      data-journey-photo
+                      className="mt-4 aspect-[4/3] max-w-sm overflow-hidden rounded-2xl border-2 border-grain"
+                    >
+                      <ContentImage
+                        image={event.image}
+                        sizes="(min-width: 768px) 24rem, 80vw"
+                        placeholderLabel={dict.image.placeholder}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
                 </li>
               );
             })}
