@@ -28,6 +28,10 @@ type Props = {
   max?: number;
   /** The text of the button that opens the library. */
   triggerLabel?: string;
+  /** Turns the button that opens the library off. */
+  disabled?: boolean;
+  /** The id of the text that says more about the button, for example why it is off. */
+  describedBy?: string;
 };
 
 /**
@@ -37,13 +41,13 @@ type Props = {
  * The upload tab takes one photo in single mode and many in multiple mode. While a photo is not uploaded yet,
  * closing the box asks first.
  */
-export function MediaPicker({ mode, value, onChange, max, triggerLabel = "Chọn ảnh" }: Props) {
+export function MediaPicker({ mode, value, onChange, max, triggerLabel = "Chọn ảnh", disabled, describedBy }: Props) {
   const dialog = useUploadDialog();
   return (
     <>
       <Dialog open={dialog.open} onOpenChange={dialog.onOpenChange}>
         <DialogTrigger asChild>
-          <Button type="button" variant="outline">
+          <Button type="button" variant="outline" disabled={disabled} aria-describedby={describedBy}>
             {triggerLabel}
           </Button>
         </DialogTrigger>

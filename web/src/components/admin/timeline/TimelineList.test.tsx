@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminApiError } from "@/lib/admin/errors";
-import type { TimelineEventAdminDto } from "@/lib/admin/types";
+import type { MediaAdminDto, TimelineEventAdminDto } from "@/lib/admin/types";
 
 const { adminFetch, requireReLogin } = vi.hoisted(() => ({
   adminFetch: vi.fn(),
@@ -16,16 +16,20 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn() } }));
 
 import { TimelineList } from "./TimelineList";
 
-function event(id: number, year: number, missingEn = false): TimelineEventAdminDto {
+function event(id: number, year: number, missingEn = false, mediaIds: number[] = []): TimelineEventAdminDto {
   return {
     id,
     year,
     sortOrder: id,
     title: { vi: `Mốc ${id}`, en: missingEn ? null : `Event ${id}` },
     description: { vi: null, en: null },
-    mediaId: null,
+    mediaIds,
     missingEn,
   };
+}
+
+function media(id: number): MediaAdminDto {
+  return { id, url: `/media/${id}.webp`, width: 10, height: 10, mime: "image/webp", altVi: `Ảnh ${id}`, altEn: `Image ${id}` };
 }
 
 const EVENTS = [event(1, 1990), event(2, 2000, true), event(3, 2010)];
@@ -57,6 +61,17 @@ describe("TimelineList", () => {
     expect(second).toHaveTextContent("Thiếu EN");
     await userEvent.click(second);
     expect(onSelect).toHaveBeenCalledWith(EVENTS[1]);
+  });
+
+  it("shows the first photo of an event in its row, and no photo for an event without one", async () => {
+    adminFetch.mockImplementation(async (path: string) => (path.startsWith("/admin/media") ? [media(1), media(2)] : undefined));
+    render(<TimelineList events={[event(1, 1990, false, [2, 1]), event(2, 2000)]} onSelect={vi.fn()} />);
+    const withPhoto = screen.getByRole("button", { name: /^1990/ });
+    await waitFor(() => expect(withPhoto.querySelectorAll("img")).toHaveLength(1));
+    expect(withPhoto.querySelector("img")).toHaveAttribute("src", "/media/2.webp");
+    // The row is named by its year and title; the photo adds nothing to that name.
+    expect(withPhoto).toHaveAccessibleName(/^1990\s?Mốc 1$/);
+    expect(screen.getByRole("button", { name: /^2000/ }).querySelector("img")).toBeNull();
   });
 
   it("sends the swapped ids when the first event is moved down", async () => {

@@ -19,6 +19,7 @@ import { ProblemMessage } from "@/components/admin/form/ProblemMessage";
 import { Button } from "@/components/admin/ui/button";
 import { adminFetch } from "@/lib/admin/api";
 import type { TimelineEventAdminDto } from "@/lib/admin/types";
+import { useMediaByIds } from "@/lib/admin/use-media-by-ids";
 import { useSave } from "@/lib/admin/use-save";
 
 /** Finger must stay still this long (ms) before a drag starts, so scrolling the list still works. */
@@ -69,6 +70,9 @@ function TimelineRow({ event, index, count, busy, selectDisabled, onSelect, onMo
     disabled: busy,
   });
   const name = eventName(event);
+  // The first photo is the one the website shows first.
+  const firstId = event.mediaIds.slice(0, 1);
+  const photo = useMediaByIds(firstId).items[0];
   return (
     <li
       ref={setNodeRef}
@@ -93,6 +97,19 @@ function TimelineRow({ event, index, count, busy, selectDisabled, onSelect, onMo
           onClick={() => onSelect(event)}
           className="flex min-h-11 min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 rounded-md px-1 text-left enabled:hover:bg-muted enabled:active:bg-secondary disabled:opacity-50"
         >
+          {photo !== undefined ? (
+            // Empty alt: the row is named by its year and title, and the photo is only a reminder of the event.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photo.url}
+              alt=""
+              width={photo.width}
+              height={photo.height}
+              className="size-11 shrink-0 rounded object-cover"
+            />
+          ) : firstId.length > 0 ? (
+            <span className="size-11 shrink-0 rounded bg-muted" aria-hidden />
+          ) : null}
           <span className="font-bold">{event.year}</span>
           <span className="min-w-0 flex-1 break-words font-semibold">{name}</span>
           {event.missingEn ? <MissingEnBadge /> : null}
