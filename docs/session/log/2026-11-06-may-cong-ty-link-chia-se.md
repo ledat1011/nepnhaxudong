@@ -26,3 +26,4 @@
 - Nhánh `feat/anh-chia-se-mascot-moi`: ảnh chia sẻ vẽ lại theo đầu trang (chữ "Nếp Nhà" + dòng phụ theo ngôn ngữ, cô gái ôm bó lúa, mặt trời, mây, cánh đồng của trang chủ).
 - PR #39 merge (`a42027b`): ảnh chia sẻ mới đã lên bản xem thử.
 - Nhánh `feat/hanh-trinh-that` (chưa commit): 4 ảnh thật, 5 mốc vi/en, dòng giới thiệu, ẩn khung ảnh trống. Chủ dự án dừng lúc đang chạy test; việc còn lại ghi trong STATE.
+- Chủ dự án gửi lại 2 ảnh: "mẫu đầu tiên với mẫu vuông vức dán tay" → thay ảnh mốc 2021 và 2023; mốc 2023 thêm ý "nhãn dán tay từng bịch".

@@ -23,9 +23,9 @@ Dòng giới thiệu dưới chữ "Hành trình" nằm trong code (`web/src/lib
 - Ảnh: `2022-may-say-may-xay.webp` — "Máy xay xát và lò sấy thóc trong xưởng của gia đình".
 
 ## 2023 · Bịch gạo vuông vức, lên kệ siêu thị
-- Tiếng Việt: Năm 2023–2024, gạo được đóng trong bịch ép khuôn vuông vức. Mỗi năm 40 tấn gạo, khoảng 20.000 bịch, và gạo bắt đầu có mặt trên kệ siêu thị.
-- Tiếng Anh (*Neat square packs, on supermarket shelves*): In 2023–2024, the rice moved to neat, square vacuum-pressed packs. Each year brought 40 tonnes of rice, about 20,000 bags, and the rice reached supermarket shelves.
-- Ảnh: `2023-bich-vuong.webp` — "Những bịch gạo 2 kg hút chân không vuông vức trên máy đóng gói".
+- Tiếng Việt: Năm 2023–2024, gạo được đóng trong bịch ép khuôn vuông vức, nhãn dán tay từng bịch. Mỗi năm 40 tấn gạo, khoảng 20.000 bịch, và gạo bắt đầu có mặt trên kệ siêu thị.
+- Tiếng Anh (*Neat square packs, on supermarket shelves*): In 2023–2024, the rice moved to neat, square vacuum-pressed packs, each labelled by hand. Each year brought 40 tonnes of rice, about 20,000 bags, and the rice reached supermarket shelves.
+- Ảnh: `2023-bich-vuong.webp` — "Những bịch gạo 2 kg vuông vức, nhãn dán tay từng bịch, xếp thành hàng".
 
 ## 2025 · Bao in tên, 50 tấn gạo
 - Tiếng Việt: Logo và thông tin được in thẳng lên bao, không còn dán nhãn như những năm trước. Năm 2025, gia đình làm được 50 tấn gạo, khoảng 25.000 bịch.
