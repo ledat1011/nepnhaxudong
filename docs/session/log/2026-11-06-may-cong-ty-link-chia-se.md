@@ -45,3 +45,7 @@
 - Chủ dự án duyệt nháp 5 bài Câu chuyện (hành trình, mẻ sấy 20 tấn, bảo quản bịch hút chân không, nấu xôi, phóng sự Truyền hình Nhị Chiểu chỉ tiếng Việt) và mốc 2024 (OCOP 3 sao, giấy ATTP mới tới 12/2027). Chờ ảnh 2 giấy 2024 (gửi lại).
 - Đã làm: 5 bài Câu chuyện thật (agent, `a1f017c`), mốc 2024 có 2 ảnh giấy (cắt sát khung tranh, không vẽ lại), báo chí thật thay bài mẫu; xem ở 375 px và 1280 px, không tràn ngang.
 - Chủ dự án: ảnh 2 giấy 2024 "bên trong hơi lệch" (chụp chéo) → sửa phối cảnh cho khung thẳng, không vẽ lại nội dung.
+- Chủ dự án: "bỏ khung viền đi làm như của chứng nhận năm 2021" → cắt ảnh 2 giấy 2024 chỉ còn tờ giấy, chỉnh giấy trắng như ảnh 2021 (chưa commit).
+- Chủ dự án hỏi đưa 2 giấy chứng nhận nhỏ xuống chân trang, "có thể dùng nano" → đề xuất dùng ảnh thật nhỏ (không dùng AI cho giấy tờ thật); chủ dự án đồng ý: ảnh thật nhỏ ở chân trang, không dùng Nano Banana.
+- Chủ dự án: "convert qua bản in" cho 2 giấy 2024 "phẳng đẹp, vừa vặn" → làm ảnh giống bản scan từ chính ảnh chụp (xóa bóng và ánh sáng không đều, giấy trắng phẳng, giữ nguyên chữ, con dấu, chữ ký); không gõ lại hay vẽ lại giấy.
+- Đã làm (`3c2327a`): chân trang có 2 ảnh giấy nhỏ dưới logo ("OCOP 3 sao / Công nhận năm 2024", "Đủ điều kiện ATTP / Hiệu lực đến 12/2027"), bấm mở popup; 2 ảnh giấy 2024 làm giống bản scan, dùng chung cho mốc 2024. Xem ở 375 px và 1280 px.
