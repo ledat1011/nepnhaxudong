@@ -44,3 +44,4 @@
 - Thêm mốc Hành trình 2024: sản phẩm "Gạo nếp cái hoa vàng Duy Tân" (HTX Nông sản sạch Duy Tân) được UBND thị xã Kinh Môn công nhận OCOP 3 sao (Quyết định 1925/QĐ-UBND ngày 30/12/2024, giá trị 3 năm); Sở NN&PTNT Hải Dương cấp giấy chứng nhận cơ sở đủ điều kiện ATTP mới cho HTX Nông sản sạch Duy Tân (số 94/2024/NNPTNT-HD, cấp 10/12/2024, hiệu lực tới 09/12/2027, "Xay xát, kinh doanh gạo"). Có ảnh 2 giấy.
 - Chủ dự án duyệt nháp 5 bài Câu chuyện (hành trình, mẻ sấy 20 tấn, bảo quản bịch hút chân không, nấu xôi, phóng sự Truyền hình Nhị Chiểu chỉ tiếng Việt) và mốc 2024 (OCOP 3 sao, giấy ATTP mới tới 12/2027). Chờ ảnh 2 giấy 2024 (gửi lại).
 - Đã làm: 5 bài Câu chuyện thật (agent, `a1f017c`), mốc 2024 có 2 ảnh giấy (cắt sát khung tranh, không vẽ lại), báo chí thật thay bài mẫu; xem ở 375 px và 1280 px, không tràn ngang.
+- Chủ dự án: ảnh 2 giấy 2024 "bên trong hơi lệch" (chụp chéo) → sửa phối cảnh cho khung thẳng, không vẽ lại nội dung.

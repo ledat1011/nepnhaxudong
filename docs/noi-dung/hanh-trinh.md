@@ -34,7 +34,7 @@ Dòng giới thiệu dưới chữ "Hành trình" nằm trong code (`web/src/lib
 ## 2024 · OCOP 3 sao, giấy chứng nhận mới
 - Tiếng Việt: Cuối năm 2024, gạo nếp cái hoa vàng Duy Tân được UBND thị xã Kinh Môn công nhận là sản phẩm OCOP 3 sao (Chương trình Mỗi xã một sản phẩm). Cùng tháng, Hợp tác xã Nông sản sạch Duy Tân được Sở Nông nghiệp tỉnh Hải Dương cấp giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm mới, có hiệu lực tới tháng 12/2027.
 - Tiếng Anh (*OCOP 3 stars, a new certificate*): At the end of 2024, Duy Tân yellow-flower sticky rice was recognised by the Kinh Môn town People's Committee as a 3-star OCOP product (the One Commune One Product programme). The same month, the Duy Tân Clean Farm Produce Cooperative received a new food safety certificate from the Hải Dương Department of Agriculture, valid until December 2027.
-- Ảnh (theo thứ tự): `2024-giay-chung-nhan-ocop.webp` — "Giấy chứng nhận OCOP 3 sao năm 2024 của gạo nếp cái hoa vàng Duy Tân"; `2024-giay-chung-nhan-attp.webp` — "Giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm năm 2024, hiệu lực tới tháng 12/2027".
+- Ảnh (theo thứ tự): `2024-ocop-3-sao.webp` — "Giấy chứng nhận OCOP 3 sao năm 2024 của gạo nếp cái hoa vàng Duy Tân"; `2024-giay-attp-moi.webp` — "Giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm năm 2024, hiệu lực tới tháng 12/2027".
 
 ## 2025 · Bao in tên, 50 tấn gạo
 - Tiếng Việt: Logo và thông tin được in thẳng lên bao, không còn dán nhãn như những năm trước. Năm 2025, gia đình làm được 50 tấn gạo, khoảng 25.000 bịch.
