@@ -104,8 +104,8 @@ test.describe("no horizontal scroll at 320x640", () => {
   const paths = [
     "/vi",
     "/en",
-    "/vi/cau-chuyen/bao-quan-gao-nep-dung-cach",
-    "/en/stories/storing-sticky-rice-the-right-way",
+    "/vi/cau-chuyen/tu-cua-hang-vat-tu-toi-bich-gao",
+    "/en/stories/from-farm-shop-to-rice-bag",
   ];
 
   for (const path of paths) {

@@ -1,14 +1,14 @@
 import { expect, test } from "@playwright/test";
 
-const VI_SLUG = "mua-gat-dau-tien-o-xu-dong";
-const VI_TITLE = "[MẪU] Mùa gặt đầu tiên ở xứ Đông";
+const VI_SLUG = "tu-cua-hang-vat-tu-toi-bich-gao";
+const VI_TITLE = "Từ cửa hàng vật tư tới bịch gạo mang tên quê";
 // This story has no own English slug: the English page keeps the Vietnamese slug.
-const SHARED_SLUG = "chuyen-nha-nep-xu-dong";
+const SHARED_SLUG = "nep-cai-hoa-vang-len-truyen-hinh";
 
 test.describe("story list and story pages", () => {
   test("the list shows every story as a card", async ({ page }) => {
     await page.goto("/vi/cau-chuyen");
-    await expect(page.getByRole("article")).toHaveCount(4);
+    await expect(page.getByRole("article")).toHaveCount(5);
   });
 
   test("a story opens from the list with its own title", async ({ page }) => {
@@ -23,7 +23,9 @@ test.describe("story list and story pages", () => {
   }) => {
     const response = await page.goto(`/en/stories/${SHARED_SLUG}`);
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Chuyện nhà Nếp");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Nếp cái hoa vàng lên truyền hình phường",
+    );
   });
 
   const notFound = [

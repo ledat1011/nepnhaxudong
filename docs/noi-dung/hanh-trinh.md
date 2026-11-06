@@ -31,6 +31,11 @@ Dòng giới thiệu dưới chữ "Hành trình" nằm trong code (`web/src/lib
 - Tiếng Anh (*Neat square packs, on supermarket shelves*): In 2023–2024, the rice moved to neat, square vacuum-pressed packs, each labelled by hand. Each year brought 40 tonnes of rice, about 20,000 bags, and the rice reached supermarket shelves.
 - Ảnh: `2023-bich-vuong-dan-tay.webp` — "Những bịch gạo 2 kg vuông vức, nhãn dán tay từng bịch, xếp thành hàng".
 
+## 2024 · OCOP 3 sao, giấy chứng nhận mới
+- Tiếng Việt: Cuối năm 2024, gạo nếp cái hoa vàng Duy Tân được UBND thị xã Kinh Môn công nhận là sản phẩm OCOP 3 sao (Chương trình Mỗi xã một sản phẩm). Cùng tháng, Hợp tác xã Nông sản sạch Duy Tân được Sở Nông nghiệp tỉnh Hải Dương cấp giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm mới, có hiệu lực tới tháng 12/2027.
+- Tiếng Anh (*OCOP 3 stars, a new certificate*): At the end of 2024, Duy Tân yellow-flower sticky rice was recognised by the Kinh Môn town People's Committee as a 3-star OCOP product (the One Commune One Product programme). The same month, the Duy Tân Clean Farm Produce Cooperative received a new food safety certificate from the Hải Dương Department of Agriculture, valid until December 2027.
+- Ảnh (theo thứ tự): `2024-giay-chung-nhan-ocop.webp` — "Giấy chứng nhận OCOP 3 sao năm 2024 của gạo nếp cái hoa vàng Duy Tân"; `2024-giay-chung-nhan-attp.webp` — "Giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm năm 2024, hiệu lực tới tháng 12/2027".
+
 ## 2025 · Bao in tên, 50 tấn gạo
 - Tiếng Việt: Logo và thông tin được in thẳng lên bao, không còn dán nhãn như những năm trước. Năm 2025, gia đình làm được 50 tấn gạo, khoảng 25.000 bịch.
 - Tiếng Anh (*A printed bag, 50 tonnes*): The logo and product details are now printed on the bag, instead of the stick-on labels of earlier years. In 2025, the family produced 50 tonnes of rice, about 25,000 bags.

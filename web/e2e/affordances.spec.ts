@@ -65,7 +65,7 @@ test.describe("tap targets of at least 44 x 44 px at 375 px", () => {
   for (const path of [
     "/en",
     "/vi/cau-chuyen",
-    "/vi/cau-chuyen/mua-gat-dau-tien-o-xu-dong",
+    "/vi/cau-chuyen/tu-cua-hang-vat-tu-toi-bich-gao",
     "/khong/co/trang/nay",
     "/vi/cau-chuyen/khong-co",
   ]) {

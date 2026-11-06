@@ -5,7 +5,7 @@ const paths = [
   "/vi",
   "/en",
   "/vi/cau-chuyen",
-  "/vi/cau-chuyen/mua-gat-dau-tien-o-xu-dong",
+  "/vi/cau-chuyen/tu-cua-hang-vat-tu-toi-bich-gao",
 ];
 
 for (const path of paths) {

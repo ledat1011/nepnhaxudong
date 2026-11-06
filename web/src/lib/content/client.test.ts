@@ -51,16 +51,16 @@ describe("mock client", () => {
   });
 
   it("finds a story without its own EN slug under its VI slug on en", async () => {
-    const story = await client.getStory("en", "chuyen-nha-nep-xu-dong");
-    expect(story?.slug).toBe("chuyen-nha-nep-xu-dong");
+    const story = await client.getStory("en", "nep-cai-hoa-vang-len-truyen-hinh");
+    expect(story?.slug).toBe("nep-cai-hoa-vang-len-truyen-hinh");
     expect(story?.alternateSlug).toBeNull();
   });
 
   it("does not find a story with its own EN slug by its VI slug on en", async () => {
-    expect(await client.getStory("en", "mua-gat-dau-tien-o-xu-dong")).toBeNull();
+    expect(await client.getStory("en", "tu-cua-hang-vat-tu-toi-bich-gao")).toBeNull();
     expect(
-      (await client.getStory("en", "first-harvest-in-xu-dong"))?.alternateSlug,
-    ).toBe("mua-gat-dau-tien-o-xu-dong");
+      (await client.getStory("en", "from-farm-shop-to-rice-bag"))?.alternateSlug,
+    ).toBe("tu-cua-hang-vat-tu-toi-bich-gao");
   });
 
   it("returns null for an unknown slug", async () => {
@@ -69,7 +69,7 @@ describe("mock client", () => {
 
   it("pages the story list with a 0-based page", async () => {
     const first = await client.getStories("vi", 0);
-    expect(first).toHaveLength(4);
+    expect(first).toHaveLength(5);
     expect(first[0]).not.toHaveProperty("bodyHtml");
     expect(await client.getStories("vi", 1)).toEqual([]);
   });

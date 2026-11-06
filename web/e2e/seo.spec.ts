@@ -45,20 +45,20 @@ test.describe("page metadata", () => {
   });
 
   test("a story links to its own translation, or to the shared slug", async ({ page }) => {
-    await page.goto("/vi/cau-chuyen/mua-gat-dau-tien-o-xu-dong");
+    await page.goto("/vi/cau-chuyen/tu-cua-hang-vat-tu-toi-bich-gao");
     await expect(page.locator("link[rel=alternate][hreflang=en]")).toHaveAttribute(
       "href",
-      `${ORIGIN}/en/stories/first-harvest-in-xu-dong`,
+      `${ORIGIN}/en/stories/from-farm-shop-to-rice-bag`,
     );
     await expect(page.locator("link[rel=alternate][hreflang=x-default]")).toHaveAttribute(
       "href",
-      `${ORIGIN}/vi/cau-chuyen/mua-gat-dau-tien-o-xu-dong`,
+      `${ORIGIN}/vi/cau-chuyen/tu-cua-hang-vat-tu-toi-bich-gao`,
     );
 
-    await page.goto("/vi/cau-chuyen/chuyen-nha-nep-xu-dong");
+    await page.goto("/vi/cau-chuyen/nep-cai-hoa-vang-len-truyen-hinh");
     await expect(page.locator("link[rel=alternate][hreflang=en]")).toHaveAttribute(
       "href",
-      `${ORIGIN}/en/stories/chuyen-nha-nep-xu-dong`,
+      `${ORIGIN}/en/stories/nep-cai-hoa-vang-len-truyen-hinh`,
     );
   });
 });

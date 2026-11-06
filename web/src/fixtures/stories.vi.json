@@ -1,38 +1,67 @@
 [
   {
-    "slug": "mua-gat-dau-tien-o-xu-dong",
-    "title": "[MẪU] Mùa gặt đầu tiên ở xứ Đông",
-    "excerpt": "[MẪU] Cả nhà ra đồng từ sáng sớm để gặt những bông nếp hoa vàng đầu mùa.",
-    "publishedAt": "2026-04-10T02:00:00Z",
-    "cover": null,
-    "bodyHtml": "<p>[MẪU] Sáng sớm, cả nhà ra đồng khi sương còn đọng trên lá. Những bông nếp hoa vàng đã chín và nặng trĩu.</p><h2>[MẪU] Gặt bằng tay</h2><p>[MẪU] Mỗi bó lúa được gặt và buộc bằng tay để hạt không bị dập. Cách làm này chậm nhưng giữ được chất lượng.</p><ul><li>[MẪU] Gặt vào lúc nắng nhẹ</li><li>[MẪU] Phơi lúa hai nắng</li></ul>",
-    "alternateSlug": "first-harvest-in-xu-dong"
-  },
-  {
-    "slug": "cach-nau-xoi-deo-thom",
-    "title": "[MẪU] Cách nấu xôi dẻo thơm từ nếp cái hoa vàng",
-    "excerpt": "[MẪU] Ba bước đơn giản để có nồi xôi dẻo, thơm và chín đều.",
-    "publishedAt": "2026-03-05T02:00:00Z",
-    "cover": null,
-    "bodyHtml": "<p>[MẪU] Xôi ngon bắt đầu từ việc ngâm nếp đủ thời gian. Dưới đây là ba bước gia đình vẫn làm mỗi ngày.</p><h2>[MẪU] Các bước nấu</h2><ol><li>[MẪU] Ngâm nếp 6 đến 8 tiếng</li><li>[MẪU] Để ráo nước</li><li>[MẪU] Đồ xôi khoảng 30 phút</li></ol><blockquote>[MẪU] Xôi dẻo là nhờ hạt nếp tốt và đủ thời gian ngâm.</blockquote><p>[MẪU] Xem thêm công thức tại <a href=\"https://example.com/cong-thuc/xoi-deo\">trang công thức mẫu</a>.</p>",
-    "alternateSlug": "how-to-cook-soft-sticky-rice"
-  },
-  {
-    "slug": "bao-quan-gao-nep-dung-cach",
-    "title": "[MẪU] Bảo quản gạo nếp đúng cách",
-    "excerpt": "[MẪU] Vài lưu ý nhỏ giúp gạo nếp giữ được mùi thơm lâu hơn.",
-    "publishedAt": "2026-02-14T02:00:00Z",
-    "cover": null,
-    "bodyHtml": "<p>[MẪU] Gạo nếp nên để nơi khô ráo, thoáng mát và tránh ánh nắng trực tiếp.</p><p>[MẪU] Địa chỉ bài viết đầy đủ: https://example.com/cau-chuyen/bao-quan-gao-nep/huong-dan-day-du-cho-moi-gia-dinh/xu-dong-hai-duong/phien-ban-2026-thang-02</p><h3>[MẪU] Mẹo nhỏ</h3><p>[MẪU] Dùng hũ kín và <strong>không</strong> để gần nơi ẩm.</p>",
-    "alternateSlug": "storing-sticky-rice-the-right-way"
-  },
-  {
-    "slug": "chuyen-nha-nep-xu-dong",
-    "title": "[MẪU] Chuyện nhà Nếp ở xứ Đông",
-    "excerpt": "[MẪU] Vì sao một gia đình chọn giữ nghề trồng nếp qua nhiều năm.",
-    "publishedAt": "2026-01-20T02:00:00Z",
-    "cover": null,
-    "bodyHtml": "<p>[MẪU] Nhà Nếp ở xứ Đông giữ nghề trồng nếp từ đời ông bà. Mỗi mùa gặt là một dịp để cả nhà gặp nhau.</p><p>[MẪU] Câu chuyện này chưa có bản tiếng Anh riêng, nên trang tiếng Anh dùng bản tiếng Việt.</p>",
+    "slug": "nep-cai-hoa-vang-len-truyen-hinh",
+    "title": "Nếp cái hoa vàng lên truyền hình phường",
+    "excerpt": "Truyền hình Nhị Chiểu làm phóng sự về nếp cái hoa vàng của phường.",
+    "publishedAt": "2026-11-02T02:00:00Z",
+    "cover": {
+      "url": "/press/2025-nhi-chieu-nep-cai-hoa-vang.webp",
+      "width": 1200,
+      "height": 675,
+      "alt": "Máy gặt trên cánh đồng nếp cái hoa vàng ở phường Nhị Chiểu"
+    },
+    "bodyHtml": "<p>UBND phường Nhị Chiểu, TP. Hải Phòng, đăng phóng sự “Nếp cái hoa vàng phường Nhị Chiểu – lan tỏa hương vị đặc sản quê hương” của Truyền hình Nhị Chiểu.</p><p>Phóng sự quay cánh đồng nếp cái hoa vàng vào mùa gặt, khi máy gặt đang vào ruộng.</p><p><a href=\"https://www.facebook.com/reel/2585570238579411\">Xem phóng sự trên trang Facebook của phường</a>.</p>",
     "alternateSlug": null
+  },
+  {
+    "slug": "tu-cua-hang-vat-tu-toi-bich-gao",
+    "title": "Từ cửa hàng vật tư tới bịch gạo mang tên quê",
+    "excerpt": "Mười ba năm bán hạt giống cho bà con, rồi một ngày gia đình tự mang nếp quê ra chợ.",
+    "publishedAt": "2026-10-25T02:00:00Z",
+    "cover": {
+      "url": "/journey/2025-bao-in-logo.webp",
+      "width": 1200,
+      "height": 900,
+      "alt": "Chồng bao gạo nếp cái hoa vàng Duy Tân in logo"
+    },
+    "bodyHtml": "<p>Từ năm 2008, gia đình mở cửa hàng vật tư nông nghiệp và hạt giống nếp cái hoa vàng cho bà con trong vùng.</p><p>Năm 2021, được hợp tác xã nông nghiệp địa phương động viên, gia đình quyết định tự đưa nếp cái hoa vàng của quê ra thị trường. Giống được chọn kỹ, từng thửa ruộng do người nhà tự chăm. Hợp tác xã giúp đầu tư một máy hút chân không nhỏ, mỗi lần đóng một bịch 2 kg, và thiết kế bao bì đầu tiên. Năm ấy có 10 tấn gạo, khoảng 5.000 bịch, tới tay khách.</p><h2>Mỗi năm một bước</h2><p>Năm 2022 có thêm lò sấy và máy xay, sản lượng lên 30 tấn. Năm 2023–2024, gạo đóng trong bịch vuông vức, nhãn dán tay từng bịch, và lên kệ siêu thị. Năm 2024, sản phẩm đạt OCOP 3 sao và được cấp giấy chứng nhận an toàn thực phẩm mới. Năm 2025, logo được in thẳng lên bao, và gia đình làm được 50 tấn gạo.</p><p>Xem đủ các mốc trong phần Hành trình ở trang chủ.</p>",
+    "alternateSlug": "from-farm-shop-to-rice-bag"
+  },
+  {
+    "slug": "mot-me-say-20-tan",
+    "title": "Một mẻ sấy 20 tấn",
+    "excerpt": "Vì sao thóc nếp được sấy ngay tại nhà, và một mẻ sấy diễn ra thế nào.",
+    "publishedAt": "2026-10-18T02:00:00Z",
+    "cover": {
+      "url": "/journey/2022-may-say-may-xay.webp",
+      "width": 1200,
+      "height": 900,
+      "alt": "Máy xay xát và lò sấy thóc của gia đình"
+    },
+    "bodyHtml": "<p>Năm 2022, khách đặt nhiều hơn, gia đình đầu tư một lò sấy thóc, mỗi mẻ 20 tấn.</p><h2>Hơi nóng đi từ dưới lên</h2><p>Quạt thổi hơi nóng từ lò than vào gầm lò sấy. Hơi nóng đi lên qua lưới sắt và làm khô lớp thóc nằm trên.</p><h2>Sấy xong mới xay</h2><p>Thóc khô được cho vào máy xay xát: vỏ trấu bay ra, hạt gạo trắng chảy xuống. Sau đó gạo được hút chân không trong từng bịch 2 kg.</p>",
+    "alternateSlug": "one-drying-batch-of-20-tonnes"
+  },
+  {
+    "slug": "nau-xoi-nep-cai-hoa-vang",
+    "title": "Nấu xôi nếp cái hoa vàng cho dẻo thơm",
+    "excerpt": "Vài bước đơn giản để có nồi xôi dẻo, thơm và chín đều.",
+    "publishedAt": "2026-10-11T02:00:00Z",
+    "cover": null,
+    "bodyHtml": "<p>Vo nhẹ nếp rồi ngâm nước sạch 6–8 tiếng, hoặc qua đêm. Vớt ra, trộn chút muối, để ráo.</p><h2>Đồ xôi</h2><p>Xếp nếp vào chõ hoặc xửng khi nước đã sôi, đồ khoảng 25–30 phút. Giữa chừng mở nắp, đảo đều và rưới vài thìa nước nóng cho hạt chín đều.</p><p>Xôi chín khi hạt trong, mềm, không còn lõi. Muốn xôi bóng thơm, trộn một thìa mỡ hành hoặc nước cốt dừa khi xôi vừa chín.</p>",
+    "alternateSlug": "cooking-yellow-flower-sticky-rice"
+  },
+  {
+    "slug": "bao-quan-bich-nep-hut-chan-khong",
+    "title": "Bảo quản bịch nếp hút chân không",
+    "excerpt": "Bịch nếp 2 kg giữ được bao lâu, và cất thế nào khi đã mở.",
+    "publishedAt": "2026-10-04T02:00:00Z",
+    "cover": {
+      "url": "/journey/2023-bich-vuong-dan-tay.webp",
+      "width": 1200,
+      "height": 900,
+      "alt": "Những bịch nếp 2 kg vuông vức xếp thành hàng"
+    },
+    "bodyHtml": "<p>Mỗi bịch nếp 2 kg được hút chân không ngay sau khi xay, để gạo giữ khô và giữ mùi thơm.</p><h2>Khi bịch còn kín</h2><p>Để nơi khô ráo, thoáng mát, tránh nắng. Hạn dùng ghi trên bịch là 12 tháng kể từ ngày sản xuất.</p><h2>Khi đã mở bịch</h2><p>Đổ gạo vào hũ có nắp kín, để nơi khô mát, xa bếp. Nên dùng trong khoảng 1–2 tháng để gạo còn thơm.</p>",
+    "alternateSlug": "storing-vacuum-packed-sticky-rice"
   }
 ]

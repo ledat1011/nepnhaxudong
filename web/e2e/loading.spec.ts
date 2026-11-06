@@ -3,8 +3,8 @@ import { getDictionary } from "../src/lib/i18n/dictionaries";
 
 const vi = getDictionary("vi");
 const BAR = "[data-navigation-progress]";
-const STORY_SLUG = "mua-gat-dau-tien-o-xu-dong";
-const STORY_TITLE = "[MẪU] Mùa gặt đầu tiên ở xứ Đông";
+const STORY_SLUG = "tu-cua-hang-vat-tu-toi-bich-gao";
+const STORY_TITLE = "Từ cửa hàng vật tư tới bịch gạo mang tên quê";
 
 /** Records whether the loading bar is ever added to the page from now on. */
 async function watchForBar(page: Page) {
