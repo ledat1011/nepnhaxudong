@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { getDictionary } from "../src/lib/i18n/dictionaries";
 
 const vi = getDictionary("vi");
@@ -118,4 +118,59 @@ test.describe("no horizontal scroll at 320x640", () => {
       expect(widths.scroll).toBeLessThanOrEqual(widths.client);
     });
   }
+});
+
+test.describe("journey photos", () => {
+  const CERTIFICATE = "Giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm, cấp năm 2021";
+  const BAG = "Bao gạo nếp cái hoa vàng Duy Tân 2 kg đầu tiên, năm 2021";
+  const milestone2021 = (page: Page) =>
+    page.locator("[data-journey-event]").filter({ hasText: "2021" });
+
+  test("a click on a photo opens it large; Esc closes it and gives focus back", async ({
+    page,
+  }) => {
+    await page.goto("/vi");
+    const photo = milestone2021(page).getByRole("button", { name: CERTIFICATE });
+    await photo.click();
+
+    const dialog = page.getByRole("dialog", { name: vi.gallery.viewLarge });
+    await expect(dialog).toBeVisible();
+    const certificate = dialog.getByRole("img", { name: CERTIFICATE });
+    await expect(certificate).toBeVisible();
+    // The whole photo fits the screen: no part of it is cut off.
+    const box = (await certificate.boundingBox())!;
+    const viewport = page.viewportSize()!;
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+    expect(box.height / box.width).toBeCloseTo(1165 / 797, 1);
+    await dialog.getByRole("button", { name: vi.gallery.next }).click();
+    await expect(dialog.getByRole("img", { name: BAG })).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(photo).toBeFocused();
+  });
+
+  test.describe("at 375x812", () => {
+    test.use({ viewport: PHONE });
+
+    test("no horizontal scroll, and the 2021 photos stay below the text", async ({ page }) => {
+      await page.goto("/vi");
+      const widths = await page.evaluate(() => ({
+        scroll: document.documentElement.scrollWidth,
+        client: document.documentElement.clientWidth,
+      }));
+      expect(widths.scroll).toBeLessThanOrEqual(widths.client);
+
+      const event = milestone2021(page);
+      const text = await event.locator("p").last().boundingBox();
+      const frames = event.locator("[data-journey-photo]");
+      await expect(frames).toHaveCount(2);
+      for (const frame of await frames.all()) {
+        const box = await frame.boundingBox();
+        expect(box!.y).toBeGreaterThanOrEqual(text!.y + text!.height);
+        expect(box!.x + box!.width).toBeLessThanOrEqual(widths.client);
+      }
+    });
+  });
 });

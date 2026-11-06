@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import homeVi from "./home.vi.json";
@@ -41,6 +41,19 @@ function walk(value: unknown, key: string | null, inText: boolean, visit: Visit)
       walk(v, k, TEXT_FIELDS.has(k), visit);
     }
   }
+}
+
+/** Width and height of a WebP file, read from its header. */
+function webpSize(file: string): [number, number] {
+  const data = readFileSync(file);
+  const format = data.toString("ascii", 12, 16);
+  if (format === "VP8 ") return [data.readUInt16LE(26) & 0x3fff, data.readUInt16LE(28) & 0x3fff];
+  if (format === "VP8L") {
+    const bits = data.readUInt32LE(21);
+    return [(bits & 0x3fff) + 1, ((bits >> 14) & 0x3fff) + 1];
+  }
+  if (format === "VP8X") return [data.readUIntLE(24, 3) + 1, data.readUIntLE(27, 3) + 1];
+  throw new Error(`${file} is not a WebP file`);
 }
 
 const stripTags = (html: string) => html.replace(/<[^>]*>/g, "").trim();
@@ -106,11 +119,20 @@ describe("home fixtures", () => {
     expect(product.packagings.every((p) => p.priceVnd === null)).toBe(true);
     expect(product.images).toEqual([]);
     expect(home.timeline.map((t) => t.year)).toEqual([2008, 2021, 2022, 2023, 2025]);
-    expect(home.timeline[0].image).toBeNull();
-    for (const { image } of home.timeline.slice(1)) {
-      expect(image?.url).toMatch(/^\/journey\/[a-z0-9-]+\.webp$/);
-      expect(existsSync(join(process.cwd(), "public", image!.url)), image?.url).toBe(true);
-      expect([image?.width, image?.height]).toEqual([1200, 900]);
+    expect(home.timeline.map((t) => t.images.length)).toEqual([0, 2, 1, 1, 1]);
+    // 2021: the food safety certificate first, then the first bag.
+    expect(home.timeline[1].images.map((image) => image.url)).toEqual([
+      "/journey/2021-giay-chung-nhan-attp.webp",
+      "/journey/2021-bao-2kg-dau-tien.webp",
+    ]);
+    const images: { url: string; width: number; height: number; alt: string }[] =
+      home.timeline.flatMap((t) => t.images);
+    for (const image of images) {
+      expect(image.url).toMatch(/^\/journey\/[a-z0-9-]+\.webp$/);
+      const file = join(process.cwd(), "public", image.url);
+      expect(existsSync(file), image.url).toBe(true);
+      expect([image.width, image.height], image.url).toEqual(webpSize(file));
+      expect(image.alt, image.url).not.toBe("");
     }
     expect(home.press).toHaveLength(2);
     expect(home.press.every((p) => p.image === null)).toBe(true);

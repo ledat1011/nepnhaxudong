@@ -1,6 +1,7 @@
+import { JourneyPhotos } from "@/components/home/JourneyPhotos";
 import { RiceEar, RiceLeaf } from "@/components/home/RicePlant";
-import { ContentImage } from "@/components/ui/ContentImage";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { toImageSrc } from "@/lib/content/image-src";
 import type { TimelineEvent } from "@/lib/content/types";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -59,19 +60,12 @@ export function JourneySection({ dict, events }: JourneySectionProps) {
                   <p className="text-xl font-bold text-coat">{event.year}</p>
                   <h3 className="mt-1 text-xl font-bold">{event.title}</h3>
                   <p className="mt-2 leading-relaxed">{event.description}</p>
-                  {event.image !== null && (
-                    <div
-                      data-journey-photo
-                      className="mt-4 aspect-[4/3] max-w-sm overflow-hidden rounded-2xl border-2 border-grain"
-                    >
-                      <ContentImage
-                        image={event.image}
-                        sizes="(min-width: 768px) 24rem, 80vw"
-                        placeholderLabel={dict.image.placeholder}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  )}
+                  <JourneyPhotos
+                    // The photos run in the browser, which cannot read SITE_URL, so the
+                    // sources are built here.
+                    images={event.images.map(({ url, ...rest }) => ({ ...rest, src: toImageSrc(url) }))}
+                    dict={dict}
+                  />
                 </li>
               );
             })}
