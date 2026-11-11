@@ -73,7 +73,7 @@ describe("RiceStory", () => {
       li.querySelector("[data-story-road-passed] path")?.getAttribute("stroke"),
     );
     expect(passed).toEqual([
-      BRAND.sprout, BRAND.sprout, BRAND.grain, BRAND.grain, BRAND.rice, BRAND.rice, BRAND.rice, BRAND.rice,
+      BRAND.sprout, BRAND.sprout, BRAND.grain, BRAND.grain, BRAND.coat, BRAND.coat, BRAND.coat, BRAND.coat,
     ]);
   });
 

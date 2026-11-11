@@ -35,14 +35,15 @@ function sceneText(dict: Dictionary, slug: SceneSlug): { title: string; text: st
 
 /**
  * The colour of the road already passed, by what the rice is on that stretch (owner,
- * 2026-11-11): young-rice green while it grows, gold for the paddy, rice white from the mill on.
- * The road's brown edges stay, so the white still reads on the straw middle.
+ * 2026-11-11): young-rice green while it grows, gold for the paddy, brown from the mill on (the
+ * brown of the bag and the bowl). Not rice white: on the straw road it looked as if nobody had
+ * passed there (owner, 2026-11-11).
  */
 const PASSED_ROAD: Record<RiceStage, string> = {
   seed: BRAND.sprout,
   paddy: BRAND.grain,
-  rice: BRAND.rice,
-  bowl: BRAND.rice,
+  rice: BRAND.coat,
+  bowl: BRAND.coat,
 };
 
 /** Where the road runs: 20 px from the left below 768 px, the middle of the list from 768 px. */

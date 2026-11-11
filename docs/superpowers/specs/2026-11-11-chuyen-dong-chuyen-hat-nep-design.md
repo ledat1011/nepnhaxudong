@@ -56,7 +56,7 @@ Khi làm, vị trí chính xác của từng vật được đo trên tranh gố
   - vòng lặp chạy thưa để đỡ tốn máy (`throttledLoop`);
   - cảnh ra khỏi màn hình thì dừng;
   - nút tạm dừng dừng mọi vòng lặp (`getLoopController`).
-- **Hình chạy trên con đường (chủ dự án, 2026-11-11):** hình đổi theo giai đoạn của hạt: hạt mầm (bước 1–2), hạt thóc (bước 3–4), hạt gạo (bước 5–7), bát xôi bốc hơi (bước 8). Hình đổi ở điểm dừng nơi giai đoạn đổi, phóng nhỏ rồi to lại trong 0,25 giây. Đoạn đường đã đi qua có màu theo giai đoạn: xanh mạ, vàng thóc, trắng gạo. Hình nằm đúng điểm ảnh của màn hình và không có lớp riêng, để không bị mờ.
+- **Hình chạy trên con đường (chủ dự án, 2026-11-11):** hình đổi theo giai đoạn của hạt: hạt mầm (bước 1–2), hạt thóc (bước 3–4), hạt gạo (bước 5–7), bát xôi bốc hơi (bước 8). Hình đổi ở điểm dừng nơi giai đoạn đổi, phóng nhỏ rồi to lại trong 0,25 giây. Đoạn đường đã đi qua có màu theo giai đoạn: xanh mạ, vàng thóc, rồi nâu (màu túi gạo và bát xôi) từ bước xay xát. Không dùng trắng gạo: trên đường màu rơm, chủ dự án thấy "như chưa từng đi qua". Hình nằm đúng điểm ảnh của màn hình và không có lớp riêng, để không bị mờ.
 - **Phần thay đổi:**
   - Khi cảnh sắp tới, mã tạo một lớp phủ (`data-story-overlay`) trong khung: các ảnh lớp cắt đặt đúng vị trí theo `scene-layers.json`, và một SVG nhỏ cho hiệu ứng vẽ bằng code.
   - Hàm chuyển động của mỗi cảnh (`SCENE_MOTIONS`) nhận lớp phủ này thay cho SVG cũ, và trả về `{ intro, loop }` như trước.
