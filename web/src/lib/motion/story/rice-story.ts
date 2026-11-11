@@ -177,7 +177,7 @@ function setupRoad(
  * at every screen size, never pinned. A rice grain moves down the road with the scroll, the
  * road it has passed turns darker and the stop of the scene in the middle of the screen is
  * filled. Each scene's drawing is swapped for its inline svg one screen before that scene,
- * then gets its own intro (once) and loop (while on screen, after the intro, and not paused by
+ * then gets its own intro and loop (while on screen, after the intro, and not paused by
  * the visitor). A scene whose file fails, or whose drawing lacks a part, keeps its static image
  * (the final frame).
  */
@@ -219,9 +219,29 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
     const entry = loop ? controller.add(throttledLoop(gsap, loop)) : null;
     if (entry) entries.push(entry);
     let onScreen = false;
+    /** At the first frame and waiting for its line, playing the intro, or done (looping). */
+    let state: "waiting" | "playing" | "done" = "waiting";
     const sync = () => entry?.setVisible(onScreen && scene.played);
+    const playIntro = () => {
+      if (state !== "waiting") return;
+      state = "playing";
+      intro.play(0);
+    };
+    // The owner wants each scene to play again from the start when it comes back (2026-11-11).
+    // It is wound back only once it is wholly off screen, so the jump to the first frame is
+    // never seen. The loop goes back to its start first: it ends where the intro ends, and
+    // parts that only the loop moves (fireflies) are then at rest during the intro.
+    const rewind = () => {
+      if (state === "waiting") return;
+      state = "waiting";
+      scene.played = false;
+      intro.pause();
+      loop?.totalTime(0);
+      intro.progress(0);
+    };
 
     intro.eventCallback("onComplete", () => {
+      state = "done";
       scene.played = true;
       sync();
     });
@@ -229,32 +249,32 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
     // came late) shows its final frame at once: nothing on screen disappears.
     if (!shouldHideElement(scene.li, pendingHashScroll(root), STORY_INTRO_LINE)) {
       intro.progress(1);
+      state = "done";
       scene.played = true;
-    } else {
-      ScrollTrigger.create({
-        trigger: scene.li,
-        start: `clamp(top ${STORY_INTRO_LINE * 100}%)`,
-        once: true,
-        onEnter: () => {
-          intro.play();
-        },
-      });
     }
+    ScrollTrigger.create({
+      trigger: scene.li,
+      start: `clamp(top ${STORY_INTRO_LINE * 100}%)`,
+      // Scrolling back up, the scene comes in from the top: it plays when its bottom reaches
+      // the middle of the screen, so its picture is in view.
+      end: "clamp(bottom 50%)",
+      onEnter: playIntro,
+      onEnterBack: playIntro,
+    });
     // Shown only now that the intro has set its first frame (or its last): no flash of rest.
     showOverlay(overlay);
-    if (entry) {
-      const trigger = ScrollTrigger.create({
-        trigger: scene.li,
-        start: "top bottom",
-        end: "bottom top",
-        onToggle: (self) => {
-          onScreen = self.isActive;
-          sync();
-        },
-      });
-      onScreen = trigger.isActive;
-      sync();
-    }
+    const trigger = ScrollTrigger.create({
+      trigger: scene.li,
+      start: "top bottom",
+      end: "bottom top",
+      onToggle: (self) => {
+        onScreen = self.isActive;
+        if (!onScreen) rewind();
+        sync();
+      },
+    });
+    onScreen = trigger.isActive;
+    sync();
   };
 
   // Everything, also what the late overlays add, is recorded here and reverted by the cleanup.

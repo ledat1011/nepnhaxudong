@@ -93,6 +93,7 @@ function fakeMotion(withLoop = true) {
   return {
     intro: {
       play: vi.fn(),
+      pause: vi.fn(),
       progress: vi.fn(),
       eventCallback: vi.fn((type: string, fn: () => void) => {
         callbacks[type] = fn;
@@ -241,7 +242,7 @@ describe("setupRiceStory", () => {
     expect(document.querySelector("[data-rice-story]")?.hasAttribute("data-story-mode")).toBe(false);
   });
 
-  it("plays each intro once when its scene reaches 75 % of the screen", async () => {
+  it("plays each intro when its scene reaches 75 % of the screen, once per visit", async () => {
     const fake = fakeModules();
     setupRiceStory(fake.modules, document);
     await load(fake);
@@ -250,11 +251,58 @@ describe("setupRiceStory", () => {
     const intros = fake.triggers.filter((t) => t.vars.start === introStart());
     expect(intros).toHaveLength(8);
     intros.forEach((t, i) => {
-      expect(t.vars).toMatchObject({ trigger: items()[i], once: true });
+      expect(t.vars).toMatchObject({ trigger: items()[i], end: "clamp(bottom 50%)" });
+      expect(t.vars.once).toBeUndefined();
       expect(motions[i].intro.play).not.toHaveBeenCalled();
       t.vars.onEnter?.();
       expect(motions[i].intro.play).toHaveBeenCalledTimes(1);
+      expect(motions[i].intro.play).toHaveBeenCalledWith(0);
+      // Scrolling a little back and forth while the scene is on screen does not restart it.
+      t.vars.onEnterBack?.();
+      t.vars.onEnter?.();
+      expect(motions[i].intro.play).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it("winds a scene back once it has left the screen and plays it again when it comes back", async () => {
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    await load(fake);
+    const intro = fake.triggers.find((t) => t.vars.trigger === items()[0] && t.vars.start === introStart())!;
+    const screen = fake.triggers.find((t) => t.vars.trigger === items()[0] && t.vars.start === "top bottom")!;
+    const entry = mocks.add.mock.results[0].value as { setVisible: ReturnType<typeof vi.fn> };
+    const m = motions[0];
+    screen.vars.onToggle?.({ isActive: true });
+    intro.vars.onEnter?.();
+    m.complete();
+    expect(entry.setVisible).toHaveBeenLastCalledWith(true);
+    // Off screen: the loop stops, goes back to its start, then the intro to its first frame.
+    screen.vars.onToggle?.({ isActive: false });
+    expect(entry.setVisible).toHaveBeenLastCalledWith(false);
+    expect(m.intro.pause).toHaveBeenCalled();
+    expect(m.intro.progress).toHaveBeenLastCalledWith(0);
+    expect(m.loop!.totalTime).toHaveBeenLastCalledWith(0);
+    expect(m.loop!.totalTime.mock.invocationCallOrder.at(-1)!).toBeLessThan(
+      m.intro.progress.mock.invocationCallOrder.at(-1)!,
+    );
+    // Back from the top (scrolling up): the intro plays again, and the loop waits for its end.
+    screen.vars.onToggle?.({ isActive: true });
+    expect(entry.setVisible).toHaveBeenLastCalledWith(false);
+    intro.vars.onEnterBack?.();
+    expect(m.intro.play).toHaveBeenCalledTimes(2);
+    m.complete();
+    expect(entry.setVisible).toHaveBeenLastCalledWith(true);
+  });
+
+  it("does not wind back a scene that has not played yet", async () => {
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    await load(fake);
+    const screen = fake.triggers.find((t) => t.vars.trigger === items()[0] && t.vars.start === "top bottom")!;
+    screen.vars.onToggle?.({ isActive: true });
+    screen.vars.onToggle?.({ isActive: false });
+    expect(motions[0].intro.pause).not.toHaveBeenCalled();
+    expect(motions[0].intro.progress).not.toHaveBeenCalled();
   });
 
   it("shows the final frame at once for a scene that is already past its line", async () => {
@@ -266,7 +314,11 @@ describe("setupRiceStory", () => {
       expect(m.intro.progress).toHaveBeenCalledWith(1);
       expect(m.intro.play).not.toHaveBeenCalled();
     });
-    expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(0);
+    // The trigger is still there: once wound back, the scene plays again when it comes back.
+    const intros = fake.triggers.filter((t) => t.vars.start === introStart());
+    expect(intros).toHaveLength(8);
+    intros[0].vars.onEnterBack?.();
+    expect(motions[0].intro.play).not.toHaveBeenCalled();
   });
 
   it("runs a loop only while its scene is on screen and after its intro", async () => {
@@ -297,7 +349,8 @@ describe("setupRiceStory", () => {
     setupRiceStory(fake.modules, document);
     await load(fake);
     expect(mocks.add).not.toHaveBeenCalled();
-    expect(fake.triggers.filter((t) => t.vars.start === "top bottom")).toHaveLength(0);
+    // The screen trigger stays: it winds the intro back when the scene leaves.
+    expect(fake.triggers.filter((t) => t.vars.start === "top bottom")).toHaveLength(8);
   });
 
   it("fills the stop of the scene in the middle of the screen", () => {
@@ -480,7 +533,6 @@ describe("setupRiceStory", () => {
       await load(fake);
       const shown = motions.map((m) => m.intro.progress.mock.calls.some(([p]) => p === 1));
       expect(shown).toEqual([true, true, true, true, false, false, false, false]);
-      expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(4);
     } finally {
       window.history.replaceState(null, "", "/");
     }
