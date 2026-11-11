@@ -58,13 +58,14 @@ function Stretch({ bend, edge, middle }: StretchProps) {
 }
 
 /**
- * From 768 px a scene starts this far above the end of the one before. A scene there is about
- * 400 px high, so a scene still ends above the next scene on its own side. Its road stretch ends
+ * From 768 px a scene starts this far above the end of the one before, so it starts beside the
+ * text of the scene before. A scene there is about 400 px high, so the stops on the road are
+ * about 340 px apart (the owner found 10rem, 250 px apart, too close). Its road stretch ends
  * this much higher too, at the next scene's stop, so the stretches still join without a gap or
  * a double line. The class names are written in full for Tailwind.
  */
-const OVERLAP_SCENE = "md:-mt-40";
-const OVERLAP_ROAD = "md:h-[calc(100%-10rem)]";
+const OVERLAP_SCENE = "md:-mt-16";
+const OVERLAP_ROAD = "md:h-[calc(100%-4rem)]";
 
 /**
  * The eight scenes from the seedling to the table, as one vertical timeline along a winding

@@ -19,6 +19,8 @@ import {
 
 /** The loop: a slow engine shake, three puffs of chaff, one flight of birds. */
 export const GAT_LOOP_S = 10;
+/** One turn of the reel: 7 whole turns per loop, so the seam does not show. */
+export const REEL_TURN_S = GAT_LOOP_S / 7;
 /** How long one puff of chaff lasts, from the machine until it fades. */
 const PUFF_S = 1.4;
 /** Puffs of the loop, in seconds from its start. The last one ends before the seam. */
@@ -103,8 +105,17 @@ function puff(tl: gsap.core.Timeline, motes: Mote[], at: number) {
   }
 }
 
+/**
+ * The reel turns clockwise (its lower paddles sweep the rice toward the machine) at one speed,
+ * from the first frame of the intro on: the intro makes one whole turn, so it ends at rest, and
+ * the loop goes on at the same speed.
+ */
+function turnReel(tl: gsap.core.Timeline, reel: HTMLElement, turns: number) {
+  tl.fromTo(reel, { rotation: 0 }, { rotation: 360 * turns, duration: REEL_TURN_S * turns, ease: "none", immediateRender: false }, 0);
+}
+
 /** The engine starts: a shake that fades out, with a first puff of chaff. */
-function buildIntro(gsap: Gsap, harvester: HTMLElement, motes: Mote[]) {
+function buildIntro(gsap: Gsap, harvester: HTMLElement[], reel: HTMLElement, motes: Mote[]) {
   const intro = introTimeline(gsap);
   const amplitudes = [2.5, 3, 2.5, 2, 1.6, 1.2, 0.8, 0.5];
   let t = 0;
@@ -116,17 +127,26 @@ function buildIntro(gsap: Gsap, harvester: HTMLElement, motes: Mote[]) {
   }
   intro.to(harvester, { x: 0, y: 0, duration: 0.2, ease: "sine.out" }, t);
   puff(intro, motes, 0.25);
+  turnReel(intro, reel, 1);
   return intro;
 }
 
-/** The engine runs: a 1 px shake, puffs now and then, and the birds cross the sky once. */
-function buildLoop(gsap: Gsap, harvester: HTMLElement, motes: Mote[], flock: SVGGElement, birds: SVGPathElement[]) {
+/** The engine runs: a 1 px shake, the reel turns, puffs now and then, the birds cross once. */
+function buildLoop(
+  gsap: Gsap,
+  harvester: HTMLElement[],
+  reel: HTMLElement,
+  motes: Mote[],
+  flock: SVGGElement,
+  birds: SVGPathElement[],
+) {
   const loop = loopTimeline(gsap);
   // An even number of half shakes per loop, so the harvester is back at rest at the seam.
   const yHalf = 0.25;
   const xHalf = 0.5;
   loop.fromTo(harvester, { y: 0 }, { y: -1, duration: yHalf, repeat: GAT_LOOP_S / yHalf - 1, yoyo: true, immediateRender: false }, 0);
   loop.fromTo(harvester, { x: 0 }, { x: 0.6, duration: xHalf, repeat: GAT_LOOP_S / xHalf - 1, yoyo: true, immediateRender: false }, 0);
+  turnReel(loop, reel, GAT_LOOP_S / REEL_TURN_S);
   for (const at of LOOP_PUFFS_S) puff(loop, motes, at);
   loop.fromTo(flock, { x: BIRDS_FROM_X, y: 0 }, { x: BIRDS_TO_X, y: -16, duration: GAT_LOOP_S, ease: "none", immediateRender: false }, 0);
   for (const [i, bird] of birds.entries()) {
@@ -137,15 +157,18 @@ function buildLoop(gsap: Gsap, harvester: HTMLElement, motes: Mote[], flock: SVG
 }
 
 export const motionGat: SceneMotionBuilder = (gsap, overlay) => {
-  const parts = pick(overlay, ["harvester"]);
+  const parts = pick(overlay, ["harvester", "reel-bg", "reel", "reel-front", "reel-arm"] as const);
   if (!parts) return null;
+  // The reel turns behind the rice in front of it and the arm that holds it, over its own
+  // background; all of them sit on the harvester, so they shake with it as one.
+  const machine = [parts.harvester, parts["reel-bg"], parts.reel, parts["reel-front"], parts["reel-arm"]];
   const motes = drawChaff(overlay.effects);
   const { flock, birds } = drawBirds(overlay.effects);
   // The first frame: no chaff yet, the birds out of view on the left.
   gsap.set(motes.map((m) => m.el), { opacity: 0 });
   gsap.set(flock, { x: BIRDS_FROM_X });
   return {
-    intro: buildIntro(gsap, parts.harvester, motes),
-    loop: buildLoop(gsap, parts.harvester, motes, flock, birds),
+    intro: buildIntro(gsap, machine, parts.reel, motes),
+    loop: buildLoop(gsap, machine, parts.reel, motes, flock, birds),
   };
 };

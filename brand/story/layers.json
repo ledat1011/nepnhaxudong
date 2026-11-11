@@ -20,7 +20,35 @@
     }
   ],
   "gat": [
-    { "name": "harvester", "rect": [434, 215, 983, 548], "pad": 10, "feather": 8 }
+    { "name": "harvester", "rect": [434, 215, 983, 548], "pad": 10, "feather": 8 },
+    { "name": "reel-bg", "circle": [918, 435, 64], "pad": 3, "feather": 2, "fill": true, "fill_color": [224, 184, 104] },
+    {
+      "name": "reel",
+      "circle": [918, 435, 64],
+      "pad": 3,
+      "feather": 2,
+      "matte": true,
+      "matte_range": [30, 60],
+      "radial": { "from": -5, "to": 55, "copies": 6 }
+    },
+    {
+      "name": "reel-front",
+      "polygon": [
+        [850, 462], [867, 448], [887, 442], [907, 443], [927, 447], [947, 450], [957, 457],
+        [960, 475], [982, 482], [995, 482], [995, 505], [850, 505]
+      ],
+      "pad": 2,
+      "feather": 2
+    },
+    {
+      "name": "reel-arm",
+      "union": [
+        { "polygon": [[842, 404], [848, 394], [925, 432], [919, 442]] },
+        { "circle": [918, 435, 10] }
+      ],
+      "pad": 2,
+      "feather": 2
+    }
   ],
   "say": [
     { "name": "fan", "circle": [274, 414, 50], "pad": 2, "feather": 2 }

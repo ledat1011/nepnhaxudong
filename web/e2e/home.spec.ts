@@ -223,6 +223,8 @@ for (const width of [768, 1024, 1440]) {
         // The stretch of road ends where the next one starts, at the next scene's stop.
         expect(Math.abs(shape[i].roadBottom - shape[i + 1].roadTop)).toBeLessThanOrEqual(1);
         expect(Math.abs(shape[i].roadBottom - shape[i + 1].stopMiddle)).toBeLessThanOrEqual(1);
+        // The stops are not crowded on the road (the owner found 250 px apart too close).
+        expect(shape[i + 1].stopMiddle - shape[i].stopMiddle).toBeGreaterThanOrEqual(280);
       }
       for (let i = 0; i + 2 < shape.length; i++) {
         // A scene ends at least 24 px above the next scene on its own side.

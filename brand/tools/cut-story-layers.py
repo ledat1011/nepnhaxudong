@@ -11,7 +11,8 @@ Reads `brand/story/layers.json` and the scene pictures the page shows (`web/publ
 A layer entry in layers.json:
 - `name`: the part name the motion code looks for (`data-part`).
 - `rect: [x0, y0, x1, y1]`, `circle: [cx, cy, r]` or `circles: [[cx, cy, r], ...]` (several small
-  shapes that move as one part, such as rain drops), in pixels of the 1200 x 675 picture.
+  shapes that move as one part, such as rain drops), `polygon: [[x, y], ...]`, or
+  `union: [<shape>, ...]` (several of these shapes as one), in pixels of the 1200 x 675 picture.
 - `pad`: pixels added around the shape. The layer covers the part plus this margin, so a part
   that shakes or drifts by less than `pad` never shows the original part behind it.
 - `feather`: the width in pixels of the soft edge, inside the pad.
@@ -21,6 +22,16 @@ A layer entry in layers.json:
   pixels around it. The page lays it under the part, so the part can leave its place.
   `"flat"` fills it with one colour instead: the median of the strip just above the shape, for a
   part that sits on a plain wall but touches other drawn things on its sides.
+- `matte_range: [low, high]` (optional): the matte thresholds for this layer, when its
+  background has a texture that the default range would keep.
+- `fill`: true makes the layer the filled-in background itself (as a patch, but stacked in the
+  entry order, so it can lie over an earlier layer that moves, such as the harvester).
+  `fill_color: [r, g, b]` fills it with one colour instead, when the things around the hole
+  (a dark machine, ink lines) would darken the smooth fill.
+- `radial: {"from": a, "to": b, "copies": n}` (with `circle` and `matte`): a wheel with n equal
+  spokes, part of it hidden behind other things. The layer is the clean sector from a to b
+  degrees (counter-clockwise from the right), turned n times by 360 / n degrees, so the whole
+  wheel can turn.
 - `origin: [x, y]` (optional): the turning point; the shape's centre by default.
 
 Needs numpy and Pillow (`brand/tools/requirements-mascot.txt`). Run from the repo root:
@@ -33,7 +44,7 @@ import json
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = ROOT / "brand" / "story" / "layers.json"
@@ -61,6 +72,15 @@ PICTURE_QUALITY = 70
 
 def shape_mask(entry: dict, grow: float) -> np.ndarray:
     """A 0..1 mask of the entry's shape grown by `grow` pixels, over the whole picture."""
+    if "union" in entry:
+        return np.max([shape_mask(shape, grow) for shape in entry["union"]], axis=0)
+    if "polygon" in entry:
+        img = Image.new("L", (WIDTH, HEIGHT), 0)
+        ImageDraw.Draw(img).polygon([tuple(p) for p in entry["polygon"]], fill=255)
+        size = int(round(abs(grow))) * 2 + 1
+        if size > 1:
+            img = img.filter(ImageFilter.MaxFilter(size) if grow > 0 else ImageFilter.MinFilter(size))
+        return np.asarray(img, dtype=np.float32) / 255
     ys, xs = np.mgrid[0:HEIGHT, 0:WIDTH]
     if "circles" in entry:
         inside = np.zeros((HEIGHT, WIDTH), dtype=bool)
@@ -110,6 +130,26 @@ def fill_hole(rgb: np.ndarray, hole: np.ndarray) -> np.ndarray:
     return out
 
 
+def wheel(rgba: np.ndarray, entry: dict) -> np.ndarray:
+    """Rebuilds a wheel with equal spokes from one clean sector: the sector is turned `copies`
+    times about the circle's centre and the copies laid over each other."""
+    cx, cy, _ = entry["circle"]
+    radial = entry["radial"]
+    ys, xs = np.mgrid[0:HEIGHT, 0:WIDTH]
+    angle = np.degrees(np.arctan2(-(ys - cy), xs - cx)) % 360
+    lo, hi = radial["from"] % 360, radial["to"] % 360
+    inside = (angle >= lo) & (angle < hi) if lo < hi else (angle >= lo) | (angle < hi)
+    sector = rgba.copy()
+    sector[..., 3] *= inside
+    source = Image.fromarray(sector.astype(np.uint8), "RGBA")
+    out = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    step = 360 / radial["copies"]
+    for k in range(radial["copies"]):
+        # PIL turns counter-clockwise on screen for a positive angle, as the sector angles go.
+        out.alpha_composite(source.rotate(k * step, resample=Image.BICUBIC, center=(cx, cy)))
+    return np.asarray(out, dtype=np.float32)
+
+
 def save_layer(rgba: np.ndarray, path: Path) -> tuple[int, int, int, int]:
     """Crops the layer to its visible pixels, saves it and returns its box."""
     alpha = rgba[..., 3]
@@ -144,6 +184,11 @@ def centre(entry: dict) -> tuple[float, float]:
         return tuple(entry["origin"])
     if "circle" in entry:
         return entry["circle"][0], entry["circle"][1]
+    if "union" in entry:
+        return centre(entry["union"][0])
+    if "polygon" in entry:
+        pts = entry["polygon"]
+        return sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
     if "circles" in entry:
         return (
             sum(c[0] for c in entry["circles"]) / len(entry["circles"]),
@@ -168,15 +213,23 @@ def cut_scene(slug: str, index: int, entries: list[dict]) -> list[dict]:
             x0, y0, x1, _ = entry["rect"]
             strip = rgb[y0 - pad - 6 : y0 - pad - 1, x0:x1].reshape(-1, 3)
             background = np.broadcast_to(np.median(strip, axis=0), rgb.shape).astype(np.float32)
-        elif entry.get("matte") or entry.get("patch"):
+        elif entry.get("matte") or entry.get("patch") or entry.get("fill"):
             background = fill_hole(rgb, shape_mask(entry, pad) > 0)
-        if entry.get("matte"):
-            diff = np.abs(rgb - background).max(axis=2)
-            drawn = np.clip((diff - MATTE_LOW) / (MATTE_HIGH - MATTE_LOW), 0, 1)
-            alpha = drawn * cover
+        if entry.get("fill"):
+            if "fill_color" in entry:
+                background = np.broadcast_to(np.array(entry["fill_color"], np.float32), rgb.shape)
+            rgba = np.dstack([background, cover * 255])
         else:
-            alpha = cover
-        rgba = np.dstack([rgb, alpha * 255])
+            if entry.get("matte"):
+                diff = np.abs(rgb - background).max(axis=2)
+                low, high = entry.get("matte_range", (MATTE_LOW, MATTE_HIGH))
+                drawn = np.clip((diff - low) / (high - low), 0, 1)
+                alpha = drawn * cover
+            else:
+                alpha = cover
+            rgba = np.dstack([rgb, alpha * 255])
+            if "radial" in entry:
+                rgba = wheel(rgba, entry)
         box = save_layer(rgba, OUT_DIR / f"{slug}-{name}.webp")
         parts.append(place(name, slug, box, centre(entry)))
         if entry.get("patch"):

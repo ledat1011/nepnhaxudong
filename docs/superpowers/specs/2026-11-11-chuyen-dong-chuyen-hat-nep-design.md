@@ -7,7 +7,7 @@ Ngày: 2026-11-11. Chủ dự án đã duyệt cách làm và bảng chuyển đ
 8 cảnh của khối "Từ hạt lúa tới người dùng" (`#tu-hat-lua`) hiện là tranh WebP tĩnh, nét mực manhua (quyết định `0014`). Việc này làm cho mỗi cảnh có chuyển động nhỏ, mà vẫn giữ nguyên nét vẽ đã duyệt.
 
 Thành công nghĩa là:
-- Mỗi cảnh có một đoạn mở đầu 1–2 giây khi cảnh tới gần giữa màn hình. Sau đó cảnh có một chuyển động nhỏ lặp lại khi còn trên màn hình.
+- Mỗi cảnh có một đoạn mở đầu 1–2 giây khi cảnh tới gần giữa màn hình. Sau đó cảnh chuyển động liên tục khi còn trên màn hình, không dừng sau đoạn mở đầu (chủ dự án, sau khi xem bản đầu: "ảnh không chạy liên tục, chạy xong bị dừng").
 - Nét mực và màu của tranh không đổi: phần động được cắt thẳng từ tranh gốc, hoặc vẽ bằng code (mưa, gió, hơi, trấu).
 - Trang đầu không nặng hơn. Lớp động chỉ tải khi cảnh sắp tới.
 - Người xem bật "giảm chuyển động" thì thấy tranh tĩnh như bây giờ, và không tải gì thêm.
@@ -25,12 +25,12 @@ Quy tắc chủ dự án đã chốt:
 | Bước | Mở đầu (chạy một lần) | Lặp lại khi còn trên màn hình | Phần động |
 |---|---|---|---|
 | 1. Cấy mạ | Gợn nước lan ra quanh tay người cấy | Mây trôi chậm, gợn nước nhẹ | Gợn nước: code. Mây: lớp cắt |
-| 2. Nắng, mưa, gió | Nắng chói, mây kéo tới, mưa rơi, gió quét, rồi trời chuyển sang đêm trăng | Sao lấp lánh, lúa lay nhẹ | Ngày sang đêm: tranh đêm đã có, hiện dần lên trên tranh ngày. Mưa, gió, sao, lay lúa: code |
-| 3. Gặt lúa | Máy gặt rung mạnh hơn, guồng quay | Guồng quay, bụi thóc bay, chim bay qua | Máy gặt, guồng: lớp cắt. Bụi, chim: code |
+| 2. Nắng, mưa, gió | Nắng chói, mây kéo tới, mưa rơi, gió quét, rồi trời chuyển sang đêm trăng | Cả vòng lặp lại: đom đóm trong đêm, trời sáng về lúa non, lúa lớn lại tới đêm | Ngày sang đêm: tranh đêm đã có, hiện dần lên trên tranh ngày. Mưa, gió, sao, lay lúa: code |
+| 3. Gặt lúa | Máy gặt rung mạnh hơn, guồng quay | Guồng quay liên tục như cánh quạt, bụi thóc bay, chim bay qua | Máy gặt, guồng: lớp cắt (guồng ghép lại từ 1/6 nguyên vẹn, quay sau bông lúa phía trước). Bụi, chim: code |
 | 4. Sấy thóc | Than đỏ rực lên, quạt bắt đầu quay | Cánh quạt quay, mũi tên hơi nóng đi lên | Cánh quạt: lớp cắt hình tròn. Than rực, hơi nóng: code |
 | 5. Xay xát | Gạo trắng chảy xuống từ vòi | Trấu bay ra, gạo chảy | Code |
 | 6. Đóng gói | Nắp máy hút chân không ép xuống, thêm một túi lên chồng | Nắp ép lên xuống mỗi vài giây | Nắp, túi mới: lớp cắt |
-| 7. Đến tay khách | Xe chở gạo rung như vừa đỗ, bánh xe quay chậm rồi dừng | Mây trôi | Xe, bánh xe, mây: lớp cắt |
+| 7. Đến tay khách | Xe chở gạo rung như vừa đỗ, bánh xe quay | Bánh xe quay đều tại chỗ, xe rung nhẹ như máy đang nổ, mây trôi | Xe, bánh xe, mây: lớp cắt |
 | 8. Mâm cơm | Hơi nóng bốc lên từ xôi và chè | Hơi bốc nhẹ | Code |
 
 Khi làm, vị trí chính xác của từng vật được đo trên tranh gốc. Nếu một vật không cắt sạch được (ví dụ bị bông lúa phía trước che), chuyển động đó được làm nhẹ đi hoặc vẽ bằng code, và ghi lại trong báo cáo.
