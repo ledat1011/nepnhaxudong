@@ -31,10 +31,35 @@ describe("SectionLink", () => {
     expect(notPrevented).toBe(false);
   });
 
-  it("leaves a different hash on the same page to the router", () => {
+  it("does not add a history entry when the address already ends in its hash", () => {
+    window.history.replaceState(null, "", "/vi#tu-hat-lua");
+    const before = window.history.length;
+    click();
+    expect(window.history.length).toBe(before);
+  });
+
+  it("scrolls to a different hash on the same page and puts the link's address in the history", () => {
     window.history.replaceState(null, "", "/vi#san-pham");
+    const before = window.history.length;
     const notPrevented = click();
-    expect(scrollIntoView).not.toHaveBeenCalled();
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(notPrevented).toBe(false);
+    expect(window.location.pathname + window.location.search + window.location.hash).toBe("/vi#tu-hat-lua");
+    expect(window.history.length).toBe(before + 1);
+  });
+
+  it("scrolls on the first click when the address has a query string, for example from a shared link", () => {
+    window.history.replaceState(null, "", "/vi?zarsrc=30&utm_source=zalo");
+    const notPrevented = click();
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(notPrevented).toBe(false);
+    expect(window.location.pathname + window.location.search + window.location.hash).toBe("/vi#tu-hat-lua");
+  });
+
+  it("leaves the click to the router when the page has no section with that id", () => {
+    window.history.replaceState(null, "", "/vi");
+    document.getElementById("tu-hat-lua")?.remove();
+    const notPrevented = click();
     expect(notPrevented).toBe(true);
   });
 
