@@ -255,20 +255,33 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
     const entry = loop ? controller.add(throttledLoop(gsap, loop)) : null;
     if (entry) entries.push(entry);
     let onScreen = false;
-    /** At the first frame and waiting for its line, playing the intro, or done (looping). */
-    let state: "waiting" | "playing" | "done" = "waiting";
+    /**
+     * At the first frame and waiting for its line, playing the intro, stopped half way because
+     * it left the screen, or done (looping).
+     */
+    let state: "waiting" | "playing" | "stopped" | "done" = "waiting";
     const sync = () => entry?.setVisible(onScreen && scene.played);
     const playIntro = () => {
-      if (state !== "waiting") return;
-      state = "playing";
-      intro.play(0);
+      if (state === "waiting") {
+        state = "playing";
+        intro.play(0);
+      } else if (state === "stopped") {
+        state = "playing";
+        intro.play();
+      }
     };
-    // The owner wants each scene to play again from the start when it comes back (2026-11-11).
-    // It is wound back only once it is wholly off screen, so the jump to the first frame is
-    // never seen. The loop goes back to its start first: it ends where the intro ends, and
-    // parts that only the loop moves (fireflies) are then at rest during the intro.
-    const rewind = () => {
-      if (state === "waiting") return;
+    // The owner (2026-11-11): an intro that leaves the screen half played stops where it is
+    // and plays on from there when it comes back; a scene that has played its intro plays
+    // again from the start. It is wound back only once it is wholly off screen, so the jump to
+    // the first frame is never seen. The loop goes back to its start first: it ends where the
+    // intro ends, and parts that only the loop moves (fireflies) are then at rest during the intro.
+    const leaveScreen = () => {
+      if (state === "playing") {
+        state = "stopped";
+        intro.pause();
+        return;
+      }
+      if (state !== "done") return;
       state = "waiting";
       scene.played = false;
       intro.pause();
@@ -305,7 +318,7 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
       end: "bottom top",
       onToggle: (self) => {
         onScreen = self.isActive;
-        if (!onScreen) rewind();
+        if (!onScreen) leaveScreen();
         sync();
       },
     });

@@ -295,6 +295,36 @@ describe("setupRiceStory", () => {
     expect(entry.setVisible).toHaveBeenLastCalledWith(true);
   });
 
+  it("stops an intro that leaves the screen half played and plays it on from there when it comes back", async () => {
+    const fake = fakeModules();
+    setupRiceStory(fake.modules, document);
+    await load(fake);
+    const intro = fake.triggers.find((t) => t.vars.trigger === items()[0] && t.vars.start === introStart())!;
+    const screen = fake.triggers.find((t) => t.vars.trigger === items()[0] && t.vars.start === "top bottom")!;
+    const m = motions[0];
+    screen.vars.onToggle?.({ isActive: true });
+    intro.vars.onEnter?.();
+    expect(m.intro.play).toHaveBeenLastCalledWith(0);
+    // Off screen before the intro ends: it stops where it is, not at its first frame.
+    screen.vars.onToggle?.({ isActive: false });
+    expect(m.intro.pause).toHaveBeenCalledTimes(1);
+    expect(m.intro.progress).not.toHaveBeenCalled();
+    expect(m.loop!.totalTime).not.toHaveBeenCalled();
+    // Back on screen, but not yet at its line: it stays stopped.
+    screen.vars.onToggle?.({ isActive: true });
+    expect(m.intro.play).toHaveBeenCalledTimes(1);
+    // At its line (scrolling up): it plays on from where it stopped.
+    intro.vars.onEnterBack?.();
+    expect(m.intro.play).toHaveBeenCalledTimes(2);
+    expect(m.intro.play).toHaveBeenLastCalledWith();
+    // Once it has ended, leaving the screen winds it back as before.
+    m.complete();
+    screen.vars.onToggle?.({ isActive: false });
+    expect(m.intro.progress).toHaveBeenLastCalledWith(0);
+    intro.vars.onEnter?.();
+    expect(m.intro.play).toHaveBeenLastCalledWith(0);
+  });
+
   it("does not wind back a scene that has not played yet", async () => {
     const fake = fakeModules();
     setupRiceStory(fake.modules, document);

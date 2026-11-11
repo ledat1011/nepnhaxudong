@@ -7,7 +7,7 @@ Ngày: 2026-11-11. Chủ dự án đã duyệt cách làm và bảng chuyển đ
 8 cảnh của khối "Từ hạt lúa tới người dùng" (`#tu-hat-lua`) hiện là tranh WebP tĩnh, nét mực manhua (quyết định `0014`). Việc này làm cho mỗi cảnh có chuyển động nhỏ, mà vẫn giữ nguyên nét vẽ đã duyệt.
 
 Thành công nghĩa là:
-- Mỗi cảnh có một đoạn mở đầu 1–2 giây khi cảnh tới gần giữa màn hình. Cảnh ra hẳn khỏi màn hình thì quay về khung đầu; khi quay lại (cuộn xuống hay cuộn lên) thì chạy lại đoạn mở đầu từ đầu (chủ dự án, 2026-11-11: "phải chạy lại 1 vòng như lúc đầu"). Sau đó cảnh chuyển động liên tục khi còn trên màn hình, không dừng sau đoạn mở đầu (chủ dự án, sau khi xem bản đầu: "ảnh không chạy liên tục, chạy xong bị dừng").
+- Mỗi cảnh có một đoạn mở đầu 1–2 giây khi cảnh tới gần giữa màn hình. Đoạn mở đầu đang chạy dở mà cảnh ra hẳn khỏi màn hình thì dừng đúng chỗ đó; khi cảnh quay lại thì chạy tiếp từ chỗ đã dừng (chủ dự án, 2026-11-11: "scroll qua thì dừng tại thời điểm đó, back lại thì tiếp tục"). Cảnh đã chạy xong đoạn mở đầu mà ra hẳn khỏi màn hình thì quay về khung đầu; khi quay lại (cuộn xuống hay cuộn lên) thì chạy lại đoạn mở đầu từ đầu (chủ dự án, 2026-11-11: "phải chạy lại 1 vòng như lúc đầu"). Sau đó cảnh chuyển động liên tục khi còn trên màn hình, không dừng sau đoạn mở đầu (chủ dự án, sau khi xem bản đầu: "ảnh không chạy liên tục, chạy xong bị dừng").
 - Nét mực và màu của tranh không đổi: phần động được cắt thẳng từ tranh gốc, hoặc vẽ bằng code (mưa, gió, hơi, trấu).
 - Trang đầu không nặng hơn. Lớp động chỉ tải khi cảnh sắp tới.
 - Người xem bật "giảm chuyển động" thì thấy tranh tĩnh như bây giờ, và không tải gì thêm.
