@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { heroPictureSources } from "./hero-picture";
+import { HERO_PICTURE_STYLE, heroPictureSources } from "./hero-picture";
 
 /**
  * The picture of the home village behind the hero, drawn on a canvas.
@@ -52,5 +52,13 @@ export function HeroPicture() {
     };
   }, []);
 
-  return <canvas ref={ref} data-hero-picture="" aria-hidden="true" className="hero-picture" />;
+  return (
+    <canvas
+      ref={ref}
+      data-hero-picture=""
+      aria-hidden="true"
+      className="hero-picture"
+      style={HERO_PICTURE_STYLE}
+    />
+  );
 }

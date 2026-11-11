@@ -22,9 +22,14 @@ const RICE_RGB = `rgba(${[1, 3, 5].map((i) => Number.parseInt(rice.slice(i, i + 
  */
 const MASCOT = 440;
 const MASCOT_LEFT = SIZE.width - 80 - MASCOT;
+// The JPEG (assets/og/nen-que.jpg) is the left 2400 x 1209 px of the hero picture, scaled down:
+// enough for the card, which ends about 2360 px into the picture. The right part of the hero
+// picture would only add bytes to every render.
+const OG_PICTURE = { width: 2400, height: 1209 };
 const PICTURE_HEIGHT = SIZE.height;
-const PICTURE_WIDTH = (PICTURE_HEIGHT * HERO_PICTURE.width) / HERO_PICTURE.height;
-const PICTURE_LEFT = MASCOT_LEFT - 8 - HERO_PICTURE.bagRight * PICTURE_WIDTH;
+const PICTURE_WIDTH = (PICTURE_HEIGHT * OG_PICTURE.width) / OG_PICTURE.height;
+const BAG_RIGHT = (HERO_PICTURE.bagRight * HERO_PICTURE.width * PICTURE_HEIGHT) / HERO_PICTURE.height;
+const PICTURE_LEFT = MASCOT_LEFT - 8 - BAG_RIGHT;
 // The text column ends before the bag, so no line of text runs over the picture's bag.
 const TEXT_LEFT = 80;
 const TEXT_WIDTH = 440;
@@ -43,7 +48,7 @@ const MASCOT_SRC = `data:image/svg+xml;base64,${Buffer.from(
 
 // The site loads these fonts from Google at build time; the image renderer needs the files.
 const fontFile = (name: string) => readFile(join(process.cwd(), "assets/fonts", name));
-// A JPEG copy of the hero picture (public/hero/nen-que.webp): the image renderer takes PNG and
+// A JPEG copy of the hero picture (public/hero/nen-que-rong.webp): the image renderer takes PNG and
 // JPEG, not WebP.
 const pictureFile = () => readFile(join(process.cwd(), "assets/og", "nen-que.jpg"));
 
