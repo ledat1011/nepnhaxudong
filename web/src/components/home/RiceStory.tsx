@@ -1,11 +1,11 @@
 import { ZaloLink } from "@/components/contact/ZaloLink";
-import { RiceGrain } from "@/components/home/RicePlant";
+import { StageIcon } from "@/components/home/RicePlant";
 import { MotionPauseButton } from "@/components/motion/MotionPauseButton";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { BRAND } from "@/lib/brand/colors";
+import { BRAND, ILLUSTRATION_ONLY_COLORS } from "@/lib/brand/colors";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { roadBend, roadPath } from "@/lib/story/road";
-import { STORY_SCENES, type SceneSlug } from "@/lib/story/scenes";
+import { RICE_STAGES, STORY_SCENES, type SceneSlug } from "@/lib/story/scenes";
 
 type RiceStoryProps = {
   dict: Dictionary;
@@ -32,6 +32,28 @@ function sceneText(dict: Dictionary, slug: SceneSlug): { title: string; text: st
   const key = KEYS[slug];
   return { title: story[`${key}Title`], text: story[`${key}Text`] };
 }
+
+/**
+ * The colours of the road already passed, at each stop and at the end of the road: one band
+ * that grows darker down the whole road, like a progress bar (owner, 2026-11-11). It goes
+ * from light young-rice green, through the gold of the ripe rice (step 2 ripens from green to
+ * gold), and from the gold step by step to the brown of the rice bag at the table. It stops at
+ * that warm brown: a road that went on to near black made the bag and the meal look gloomy
+ * (owner, 2026-11-11). Each stretch blends from its own stop's colour to the next one, so no
+ * colour changes at once. The colours between gold and brown are their even mixes.
+ */
+export const ROAD_SHADES = [
+  ILLUSTRATION_ONLY_COLORS.leafLight,
+  BRAND.sprout,
+  BRAND.grain,
+  "#CC9538", // 1/6 of the way from grain to coat
+  "#BF8936", // 2/6
+  "#B27E33", // 3/6
+  "#A57230", // 4/6
+  "#98662E", // 5/6
+  BRAND.coat,
+] as const;
+
 
 /** Where the road runs: 20 px from the left below 768 px, the middle of the list from 768 px. */
 const ON_ROAD_LEFT = "md:left-auto md:right-0 md:translate-x-1/2";
@@ -75,8 +97,9 @@ const OVERLAP_ROAD = "md:h-[calc(100%-4rem)]";
  * instead of leaving half the width empty. Each scene draws
  * its own stretch of road down to the next stop, so the stops always sit on the road. The
  * static markup is complete: the whole road is drawn and every drawing shows its final frame.
- * The motion code (lib/motion/story/rice-story.ts) moves the grain down the road, darkens the
- * part already passed and fills the stop of the scene in view, through the `data-story-*`
+ * The motion code (lib/motion/story/rice-story.ts) moves the marker (what the rice is at that
+ * step) down the road, colours the part already passed and fills the stop of the scene in view,
+ * through the `data-story-*`
  * hooks.
  */
 export function RiceStory({ dict, zalo }: RiceStoryProps) {
@@ -101,12 +124,23 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
           </div>
         </div>
         <div data-story-road-wrap className="relative">
+          {/*
+            The marker that moves down the road: what the rice is at the scene it passes. All four
+            icons are here, one over the other; the motion code shows the one of the stretch.
+          */}
           <span
             data-story-grain
             aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-0 z-20 opacity-0"
+            className="pointer-events-none absolute left-0 top-0 z-20 size-8 opacity-0"
           >
-            <RiceGrain className="block" />
+            {RICE_STAGES.map((stage) => (
+              // A thin rice-white rim, so the brown bowl still shows on the brown end of the road.
+              <StageIcon
+                key={stage}
+                stage={stage}
+                className="absolute inset-0 block opacity-0 [filter:drop-shadow(0_0_1px_var(--color-rice))_drop-shadow(0_0_1px_var(--color-rice))]"
+              />
+            ))}
           </span>
           <ol data-story-list role="list">
             {STORY_SCENES.map((scene, i) => {
@@ -147,9 +181,21 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                           strokeLinecap="round"
                           className="absolute inset-0 h-full w-full overflow-visible"
                         >
+                          {/* In the viewBox units: a straight stretch has no width to measure. */}
+                          <linearGradient
+                            id={`story-road-shade-${i}`}
+                            gradientUnits="userSpaceOnUse"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="100"
+                          >
+                            <stop offset="0" stopColor={ROAD_SHADES[i]} />
+                            <stop offset="1" stopColor={ROAD_SHADES[i + 1]} />
+                          </linearGradient>
                           <path
                             d={roadPath(bend)}
-                            stroke={BRAND.grain}
+                            stroke={`url(#story-road-shade-${i})`}
                             vectorEffect="non-scaling-stroke"
                             className="[stroke-width:12px] md:[stroke-width:20px]"
                           />

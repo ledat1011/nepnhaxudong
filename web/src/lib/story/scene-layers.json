@@ -4,41 +4,41 @@
       "name": "cloud-left-patch",
       "src": "/lop/cay-ma-cloud-left-patch.webp",
       "left": 22.167,
-      "top": 12.444,
-      "width": 11.333,
-      "height": 8.889,
-      "originX": 52.206,
-      "originY": 49.167
+      "top": 12.296,
+      "width": 11.0,
+      "height": 9.63,
+      "originX": 53.788,
+      "originY": 46.923
     },
     {
       "name": "cloud-right-patch",
       "src": "/lop/cay-ma-cloud-right-patch.webp",
-      "left": 61.75,
-      "top": 8.889,
-      "width": 8.833,
-      "height": 7.407,
-      "originX": 50.472,
-      "originY": 49.0
+      "left": 61.833,
+      "top": 8.741,
+      "width": 8.75,
+      "height": 7.556,
+      "originX": 50.0,
+      "originY": 50.0
     },
     {
       "name": "cloud-left",
       "src": "/lop/cay-ma-cloud-left.webp",
-      "left": 22.667,
+      "left": 22.417,
       "top": 13.185,
-      "width": 10.417,
-      "height": 7.407,
-      "originX": 52.0,
-      "originY": 49.0
+      "width": 11.083,
+      "height": 7.704,
+      "originX": 51.128,
+      "originY": 47.115
     },
     {
       "name": "cloud-right",
       "src": "/lop/cay-ma-cloud-right.webp",
-      "left": 62.333,
-      "top": 9.481,
-      "width": 7.75,
-      "height": 5.926,
+      "left": 62.417,
+      "top": 9.778,
+      "width": 7.583,
+      "height": 5.63,
       "originX": 50.0,
-      "originY": 51.25
+      "originY": 48.684
     }
   ],
   "nang-mua-gio": [
@@ -56,11 +56,11 @@
       "name": "cloud-patch",
       "src": "/lop/nang-mua-gio-cloud-patch.webp",
       "left": 38.667,
-      "top": 7.704,
+      "top": 7.556,
       "width": 24.333,
-      "height": 17.185,
+      "height": 17.333,
       "originX": 50.342,
-      "originY": 49.569
+      "originY": 50.0
     },
     {
       "name": "wind-patch",
@@ -68,9 +68,9 @@
       "left": 63.667,
       "top": 9.037,
       "width": 17.917,
-      "height": 22.519,
+      "height": 22.815,
       "originX": 50.233,
-      "originY": 50.329
+      "originY": 49.675
     },
     {
       "name": "rain-patch",
@@ -87,30 +87,30 @@
       "src": "/lop/nang-mua-gio-sun.webp",
       "left": 18.833,
       "top": 2.37,
-      "width": 14.417,
-      "height": 25.778,
-      "originX": 49.711,
-      "originY": 49.425
+      "width": 14.5,
+      "height": 25.926,
+      "originX": 49.425,
+      "originY": 49.143
     },
     {
       "name": "cloud",
       "src": "/lop/nang-mua-gio-cloud.webp",
       "left": 38.833,
-      "top": 8.593,
+      "top": 8.444,
       "width": 23.583,
-      "height": 15.259,
+      "height": 15.407,
       "originX": 51.237,
-      "originY": 50.0
+      "originY": 50.481
     },
     {
       "name": "wind",
       "src": "/lop/nang-mua-gio-wind.webp",
       "left": 64.25,
       "top": 10.074,
-      "width": 17.083,
-      "height": 20.444,
-      "originX": 49.268,
-      "originY": 50.362
+      "width": 17.167,
+      "height": 20.741,
+      "originX": 49.029,
+      "originY": 49.643
     },
     {
       "name": "rain",
@@ -118,22 +118,12 @@
       "left": 42.667,
       "top": 26.074,
       "width": 18.75,
-      "height": 18.815,
+      "height": 18.963,
       "originX": 51.175,
-      "originY": 49.213
+      "originY": 48.828
     }
   ],
   "gat": [
-    {
-      "name": "harvester",
-      "src": "/lop/gat-harvester.webp",
-      "left": 35.25,
-      "top": 30.222,
-      "width": 47.667,
-      "height": 52.741,
-      "originX": 49.913,
-      "originY": 49.86
-    },
     {
       "name": "reel-bg",
       "src": "/lop/gat-reel-bg.webp",
@@ -223,22 +213,22 @@
     {
       "name": "cloud-patch",
       "src": "/lop/den-tay-khach-cloud-patch.webp",
-      "left": 32.833,
-      "top": 6.667,
-      "width": 10.083,
-      "height": 9.185,
-      "originX": 50.826,
-      "originY": 46.774
+      "left": 32.5,
+      "top": 6.222,
+      "width": 10.417,
+      "height": 9.63,
+      "originX": 52.4,
+      "originY": 49.231
     },
     {
       "name": "cloud",
       "src": "/lop/den-tay-khach-cloud.webp",
-      "left": 33.417,
-      "top": 7.704,
-      "width": 8.917,
-      "height": 7.852,
-      "originX": 50.935,
-      "originY": 41.509
+      "left": 32.667,
+      "top": 7.111,
+      "width": 9.667,
+      "height": 8.444,
+      "originX": 54.741,
+      "originY": 45.614
     },
     {
       "name": "truck",

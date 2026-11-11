@@ -70,3 +70,19 @@
 - PR #50 (chuyển động chuyện hạt nếp) merge sau khi CI qua.
 - Chủ dự án xem bản xem thử, góp ý: (1) "sao các chặng lại gần nhau vậy" (các chấm trên con đường giữa các bước gần nhau quá); (2) "ảnh không chạy liên tục, chạy xong bị dừng" → chuyển động phải chạy liên tục khi cảnh còn trên màn hình, không dừng sau đoạn mở đầu; (3) bước 3: đầu máy gặt (guồng) quay như cánh quạt là được.
 - PR #52 (sửa theo 3 góp ý trên) merge sau khi CI qua (`c09739c`). PR #53 của session nền mascot (hero: cảnh tới mép phải, mặt trời nấp sau núi) merge sau khi CI qua (`1de630b`), khi chủ dự án hỏi "merge hết chưa".
+- 2026-11-11, chủ dự án góp ý (kèm ảnh chụp đầu trang và hạt gạo trên con đường):
+  - "tìm lý do LCP chậm đi" (LCP chậm 1/6 lần đo mà session nền mascot báo).
+  - "này nó bị mờ" (ảnh chụp: hạt gạo chạy trên con đường câu chuyện; cần kiểm tra cả ảnh nền đầu trang).
+  - "ảnh hành trình chạy 1 lần không chạy lại hả -> phải chạy lại 1 vòng như lúc đầu": khi xem lại, cảnh phải chạy lại cả vòng như lần đầu.
+  - Cảnh gặt lúa: "chỉ cần đầu máy gặt chuyển động thôi" (bỏ rung máy, chỉ guồng quay).
+  - "page load hơi lâu không biết có phải do resource nặng không" → rà lại dung lượng tài nguyên và thời gian tải.
+  - Việc mới: khi cuộn xuống, hình chạy trên con đường đổi theo giai đoạn: hạt mầm ở bước cấy, thóc sau khi gặt, hạt gạo sau khi xay xát…
+- Chủ dự án chọn: "chạy lại" là 8 cảnh chuyện hạt nếp (cảnh ra khỏi màn hình rồi quay lại thì chạy lại đoạn mở đầu từ đầu). Hình chạy trên con đường: 4 hình — bước 1–2 hạt mầm, bước 3–4 hạt thóc, bước 5–7 hạt gạo, bước 8 bát xôi bốc hơi. Đoạn đường đã đi qua đổi màu theo giai đoạn (chỉ dùng màu thương hiệu).
+- Kết quả đo: LCP không chậm. Lighthouse điện thoại 6 lần trên bản build ở máy: LCP 1,36–1,41 giây, luôn là chữ "Nếp Nhà". Điểm dao động 89–99 là do thời gian chặn luồng chính (TBT 83–428 ms), thay đổi theo tải của máy lúc đo. Trang nặng: 8 tranh cảnh tải ngay khi mở trang (trình duyệt tải trước ảnh `loading="lazy"` trong khoảng 2–3 màn hình), khoảng 390 KB.
+- Đã làm trên nhánh `feat/hanh-trinh-hat`: cảnh gặt chỉ guồng quay; cảnh chạy lại đoạn mở đầu khi quay lại; tranh cảnh 960 × 540 (744 KB còn 460 KB); hình chạy 4 giai đoạn, đường đổi màu theo giai đoạn, hình không còn mờ (nằm đúng điểm ảnh, không có lớp riêng).
+- Chủ dự án (ảnh chụp bước 8): "để đường đã đi màu trắng như vậy như chưa từng đi qua đó" → đoạn đường đã qua ở bước gạo và bát xôi không dùng màu trắng gạo; đổi sang màu nâu (`coat`).
+- Chủ dự án (ảnh tranh đêm bước 2): "tối thì 2 ông bà về nghỉ ngơi rồi nên để hình đồng lúa là được rồi" → tranh đêm bỏ hai người, chỉ còn đồng lúa dưới trăng (sửa bằng Nano Banana, giữ nguyên bố cục).
+- Chủ dự án hỏi ý kiến (ảnh chụp đoạn đường xanh ở bước 1): "màu của đường đi đậm dần kiểu giống tiến độ á ok không" → chờ chủ dự án chọn cách làm.
+- Chủ dự án chọn: đường đã đi qua là một dải màu liền cả đường, đậm dần như thanh tiến độ: xanh mạ nhạt → xanh mạ → vàng thóc → vàng đậm → nâu → nâu đậm; không còn chỗ đổi màu đột ngột ở điểm dừng.
+- Chủ dự án (ảnh đoạn cuối đường): "màu khác được không, lên mâm cơm, đóng gói rồi màu càng ngày càng đen không đúng lắm" → đoạn cuối đường không được tối dần tới gần đen; chọn màu khác cho các bước đóng gói, mâm cơm.
+- Chủ dự án chọn: đường đậm dần nhưng dừng ở nâu túi gạo (`coat`) ở cuối, không tới gần đen: xanh nhạt → xanh mạ → vàng thóc → vàng đậm → vàng nâu → nâu túi gạo.

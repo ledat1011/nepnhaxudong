@@ -7,7 +7,7 @@ Ngày: 2026-11-11. Chủ dự án đã duyệt cách làm và bảng chuyển đ
 8 cảnh của khối "Từ hạt lúa tới người dùng" (`#tu-hat-lua`) hiện là tranh WebP tĩnh, nét mực manhua (quyết định `0014`). Việc này làm cho mỗi cảnh có chuyển động nhỏ, mà vẫn giữ nguyên nét vẽ đã duyệt.
 
 Thành công nghĩa là:
-- Mỗi cảnh có một đoạn mở đầu 1–2 giây khi cảnh tới gần giữa màn hình. Sau đó cảnh chuyển động liên tục khi còn trên màn hình, không dừng sau đoạn mở đầu (chủ dự án, sau khi xem bản đầu: "ảnh không chạy liên tục, chạy xong bị dừng").
+- Mỗi cảnh có một đoạn mở đầu 1–2 giây khi cảnh tới gần giữa màn hình. Cảnh ra hẳn khỏi màn hình thì quay về khung đầu; khi quay lại (cuộn xuống hay cuộn lên) thì chạy lại đoạn mở đầu từ đầu (chủ dự án, 2026-11-11: "phải chạy lại 1 vòng như lúc đầu"). Sau đó cảnh chuyển động liên tục khi còn trên màn hình, không dừng sau đoạn mở đầu (chủ dự án, sau khi xem bản đầu: "ảnh không chạy liên tục, chạy xong bị dừng").
 - Nét mực và màu của tranh không đổi: phần động được cắt thẳng từ tranh gốc, hoặc vẽ bằng code (mưa, gió, hơi, trấu).
 - Trang đầu không nặng hơn. Lớp động chỉ tải khi cảnh sắp tới.
 - Người xem bật "giảm chuyển động" thì thấy tranh tĩnh như bây giờ, và không tải gì thêm.
@@ -26,7 +26,7 @@ Quy tắc chủ dự án đã chốt:
 |---|---|---|---|
 | 1. Cấy mạ | Gợn nước lan ra quanh tay người cấy | Mây trôi chậm, gợn nước nhẹ | Gợn nước: code. Mây: lớp cắt |
 | 2. Nắng, mưa, gió | Nắng chói, mây kéo tới, mưa rơi, gió quét, rồi trời chuyển sang đêm trăng | Cả vòng lặp lại: đom đóm trong đêm, trời sáng về lúa non, lúa lớn lại tới đêm | Ngày sang đêm: tranh đêm đã có, hiện dần lên trên tranh ngày. Mưa, gió, sao, lay lúa: code |
-| 3. Gặt lúa | Máy gặt rung mạnh hơn, guồng quay | Guồng quay liên tục như cánh quạt, bụi thóc bay, chim bay qua | Máy gặt, guồng: lớp cắt (guồng ghép lại từ 1/6 nguyên vẹn, quay sau bông lúa phía trước). Bụi, chim: code |
+| 3. Gặt lúa | Guồng quay một vòng | Chỉ guồng quay liên tục như cánh quạt; máy gặt đứng yên, không bụi, không chim (chủ dự án, 2026-11-11: "chỉ cần đầu máy gặt chuyển động thôi") | Guồng: lớp cắt (ghép lại từ 1/6 nguyên vẹn, quay sau bông lúa phía trước) |
 | 4. Sấy thóc | Than đỏ rực lên, quạt bắt đầu quay | Cánh quạt quay, mũi tên hơi nóng đi lên | Cánh quạt: lớp cắt hình tròn. Than rực, hơi nóng: code |
 | 5. Xay xát | Gạo trắng chảy xuống từ vòi | Trấu bay ra, gạo chảy | Code |
 | 6. Đóng gói | Nắp máy hút chân không ép xuống, thêm một túi lên chồng | Nắp ép lên xuống mỗi vài giây | Nắp, túi mới: lớp cắt |
@@ -40,10 +40,11 @@ Khi làm, vị trí chính xác của từng vật được đo trên tranh gố
 ### 4.1. Tài nguyên
 - **Nguồn:** bản phác đã duyệt `brand/story/phac/*.webp` (1600 px).
 - **Định nghĩa lớp:** `brand/story/layers.json`. Mỗi lớp ghi: cảnh, tên, hình cắt (chữ nhật, tròn hoặc đa giác, đo theo pixel của bản 1600 px), độ mờ mép, tâm quay nếu có. Nếu vật dời khỏi chỗ cũ, ghi thêm vùng tô bù bằng màu nền phẳng xung quanh. Chỉ dùng vùng tô bù khi nền ở đó là màu phẳng.
-- **Công cụ cắt:** `brand/tools/cut-story-layers.py` (Python, PIL). Script đọc `layers.json`, cắt từng lớp từ tranh gốc và thu về tỉ lệ của tranh trên web (1200 × 675). Script ghi:
+- **Công cụ cắt:** `brand/tools/cut-story-layers.py` (Python, PIL). Script đọc `layers.json`, cắt từng lớp từ bản phác thu về 1200 × 675 (đơn vị của mọi tọa độ). Script ghi:
+  - 8 tranh cảnh trên web, 960 × 540 (sau góp ý "page load hơi lâu", 2026-11-11: khung cảnh rộng tối đa 416 px nên 960 px vẫn nét trên màn hình tỉ lệ 2, nhẹ hơn khoảng 30 %);
   - mỗi lớp ra một file WebP có kênh trong suốt, trong `web/public/lop/`;
   - vị trí và kích thước của mọi lớp (theo phần trăm khung cảnh) ra `web/src/lib/story/scene-layers.json`.
-- **Tranh đêm bước 2:** `web/public/story/canh-2-nang-mua-gio-dem.webp` (1200 × 675), xuất từ `brand/story/phac/2-nang-mua-gio-dem.webp`.
+- **Tranh đêm bước 2:** chỉ có đồng lúa dưới trăng, không có người: ban đêm hai ông bà đã về nghỉ (chủ dự án, 2026-11-11). Khi trời chuyển sang đêm, hai người mờ dần cùng lúc tranh đêm hiện lên. File `web/public/story/canh-2-nang-mua-gio-dem.webp` (960 × 540, như tranh ngày), xuất từ `brand/story/phac/2-nang-mua-gio-dem.webp`.
 - **Giới hạn dung lượng:** mỗi lớp dưới 40 KB; tổng các lớp của một cảnh dưới 120 KB. Tranh lúa non và tranh đêm của bước 2 tính riêng: mỗi tranh dưới 120 KB. Test kiểm tra.
 - **Bước 2 (chủ dự án chọn thêm, 2026-11-11):** lúa lớn dần: tranh lúa non mới (Nano Banana Pro, cùng bố cục) → lúa xanh → lúa chín vàng → đêm trăng. Lúa xanh được đổi màu từ tranh gốc ngay trong trình duyệt (`web/src/lib/story/green-rice.ts`), vì làm thành file thì nặng như chính tranh gốc (khoảng 150 KB). Việc đổi màu chia thành từng dải 60 hàng điểm ảnh, nghỉ giữa các dải, để không làm khựng chuyển động khác đang chạy (làm một lần thì chặn trang 50–80 ms). Giọt mưa có sẵn trong tranh được cắt theo từng giọt (mỗi giọt một hình tròn nhỏ) và che đi lúc đầu, rồi hiện ra khi mây đã tới; thêm vài giọt rơi vẽ bằng code. Như vậy không có mưa trước khi có mây.
 
@@ -55,6 +56,7 @@ Khi làm, vị trí chính xác của từng vật được đo trên tranh gố
   - vòng lặp chạy thưa để đỡ tốn máy (`throttledLoop`);
   - cảnh ra khỏi màn hình thì dừng;
   - nút tạm dừng dừng mọi vòng lặp (`getLoopController`).
+- **Hình chạy trên con đường (chủ dự án, 2026-11-11):** hình đổi theo giai đoạn của hạt: hạt mầm (bước 1–2), hạt thóc (bước 3–4), hạt gạo (bước 5–7), bát xôi bốc hơi (bước 8). Hình đổi ở điểm dừng nơi giai đoạn đổi, phóng nhỏ rồi to lại trong 0,25 giây. Đoạn đường đã đi qua là một dải màu liền cả đường, đậm dần như thanh tiến độ (chủ dự án chọn): xanh mạ nhạt → xanh mạ → vàng thóc (bước 2 chuyển từ xanh sang vàng, như lúa chín) → vàng đậm dần → nâu túi gạo ở cuối đường. Không tối tới gần đen: tới đóng gói và mâm cơm mà đường gần đen thì không hợp (chủ dự án, 2026-11-11). Hình chạy có viền mỏng màu trắng gạo, để bát xôi nâu vẫn nổi trên đoạn đường nâu. Mỗi đoạn chuyển từ màu của điểm dừng mình sang màu của điểm dừng kế tiếp, nên không có chỗ đổi màu đột ngột. Không dùng trắng gạo: trên đường màu rơm, chủ dự án thấy "như chưa từng đi qua". Hình nằm đúng điểm ảnh của màn hình và không có lớp riêng, để không bị mờ.
 - **Phần thay đổi:**
   - Khi cảnh sắp tới, mã tạo một lớp phủ (`data-story-overlay`) trong khung: các ảnh lớp cắt đặt đúng vị trí theo `scene-layers.json`, và một SVG nhỏ cho hiệu ứng vẽ bằng code.
   - Hàm chuyển động của mỗi cảnh (`SCENE_MOTIONS`) nhận lớp phủ này thay cho SVG cũ, và trả về `{ intro, loop }` như trước.

@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { BRAND } from "@/lib/brand/colors";
 import { roadBend, roadPath } from "@/lib/story/road";
-import { STORY_SCENES } from "@/lib/story/scenes";
+import { RICE_STAGES, STORY_SCENES } from "@/lib/story/scenes";
 import { Hero } from "./Hero";
-import { RiceStory } from "./RiceStory";
+import { RiceStory, ROAD_SHADES } from "./RiceStory";
 
 const KEYS = {
   "cay-ma": "cayMa",
@@ -61,8 +61,42 @@ describe("RiceStory", () => {
     const grain = container.querySelector("[data-story-road-wrap] > [data-story-grain]") as HTMLElement;
     expect(grain).toHaveAttribute("aria-hidden", "true");
     expect(grain.getAttribute("class")).toContain("opacity-0");
-    // No layer for a grain that does not move: the motion code adds the hint.
     expect(grain.getAttribute("class")).not.toContain("will-change");
+    // One icon per stage of the rice, one over the other; the motion code shows one of them.
+    const icons = [...grain.querySelectorAll("svg[data-stage]")].map((svg) => svg.getAttribute("data-stage"));
+    expect(icons).toEqual([...RICE_STAGES]);
+  });
+
+  it("colours the road already passed as one band that grows darker down the road", () => {
+    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
+    const items = [...container.querySelectorAll("li[data-story-scene]")];
+    expect(ROAD_SHADES).toHaveLength(items.length + 1);
+    items.forEach((li, i) => {
+      const svg = li.querySelector("[data-story-road-passed] svg") as SVGSVGElement;
+      const gradient = svg.querySelector("linearGradient") as SVGLinearGradientElement;
+      const path = svg.querySelector("path") as SVGPathElement;
+      expect(path.getAttribute("stroke")).toBe(`url(#${gradient.id})`);
+      // From this stop's colour to the next one: the stretches join without a jump.
+      const stops = [...gradient.querySelectorAll("stop")].map((s) => s.getAttribute("stop-color"));
+      expect(stops).toEqual([ROAD_SHADES[i], ROAD_SHADES[i + 1]]);
+      expect(gradient.getAttribute("gradientUnits")).toBe("userSpaceOnUse");
+    });
+    const ids = items.map((li) => li.querySelector("linearGradient")?.id);
+    expect(new Set(ids).size).toBe(items.length);
+    // Green while the rice grows, gold when it is ripe, then step by step to brown at the end.
+    expect(ROAD_SHADES[1]).toBe(BRAND.sprout);
+    expect(ROAD_SHADES[2]).toBe(BRAND.grain);
+    // It ends at the warm brown of the rice bag, not near black.
+    expect(ROAD_SHADES.at(-1)).toBe(BRAND.coat);
+    expect(ROAD_SHADES).not.toContain(BRAND.earth);
+    const lightness = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((k) => parseInt(hex.slice(k, k + 2), 16));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    // From the ripe gold on, every stop is darker than the one before.
+    for (let k = 3; k < ROAD_SHADES.length; k++) {
+      expect(lightness(ROAD_SHADES[k])).toBeLessThan(lightness(ROAD_SHADES[k - 1]));
+    }
   });
 
   it("puts the scenes left and right of the road from 768 px, the first one on the left", () => {
@@ -102,7 +136,7 @@ describe("RiceStory", () => {
     items.forEach((li) => {
       const stage = li.querySelector("[data-story-stage]") as HTMLElement;
       const classes = stage.getAttribute("class") ?? "";
-      // A 16:9 stage (the 1200 x 675 sketch) as wide as the column; the fade softens its four
+      // A 16:9 stage (the 960 x 540 sketch) as wide as the column; the fade softens its four
       // edges, and it clips the moving parts that the motion code lays over the sketch.
       for (const name of ["story-scene-fade", "aspect-[16/9]", "w-full", "overflow-hidden", "relative"]) {
         expect(classes, name).toContain(name);
@@ -143,8 +177,8 @@ describe("RiceStory", () => {
     items.forEach((li, i) => {
       const img = li.querySelector("img");
       expect(img).toHaveAttribute("src", STORY_SCENES[i].src);
-      expect(img).toHaveAttribute("width", "1200");
-      expect(img).toHaveAttribute("height", "675");
+      expect(img).toHaveAttribute("width", "960");
+      expect(img).toHaveAttribute("height", "540");
       expect(img).toHaveAttribute("loading", "lazy");
       expect(img).toHaveAttribute("decoding", "async");
       expect(img).toHaveAttribute("alt", "");
