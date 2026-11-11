@@ -114,6 +114,31 @@ body {
   mask-image: linear-gradient(to bottom, var(--color-earth) 90%, transparent);
 }
 
+/*
+ * The picture of the home village (Hero.tsx, HERO_PICTURE in HeroScene.tsx). Its parent is a size
+ * container, so 100cqh is the panel height. The picture is as high as the panel (the mountain top
+ * is near its top edge, so it is never cut) and keeps its shape, so its width is
+ * 100cqh x 2400 / 1209. It is placed from the mascot, not from the panel edges: the right edge
+ * of the bag (0.5625 of the picture) goes 0.5rem left of the mascot, so the bag stands beside it
+ * and the mountain rises behind it. The mascot center (`--hero-mascot-x`) is the panel center on a
+ * phone, and from md the center of the right column: 50% + the container width / 4 + 0.125rem,
+ * from the grid in Hero.tsx.
+ * Where the picture does not reach a side of the panel (very wide or very narrow screens), its
+ * edges fade into the sky gradient behind it, so no cut line shows.
+ */
+.hero-picture {
+  --hero-picture-w: calc(100cqh * 2400 / 1209);
+  --hero-mascot-x: 50%;
+  position: absolute;
+  bottom: 0;
+  left: calc(var(--hero-mascot-x) - var(--hero-m) / 2 - 0.5rem - 0.5625 * var(--hero-picture-w));
+  width: var(--hero-picture-w);
+  max-width: none;
+  height: 100%;
+  -webkit-mask-image: linear-gradient(to right, transparent, var(--color-earth) 6%, var(--color-earth) 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, var(--color-earth) 6%, var(--color-earth) 92%, transparent);
+}
+
 .hero-fade-mascot {
   -webkit-mask-image: linear-gradient(to bottom, var(--color-earth) 92%, transparent);
   mask-image: linear-gradient(to bottom, var(--color-earth) 92%, transparent);
@@ -143,6 +168,11 @@ body {
       color-mix(in srgb, var(--color-earth) 30%, transparent) var(--hero-text-end),
       var(--color-earth) calc(var(--hero-text-end) + 10rem)
     );
+  }
+
+  /* From md the mascot is the center of the right column (see .hero-picture above). */
+  .hero-picture {
+    --hero-mascot-x: calc(50% + min(100%, 72rem) / 4 + 0.125rem);
   }
 }
 

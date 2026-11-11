@@ -1,15 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { Children, cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
 import { MASCOT_INNER, MASCOT_VIEWBOX } from "@/components/brand/generated/mascot";
-import {
-  HERO_CLOUD_STARTS,
-  HERO_CLOUDS,
-  HeroFieldStatic,
-  SUN_RAY,
-  SUN_RAY_ANGLES,
-} from "@/components/home/HeroScene";
+import { HERO_CLOUD_STARTS, HERO_CLOUDS, HERO_PICTURE, SUN_RAY, SUN_RAY_ANGLES } from "@/components/home/HeroScene";
 import { BRAND, ILLUSTRATION_ONLY_COLORS } from "@/lib/brand/colors";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { DEFAULT_LANG, isLang } from "@/lib/i18n/langs";
@@ -17,18 +10,23 @@ import { DEFAULT_LANG, isLang } from "@/lib/i18n/langs";
 const SIZE = { width: 1200, height: 630 };
 const { earth, coat, grain, straw, rice } = BRAND;
 const { sky, skyLight } = ILLUSTRATION_ONLY_COLORS;
+// Trắng gạo as the start of an rgba() color: the image renderer does not read 8-digit hex colors.
+const RICE_RGB = `rgba(${[1, 3, 5].map((i) => Number.parseInt(rice.slice(i, i + 2), 16)).join(", ")}`;
 
 /*
  * The share card follows the desktop hero (Hero.tsx): the brand name and tagline on the left, the
  * mascot standing on the bottom edge on the right, the sun behind its top-right corner, and the
- * field sized from the mascot width with the same factors as HeroScene.tsx.
+ * picture of the home village as high as the card, placed like `.hero-picture` in globals.css:
+ * the right edge of the bag 8 px left of the mascot.
  */
 const MASCOT = 440;
 const MASCOT_LEFT = SIZE.width - 80 - MASCOT;
-const MASCOT_CENTER = MASCOT_LEFT + MASCOT / 2;
-// HeroScene: the static field is three 1440 x 260 tiles, 14.19 x the mascot width.
-const FIELD_WIDTH = MASCOT * 14.19;
-const FIELD_HEIGHT = (FIELD_WIDTH * 260) / 4320;
+const PICTURE_HEIGHT = SIZE.height;
+const PICTURE_WIDTH = (PICTURE_HEIGHT * HERO_PICTURE.width) / HERO_PICTURE.height;
+const PICTURE_LEFT = MASCOT_LEFT - 8 - HERO_PICTURE.bagRight * PICTURE_WIDTH;
+// The text column ends before the bag, so no line of text runs over the picture's bag.
+const TEXT_LEFT = 80;
+const TEXT_WIDTH = 440;
 // HeroScene, md: the sun box is w-40 at a 18rem mascot, -top-10 and -right-6 from the mascot box.
 const SUN_SCALE = MASCOT / 288;
 const SUN = 160 * SUN_SCALE;
@@ -44,27 +42,9 @@ const MASCOT_SRC = `data:image/svg+xml;base64,${Buffer.from(
 
 // The site loads these fonts from Google at build time; the image renderer needs the files.
 const fontFile = (name: string) => readFile(join(process.cwd(), "assets/fonts", name));
-
-/**
- * The image renderer takes only plain svg elements inside <svg>, so this calls each function
- * component in the tree (they are plain functions of their props here, without hooks).
- */
-function inlineComponents(node: ReactNode): ReactNode {
-  if (Array.isArray(node)) return Children.map(node, inlineComponents);
-  if (!isValidElement(node)) return node;
-  const element = node as ReactElement<{ children?: ReactNode }>;
-  if (typeof element.type === "function") {
-    return inlineComponents((element.type as (props: object) => ReactNode)(element.props));
-  }
-  const { children, ...props } = element.props;
-  return { ...element, props: children === undefined ? props : { ...props, children: inlineComponents(children) } };
-}
-
-// The page sizes the field svg with CSS classes, which the image renderer does not read.
-const FIELD = cloneElement(inlineComponents(<HeroFieldStatic />) as ReactElement<{ width?: number; height?: number }>, {
-  width: FIELD_WIDTH,
-  height: FIELD_HEIGHT,
-});
+// A JPEG copy of the hero picture (public/hero/nen-que.webp): the image renderer takes PNG and
+// JPEG, not WebP.
+const pictureFile = () => readFile(join(process.cwd(), "assets/og", "nen-que.jpg"));
 
 type ImageProps = { params: Promise<{ lang: string }> };
 
@@ -78,10 +58,12 @@ export async function generateImageMetadata({ params }: ImageProps) {
 export default async function Image({ params }: ImageProps) {
   const { lang } = await params;
   const { site } = getDictionary(isLang(lang) ? lang : DEFAULT_LANG);
-  const [pacifico, quicksand] = await Promise.all([
+  const [pacifico, quicksand, picture] = await Promise.all([
     fontFile("Pacifico-Regular.ttf"),
     fontFile("Quicksand-700.ttf"),
+    pictureFile(),
   ]);
+  const pictureSrc = `data:image/jpeg;base64,${picture.toString("base64")}`;
 
   return new ImageResponse(
     (
@@ -95,6 +77,26 @@ export default async function Image({ params }: ImageProps) {
           backgroundImage: `linear-gradient(to bottom, ${sky} 0%, ${skyLight} 50%, ${rice} 95%)`,
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- the image renderer only takes <img> */}
+        <img
+          src={pictureSrc}
+          alt=""
+          width={PICTURE_WIDTH}
+          height={PICTURE_HEIGHT}
+          style={{ position: "absolute", left: PICTURE_LEFT, bottom: 0 }}
+        />
+        {/* Rice white over the text side, like the hero's side fade, so the text keeps its contrast. */}
+        <div
+          style={{
+            display: "flex",
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: SIZE.width,
+            height: SIZE.height,
+            backgroundImage: `linear-gradient(to right, ${RICE_RGB}, 0.6) 0px, ${RICE_RGB}, 0.5) ${TEXT_LEFT + TEXT_WIDTH - 60}px, ${RICE_RGB}, 0) ${TEXT_LEFT + TEXT_WIDTH + 60}px)`,
+          }}
+        />
         {HERO_CLOUDS.map((cloud, i) => (
           <svg
             key={cloud.body}
@@ -126,18 +128,6 @@ export default async function Image({ params }: ImageProps) {
           <circle cx="80" cy="80" r="38" fill={grain} stroke={earth} strokeWidth="2.5" />
           <path d="M57 72A25 25 0 0 1 72 56" fill="none" stroke={straw} strokeWidth="4" strokeLinecap="round" />
         </svg>
-        <div
-          style={{
-            display: "flex",
-            position: "absolute",
-            left: MASCOT_CENTER - FIELD_WIDTH / 2,
-            bottom: 0,
-            width: FIELD_WIDTH,
-            height: FIELD_HEIGHT,
-          }}
-        >
-          {FIELD}
-        </div>
         {/* eslint-disable-next-line @next/next/no-img-element -- the image renderer only takes <img> */}
         <img
           src={MASCOT_SRC}
@@ -151,14 +141,14 @@ export default async function Image({ params }: ImageProps) {
             display: "flex",
             flexDirection: "column",
             position: "absolute",
-            left: 80,
-            top: 170,
-            width: MASCOT_LEFT - 120,
+            left: TEXT_LEFT,
+            top: 150,
+            width: TEXT_WIDTH,
             color: earth,
           }}
         >
-          <div style={{ fontFamily: "Pacifico", fontSize: 136, lineHeight: 1.3 }}>{site.name}</div>
-          <div style={{ fontFamily: "Quicksand", fontSize: 44, fontWeight: 700, color: coat, marginTop: 8 }}>
+          <div style={{ fontFamily: "Pacifico", fontSize: 120, lineHeight: 1.3, whiteSpace: "nowrap" }}>{site.name}</div>
+          <div style={{ fontFamily: "Quicksand", fontSize: 38, fontWeight: 700, color: coat, marginTop: 8 }}>
             {site.tagline}
           </div>
         </div>

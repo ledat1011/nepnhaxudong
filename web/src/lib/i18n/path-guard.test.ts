@@ -46,6 +46,13 @@ describe("classifyPath", () => {
     expect(classifyPath("/journey")).toBe("not-found");
   });
 
+  it("lets the hero picture through, and nothing else under /hero", () => {
+    expect(classifyPath("/hero/nen-que.webp")).toBe("pass");
+    expect(classifyPath("/hero/a.svg")).toBe("not-found");
+    expect(classifyPath("/hero/a/b.webp")).toBe("not-found");
+    expect(classifyPath("/hero")).toBe("not-found");
+  });
+
   it("lets the press photos through, and nothing else under /press", () => {
     expect(classifyPath("/press/2025-nhi-chieu-nep-cai-hoa-vang.webp")).toBe("pass");
     expect(classifyPath("/press/a.svg")).toBe("not-found");

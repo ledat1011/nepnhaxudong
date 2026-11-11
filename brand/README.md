@@ -15,6 +15,8 @@
 | `logo/mascot-logo-head.svg` | Cả cái đầu của mascot giản lược (không bị bó lúa che), nguồn của `logo-icon.svg`. |
 | `story/people/*.svg` | 6 tư thế người cho các cảnh câu chuyện (`me-cay`, `nong-dan-cay`, `me-trao-tui`, `ba-lai-may`, `ba-canh-lo`, `anh2-be-bao`), trace từ ảnh Recraft đã duyệt bằng `tools/vectorize-pose.py`. Mỗi file `viewBox="0 0 256 256"`, đúng một nhóm `<g data-part="person">`, chân chạm đáy khung. `web/scripts/build-story.mjs` ghép chúng vào cảnh. |
 | `story/pose-fixes/` | Phần sửa tay của từng tư thế cho `vectorize-pose.py`: `<tu-the>.json` (lật ngang, đổi màu, xoá vùng) và hình vẽ tay đặt trên / dưới hình trace: `<tu-the>-face.svg` (nét mặt hợp với việc đang làm), `me-trao-tui-bag.svg` (túi 2 kg mảnh), `anh2-be-bao-sack.svg` (bao thóc trắng như bao trong cảnh). Hình vẽ tay phải nằm trong thư mục này. Giọt mồ hôi: nền Xanh trời nhạt, viền Nâu đất. |
+| `hero/tranh-mascot-ngang-16x9.webp`, `hero/tranh-mascot-vuong-1x1.webp` | Tranh mascot đứng riêng (quyết định `0016`): cô gái ôm bó lúa trước núi đá thật ở Duy Tân, bao 2 kg trong ruộng. Bản ngang cho ảnh bìa, banner (góc trái để trống cho chữ); bản vuông cho bài đăng. Vẽ bằng Nano Banana Pro; cô gái là bản AI vẽ lại mascot, bản in lớn nên đặt mascot SVG thật lên. |
+| `hero/anh-chia-se-cu-2026-11-11.png` | Ảnh chia sẻ link cũ (đồng lúa vẽ bằng code), lưu lại để quay lại được (quyết định `0016`, tag git `hero-cu-2026-11-11`). |
 | `tokens/tokens.json` | Nguồn gốc màu, font, các cặp chữ / nền hợp lệ. |
 | `tokens/tokens.css` | Biến CSS sinh từ `tokens.json` (`--color-*`, `--font-*`). |
 | `fonts/` | Pacifico, Quicksand 400 / 500 / 700 (giấy phép OFL). |
