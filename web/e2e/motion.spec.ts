@@ -986,11 +986,11 @@ test.describe("the rice story road", () => {
       );
     expect(await passedStroke(2)).toBe(BRAND.sprout.toUpperCase());
     expect(await passedStroke(4)).toBe(BRAND.grain.toUpperCase());
-    // At step 4 the marker shows a paddy grain, and only that icon.
+    // At step 5 (index 4, the mill) the marker shows a rice grain, and only that icon.
     const shownIcons = await page.$$eval("[data-story-grain] [data-stage]", (els) =>
       els.filter((el) => Number(getComputedStyle(el).opacity) > 0.5).map((el) => el.getAttribute("data-stage")),
     );
-    expect(shownIcons).toEqual(["paddy"]);
+    expect(shownIcons).toEqual(["rice"]);
 
     // Back up the page, the grain goes back up the road.
     const down = await grainY();
