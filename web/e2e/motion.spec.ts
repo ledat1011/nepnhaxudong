@@ -959,15 +959,19 @@ test.describe("the rice story road", () => {
       });
     const activeStop = () =>
       page.$$eval("[data-story-stop]", (els) => els.findIndex((el) => el.hasAttribute("data-active")));
+    const activeStops = () => page.locator("[data-story-stop][data-active]").count();
     await scrollToScene(page, 1);
     await page.waitForTimeout(1500);
     expect(await page.$eval("[data-story-grain]", (el) => getComputedStyle(el).opacity)).toBe("1");
     const first = await grainY();
     expect(await activeStop()).toBe(1);
+    // From 768 px the scenes overlap, and still only one stop is filled at a time.
+    expect(await activeStops()).toBe(1);
     await scrollToScene(page, 4);
     await page.waitForTimeout(1500);
     expect(await grainY()).toBeGreaterThan(first + 500);
     expect(await activeStop()).toBe(4);
+    expect(await activeStops()).toBe(1);
     // The road above the grain is darker: the passed layer of an earlier stretch is shown whole.
     const passed = await page.$eval(
       "li[data-story-scene]:nth-child(2) [data-story-road-passed]",

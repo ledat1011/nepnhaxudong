@@ -12,7 +12,10 @@ type ContactSectionProps = {
 const BUTTON_CLASS =
   "inline-flex min-h-11 items-center justify-center rounded-full bg-coat px-6 py-2 font-bold text-rice underline-offset-4 hover:underline hover:bg-earth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
 
-/** Contact by phone, Zalo and Messenger only: no form, no embedded map. */
+/**
+ * Contact by phone, Zalo and Messenger only: no form, no embedded map. The phone number is set
+ * large in the left column, so that column carries the main action next to the address card.
+ */
 export function ContactSection({ dict, contact }: ContactSectionProps) {
   const { phone, zalo, messenger, address, mapUrl, hours } = contact;
   const hasButtons = phone !== null || zalo !== null || messenger !== null;
@@ -24,34 +27,41 @@ export function ContactSection({ dict, contact }: ContactSectionProps) {
         <SectionHeading id="lien-he" title={dict.sections.contact} />
         <div data-reveal className="grid gap-8 md:grid-cols-2 md:items-start">
           {hasButtons && (
-            <ul className="flex flex-wrap gap-3">
+            <div>
+              <p className="max-w-md text-lg leading-relaxed">{dict.contact.intro}</p>
               {phone !== null && (
-                <li>
-                  <a href={telHref(phone)} className={BUTTON_CLASS}>
-                    {phone}
-                  </a>
-                </li>
+                <a
+                  href={telHref(phone)}
+                  className="mt-4 inline-flex min-h-11 items-center rounded text-3xl font-bold text-earth tabular-nums underline-offset-8 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat md:text-4xl"
+                >
+                  <span className="sr-only">{dict.contact.phone}: </span>
+                  {phone}
+                </a>
               )}
-              {zalo !== null && (
-                <li>
-                  <ZaloLink zalo={zalo} labels={dict.zalo} className={BUTTON_CLASS}>
-                    {dict.contact.zalo}
-                  </ZaloLink>
-                </li>
+              {(zalo !== null || messenger !== null) && (
+                <ul className="mt-6 flex flex-wrap gap-3">
+                  {zalo !== null && (
+                    <li>
+                      <ZaloLink zalo={zalo} labels={dict.zalo} className={BUTTON_CLASS}>
+                        {dict.contact.zalo}
+                      </ZaloLink>
+                    </li>
+                  )}
+                  {messenger !== null && (
+                    <li>
+                      <a
+                        href={messenger}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={BUTTON_CLASS}
+                      >
+                        {dict.contact.messenger}
+                      </a>
+                    </li>
+                  )}
+                </ul>
               )}
-              {messenger !== null && (
-                <li>
-                  <a
-                    href={messenger}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={BUTTON_CLASS}
-                  >
-                    {dict.contact.messenger}
-                  </a>
-                </li>
-              )}
-            </ul>
+            </div>
           )}
           {hasDetails && (
             <dl className="space-y-5 rounded-2xl bg-straw p-6">

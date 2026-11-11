@@ -65,4 +65,20 @@ describe("PressSection", () => {
     render(<PressSection lang="vi" dict={dict} items={ITEMS} />);
     expect(screen.getAllByRole("img", { name: dict.image.placeholder })).toHaveLength(2);
   });
+
+  it("lays a single article across the row from md, and keeps the grid for several", () => {
+    const { rerender } = render(<PressSection lang="vi" dict={dict} items={ITEMS.slice(0, 1)} />);
+    expect(screen.getByRole("link")).toHaveClass("md:flex-row");
+    rerender(<PressSection lang="vi" dict={dict} items={ITEMS} />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link).not.toHaveClass("md:flex-row");
+    }
+  });
+
+  it("says where the link goes and that it opens a new tab", () => {
+    render(<PressSection lang="vi" dict={dict} items={ITEMS.slice(0, 1)} />);
+    expect(screen.getByRole("link")).toHaveAccessibleName(
+      expect.stringContaining(`${dict.press.open} ${dict.press.newTab}`),
+    );
+  });
 });

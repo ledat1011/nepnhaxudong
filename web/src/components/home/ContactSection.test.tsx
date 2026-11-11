@@ -87,6 +87,13 @@ describe("ContactSection", () => {
   it("renders only the heading when every field is null", () => {
     renderContact(EMPTY);
     expect(screen.queryAllByRole("link")).toHaveLength(0);
+    expect(screen.queryByText(dict.contact.intro)).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2 })).toBeInTheDocument();
+  });
+
+  it("invites contact and names the large phone number for screen readers", () => {
+    renderContact(CONTACT);
+    expect(screen.getByText(dict.contact.intro)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: new RegExp(`^${dict.contact.phone}:\s*0000 000 000$`) })).toBeInTheDocument();
   });
 });

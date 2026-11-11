@@ -36,7 +36,7 @@ export function MobileMenu({ label, closeLabel, children }: MobileMenuProps) {
   }
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         ref={buttonRef}
         type="button"

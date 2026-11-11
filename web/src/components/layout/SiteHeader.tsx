@@ -17,7 +17,7 @@ type SiteHeaderProps = {
 };
 
 const LINK_CLASS =
-  "flex min-h-11 items-center whitespace-nowrap rounded px-2 font-medium text-earth md:text-sm lg:text-base hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
+  "flex min-h-11 items-center whitespace-nowrap rounded px-2 font-medium text-earth hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coat";
 
 export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderProps) {
   const home = homePath(lang);
@@ -34,7 +34,7 @@ export function SiteHeader({ lang, dict, nav, zalo, alternateHref }: SiteHeaderP
     <header className="sticky top-0 z-40 border-b border-straw bg-rice">
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-1 md:gap-3">
         <LogoLink href={home} name={dict.site.name} loadingLabel={dict.loading.page} />
-        <nav aria-label={dict.nav.label} className="hidden md:block">
+        <nav aria-label={dict.nav.label} className="hidden lg:block">
           <ul className="flex items-center gap-2">{items}</ul>
         </nav>
         <LanguageSwitch
