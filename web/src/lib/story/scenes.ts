@@ -9,11 +9,10 @@ export type SceneSlug =
   | "mam-com";
 
 /**
- * A scene picture: the approved flat sketch with manhua ink lines (decision 0014), a 1200 x 675
- * WebP with no background bleed. The layered SVG scenes in public/story/*.svg come back when they
- * are rebuilt from these sketches for motion.
+ * A scene picture: the approved flat sketch with manhua ink lines (decision 0014), a 960 x 540
+ * WebP with no background bleed, written by brand/tools/cut-story-layers.py.
  */
-export type StoryScene = { slug: SceneSlug; src: string; width: 1200; height: 675 };
+export type StoryScene = { slug: SceneSlug; src: string; width: 960; height: 540 };
 
 const SLUGS: readonly SceneSlug[] = [
   "cay-ma",
@@ -29,6 +28,6 @@ const SLUGS: readonly SceneSlug[] = [
 export const STORY_SCENES: readonly StoryScene[] = SLUGS.map((slug, i) => ({
   slug,
   src: `/story/canh-${i + 1}-${slug}.webp`,
-  width: 1200,
-  height: 675,
+  width: 960,
+  height: 540,
 }));

@@ -1,11 +1,13 @@
 """Cuts the moving parts of the rice story scenes into transparent WebP layers.
 
-Reads `brand/story/layers.json` and the scene pictures the page shows (`web/public/story/canh-*.webp`,
-1200 x 675), so every layer matches the page pixel for pixel. Writes:
+Reads `brand/story/layers.json` and the approved sketches (`brand/story/phac/*.webp`, 1600 px wide).
+The layers are cut from each sketch resized to 1200 x 675, the size all coordinates are in; the page
+places them in percent of the scene, so they line up with the smaller scene picture. Writes:
 
 - `web/public/lop/<slug>-<name>.webp`: one RGBA WebP per layer, cropped to its visible box (a
   folder of its own, one level deep, as the path guard of the site wants);
-- `web/public/story/canh-2-nang-mua-gio-{non,dem}.webp`: the young-rice and night pictures of step 2;
+- `web/public/story/canh-<n>-<slug>.webp`: the scene pictures, 960 x 540, and the young-rice and
+  night pictures of step 2 (`canh-2-nang-mua-gio-{non,dem}.webp`);
 - `web/src/lib/story/scene-layers.json`: where each layer sits, in percent of the scene.
 
 A layer entry in layers.json:
@@ -57,8 +59,15 @@ SKETCHES = ROOT / "brand" / "story" / "phac"
 # because as a file it would weigh as much as the day picture.
 YOUNG = (SKETCHES / "2-nang-mua-gio-non.webp", SCENES / "canh-2-nang-mua-gio-non.webp")
 NIGHT = (SKETCHES / "2-nang-mua-gio-dem.webp", SCENES / "canh-2-nang-mua-gio-dem.webp")
+# Sketches whose file name is not `<n>-<slug>.webp`.
+SKETCH_NAMES = {"nang-mua-gio": "2-nang-mua-gio-ngay"}
 
+# The size the layers are cut at, and the size of every coordinate in layers.json.
 WIDTH, HEIGHT = 1200, 675
+# The size of the pictures on the page. The scene is at most 416 CSS px wide (from 768 px) or about
+# 320 px (phone), so 960 px is sharp on 2x screens and on a 3x phone; 1200 px only added bytes
+# (about 30 % more for the 8 scenes, owner 2026-11-11: "page load hơi lâu").
+PAGE_WIDTH, PAGE_HEIGHT = 960, 540
 SLUGS = ["cay-ma", "nang-mua-gio", "gat", "say", "xay-xat", "dong-goi", "den-tay-khach", "mam-com"]
 # The difference from the background, per channel, below which a pixel is background and above
 # which it is fully the drawn part (matte layers).
@@ -198,10 +207,18 @@ def centre(entry: dict) -> tuple[float, float]:
     return (x0 + x1) / 2, (y0 + y1) / 2
 
 
-def cut_scene(slug: str, index: int, entries: list[dict]) -> list[dict]:
-    src = SCENES / f"canh-{index + 1}-{slug}.webp"
-    rgb = np.asarray(Image.open(src).convert("RGB"), dtype=np.float32)
-    assert rgb.shape[:2] == (HEIGHT, WIDTH), f"{src} is not {WIDTH} x {HEIGHT}"
+def sketch_of(slug: str) -> Path:
+    index = SLUGS.index(slug)
+    return SKETCHES / f"{SKETCH_NAMES.get(slug, f'{index + 1}-{slug}')}.webp"
+
+
+def scene_picture(slug: str) -> Path:
+    return SCENES / f"canh-{SLUGS.index(slug) + 1}-{slug}.webp"
+
+
+def cut_scene(slug: str, entries: list[dict]) -> list[dict]:
+    resized = Image.open(sketch_of(slug)).convert("RGB").resize((WIDTH, HEIGHT), Image.LANCZOS)
+    rgb = np.asarray(resized, dtype=np.float32)
     patches: list[dict] = []
     parts: list[dict] = []
     for entry in entries:
@@ -250,7 +267,7 @@ def cut_scene(slug: str, index: int, entries: list[dict]) -> list[dict]:
 
 
 def save_picture(img: Image.Image, path: Path) -> None:
-    img.convert("RGB").resize((WIDTH, HEIGHT), Image.LANCZOS).save(
+    img.convert("RGB").resize((PAGE_WIDTH, PAGE_HEIGHT), Image.LANCZOS).save(
         path, "WEBP", quality=PICTURE_QUALITY, method=6
     )
 
@@ -262,15 +279,17 @@ def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     for old in OUT_DIR.glob("*.webp"):
         old.unlink()
-    manifest = {slug: cut_scene(slug, SLUGS.index(slug), spec[slug]) for slug in SLUGS if slug in spec}
+    manifest = {slug: cut_scene(slug, spec[slug]) for slug in SLUGS if slug in spec}
     MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    # Resized like the day picture of the same scene, so they line up when one fades in.
-    for source, target in (YOUNG, NIGHT):
+    # The young-rice and night pictures are resized like the day picture of the same scene, so
+    # they line up when one fades in.
+    pictures = [(sketch_of(slug), scene_picture(slug)) for slug in SLUGS] + [YOUNG, NIGHT]
+    for source, target in pictures:
         save_picture(Image.open(source), target)
     for slug, layers in manifest.items():
         size = sum((OUT_DIR / Path(layer["src"]).name).stat().st_size for layer in layers)
         print(f"{slug}: {len(layers)} layers, {size // 1024} KB")
-    for _, target in (YOUNG, NIGHT):
+    for _, target in pictures:
         print(f"{target.name}: {target.stat().st_size // 1024} KB")
 
 

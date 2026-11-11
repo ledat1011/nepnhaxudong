@@ -102,7 +102,7 @@ describe("RiceStory", () => {
     items.forEach((li) => {
       const stage = li.querySelector("[data-story-stage]") as HTMLElement;
       const classes = stage.getAttribute("class") ?? "";
-      // A 16:9 stage (the 1200 x 675 sketch) as wide as the column; the fade softens its four
+      // A 16:9 stage (the 960 x 540 sketch) as wide as the column; the fade softens its four
       // edges, and it clips the moving parts that the motion code lays over the sketch.
       for (const name of ["story-scene-fade", "aspect-[16/9]", "w-full", "overflow-hidden", "relative"]) {
         expect(classes, name).toContain(name);
@@ -143,8 +143,8 @@ describe("RiceStory", () => {
     items.forEach((li, i) => {
       const img = li.querySelector("img");
       expect(img).toHaveAttribute("src", STORY_SCENES[i].src);
-      expect(img).toHaveAttribute("width", "1200");
-      expect(img).toHaveAttribute("height", "675");
+      expect(img).toHaveAttribute("width", "960");
+      expect(img).toHaveAttribute("height", "540");
       expect(img).toHaveAttribute("loading", "lazy");
       expect(img).toHaveAttribute("decoding", "async");
       expect(img).toHaveAttribute("alt", "");

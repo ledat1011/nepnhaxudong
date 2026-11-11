@@ -3,7 +3,7 @@ import { SCENE_LAYERS, STEP2_PICTURES, type SceneLayer } from "./scene-layers";
 import type { SceneSlug } from "./scenes";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-/** The scene pictures are 1200 x 675; the effects are drawn in the same units. */
+/** The units of the layer boxes and the drawn effects: the 1200 x 675 the layers are cut at. */
 export const SCENE_VIEWBOX = { width: 1200, height: 675 } as const;
 
 /** The moving parts of one scene, laid over its sketch. Built by `buildOverlay`. */
