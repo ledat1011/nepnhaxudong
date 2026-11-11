@@ -17,12 +17,16 @@
 - Chủ dự án: "sao lại thêm mấy chỏm lúa bên cạnh vậy" → 2 chỏm lúa cao hai bên bao là do prompt "lúa ôm quanh bao", nhưng vẽ cao và to hơn hẳn lúa ruộng nên nhìn như 2 bó hoa cắm thêm. Đề xuất: bỏ 2 chỏm này, để bao đứng trong ruộng, chỉ lúa ruộng bình thường che phần chân bao. Chờ chủ dự án đồng ý.
 - Chủ dự án: "Bỏ đi" → bỏ 2 chỏm lúa cao hai bên bao; chỉ lúa ruộng bình thường che chân bao.
 - Đã làm `b5-tranh-ngang-16x9-sua`, `b5-tranh-vuong-1x1` (khoảng 0,27 USD; tổng phần nền mascot khoảng 1,6 USD). Bản ngang: đã bỏ 2 chỏm lúa; Nano Banana viết sai thành "ĐẠO NẾP" nên ghép lại vùng logo và chữ đúng từ bản `b4` (2 ảnh trùng khớp từng điểm ảnh). Bản vuông: chữ đúng; lúa trước bao là hàng lúa gần, cao bằng hàng lúa bên phải nên không nổi lên như bản ngang. Đã gửi, chờ chủ dự án xem.
+- Chủ dự án (kèm ảnh cắt cái bao ở bản ngang): "nhìn bịch gạo như vẽ sơn, nhìn không thật lắm, vẽ lại" → vẽ lại bao cho giống thật: nilon hút chân không bó sát hạt gạo (mặt sần), nilon bóng, nhãn in sắc nét như bao thật. Cách làm: vẽ riêng bao cỡ lớn (chữ ít sai hơn), soát chữ, tách nền, rồi tôi tự ghép bao vào tranh (không để AI vẽ lại bao trong cảnh, để chữ giữ đúng).
+- Đã thử: vẽ bao giống ảnh chụp thật (`bao-that-2`, chữ đúng), tách nền, ghép vào 2 tranh, rồi cho Nano Banana thêm lúa trước chân bao và bóng đổ (`c1-*`). Khoảng 0,8 USD cho lần thử này; tổng phần nền mascot khoảng 2,4 USD.
+- Chủ dự án: "nhìn fake quá, giữ ảnh cũ đi" → bỏ hướng bao giống ảnh chụp (bao thật trong tranh vẽ nhìn như dán vào). Giữ 2 tranh cũ: `b5-tranh-ngang-16x9-sua` và `b5-tranh-vuong-1x1` (bao vẽ cùng nét với tranh, chữ đúng như bao thật, không có "Hạt Ngọc Xứ Đông").
 
 ## Quyết định
 - Chủ dự án chọn hướng B "Hai vai riêng": hero trang chủ giữ cảnh núi b2, không có bao; tranh mascot riêng (ảnh bìa, ảnh chia sẻ link, banner) dùng cùng cảnh, thêm một bao 2 kg đứng trên bờ ruộng cạnh cô gái — hero gọn, khối Sản phẩm ngay bên dưới đã có ảnh bao thật. Bao phải có tên sản phẩm như bao thật (chủ dự án, xem mục Phản hồi); chữ do Nano Banana viết phải được soát từng dấu trước khi gửi.
 
 ## Còn mở
-- Chờ chủ dự án xem 2 tranh mascot riêng của hướng B.
+- 2 tranh mascot riêng đã chốt là bản xem thử (`b5-*`, để ngoài repo, trong scratchpad của session này). Chưa đưa vào web hay ảnh chia sẻ link. Khi làm bản thật: đặt mascot SVG thật của thương hiệu thay cho cô gái do AI vẽ lại; logo tròn trên bao là AI vẽ, không giống logo thật của bao (cần file logo thật nếu muốn đúng).
+- Hero trang chủ theo hướng B dùng cảnh núi b2, không có bao; việc dựng núi vào hero thuộc nhánh `feat/hero-nui-may` của session vẽ núi.
 
 ## Đã làm
 - Lần gọi Nano Banana đầu bị từ chối (HTTP 429, dự án Gemini chạm giới hạn chi tiêu hằng tháng). Chủ dự án: "Đã nâng, vẽ tiếp".
