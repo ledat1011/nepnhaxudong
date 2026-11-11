@@ -51,3 +51,9 @@
 - Đã làm (`3c2327a`): chân trang có 2 ảnh giấy nhỏ dưới logo ("OCOP 3 sao / Công nhận năm 2024", "Đủ điều kiện ATTP / Hiệu lực đến 12/2027"), bấm mở popup; 2 ảnh giấy 2024 làm giống bản scan, dùng chung cho mốc 2024. Xem ở 375 px và 1280 px.
 - Chủ dự án xem và nói "Looks good, merge" → PR #41 merge (`defdc2b`) sau khi mọi check CI qua (repo không bật auto-merge).
 - Làm giấy 2021 giống bản scan như 2 giấy 2024: chủ dự án nói "Not now" → chưa làm.
+- Chủ dự án gửi ảnh núi đá thật sau cánh đồng lúa ở quê (ảnh Google Street View, có dây điện) và ảnh hero hiện tại → muốn thêm núi phía sau đồng lúa ở hero, mây ở trên và bay qua đỉnh núi, phong cách manhua (như quyết định `0014`), dùng Nano Banana để vẽ. Ảnh gốc không đưa vào repo.
+- Chủ dự án: "gửi ảnh trước để tôi coi thôi" → vẽ bản xem thử bằng Nano Banana và gửi trước, chưa sửa web.
+- Đã vẽ 3 bản xem thử bằng Nano Banana Pro (21:9, 2K, khoảng 0,4 USD): A mây manhua + dải sương qua đỉnh, B giữ 3 mây cũ + sương mỏng, C biển mây cuộn quanh núi (kiểu thủy mặc). Chờ chủ dự án chọn. Chưa sửa web.
+- Chủ dự án chọn bản B (giữ 3 mây cũ, sương mỏng qua núi), nhưng "sao cho chân núi cao vậy" → chân núi phải nằm sát đồng lúa như ảnh thật, bỏ gò đất màu be dưới chân núi.
+- Đã vẽ lại bản B (`b2`): chân núi nằm sát đồng lúa, bỏ gò đất be. Nano Banana tự thêm 2 bụi tre ở 2 mép và vẽ nhà làng chi tiết hơn. Chờ chủ dự án xem.
+- 2026-11-11, chủ dự án: "dùng UI skill review lại landing page coi ổn chưa (animation, bố cục, background)" → đã rà bằng taste-skill và web-interface-guidelines trên bản build production, chưa sửa gì. Kết quả: hiệu ứng và nền ổn; lỗi thật: ở 768–830 px menu đầu trang tràn, trang cuộn ngang; bố cục: khối Quy trình trên máy tính trống nửa ngang, Báo chí 1 thẻ trống 2/3, Liên hệ lặp chân trang, ảnh bìa lặp giữa Báo chí/Hành trình và Câu chuyện. Chờ chủ dự án chọn việc cần sửa.
