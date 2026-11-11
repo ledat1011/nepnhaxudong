@@ -83,11 +83,12 @@ describe("RiceStory", () => {
     });
     const ids = items.map((li) => li.querySelector("linearGradient")?.id);
     expect(new Set(ids).size).toBe(items.length);
-    // Green while the rice grows, gold when it is ripe, brown from the mill on, darkest at the end.
+    // Green while the rice grows, gold when it is ripe, then step by step to brown at the end.
     expect(ROAD_SHADES[1]).toBe(BRAND.sprout);
     expect(ROAD_SHADES[2]).toBe(BRAND.grain);
-    expect(ROAD_SHADES[4]).toBe(BRAND.coat);
-    expect(ROAD_SHADES.at(-1)).toBe(BRAND.earth);
+    // It ends at the warm brown of the rice bag, not near black.
+    expect(ROAD_SHADES.at(-1)).toBe(BRAND.coat);
+    expect(ROAD_SHADES).not.toContain(BRAND.earth);
     const lightness = (hex: string) => {
       const [r, g, b] = [1, 3, 5].map((k) => parseInt(hex.slice(k, k + 2), 16));
       return 0.2126 * r + 0.7152 * g + 0.0722 * b;

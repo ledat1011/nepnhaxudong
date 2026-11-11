@@ -37,20 +37,21 @@ function sceneText(dict: Dictionary, slug: SceneSlug): { title: string; text: st
  * The colours of the road already passed, at each stop and at the end of the road: one band
  * that grows darker down the whole road, like a progress bar (owner, 2026-11-11). It goes
  * from light young-rice green, through the gold of the ripe rice (step 2 ripens from green to
- * gold), to brown from the mill on, and dark brown at the end. Each stretch blends from its own
- * stop's colour to the next one, so no colour changes at once. The colours between the brand
- * colours are their even mixes.
+ * gold), and from the gold step by step to the brown of the rice bag at the table. It stops at
+ * that warm brown: a road that went on to near black made the bag and the meal look gloomy
+ * (owner, 2026-11-11). Each stretch blends from its own stop's colour to the next one, so no
+ * colour changes at once. The colours between gold and brown are their even mixes.
  */
 export const ROAD_SHADES = [
   ILLUSTRATION_ONLY_COLORS.leafLight,
   BRAND.sprout,
   BRAND.grain,
-  "#B27E33", // grain and coat, half and half
+  "#CC9538", // 1/6 of the way from grain to coat
+  "#BF8936", // 2/6
+  "#B27E33", // 3/6
+  "#A57230", // 4/6
+  "#98662E", // 5/6
   BRAND.coat,
-  "#7B4F27", // coat, a quarter of the way to earth
-  "#6B4323", // coat and earth, half and half
-  "#5A381E", // three quarters of the way to earth
-  BRAND.earth,
 ] as const;
 
 
@@ -133,7 +134,12 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
             className="pointer-events-none absolute left-0 top-0 z-20 size-8 opacity-0"
           >
             {RICE_STAGES.map((stage) => (
-              <StageIcon key={stage} stage={stage} className="absolute inset-0 block opacity-0" />
+              // A thin rice-white rim, so the brown bowl still shows on the brown end of the road.
+              <StageIcon
+                key={stage}
+                stage={stage}
+                className="absolute inset-0 block opacity-0 [filter:drop-shadow(0_0_1px_var(--color-rice))_drop-shadow(0_0_1px_var(--color-rice))]"
+              />
             ))}
           </span>
           <ol data-story-list role="list">

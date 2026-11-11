@@ -979,7 +979,7 @@ test.describe("the rice story road", () => {
     );
     expect(IDENTITY).toContain(passed);
     // The road passed is one band that grows darker down the road: step 2 goes from green to
-    // the gold of the ripe rice, step 4 from gold to brown.
+    // the gold of the ripe rice, and the last stretch ends at the brown of the rice bag.
     const passedShades = (step: number) =>
       page.$eval(`li[data-story-scene]:nth-child(${step}) [data-story-road-passed] svg`, (svg) => {
         const id = svg.querySelector("path")?.getAttribute("stroke")?.match(/^url\(#(.+)\)$/)?.[1];
@@ -987,7 +987,7 @@ test.describe("the rice story road", () => {
         return [...(gradient?.querySelectorAll("stop") ?? [])].map((s) => s.getAttribute("stop-color")?.toUpperCase());
       });
     expect(await passedShades(2)).toEqual([BRAND.sprout.toUpperCase(), BRAND.grain.toUpperCase()]);
-    expect((await passedShades(4))[1]).toBe(BRAND.coat.toUpperCase());
+    expect((await passedShades(8))[1]).toBe(BRAND.coat.toUpperCase());
     // At step 5 (index 4, the mill) the marker shows a rice grain, and only that icon.
     const shownIcons = await page.$$eval("[data-story-grain] [data-stage]", (els) =>
       els.filter((el) => Number(getComputedStyle(el).opacity) > 0.5).map((el) => el.getAttribute("data-stage")),
