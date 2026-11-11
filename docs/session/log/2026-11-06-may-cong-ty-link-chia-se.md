@@ -87,3 +87,4 @@
 - Chủ dự án (ảnh đoạn cuối đường): "màu khác được không, lên mâm cơm, đóng gói rồi màu càng ngày càng đen không đúng lắm" → đoạn cuối đường không được tối dần tới gần đen; chọn màu khác cho các bước đóng gói, mâm cơm.
 - Chủ dự án chọn: đường đậm dần nhưng dừng ở nâu túi gạo (`coat`) ở cuối, không tới gần đen: xanh nhạt → xanh mạ → vàng thóc → vàng đậm → vàng nâu → nâu túi gạo.
 - Chủ dự án merge PR #55 (`6108d2e`): "đã merge".
+- Chủ dự án báo lỗi: mở link chia sẻ có tham số (`/vi?zarsrc=30&utm_source=zalo&...`), bấm "Chuyện hạt nếp" trên thanh menu → địa chỉ đổi thành `/vi#tu-hat-lua#tu-hat-lua` nhưng trang không cuộn tới khối đó; "bấm lần 2 mới được" → lần bấm đầu phải cuộn ngay.
