@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { afterEach, describe, expect, it } from "vitest";
-import { motionDenTayKhach } from "./den-tay-khach";
+import { motionDenTayKhach, WHEEL_TURN_S } from "./den-tay-khach";
 import { testOverlay } from "./test-overlay";
 
 const num = (el: Element, prop: string) => Number(gsap.getProperty(el, prop));
@@ -10,17 +10,25 @@ afterEach(() => {
 });
 
 describe("motionDenTayKhach", () => {
-  it("starts with the wheels turned and rolls them to a stop", () => {
+  it("turns the wheels at one steady speed, anticlockwise, through the intro and the loop", () => {
     const overlay = testOverlay("den-tay-khach");
     const motion = motionDenTayKhach(gsap, overlay)!;
-    for (const name of ["wheel-front", "wheel-back"]) {
-      expect(num(overlay.parts[name], "rotation"), name).toBeCloseTo(120, 1);
+    const wheels = [overlay.parts["wheel-front"], overlay.parts["wheel-back"]];
+    const speed = 360 / WHEEL_TURN_S;
+    const introS = motion.intro.duration();
+    expect(introS).toBeLessThanOrEqual(1.7);
+    for (const t of [0, introS / 2]) {
+      motion.intro.time(t);
+      for (const wheel of wheels) expect(num(wheel, "rotation")).toBeCloseTo(speed * (introS - t), 1);
     }
     motion.intro.progress(1);
-    for (const name of ["wheel-front", "wheel-back"]) {
-      expect(num(overlay.parts[name], "rotation"), name).toBeCloseTo(0, 1);
+    for (const wheel of wheels) expect(num(wheel, "rotation")).toBeCloseTo(0, 1);
+    const loop = motion.loop!;
+    for (const t of [1, 4, 9]) {
+      loop.time(t);
+      for (const wheel of wheels) expect(num(wheel, "rotation")).toBeCloseTo(-speed * t, 1);
     }
-    expect(motion.intro.duration()).toBeLessThanOrEqual(1.7);
+    expect((speed * loop.duration()) % 360).toBeCloseTo(0, 3);
   });
 
   it("bounces the van and its wheels together, by a few pixels", () => {
@@ -40,21 +48,32 @@ describe("motionDenTayKhach", () => {
     expect(deepest).toBeLessThanOrEqual(3);
   });
 
-  it("moves only the cloud in the loop, and its start and end look the same", () => {
+  it("drifts the cloud and keeps the engine running in the loop; start and end look the same", () => {
     const overlay = testOverlay("den-tay-khach");
     const { intro, loop } = motionDenTayKhach(gsap, overlay)!;
     intro.progress(1);
-    const { cloud } = overlay.parts;
-    const targets = loop!.getChildren(true, true, false).flatMap((t) => t.targets());
-    expect(new Set(targets)).toEqual(new Set([cloud]));
+    const { cloud, truck } = overlay.parts;
+    const wheels = [overlay.parts["wheel-front"], overlay.parts["wheel-back"]];
     expect(loop!.duration()).toBeCloseTo(10, 1);
 
-    loop!.totalTime(0);
-    const start = num(cloud, "x");
+    let shake = 0;
+    for (let t = 0.05; t < loop!.duration(); t += 0.05) {
+      loop!.time(t);
+      const y = num(truck, "y");
+      for (const wheel of wheels) expect(num(wheel, "y")).toBeCloseTo(y, 3);
+      shake = Math.max(shake, Math.abs(y));
+    }
+    // A small idle shake, not a bounce.
+    expect(shake).toBeGreaterThan(0.3);
+    expect(shake).toBeLessThanOrEqual(1);
+
+    loop!.totalTime(0.0001);
+    const start = [num(cloud, "x"), num(truck, "y")];
     loop!.totalTime(5);
-    expect(num(cloud, "x") - start).toBeCloseTo(9, 1);
+    expect(num(cloud, "x") - start[0]).toBeCloseTo(9, 1);
     loop!.totalTime(loop!.duration() - 1e-4);
-    expect(num(cloud, "x")).toBeCloseTo(start, 2);
-    expect(start).toBe(0);
+    expect(num(cloud, "x")).toBeCloseTo(start[0], 2);
+    expect(num(truck, "y")).toBeCloseTo(start[1], 2);
+    expect(start[0]).toBeCloseTo(0, 2);
   });
 });

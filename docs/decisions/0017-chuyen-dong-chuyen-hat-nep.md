@@ -10,6 +10,7 @@ Ngày: 2026-11-11. Người quyết định: chủ dự án.
 - Mỗi cảnh có đoạn mở đầu khi cảnh tới gần giữa màn hình, rồi chuyển động nhỏ lặp lại khi cảnh còn trên màn hình. Cảnh ra khỏi màn hình thì dừng. Nút tạm dừng dừng tất cả. Người xem bật "giảm chuyển động" thì chỉ thấy tranh tĩnh.
 - Máy gặt và xe chở gạo chỉ rung hoặc quay bánh tại chỗ, không chạy ngang. Người trong tranh đứng yên.
 - Bước 2: lúa lớn dần từ lúa non (tranh mới vẽ bằng Nano Banana Pro, cùng bố cục) qua lúa xanh (đổi màu từ bản phác, làm trong trình duyệt) tới lúa chín vàng, qua nắng, mưa, gió, rồi sang đêm trăng. Giọt mưa có sẵn trong tranh chỉ hiện khi mây đã tới (lớp `rain` cắt theo từng giọt).
+- Sau khi xem bản đầu (2026-11-11), chủ dự án muốn chuyển động chạy liên tục: bước 2 lặp cả vòng ngày-đêm, guồng máy gặt quay liên tục như cánh quạt, bánh xe chở gạo quay đều tại chỗ. Các chặng trên con đường giãn ra: từ 768 px mỗi bước chồng lên bước trước 4rem thay vì 10rem (khoảng 340 px giữa hai chặng thay vì 250 px).
 - Công cụ: `brand/tools/cut-story-layers.py` đọc `brand/story/layers.json` và ghi lớp vào `web/public/lop/`.
 - Xóa đường cũ: cảnh SVG tách lớp, script `story:build`, mã nhúng SVG, công cụ trace người `vectorize-pose.py`, các tư thế người và phần sửa tay của chúng.
 

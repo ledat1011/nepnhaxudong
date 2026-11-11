@@ -133,6 +133,46 @@
       "height": 52.741,
       "originX": 49.913,
       "originY": 49.86
+    },
+    {
+      "name": "reel-bg",
+      "src": "/lop/gat-reel-bg.webp",
+      "left": 70.917,
+      "top": 54.519,
+      "width": 11.25,
+      "height": 20.0,
+      "originX": 49.63,
+      "originY": 49.63
+    },
+    {
+      "name": "reel",
+      "src": "/lop/gat-reel.webp",
+      "left": 70.917,
+      "top": 54.519,
+      "width": 11.167,
+      "height": 19.852,
+      "originX": 50.0,
+      "originY": 50.0
+    },
+    {
+      "name": "reel-front",
+      "src": "/lop/gat-reel-front.webp",
+      "left": 70.667,
+      "top": 65.185,
+      "width": 12.5,
+      "height": 10.074,
+      "originX": 52.667,
+      "originY": 38.971
+    },
+    {
+      "name": "reel-arm",
+      "src": "/lop/gat-reel-arm.webp",
+      "left": 70.0,
+      "top": 58.074,
+      "width": 7.583,
+      "height": 8.296,
+      "originX": 47.802,
+      "originY": 46.429
     }
   ],
   "say": [

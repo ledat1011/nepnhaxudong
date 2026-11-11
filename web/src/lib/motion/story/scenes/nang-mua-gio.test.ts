@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { afterEach, describe, expect, it } from "vitest";
-import { motionNangMuaGio } from "./nang-mua-gio";
+import { motionNangMuaGio, NIGHT_S } from "./nang-mua-gio";
 import { testOverlay } from "./test-overlay";
 
 const num = (el: Element, prop: string) => Number(gsap.getProperty(el, prop));
@@ -167,5 +167,41 @@ describe("motionNangMuaGio", () => {
     motion.intro.progress(1);
     expect(num(young, "opacity")).toBe(0);
     expect(num(night, "opacity")).toBe(1);
+  });
+
+  it("goes round and round: night, dawn on the young rice, the day again, and night", () => {
+    const { overlay, motion } = build();
+    const { young, green, night, cloud, rain } = overlay.parts;
+    motion.intro.progress(1);
+    const loop = motion.loop!;
+    // The loop starts and ends at night, so its seam does not show.
+    loop.time(0.01);
+    expect(num(night, "opacity")).toBe(1);
+    loop.time(loop.duration() - 1e-4);
+    expect(num(night, "opacity")).toBeCloseTo(1, 2);
+    // Dawn: the night has gone and the young rice is back, under an empty sky.
+    loop.time(NIGHT_S + 1.3);
+    expect(num(night, "opacity")).toBeLessThan(0.05);
+    expect(num(young, "opacity")).toBe(1);
+    expect(num(green, "opacity")).toBe(1);
+    expect(num(cloud, "opacity")).toBeLessThan(0.05);
+    expect(num(rain, "opacity")).toBe(0);
+    // Later the same day plays again: the young rice turns green, then gold.
+    loop.time(NIGHT_S + 1.2 + 4.2);
+    expect(num(young, "opacity")).toBeLessThan(0.05);
+    expect(num(green, "opacity")).toBe(1);
+    expect(num(cloud, "opacity")).toBe(1);
+    // A day and a night take at most about 15 s.
+    expect(loop.duration()).toBeLessThanOrEqual(15);
+  });
+
+  it("keeps the fireflies dark by day in the loop", () => {
+    const { motion, fireflies } = build();
+    motion.intro.progress(1);
+    const loop = motion.loop!;
+    for (let t = NIGHT_S; t < loop.duration(); t += 0.25) {
+      loop.time(t);
+      for (const dot of fireflies) expect(num(dot, "opacity")).toBe(0);
+    }
   });
 });

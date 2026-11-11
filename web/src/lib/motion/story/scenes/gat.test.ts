@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { afterEach, describe, expect, it } from "vitest";
-import { BIRDS_FROM_X, BIRDS_TO_X, GAT_LOOP_S, motionGat } from "./gat";
+import { BIRDS_FROM_X, BIRDS_TO_X, GAT_LOOP_S, motionGat, REEL_TURN_S } from "./gat";
 import { testOverlay } from "./test-overlay";
 
 const ALLOWED = new Set(["x", "y", "rotation", "scale", "scaleX", "scaleY", "opacity"]);
@@ -118,5 +118,50 @@ describe("motionGat", () => {
     const overlay = testOverlay("gat", ["harvester"]);
     expect(motionGat(gsap, overlay)).toBeNull();
     expect(overlay.effects.childElementCount).toBe(0);
+  });
+
+  it("turns the reel clockwise all the time, at one speed, through the intro and the loop", () => {
+    const { overlay, motion } = build();
+    const reel = overlay.parts.reel;
+    const speed = 360 / REEL_TURN_S;
+    // Like a fan: about one turn in 1 to 2 s.
+    expect(REEL_TURN_S).toBeGreaterThanOrEqual(1);
+    expect(REEL_TURN_S).toBeLessThanOrEqual(2);
+    motion.intro.time(0.5);
+    expect(num(reel, "rotation")).toBeCloseTo(speed * 0.5, 1);
+    const loop = motion.loop!;
+    let last = -1;
+    for (let t = 0.25; t <= GAT_LOOP_S; t += 0.25) {
+      loop.time(t);
+      const rotation = num(reel, "rotation");
+      expect(rotation).toBeGreaterThan(last);
+      expect(rotation).toBeCloseTo(speed * t, 1);
+      last = rotation;
+    }
+    // Whole turns per loop, so the seam does not show.
+    expect((speed * GAT_LOOP_S) % 360).toBeCloseTo(0, 3);
+  });
+
+  it("shakes the reel, its background, the rice in front and the arm with the harvester", () => {
+    const { overlay, motion, harvester } = build();
+    const group = ["reel-bg", "reel", "reel-front", "reel-arm"].map((name) => overlay.parts[name]);
+    for (const t of [0.1, 0.3, 0.6, 0.9]) {
+      motion.intro.time(t);
+      for (const el of group) {
+        expect(num(el, "x")).toBeCloseTo(num(harvester, "x"), 3);
+        expect(num(el, "y")).toBeCloseTo(num(harvester, "y"), 3);
+      }
+    }
+    for (const t of [0.4, 2.2, 7.1]) {
+      motion.loop!.time(t);
+      for (const el of group) expect(num(el, "y")).toBeCloseTo(num(harvester, "y"), 3);
+    }
+  });
+
+  it("leaves the still sketch when a reel layer is missing", () => {
+    for (const name of ["reel-bg", "reel", "reel-front", "reel-arm"]) {
+      expect(motionGat(gsap, testOverlay("gat", [name])), name).toBeNull();
+      document.body.innerHTML = "";
+    }
   });
 });
