@@ -33,8 +33,9 @@ export function HeroPicture({ behind }: { behind?: ReactNode }) {
     picture.srcset = srcSet;
     picture.src = src;
 
+    let decoded = false;
     const draw = () => {
-      if (!picture.complete || picture.naturalWidth === 0) return;
+      if (!decoded) return;
       const box = canvas.getBoundingClientRect();
       const density = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.round(box.width * density);
@@ -45,11 +46,21 @@ export function HeroPicture({ behind }: { behind?: ReactNode }) {
       canvas.getContext("2d")?.drawImage(picture, 0, 0, width, height);
     };
 
-    picture.addEventListener("load", draw);
+    // decode() decodes the picture off the main thread; drawImage on a picture that is only
+    // loaded would decode it on the main thread, in one long task. If the picture does not load,
+    // decode() rejects and the canvas stays empty: the sky gradient behind it is enough.
+    let active = true;
+    picture
+      .decode()
+      .then(() => {
+        decoded = true;
+        if (active) draw();
+      })
+      .catch(() => {});
     const resize = new ResizeObserver(draw);
     resize.observe(canvas);
     return () => {
-      picture.removeEventListener("load", draw);
+      active = false;
       resize.disconnect();
     };
   }, []);

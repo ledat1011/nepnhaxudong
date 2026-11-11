@@ -127,6 +127,13 @@ describe("Hero", () => {
     expect(rule).toMatch(/var\(--color-earth\) 30%, transparent\) var\(--hero-text-end\)/);
   });
 
+  it("preloads the village picture with a low priority, so it never delays the fonts", () => {
+    renderHero(null);
+    const link = document.head.querySelector('link[rel="preload"][as="image"]');
+    expect(link).not.toBeNull();
+    expect(link).toHaveAttribute("fetchpriority", "low");
+  });
+
   it("puts the sun in the picture box before the canvas, so the mountain hides part of it", () => {
     const { container } = renderHero(null);
     const box = container.querySelector("[data-hero-picture-box]");

@@ -44,13 +44,16 @@ const BUTTON_CLASS =
  */
 export function Hero({ lang, dict, tagline, zalo }: HeroProps) {
   // The canvas (HeroPicture.tsx) loads its picture only after the page script runs; this preload
-  // in the document head starts the download at once, with a high priority.
+  // in the document head starts the download at once. Its priority is low on purpose: with a high
+  // priority this decorative picture (about 64 KB on a phone) took the bandwidth from the fonts,
+  // so the brand name, which is the LCP, was drawn later (Lighthouse mobile /vi: LCP 4.9 s in 2 of
+  // 3 runs, Performance 73 to 76).
   const picture = heroPictureSources();
   preload(picture.src, {
     as: "image",
     imageSrcSet: picture.srcSet,
     imageSizes: picture.sizes,
-    fetchPriority: "high",
+    fetchPriority: "low",
   });
   return (
     <section

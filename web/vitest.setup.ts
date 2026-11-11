@@ -23,6 +23,12 @@ for (const name of ["setPointerCapture", "releasePointerCapture", "hasPointerCap
   }
 }
 
+// jsdom does not decode images, so HTMLImageElement has no decode(). The hero picture
+// (HeroPicture.tsx) decodes its picture before it draws; here it never resolves, as nothing loads.
+if (typeof HTMLImageElement !== "undefined" && typeof HTMLImageElement.prototype.decode !== "function") {
+  HTMLImageElement.prototype.decode = () => new Promise<void>(() => {});
+}
+
 // jsdom has no layout, so no ResizeObserver. The hero picture (HeroPicture.tsx) redraws its canvas when it resizes.
 if (typeof globalThis.ResizeObserver !== "function") {
   globalThis.ResizeObserver = class {
