@@ -25,11 +25,11 @@ Quy tắc chủ dự án đã chốt:
 | Bước | Mở đầu (chạy một lần) | Lặp lại khi còn trên màn hình | Phần động |
 |---|---|---|---|
 | 1. Cấy mạ | Gợn nước lan ra quanh tay người cấy | Mây trôi chậm, gợn nước nhẹ | Gợn nước: code. Mây: lớp cắt |
-| 2. Nắng, mưa, gió | Nắng chói, mây kéo tới, mưa rơi, gió quét, rồi trời chuyển sang đêm trăng | Cả vòng lặp lại: đom đóm trong đêm, trời sáng về lúa non, lúa lớn lại tới đêm | Ngày sang đêm: tranh đêm đã có, hiện dần lên trên tranh ngày. Mưa, gió, sao, lay lúa: code |
+| 2. Nắng, mưa, gió | Nắng chói, mây kéo tới, mưa rơi, gió quét, rồi trời chuyển sang đêm trăng | Cả vòng lặp lại (khoảng 10,7 giây): đom đóm trong đêm 2,5 giây (chủ dự án thấy 5 giây là lâu, 2026-11-12), trời sáng về lúa non, lúa lớn lại tới đêm | Ngày sang đêm: tranh đêm đã có, hiện dần lên trên tranh ngày. Mưa, gió, sao, lay lúa: code |
 | 3. Gặt lúa | Guồng quay một vòng | Chỉ guồng quay liên tục như cánh quạt; máy gặt đứng yên, không bụi, không chim (chủ dự án, 2026-11-11: "chỉ cần đầu máy gặt chuyển động thôi") | Guồng: lớp cắt (ghép lại từ 1/6 nguyên vẹn, quay sau bông lúa phía trước) |
 | 4. Sấy thóc | Than đỏ rực lên, quạt bắt đầu quay | Cánh quạt quay, mũi tên hơi nóng đi lên | Cánh quạt: lớp cắt hình tròn. Than rực, hơi nóng: code |
 | 5. Xay xát | Gạo trắng chảy xuống từ vòi | Trấu bay ra, gạo chảy | Code |
-| 6. Đóng gói | Nắp máy hút chân không ép xuống, thêm một túi lên chồng | Nắp ép lên xuống mỗi vài giây | Nắp, túi mới: lớp cắt |
+| 6. Đóng gói | Nắp máy hút chân không ép xuống, thêm một túi lên chồng | Nắp ép xuống rồi mở lên liên tục, mỗi 1,6 giây một lần (chủ dự án thấy mỗi 4,5 giây như chỉ dập một lần, 2026-11-12) | Nắp, túi mới: lớp cắt |
 | 7. Đến tay khách | Xe chở gạo rung như vừa đỗ, bánh xe quay | Bánh xe quay đều tại chỗ, xe rung nhẹ như máy đang nổ, mây trôi | Xe, bánh xe, mây: lớp cắt |
 | 8. Mâm cơm | Hơi nóng bốc lên từ xôi và chè | Hơi bốc nhẹ | Code |
 

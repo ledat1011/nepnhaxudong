@@ -191,8 +191,8 @@ describe("motionNangMuaGio", () => {
     expect(num(young, "opacity")).toBeLessThan(0.05);
     expect(num(green, "opacity")).toBe(1);
     expect(num(cloud, "opacity")).toBe(1);
-    // A day and a night take at most about 15 s.
-    expect(loop.duration()).toBeLessThanOrEqual(15);
+    // A day and a night take about 11 s, close to the loop of step 1 (owner, 2026-11-12).
+    expect(loop.duration()).toBeLessThanOrEqual(11);
   });
 
   it("keeps the fireflies dark by day in the loop", () => {
