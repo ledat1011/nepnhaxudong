@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { HERO_PICTURE_STYLE, heroPictureSources } from "./hero-picture";
 
 /**
@@ -14,11 +14,13 @@ import { HERO_PICTURE_STYLE, heroPictureSources } from "./hero-picture";
  * Hero.tsx preloads the same sources with a high fetch priority, so the picture is usually
  * downloaded before this code runs. Without script there is no picture; the sky gradient stays.
  *
- * The canvas has the box of `.hero-picture` (globals.css) and the picture's own shape, so the
+ * The box (`.hero-picture` in globals.css) has the picture's own shape; the canvas fills it, so the
  * picture is drawn over the whole canvas. It is drawn again when the box changes size, at the
  * screen's pixel density (at most 2, more would only cost memory).
+ * `behind` goes in the same box before the canvas: the picture's sky is transparent, so the
+ * mountain covers what stands behind it (the sun, HeroSun).
  */
-export function HeroPicture() {
+export function HeroPicture({ behind }: { behind?: ReactNode }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -53,12 +55,9 @@ export function HeroPicture() {
   }, []);
 
   return (
-    <canvas
-      ref={ref}
-      data-hero-picture=""
-      aria-hidden="true"
-      className="hero-picture"
-      style={HERO_PICTURE_STYLE}
-    />
+    <div data-hero-picture-box="" aria-hidden="true" className="hero-picture" style={HERO_PICTURE_STYLE}>
+      {behind}
+      <canvas ref={ref} data-hero-picture="" className="absolute inset-0 size-full" />
+    </div>
   );
 }

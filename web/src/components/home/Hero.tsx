@@ -29,10 +29,12 @@ const BUTTON_CLASS =
  * and toward the bottom (`hero-fade-*` in globals.css).
  * In the panel: the sky gradient, the picture of the home village (the real limestone mountain of
  * Duy Tân, the rice field and the family's 2 kg bag; `.hero-picture` in globals.css places it so
- * the bag stands left of the mascot), and over it the moving clouds and sun (HeroScene.tsx).
+ * the bag stands left of the mascot), the sun half hidden behind the mountain (the picture's sky
+ * is transparent), and over the picture the moving clouds (HeroScene.tsx).
  * `--hero-m` is the mascot width; the mascot stands on the bottom of the panel.
  *
- * Layers, back to front: panel (z-0), sun (z-1), text and mascot (z-2), pause button (z-10).
+ * Layers, back to front: panel (z-0: sky, sun, picture, clouds), text and mascot (z-2), pause
+ * button (z-10).
  * The section is `isolate`, so these z values stay inside the hero.
  *
  * The pause button sits in the bottom-right corner of the moving scene: on a phone that is the
@@ -61,7 +63,7 @@ export function Hero({ lang, dict, tagline, zalo }: HeroProps) {
         className="hero-fade-side pointer-events-none absolute inset-x-0 top-0 z-0 h-[calc(2.5rem+var(--hero-m))] md:inset-y-0 md:h-auto"
       >
         <div className="hero-fade-bottom absolute inset-0 bg-linear-to-b from-sky from-0% via-sky-light via-50% to-rice to-95% [container-type:size]">
-          <HeroPicture />
+          <HeroPicture behind={<HeroSun />} />
           <HeroSky />
         </div>
       </div>
@@ -91,7 +93,6 @@ export function Hero({ lang, dict, tagline, zalo }: HeroProps) {
             </div>
         </div>
         <div className="relative order-1 mx-auto w-(--hero-m) md:order-2 md:self-end" aria-hidden="true">
-          <HeroSun />
           <Mascot title={dict.site.name} className="hero-fade-mascot relative z-[2] block h-auto w-full" />
         </div>
       </div>

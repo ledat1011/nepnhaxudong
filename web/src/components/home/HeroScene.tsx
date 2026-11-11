@@ -13,8 +13,13 @@ import { BRAND, ILLUSTRATION_ONLY_COLORS } from "@/lib/brand/colors";
  * inline svg (`data-hero-field`) on its own layer that nothing moves.
  */
 
-/** Left edge of each cloud, as a fraction of the panel width. The motion code starts from here. */
-export const HERO_CLOUD_STARTS: readonly number[] = [0.08, 0.42, 0.74];
+/**
+ * Left edge of each cloud, as a fraction of the panel width. The motion code starts from here.
+ * The third (lowest) cloud starts at 0.3: the sun (HERO_PICTURE.sun) covers about 0.58 to 0.97
+ * of the panel width at its height, on a phone and on a desktop, and at 0.74 this cloud stood in
+ * front of it. With reduced motion the clouds stay at these places.
+ */
+export const HERO_CLOUD_STARTS: readonly number[] = [0.08, 0.42, 0.3];
 
 /** Number of rice-stalk groups that sway together (data-hero-gust), from left to right. */
 export const HERO_GUST_COUNT = 5;
@@ -98,12 +103,15 @@ export function HeroSky() {
 export const SUN_RAY = "M74 30L80 9L86 30Z";
 export const SUN_RAY_ANGLES = Array.from({ length: 12 }, (_, i) => i * 30);
 
-const SUN_CLASS =
-  "pointer-events-none absolute -top-6 -right-14 z-[1] w-28 will-change-transform md:-top-10 md:-right-6 md:w-40 lg:-right-24 lg:w-44";
+const SUN_CLASS = "hero-sun pointer-events-none absolute will-change-transform";
 
 /**
- * The sun, drawn behind the mascot at the top-right corner of the mascot box. The rays and the
- * body are two svgs on the same box (the rays turn, the body bobs), the body on top.
+ * The sun, half hidden behind the mountain (on a phone the small peak right of the mascot, from md
+ * the big mountain above the mascot; HERO_PICTURE.sun): it sits in the box of the picture
+ * (`.hero-sun` in globals.css places it in picture coordinates), before the canvas, and the
+ * picture's sky is transparent, so the mountain covers it. The owner asked for this: a sun in
+ * front of the mountain and lower than its top does not make sense.
+ * The rays and the body are two svgs on the same box (the rays turn, the body bobs), the body on top.
  */
 export function HeroSun() {
   return (

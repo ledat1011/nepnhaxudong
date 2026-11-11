@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { MASCOT_INNER, MASCOT_VIEWBOX } from "@/components/brand/generated/mascot";
-import { HERO_CLOUD_STARTS, HERO_CLOUDS, SUN_RAY, SUN_RAY_ANGLES } from "@/components/home/HeroScene";
+import { HERO_CLOUDS, SUN_RAY, SUN_RAY_ANGLES } from "@/components/home/HeroScene";
 import { HERO_PICTURE } from "@/components/home/hero-picture";
 import { BRAND, ILLUSTRATION_ONLY_COLORS } from "@/lib/brand/colors";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -16,15 +16,16 @@ const RICE_RGB = `rgba(${[1, 3, 5].map((i) => Number.parseInt(rice.slice(i, i + 
 
 /*
  * The share card follows the desktop hero (Hero.tsx): the brand name and tagline on the left, the
- * mascot standing on the bottom edge on the right, the sun behind its top-right corner, and the
- * picture of the home village as high as the card, placed like `.hero-picture` in globals.css:
- * the right edge of the bag 8 px left of the mascot.
+ * mascot standing on the bottom edge on the right, and the picture of the home village as high as
+ * the card, placed like `.hero-picture` in globals.css: the right edge of the bag 8 px left of the
+ * mascot. The picture's sky is transparent and the sun is drawn before it, so the mountain hides
+ * part of the sun, as in the hero.
  */
 const MASCOT = 440;
 const MASCOT_LEFT = SIZE.width - 80 - MASCOT;
-// The JPEG (assets/og/nen-que.jpg) is the left 2400 x 1209 px of the hero picture, scaled down:
-// enough for the card, which ends about 2360 px into the picture. The right part of the hero
-// picture would only add bytes to every render.
+// The PNG (assets/og/nen-que.png) is the left 2400 x 1209 px of the hero picture, scaled down
+// and cut to 256 colors (167 KB instead of 840 KB): enough for the card, which ends about 2360 px
+// into the picture. The right part of the hero picture would only add bytes to every render.
 const OG_PICTURE = { width: 2400, height: 1209 };
 const PICTURE_HEIGHT = SIZE.height;
 const PICTURE_WIDTH = (PICTURE_HEIGHT * OG_PICTURE.width) / OG_PICTURE.height;
@@ -33,12 +34,16 @@ const PICTURE_LEFT = MASCOT_LEFT - 8 - BAG_RIGHT;
 // The text column ends before the bag, so no line of text runs over the picture's bag.
 const TEXT_LEFT = 80;
 const TEXT_WIDTH = 440;
-// HeroScene, md: the sun box is w-40 at a 18rem mascot, -top-10 and -right-6 from the mascot box.
-const SUN_SCALE = MASCOT / 288;
-const SUN = 160 * SUN_SCALE;
-const SUN_TOP = SIZE.height - MASCOT - 40 * SUN_SCALE;
-const SUN_LEFT = MASCOT_LEFT + MASCOT + 24 * SUN_SCALE - SUN;
-// HeroScene: cloud widths in px at the max-width the hero uses on a desktop, and their tops.
+// The sun has the desktop hero's size and place (HERO_PICTURE.sun): behind the right shoulder of
+// the big mountain, above the mascot's head. The sun x and y are parts of the whole hero picture.
+const SUN = HERO_PICTURE.sun.size * PICTURE_HEIGHT;
+const SUN_LEFT =
+  PICTURE_LEFT + (HERO_PICTURE.sun.wide.x * HERO_PICTURE.width * PICTURE_HEIGHT) / HERO_PICTURE.height - SUN / 2;
+const SUN_TOP = HERO_PICTURE.sun.wide.y * PICTURE_HEIGHT - SUN / 2;
+// HeroScene: cloud widths in px at the max-width the hero uses on a desktop, and their tops. The
+// lefts are the card's own: the hero's third cloud (HERO_CLOUD_STARTS, 0.3) would cover the brand
+// name here, so it stands between the text and the sun, in front of the mountain.
+const CLOUD_LEFTS = [0.08, 0.42, 0.56];
 const CLOUD_WIDTHS = [144, 112, 152];
 const CLOUD_TOPS = [0.04, 0.02, 0.24];
 
@@ -48,9 +53,9 @@ const MASCOT_SRC = `data:image/svg+xml;base64,${Buffer.from(
 
 // The site loads these fonts from Google at build time; the image renderer needs the files.
 const fontFile = (name: string) => readFile(join(process.cwd(), "assets/fonts", name));
-// A JPEG copy of the hero picture (public/hero/nen-que-rong.webp): the image renderer takes PNG and
-// JPEG, not WebP.
-const pictureFile = () => readFile(join(process.cwd(), "assets/og", "nen-que.jpg"));
+// A PNG copy of the hero picture (public/hero/nen-que-rong.webp): the image renderer takes PNG and
+// JPEG, not WebP, and JPEG has no transparent sky.
+const pictureFile = () => readFile(join(process.cwd(), "assets/og", "nen-que.png"));
 
 type ImageProps = { params: Promise<{ lang: string }> };
 
@@ -69,7 +74,7 @@ export default async function Image({ params }: ImageProps) {
     fontFile("Quicksand-700.ttf"),
     pictureFile(),
   ]);
-  const pictureSrc = `data:image/jpeg;base64,${picture.toString("base64")}`;
+  const pictureSrc = `data:image/png;base64,${picture.toString("base64")}`;
 
   return new ImageResponse(
     (
@@ -83,6 +88,20 @@ export default async function Image({ params }: ImageProps) {
           backgroundImage: `linear-gradient(to bottom, ${sky} 0%, ${skyLight} 50%, ${rice} 95%)`,
         }}
       >
+        <svg
+          viewBox="0 0 160 160"
+          width={SUN}
+          height={SUN}
+          style={{ position: "absolute", left: SUN_LEFT, top: SUN_TOP }}
+        >
+          <g fill={straw} stroke={earth} strokeWidth="1.5" strokeLinejoin="round">
+            {SUN_RAY_ANGLES.map((angle) => (
+              <path key={angle} d={SUN_RAY} transform={`rotate(${angle} 80 80)`} />
+            ))}
+          </g>
+          <circle cx="80" cy="80" r="38" fill={grain} stroke={earth} strokeWidth="2.5" />
+          <path d="M57 72A25 25 0 0 1 72 56" fill="none" stroke={straw} strokeWidth="4" strokeLinecap="round" />
+        </svg>
         {/* eslint-disable-next-line @next/next/no-img-element -- the image renderer only takes <img> */}
         <img
           src={pictureSrc}
@@ -111,7 +130,7 @@ export default async function Image({ params }: ImageProps) {
             height={CLOUD_WIDTHS[i] / 2}
             style={{
               position: "absolute",
-              left: HERO_CLOUD_STARTS[i] * SIZE.width,
+              left: CLOUD_LEFTS[i] * SIZE.width,
               top: CLOUD_TOPS[i] * SIZE.height,
             }}
           >
@@ -120,20 +139,6 @@ export default async function Image({ params }: ImageProps) {
             <path d={cloud.body} fill="none" stroke={earth} strokeWidth="1.6" strokeLinejoin="round" />
           </svg>
         ))}
-        <svg
-          viewBox="0 0 160 160"
-          width={SUN}
-          height={SUN}
-          style={{ position: "absolute", left: SUN_LEFT, top: SUN_TOP }}
-        >
-          <g fill={straw} stroke={earth} strokeWidth="1.5" strokeLinejoin="round">
-            {SUN_RAY_ANGLES.map((angle) => (
-              <path key={angle} d={SUN_RAY} transform={`rotate(${angle} 80 80)`} />
-            ))}
-          </g>
-          <circle cx="80" cy="80" r="38" fill={grain} stroke={earth} strokeWidth="2.5" />
-          <path d="M57 72A25 25 0 0 1 72 56" fill="none" stroke={straw} strokeWidth="4" strokeLinecap="round" />
-        </svg>
         {/* eslint-disable-next-line @next/next/no-img-element -- the image renderer only takes <img> */}
         <img
           src={MASCOT_SRC}
