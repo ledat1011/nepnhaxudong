@@ -13,20 +13,6 @@ import { BRAND, ILLUSTRATION_ONLY_COLORS } from "@/lib/brand/colors";
  * inline svg (`data-hero-field`) on its own layer that nothing moves.
  */
 
-/**
- * The picture of the home village behind the mascot (Hero.tsx, the share image): the real
- * limestone mountain behind the rice field of Duy Tân, the rice field, and the family's 2 kg bag.
- * Drawn from the owner's photo of the mountain and the photo of the real bag; it has no sky
- * objects, because the clouds and the sun below move over it. `bagRight` is the right edge of the
- * bag, as a part of the width: the mascot stands just right of it (`.hero-picture` in globals.css).
- */
-export const HERO_PICTURE = {
-  src: "/hero/nen-que.webp",
-  width: 2400,
-  height: 1209,
-  bagRight: 0.5625,
-} as const;
-
 /** Left edge of each cloud, as a fraction of the panel width. The motion code starts from here. */
 export const HERO_CLOUD_STARTS: readonly number[] = [0.08, 0.42, 0.74];
 
@@ -374,7 +360,7 @@ const FIELD_BOX_WIDE =
 
 /*
  * HeroField and HeroFieldStatic are not drawn any more: the picture of the home village
- * (HERO_PICTURE) replaced them in the hero and the share image. The owner asked to keep the old
+ * (HERO_PICTURE in hero-picture.ts) replaced them in the hero and the share image. The owner asked to keep the old
  * field so it can come back (decision 0016, git tag `hero-cu-2026-11-11`); deleting it would lose
  * that way back.
  */

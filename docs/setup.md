@@ -133,6 +133,15 @@ Kết quả đo sau B4 (hiệu ứng GSAP, mascot thật), ngày 2026-11-04, má
 
 LCP và CLS đạt mục tiêu ở cả 4 lần đo. Một lần đo của `/vi` (lần 2) có Performance 86, dưới mục tiêu 90, vì TBT lên 560 ms; lần 1 của cùng trang đạt 98. TBT dao động nhiều giữa các lần đo trên máy này. Nên đo lại khi có ảnh thật.
 
+Kết quả đo sau khi hero có ảnh nền quê (quyết định `0016`, ảnh vẽ lên canvas), ngày 2026-11-11, máy công ty, Lighthouse 13.6.0, mobile, dữ liệu mẫu, bản build production. Phần tử LCP ở mọi lần đo là chữ "Nếp Nhà".
+
+| Trang | Performance | Accessibility | SEO | LCP | CLS | TBT |
+|---|---|---|---|---|---|---|
+| `/vi` | 91 / 93 / 95 | 100 / 100 | 100 / 100 | 1,5 s / 1,5 s / 1,5 s | 0 | 250 / 270 / 210 ms |
+| `/en` | 93 / 98 | 100 / 100 | 100 / 100 | 1,4 s / 1,4 s | 0 | 310 / 160 ms |
+
+Khi ảnh nền còn là `<img>`, `/vi` chỉ được Performance 80–83 và LCP 4,4–5,0 giây, vì ảnh thành phần tử LCP.
+
 ## Cloud session
 Sẽ điền sau khi kiểm tra trên claude.ai/code.
 
