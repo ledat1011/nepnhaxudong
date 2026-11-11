@@ -50,6 +50,13 @@ describe("motionDongGoi", () => {
     expect(deepest).toBeCloseTo(LID_PRESS_PX, 1);
   });
 
+  it("presses the lid again and again: one press in every loop of at most 2 s", () => {
+    // The owner saw a press every 4.5 s as "only one press" (2026-11-12).
+    const { motion } = build();
+    expect(motion.loop!.duration()).toBeLessThanOrEqual(2);
+    expect(motion.loop!.repeat()).toBe(-1);
+  });
+
   it("keeps the bag at rest in the loop and joins its end to its start", () => {
     const { motion, lid, bag } = build();
     expect(motion.loop!.duration()).toBeCloseTo(DONG_GOI_LOOP_S, 5);

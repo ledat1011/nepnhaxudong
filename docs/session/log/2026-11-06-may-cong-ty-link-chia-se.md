@@ -90,3 +90,5 @@
 - Chủ dự án báo lỗi: mở link chia sẻ có tham số (`/vi?zarsrc=30&utm_source=zalo&...`), bấm "Chuyện hạt nếp" trên thanh menu → địa chỉ đổi thành `/vi#tu-hat-lua#tu-hat-lua` nhưng trang không cuộn tới khối đó; "bấm lần 2 mới được" → lần bấm đầu phải cuộn ngay.
 - Chủ dự án (Chuyện hạt nếp): "cuộn tới step đó nếu là ảnh động thì chạy, scroll qua thì dừng tại thời điểm đó, back lại thì tiếp tục" → ảnh động phải dừng đúng chỗ khi cuộn qua và chạy tiếp từ chỗ đó khi quay lại. Điều này khác với cách đang làm (ra khỏi màn hình thì quấn về đầu, quay lại chạy lại từ đầu).
 - Chủ dự án chọn "gộp cả hai": cảnh đang chạy dở mà cuộn ra khỏi màn hình thì dừng đúng chỗ, quay lại thì chạy tiếp từ chỗ đó; cảnh đã chạy xong một lượt thì khi quay lại vẫn chạy lại từ đầu.
+- Chủ dự án (2026-11-12, ảnh tranh đêm bước 2): "bước 2 để time hơi lâu so với những cảnh trước" → rút ngắn đoạn đêm trong vòng lặp bước 2 (đang giữ 5 giây) cho gần nhịp bước 1.
+- Chủ dự án (2026-11-12, ảnh bước 6 Đóng gói): "máy hút chân không không dập mở liên tục, dập được có 1 lần à" → nắp máy hút chân không phải dập xuống rồi mở lên liên tục khi cảnh còn trên màn hình, không chỉ một lần.

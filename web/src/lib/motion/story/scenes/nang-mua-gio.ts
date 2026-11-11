@@ -18,18 +18,21 @@ const FIREFLY_FILL = "#F2E2B6";
 /** Fireflies over the dark field, away from the people and the fireflies of the night picture. */
 const FIREFLIES: ReadonlyArray<{ x: number; y: number; r: number; peak: number; at: number }> = [
   { x: 60, y: 330, r: 2.5, peak: 0.85, at: 0 },
-  { x: 545, y: 372, r: 2, peak: 0.8, at: 1.6 },
-  { x: 612, y: 298, r: 3, peak: 0.9, at: 0.6 },
-  { x: 725, y: 402, r: 2.5, peak: 0.8, at: 2.3 },
-  { x: 868, y: 318, r: 2, peak: 0.85, at: 1.2 },
-  { x: 962, y: 372, r: 3, peak: 0.9, at: 2.8 },
-  { x: 1095, y: 302, r: 2.5, peak: 0.85, at: 0.3 },
-  { x: 1165, y: 398, r: 2, peak: 0.8, at: 1.9 },
+  { x: 545, y: 372, r: 2, peak: 0.8, at: 0.75 },
+  { x: 612, y: 298, r: 3, peak: 0.9, at: 0.3 },
+  { x: 725, y: 402, r: 2.5, peak: 0.8, at: 1.05 },
+  { x: 868, y: 318, r: 2, peak: 0.85, at: 0.55 },
+  { x: 962, y: 372, r: 3, peak: 0.9, at: 1.3 },
+  { x: 1095, y: 302, r: 2.5, peak: 0.85, at: 0.15 },
+  { x: 1165, y: 398, r: 2, peak: 0.8, at: 0.9 },
 ];
-/** One glow: fade in, then out, over twice this time. The last glow ends at 2.8 + 2 = 4.8 s. */
-const GLOW_S = 1;
-/** How long the night lasts in the loop, then how long the dawn takes. */
-export const NIGHT_S = 5;
+/** One glow: fade in, then out, over twice this time. The last glow ends at 1.3 + 1.2 = 2.5 s. */
+const GLOW_S = 0.6;
+/**
+ * How long the night lasts in the loop, then how long the dawn takes. The owner found a 5 s night
+ * too long next to the other scenes (2026-11-12), so the whole loop is now about 10.7 s.
+ */
+export const NIGHT_S = 2.5;
 const DAWN_S = 1.2;
 
 /**

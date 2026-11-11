@@ -11,9 +11,12 @@ export const LID_PRESS_PX = 5;
 export const BAG_DROP_PX = 30;
 /** The small bounce of the bag when it lands. */
 const BAG_SETTLE_PX = 3;
-/** The loop: one press, then the machine is still. */
-export const DONG_GOI_LOOP_S = 4.5;
-const LOOP_PRESS_AT = 1.2;
+/**
+ * The loop: one press, then a short rest, again and again. A press every 4.5 s looked like
+ * a single press to the owner (2026-11-12), so the loop is short.
+ */
+export const DONG_GOI_LOOP_S = 1.6;
+const LOOP_PRESS_AT = 0.4;
 
 /**
  * One press of the lid at `at`: down, a short hold, back up (0.6 s of movement). The eases do
@@ -28,8 +31,8 @@ function addPress(timeline: gsap.core.Timeline, lid: HTMLElement, at: number) {
 /**
  * Intro (about 1.5 s): the lid presses down and comes back (a bag is sealed); then a new bag drops
  * onto the right stack, from 30 px above and invisible, and settles with a 3 px bounce.
- * Loop (4.5 s): the lid presses once at 1.2 s (0.75 s with the hold) and is still the rest of
- * the time. The bag stays at rest. Two layers move: the lid and the top bag.
+ * Loop (1.6 s): the lid presses at 0.4 s (0.75 s with the hold) and rests until the next press,
+ * so it seals bag after bag. The bag stays at rest. Two layers move: the lid and the top bag.
  */
 export const motionDongGoi: SceneMotionBuilder = (gsap, overlay) => {
   // The patch is not moved, but the bag may only leave its place when the wall behind it exists.
@@ -49,7 +52,7 @@ export const motionDongGoi: SceneMotionBuilder = (gsap, overlay) => {
 
   const loop = loopTimeline(gsap);
   addPress(loop, lid, LOOP_PRESS_AT);
-  // Keeps the still time after the press inside the loop, so it lasts DONG_GOI_LOOP_S.
+  // Keeps the rest after the press inside the loop, so it lasts DONG_GOI_LOOP_S.
   loop.set(lid, { y: 0 }, DONG_GOI_LOOP_S);
 
   return { intro, loop };
