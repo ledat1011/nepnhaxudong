@@ -7,7 +7,7 @@ Ngày: 2026-11-11. Chủ dự án đã duyệt cách làm và bảng chuyển đ
 8 cảnh của khối "Từ hạt lúa tới người dùng" (`#tu-hat-lua`) hiện là tranh WebP tĩnh, nét mực manhua (quyết định `0014`). Việc này làm cho mỗi cảnh có chuyển động nhỏ, mà vẫn giữ nguyên nét vẽ đã duyệt.
 
 Thành công nghĩa là:
-- Mỗi cảnh có một đoạn mở đầu 1–2 giây khi cảnh tới gần giữa màn hình. Sau đó cảnh chuyển động liên tục khi còn trên màn hình, không dừng sau đoạn mở đầu (chủ dự án, sau khi xem bản đầu: "ảnh không chạy liên tục, chạy xong bị dừng").
+- Mỗi cảnh có một đoạn mở đầu 1–2 giây khi cảnh tới gần giữa màn hình. Cảnh ra hẳn khỏi màn hình thì quay về khung đầu; khi quay lại (cuộn xuống hay cuộn lên) thì chạy lại đoạn mở đầu từ đầu (chủ dự án, 2026-11-11: "phải chạy lại 1 vòng như lúc đầu"). Sau đó cảnh chuyển động liên tục khi còn trên màn hình, không dừng sau đoạn mở đầu (chủ dự án, sau khi xem bản đầu: "ảnh không chạy liên tục, chạy xong bị dừng").
 - Nét mực và màu của tranh không đổi: phần động được cắt thẳng từ tranh gốc, hoặc vẽ bằng code (mưa, gió, hơi, trấu).
 - Trang đầu không nặng hơn. Lớp động chỉ tải khi cảnh sắp tới.
 - Người xem bật "giảm chuyển động" thì thấy tranh tĩnh như bây giờ, và không tải gì thêm.
@@ -26,7 +26,7 @@ Quy tắc chủ dự án đã chốt:
 |---|---|---|---|
 | 1. Cấy mạ | Gợn nước lan ra quanh tay người cấy | Mây trôi chậm, gợn nước nhẹ | Gợn nước: code. Mây: lớp cắt |
 | 2. Nắng, mưa, gió | Nắng chói, mây kéo tới, mưa rơi, gió quét, rồi trời chuyển sang đêm trăng | Cả vòng lặp lại: đom đóm trong đêm, trời sáng về lúa non, lúa lớn lại tới đêm | Ngày sang đêm: tranh đêm đã có, hiện dần lên trên tranh ngày. Mưa, gió, sao, lay lúa: code |
-| 3. Gặt lúa | Máy gặt rung mạnh hơn, guồng quay | Guồng quay liên tục như cánh quạt, bụi thóc bay, chim bay qua | Máy gặt, guồng: lớp cắt (guồng ghép lại từ 1/6 nguyên vẹn, quay sau bông lúa phía trước). Bụi, chim: code |
+| 3. Gặt lúa | Guồng quay một vòng | Chỉ guồng quay liên tục như cánh quạt; máy gặt đứng yên, không bụi, không chim (chủ dự án, 2026-11-11: "chỉ cần đầu máy gặt chuyển động thôi") | Guồng: lớp cắt (ghép lại từ 1/6 nguyên vẹn, quay sau bông lúa phía trước) |
 | 4. Sấy thóc | Than đỏ rực lên, quạt bắt đầu quay | Cánh quạt quay, mũi tên hơi nóng đi lên | Cánh quạt: lớp cắt hình tròn. Than rực, hơi nóng: code |
 | 5. Xay xát | Gạo trắng chảy xuống từ vòi | Trấu bay ra, gạo chảy | Code |
 | 6. Đóng gói | Nắp máy hút chân không ép xuống, thêm một túi lên chồng | Nắp ép lên xuống mỗi vài giây | Nắp, túi mới: lớp cắt |
@@ -56,6 +56,7 @@ Khi làm, vị trí chính xác của từng vật được đo trên tranh gố
   - vòng lặp chạy thưa để đỡ tốn máy (`throttledLoop`);
   - cảnh ra khỏi màn hình thì dừng;
   - nút tạm dừng dừng mọi vòng lặp (`getLoopController`).
+- **Hình chạy trên con đường (chủ dự án, 2026-11-11):** hình đổi theo giai đoạn của hạt: hạt mầm (bước 1–2), hạt thóc (bước 3–4), hạt gạo (bước 5–7), bát xôi bốc hơi (bước 8). Hình đổi ở điểm dừng nơi giai đoạn đổi, phóng nhỏ rồi to lại trong 0,25 giây. Đoạn đường đã đi qua có màu theo giai đoạn: xanh mạ, vàng thóc, trắng gạo. Hình nằm đúng điểm ảnh của màn hình và không có lớp riêng, để không bị mờ.
 - **Phần thay đổi:**
   - Khi cảnh sắp tới, mã tạo một lớp phủ (`data-story-overlay`) trong khung: các ảnh lớp cắt đặt đúng vị trí theo `scene-layers.json`, và một SVG nhỏ cho hiệu ứng vẽ bằng code.
   - Hàm chuyển động của mỗi cảnh (`SCENE_MOTIONS`) nhận lớp phủ này thay cho SVG cũ, và trả về `{ intro, loop }` như trước.
