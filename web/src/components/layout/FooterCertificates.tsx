@@ -40,7 +40,7 @@ export function FooterCertificates({ dict }: { dict: Dictionary }) {
     <>
       <ul aria-label={dict.footer.certificates} className="flex gap-4">
         {CERTIFICATES.map((certificate, i) => (
-          <li key={certificate.src} className="w-36">
+          <li key={certificate.src} className="w-40">
             <button
               type="button"
               aria-haspopup="dialog"
@@ -61,8 +61,8 @@ export function FooterCertificates({ dict }: { dict: Dictionary }) {
                 className="aspect-[5/7] w-full object-cover object-top"
               />
             </button>
-            <p className="mt-2 text-sm font-bold leading-snug">{dict.footer[`${certificate.key}Title`]}</p>
-            <p className="text-xs leading-snug">{dict.footer[`${certificate.key}Detail`]}</p>
+            <p className="mt-2 font-bold leading-snug">{dict.footer[`${certificate.key}Title`]}</p>
+            <p className="text-sm leading-snug">{dict.footer[`${certificate.key}Detail`]}</p>
           </li>
         ))}
       </ul>

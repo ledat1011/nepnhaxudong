@@ -154,12 +154,26 @@ describe("stories fixtures", () => {
   ])("gives each cover a real file, its real size and an alt text in %s", (_lang, stories) => {
     for (const { cover } of stories) {
       if (cover === null) continue;
-      expect(cover.url).toMatch(/^\/(journey|press)\/[a-z0-9-]+\.webp$/);
+      expect(cover.url).toMatch(/^\/(journey|press|story)\/[a-z0-9-]+\.webp$/);
       const file = join(process.cwd(), "public", cover.url);
       expect(existsSync(file), cover.url).toBe(true);
       expect([cover.width, cover.height], cover.url).toEqual(webpSize(file));
       expect(cover.alt, cover.url).not.toBe("");
     }
+  });
+
+  it.each([
+    ["vi", storiesVi, homeVi],
+    ["en", storiesEn, homeEn],
+  ])("gives every story a cover the home page does not already show in %s", (_lang, stories, home) => {
+    // The home page lists the newest stories under the journey and press: a reused photo shows twice.
+    const homePictures = new Set(JSON.stringify(home).match(/\/(journey|press)\/[a-z0-9-]+\.webp/g));
+    const covers = stories.map((s) => s.cover?.url);
+    for (const url of covers) {
+      expect(url, "a story without a cover").toBeDefined();
+      expect(homePictures.has(url!), url).toBe(false);
+    }
+    expect(new Set(covers).size).toBe(covers.length);
   });
 
   it("has an English story that falls back to a Vietnamese slug and one with its own slug", () => {

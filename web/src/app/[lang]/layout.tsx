@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { NavigationProgress } from "@/components/ui/NavigationProgress";
+import { BRAND } from "@/lib/brand/colors";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { DEFAULT_LANG, isLang } from "@/lib/i18n/langs";
 import { getSiteUrl, isIndexingOff } from "@/lib/seo/metadata";
@@ -18,6 +19,9 @@ export function generateMetadata(): Metadata {
   const metadataBase = getSiteUrl();
   return isIndexingOff() ? { metadataBase, robots: { index: false, follow: false } } : { metadataBase };
 }
+
+/** The phone browser bar takes the page ground (Trắng gạo), so the header runs into it. */
+export const viewport: Viewport = { themeColor: BRAND.rice };
 
 /** Root layout. Each page renders its own header and footer, because only it has the home data. */
 export default async function LangLayout({ children, params }: LangLayoutProps) {
