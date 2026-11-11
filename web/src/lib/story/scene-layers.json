@@ -1,0 +1,234 @@
+{
+  "cay-ma": [
+    {
+      "name": "cloud-left-patch",
+      "src": "/lop/cay-ma-cloud-left-patch.webp",
+      "left": 22.167,
+      "top": 12.444,
+      "width": 11.333,
+      "height": 8.889,
+      "originX": 52.206,
+      "originY": 49.167
+    },
+    {
+      "name": "cloud-right-patch",
+      "src": "/lop/cay-ma-cloud-right-patch.webp",
+      "left": 61.75,
+      "top": 8.889,
+      "width": 8.833,
+      "height": 7.407,
+      "originX": 50.472,
+      "originY": 49.0
+    },
+    {
+      "name": "cloud-left",
+      "src": "/lop/cay-ma-cloud-left.webp",
+      "left": 22.667,
+      "top": 13.185,
+      "width": 10.417,
+      "height": 7.407,
+      "originX": 52.0,
+      "originY": 49.0
+    },
+    {
+      "name": "cloud-right",
+      "src": "/lop/cay-ma-cloud-right.webp",
+      "left": 62.333,
+      "top": 9.481,
+      "width": 7.75,
+      "height": 5.926,
+      "originX": 50.0,
+      "originY": 51.25
+    }
+  ],
+  "nang-mua-gio": [
+    {
+      "name": "sun-patch",
+      "src": "/lop/nang-mua-gio-sun-patch.webp",
+      "left": 18.333,
+      "top": 1.481,
+      "width": 15.417,
+      "height": 27.407,
+      "originX": 49.73,
+      "originY": 49.73
+    },
+    {
+      "name": "cloud-patch",
+      "src": "/lop/nang-mua-gio-cloud-patch.webp",
+      "left": 38.667,
+      "top": 7.704,
+      "width": 24.333,
+      "height": 17.185,
+      "originX": 50.342,
+      "originY": 49.569
+    },
+    {
+      "name": "wind-patch",
+      "src": "/lop/nang-mua-gio-wind-patch.webp",
+      "left": 63.667,
+      "top": 9.037,
+      "width": 17.917,
+      "height": 22.519,
+      "originX": 50.233,
+      "originY": 50.329
+    },
+    {
+      "name": "rain-patch",
+      "src": "/lop/nang-mua-gio-rain-patch.webp",
+      "left": 42.083,
+      "top": 25.63,
+      "width": 19.917,
+      "height": 19.852,
+      "originX": 51.106,
+      "originY": 48.881
+    },
+    {
+      "name": "sun",
+      "src": "/lop/nang-mua-gio-sun.webp",
+      "left": 18.833,
+      "top": 2.37,
+      "width": 14.417,
+      "height": 25.778,
+      "originX": 49.711,
+      "originY": 49.425
+    },
+    {
+      "name": "cloud",
+      "src": "/lop/nang-mua-gio-cloud.webp",
+      "left": 38.833,
+      "top": 8.593,
+      "width": 23.583,
+      "height": 15.259,
+      "originX": 51.237,
+      "originY": 50.0
+    },
+    {
+      "name": "wind",
+      "src": "/lop/nang-mua-gio-wind.webp",
+      "left": 64.25,
+      "top": 10.074,
+      "width": 17.083,
+      "height": 20.444,
+      "originX": 49.268,
+      "originY": 50.362
+    },
+    {
+      "name": "rain",
+      "src": "/lop/nang-mua-gio-rain.webp",
+      "left": 42.667,
+      "top": 26.074,
+      "width": 18.75,
+      "height": 18.815,
+      "originX": 51.175,
+      "originY": 49.213
+    }
+  ],
+  "gat": [
+    {
+      "name": "harvester",
+      "src": "/lop/gat-harvester.webp",
+      "left": 35.25,
+      "top": 30.222,
+      "width": 47.667,
+      "height": 52.741,
+      "originX": 49.913,
+      "originY": 49.86
+    }
+  ],
+  "say": [
+    {
+      "name": "fan",
+      "src": "/lop/say-fan.webp",
+      "left": 18.5,
+      "top": 53.63,
+      "width": 8.75,
+      "height": 15.556,
+      "originX": 49.524,
+      "originY": 49.524
+    }
+  ],
+  "dong-goi": [
+    {
+      "name": "bag-top-patch",
+      "src": "/lop/dong-goi-bag-top-patch.webp",
+      "left": 75.25,
+      "top": 64.593,
+      "width": 10.0,
+      "height": 4.889,
+      "originX": 49.583,
+      "originY": 48.485
+    },
+    {
+      "name": "lid",
+      "src": "/lop/dong-goi-lid.webp",
+      "left": 40.0,
+      "top": 35.259,
+      "width": 12.75,
+      "height": 28.741,
+      "originX": 49.673,
+      "originY": 49.742
+    },
+    {
+      "name": "bag-top",
+      "src": "/lop/dong-goi-bag-top.webp",
+      "left": 75.25,
+      "top": 64.593,
+      "width": 10.0,
+      "height": 4.889,
+      "originX": 49.583,
+      "originY": 48.485
+    }
+  ],
+  "den-tay-khach": [
+    {
+      "name": "cloud-patch",
+      "src": "/lop/den-tay-khach-cloud-patch.webp",
+      "left": 32.833,
+      "top": 6.667,
+      "width": 10.083,
+      "height": 9.185,
+      "originX": 50.826,
+      "originY": 46.774
+    },
+    {
+      "name": "cloud",
+      "src": "/lop/den-tay-khach-cloud.webp",
+      "left": 33.417,
+      "top": 7.704,
+      "width": 8.917,
+      "height": 7.852,
+      "originX": 50.935,
+      "originY": 41.509
+    },
+    {
+      "name": "truck",
+      "src": "/lop/den-tay-khach-truck.webp",
+      "left": 56.25,
+      "top": 66.667,
+      "width": 32.083,
+      "height": 30.963,
+      "originX": 49.87,
+      "originY": 49.761
+    },
+    {
+      "name": "wheel-front",
+      "src": "/lop/den-tay-khach-wheel-front.webp",
+      "left": 59.083,
+      "top": 86.963,
+      "width": 5.083,
+      "height": 9.037,
+      "originX": 49.18,
+      "originY": 49.18
+    },
+    {
+      "name": "wheel-back",
+      "src": "/lop/den-tay-khach-wheel-back.webp",
+      "left": 78.75,
+      "top": 86.963,
+      "width": 5.083,
+      "height": 9.037,
+      "originX": 49.18,
+      "originY": 49.18
+    }
+  ]
+}

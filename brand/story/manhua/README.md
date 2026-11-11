@@ -5,7 +5,7 @@ nét mực thô và mạnh, đổ bóng tương phản cao, nền thủy mặc, 
 
 - Tranh được vẽ bằng Nano Banana Pro (`gemini-3-pro-image-preview`), cỡ 2K, tỉ lệ 16:9. Prompt của từng tranh nằm trong `prompts.json`.
 - File lưu ở dạng WebP, rộng 1600 px. Ảnh PNG gốc không đưa vào repo.
-- Web chưa dùng các tranh này. Chủ dự án duyệt xong mới thay cảnh SVG trong `brand/story/scenes/`. Phần chuyển động làm sau.
+- Web không dùng các tranh này. Khối "Từ hạt lúa tới người dùng" dùng bản phác trong `brand/story/phac/` (quyết định `0014` và `0017`).
 
 | File | Bước |
 |---|---|

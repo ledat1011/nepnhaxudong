@@ -24,16 +24,11 @@ và giữ kiểu phẳng "để sau này còn làm chuyển động".
 - 9 tranh manhua bán thực tế đầy đủ nằm trong `brand/story/manhua/`. Không dùng cho hành trình; có thể dùng cho tranh của phần Câu chuyện.
 
 ## Trên web
-Chủ dự án muốn đưa ảnh lên web ngay, chuyển động làm sau. Trang chủ hiện dùng 8 bản phác (bước 2 dùng cảnh ngày) dạng WebP 1200 × 675 trong `web/public/story/`. Các cảnh SVG tách lớp và mã chuyển động của từng cảnh vẫn giữ trong repo, nhưng trang không dùng tới, vì tuần sau sẽ dựng lại cảnh SVG từ các bản phác này. Hai test đầu-cuối về cảnh SVG đang tạm tắt, ghi rõ lý do.
+Chủ dự án muốn đưa ảnh lên web ngay, chuyển động làm sau. Trang chủ hiện dùng 8 bản phác (bước 2 dùng cảnh ngày) dạng WebP 1200 × 675 trong `web/public/story/`. Các cảnh SVG tách lớp cũ đã xóa ngày 2026-11-11 (quyết định `0017`).
 Menu có thêm mục "Quy trình" (tiếng Anh "Process") dẫn tới khối "Từ hạt lúa tới người dùng" (`#tu-hat-lua`). Nút thứ hai ở hero đổi thành "Chuyện hạt nếp" ("A grain's story") và cũng dẫn tới khối này.
 
 ## Còn phải làm
-Chủ dự án chọn làm tuần sau:
-- Dựng lại 9 cảnh bằng SVG tách lớp theo bản phác: sửa `brand/story/scenes/`, trace người mới bằng `brand/tools/vectorize-pose.py`.
-- Chạy `npm run story:build` trong `web/`.
-- Làm chuyển động: ngày sang đêm ở bước 2, và các chuyển động khác.
-- Kiểm tra ở 375 px và 1280 px.
-- Mở PR.
+Đã thay bằng quyết định `0017` (2026-11-11): không dựng lại cảnh SVG tách lớp. Chuyển động được làm bằng lớp cắt thẳng từ bản phác, và các cảnh SVG cũ đã xóa.
 
 ## Hệ quả
 Đã dùng 23 ảnh Nano Banana Pro cho phần này, khoảng 3,1 USD theo bảng giá.

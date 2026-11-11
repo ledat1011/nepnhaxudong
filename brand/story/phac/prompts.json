@@ -104,5 +104,15 @@
       "2-ngay-v3.png"
     ],
     "prompt": "Turn the attached daytime scene into the SAME scene at NIGHT under a full moon. Keep EXACTLY the same composition and framing: the same dense rice field, BA and ME in the same places and poses, the same line style. Replace the sun with a big pale full moon in the same place, replace the rain cloud with a few thin moonlit clouds, remove the rain drops and wind lines, add a few small fireflies above the rice. Night colours: deep blue-grey ink-wash sky, the rice and people in darker, cooler flat colours with soft silver moonlight, still flat fills with the same ink-brush outlines. No text, no letters, no watermark."
+  },
+  {
+    "name": "2-nang-mua-gio-non",
+    "model": "gemini-3-pro-image-preview",
+    "aspect": "16:9",
+    "imageSize": "2K",
+    "inputs": [
+      "2-nang-mua-gio-ngay.webp"
+    ],
+    "prompt": "Edit the attached image (a rice field scene with sun, rain cloud and wind lines, and two farmers, BA and ME, standing in the field).\nMake the rice YOUNG: the same field early in the season, with young green rice plants about half the height of the rice now (reaching the people's thighs), fresh light-green and mid-green leaves in the same simple flat style, NO rice heads and NO grains yet. Keep the rows and the spacing of the clumps similar so the field still fills the whole width.\nKeep EVERYTHING ELSE EXACTLY the same: the composition and framing, the sky with its ink-wash, the sun, the cloud with its rain drops, the wind lines, BA and ME in the same places with the same poses, faces, hair, hat and clothes. Where the shorter rice no longer hides their legs, show their legs standing in the field in the same clothes (ME: brown blouse and brown trousers; BA: dark grey shirt and light khaki trousers).\nKEEP THE STYLE EXACTLY: flat colour fills and the same dark-brown ink-brush outlines with thick and thin strokes. No new objects, no text, no letters, no watermark."
   }
 ]

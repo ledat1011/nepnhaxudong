@@ -1,15 +1,15 @@
+import { buildOverlay, showOverlay, type Overlay } from "@/lib/story/overlay";
 import { roadPoint } from "@/lib/story/road";
 import type { SceneSlug } from "@/lib/story/scenes";
 import type { GsapModules, MotionSetup } from "../load-gsap";
 import { pendingHashScroll, shouldHideElement } from "../reveal";
 import { getLoopController, type Loop, type LoopEntry } from "../loops";
 import { LOOP_MIN_GAP_S, type Setter } from "../throttle";
-import { inlineSvg } from "./inline-svg";
 import { SCENE_MOTIONS } from "./scene-motions";
 
 type Gsap = GsapModules["gsap"];
 
-/** A drawing starts to load when its scene is one screen below the bottom of the screen. */
+/** A scene's moving parts start to load when it is one screen below the bottom of the screen. */
 export const STORY_LOAD_AHEAD = "top bottom+=100%";
 /** A scene's intro plays when its top reaches this part of the screen height. */
 export const STORY_INTRO_LINE = 0.75;
@@ -23,7 +23,14 @@ export const STORY_ROAD_SCRUB_S = 0.6;
 /** After a long gap (a background tab), the loop goes on from where it was, not far ahead. */
 const LOOP_MAX_STEP_S = 0.1;
 
-type Scene = { li: HTMLElement; slug: SceneSlug; svg: SVGSVGElement | null; played: boolean };
+type Scene = {
+  li: HTMLElement;
+  slug: SceneSlug;
+  /** The box that holds the sketch; the overlay of moving parts goes in it. */
+  stage: HTMLElement | null;
+  overlay: Overlay | null;
+  played: boolean;
+};
 
 /**
  * Plays a paused GSAP loop by stepping it from GSAP's ticker, at most LOOP_UPDATES_PER_S times a
@@ -182,7 +189,13 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
 
   const scenes: Scene[] = Array.from(
     wrap.querySelectorAll<HTMLElement>("li[data-story-scene]"),
-    (li) => ({ li, slug: li.dataset.storyScene as SceneSlug, svg: null, played: false }),
+    (li) => ({
+      li,
+      slug: li.dataset.storyScene as SceneSlug,
+      stage: li.querySelector<HTMLElement>("[data-story-stage]"),
+      overlay: null,
+      played: false,
+    }),
   );
   const stops = scenes.flatMap(({ li }) => li.querySelector<HTMLElement>("[data-story-stop]") ?? []);
   const grain = wrap.querySelector<HTMLElement>("[data-story-grain]");
@@ -194,8 +207,14 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
 
   /** Builds the scene's motion and connects its intro and loop to the scroll. */
   const attach = (scene: Scene) => {
-    const motion = scene.svg ? (SCENE_MOTIONS[scene.slug]?.(gsap, scene.svg) ?? null) : null;
-    if (!motion) return;
+    const overlay = scene.overlay;
+    const motion = overlay ? (SCENE_MOTIONS[scene.slug]?.(gsap, overlay) ?? null) : null;
+    if (!overlay || !motion) {
+      // Nothing to move: the still sketch stays, without a layer over it.
+      overlay?.root.remove();
+      scene.overlay = null;
+      return;
+    }
     const { intro, loop } = motion;
     const entry = loop ? controller.add(throttledLoop(gsap, loop)) : null;
     if (entry) entries.push(entry);
@@ -206,7 +225,7 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
       scene.played = true;
       sync();
     });
-    // A scene that is already past its line (a `#hash` link, a restored scroll, a file that
+    // A scene that is already past its line (a `#hash` link, a restored scroll, layers that
     // came late) shows its final frame at once: nothing on screen disappears.
     if (!shouldHideElement(scene.li, pendingHashScroll(root), STORY_INTRO_LINE)) {
       intro.progress(1);
@@ -221,6 +240,8 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
         },
       });
     }
+    // Shown only now that the intro has set its first frame (or its last): no flash of rest.
+    showOverlay(overlay);
     if (entry) {
       const trigger = ScrollTrigger.create({
         trigger: scene.li,
@@ -236,33 +257,25 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
     }
   };
 
-  // Everything, also what the late drawings add, is recorded here and reverted by the cleanup.
+  // Everything, also what the late overlays add, is recorded here and reverted by the cleanup.
   const ctx = gsap.context(() => {
     for (const scene of scenes) {
-      // Swapped by an earlier run of this setup (reduced motion was on for a while): the svg is
-      // already in place and shows its final frame.
-      const inline = scene.li.querySelector<SVGSVGElement>("svg[data-scene]");
-      if (inline) {
-        scene.svg = inline;
-        attach(scene);
-        continue;
-      }
-      const img = scene.li.querySelector("img");
-      // Only an SVG scene has parts to move. The scenes are WebP sketches for now (decision
-      // 0014); fetching one again would only fail to parse.
-      if (!img || !new URL(img.src, window.location.href).pathname.endsWith(".svg")) continue;
-      // Each drawing loads about one screen before its own scene, not with the whole section.
+      const stage = scene.stage;
+      if (!stage) continue;
+      // Each scene's moving parts load about one screen before the scene, not with the section.
       loads.push(
         ScrollTrigger.create({
           trigger: scene.li,
           start: STORY_LOAD_AHEAD,
           once: true,
           onEnter: () => {
-            void inlineSvg(img).then((svg) => {
-              if (disposed) return;
-              // A run before a restart may have swapped this img while the file loaded here.
-              scene.svg = svg ?? scene.li.querySelector<SVGSVGElement>("svg[data-scene]");
-              if (scene.svg) ctx.add(() => attach(scene));
+            void buildOverlay(stage, scene.slug).then((overlay) => {
+              if (disposed) {
+                overlay?.root.remove();
+                return;
+              }
+              scene.overlay = overlay;
+              if (overlay) ctx.add(() => attach(scene));
             });
           },
         }),
@@ -292,6 +305,11 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
     entries.splice(0).forEach((entry) => entry.remove());
     undoRoad();
     ctx.revert();
+    // Reduced motion turned on, or the page left: back to the still sketches.
+    for (const scene of scenes) {
+      scene.overlay?.root.remove();
+      scene.overlay = null;
+    }
     stops.forEach((stop) => stop.removeAttribute("data-active"));
   };
 };

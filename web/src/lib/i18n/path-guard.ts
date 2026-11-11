@@ -8,12 +8,12 @@ export type PathDecision = "redirect-root" | "pass" | "not-found";
 const INTERNAL_PREFIXES = ["_next", "_not-found", "api", "admin", "media"];
 // Files the app serves itself.
 const OWN_FILES = new Set(["robots.txt", "sitemap.xml", "icon.svg"]);
-// Folders of pictures in `public/`, one level deep, with the file types each may hold:
-// the story scenes, `.svg` (layered scenes kept for motion) and `.webp` (the sketches the page
-// shows now, decision 0014), the picture behind the hero (decision 0016), and the journey and
-// press photos of the sample content.
+// Folders of pictures in `public/`, one level deep, with the file types each may hold: the story
+// sketches (decision 0014) and the moving layers cut from them (`lop`, decision 0017), the
+// picture behind the hero (decision 0016), and the journey and press photos of the sample content.
 const ASSET_DIRS: Record<string, readonly string[]> = {
-  story: [".svg", ".webp"],
+  story: [".webp"],
+  lop: [".webp"],
   hero: [".webp"],
   journey: [".webp"],
   press: [".webp"],

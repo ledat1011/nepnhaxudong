@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <!-- Focused face (source pixels, before the mirror): open eyes under a lowered lid, looking down
-       at the seedling, and a small closed-mouth smile. The old eyes and smile are cleared in me-cay.json. -->
-  <g fill="#4A2C1A">
-    <ellipse cx="345" cy="346" rx="11" ry="10"/>
-    <ellipse cx="472" cy="349" rx="11" ry="10"/>
-  </g>
-  <path d="M325 337Q348 327 371 337M452 340Q475 330 498 340M398 404Q414 413 430 404" fill="none" stroke="#4A2C1A" stroke-width="10" stroke-linecap="round"/>
-</svg>

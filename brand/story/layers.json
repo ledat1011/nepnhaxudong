@@ -1,0 +1,38 @@
+{
+  "cay-ma": [
+    { "name": "cloud-left", "rect": [284, 91, 390, 136], "pad": 18, "feather": 6, "matte": true, "patch": true },
+    { "name": "cloud-right", "rect": [750, 67, 839, 102], "pad": 18, "feather": 6, "matte": true, "patch": true }
+  ],
+  "nang-mua-gio": [
+    { "name": "sun", "circle": [312, 102, 88], "pad": 4, "feather": 3, "matte": true, "patch": true },
+    { "name": "cloud", "rect": [472, 59, 750, 160], "pad": 8, "feather": 5, "matte": true, "patch": true },
+    { "name": "wind", "rect": [769, 67, 975, 208], "pad": 8, "feather": 4, "matte": true, "patch": true },
+    {
+      "name": "rain",
+      "circles": [
+        [519, 187, 11], [711, 189, 11], [588, 191, 11], [652, 194, 11], [555, 220, 11], [685, 224, 11], [620, 230, 11],
+        [730, 254, 11], [670, 258, 11], [604, 260, 11], [535, 264, 11], [640, 286, 11], [699, 290, 11], [572, 292, 11]
+      ],
+      "pad": 3,
+      "feather": 2,
+      "matte": true,
+      "patch": true
+    }
+  ],
+  "gat": [
+    { "name": "harvester", "rect": [434, 215, 983, 548], "pad": 10, "feather": 8 }
+  ],
+  "say": [
+    { "name": "fan", "circle": [274, 414, 50], "pad": 2, "feather": 2 }
+  ],
+  "dong-goi": [
+    { "name": "lid", "rect": [488, 246, 624, 423], "pad": 8, "feather": 4 },
+    { "name": "bag-top", "rect": [905, 438, 1020, 466], "pad": 2, "feather": 2, "patch": "flat" }
+  ],
+  "den-tay-khach": [
+    { "name": "cloud", "rect": [404, 56, 507, 92], "pad": 14, "feather": 5, "matte": true, "patch": true },
+    { "name": "truck", "rect": [684, 459, 1050, 649], "pad": 8, "feather": 5 },
+    { "name": "wheel-front", "circle": [739, 617, 29], "pad": 1, "feather": 1 },
+    { "name": "wheel-back", "circle": [975, 617, 29], "pad": 1, "feather": 1 }
+  ]
+}

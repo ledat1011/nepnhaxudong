@@ -12,12 +12,16 @@ import {
 import { LOOP_UPDATES_PER_S } from "../throttle";
 
 const mocks = vi.hoisted(() => ({
-  inlineSvg: vi.fn(),
+  buildOverlay: vi.fn(),
+  showOverlay: vi.fn(),
   build: vi.fn(),
   add: vi.fn(),
 }));
 
-vi.mock("./inline-svg", () => ({ inlineSvg: mocks.inlineSvg }));
+vi.mock("@/lib/story/overlay", () => ({
+  buildOverlay: mocks.buildOverlay,
+  showOverlay: mocks.showOverlay,
+}));
 vi.mock("./scene-motions", async () => {
   const { STORY_SCENES: scenes } = await import("@/lib/story/scenes");
   const known = new Set<string | symbol>(scenes.map((s) => s.slug));
@@ -110,7 +114,7 @@ const MARKUP = `
             <svg></svg><span data-story-road-passed><span></span></span>
           </span>
           <span data-story-stop aria-hidden="true"></span>
-          <img src="${s.src.replace(/\.webp$/, ".svg")}" alt=""><h3>t</h3></li>`,
+          <div data-story-stage><img src="${s.src}" alt=""></div><h3>t</h3></li>`,
       ).join("")}</ol>
     </div>
     <div id="sau-cau-chuyen" tabindex="-1"></div>
@@ -137,16 +141,21 @@ function place(top: number) {
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-function svgFor(slug: string) {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("data-scene", slug);
-  return svg;
+/** The overlay `buildOverlay` would add: a root in the stage, no parts. */
+function overlayIn(stage: HTMLElement) {
+  const root = document.createElement("div");
+  root.setAttribute("data-story-overlay", "");
+  stage.append(root);
+  return { root, parts: {}, effects: document.createElementNS("http://www.w3.org/2000/svg", "svg") };
 }
+
+const stageOf = (slug: string) =>
+  document.querySelector<HTMLElement>(`li[data-story-scene='${slug}'] [data-story-stage]`)!;
 
 const loadTriggers = (fake: ReturnType<typeof fakeModules>) =>
   fake.triggers.filter((t) => t.vars.start === STORY_LOAD_AHEAD);
 
-/** Runs every scene's load trigger and waits for the (mocked) inline swaps. */
+/** Runs every scene's load trigger and waits for the (mocked) overlays. */
 async function load(fake: ReturnType<typeof fakeModules>) {
   loadTriggers(fake).forEach((t) => t.vars.onEnter?.());
   await flush();
@@ -161,11 +170,9 @@ beforeEach(() => {
   Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
   place(2000);
   motions = [];
-  mocks.inlineSvg.mockReset();
-  mocks.inlineSvg.mockImplementation(async (img: HTMLImageElement) => {
-    const slug = img.closest("li")?.getAttribute("data-story-scene") ?? "";
-    return svgFor(slug);
-  });
+  mocks.buildOverlay.mockReset();
+  mocks.buildOverlay.mockImplementation(async (stage: HTMLElement) => overlayIn(stage));
+  mocks.showOverlay.mockReset();
   mocks.build.mockReset();
   mocks.build.mockImplementation(() => {
     const motion = fakeMotion();
@@ -190,38 +197,32 @@ describe("setupRiceStory", () => {
     expect(fake.gsap.to).not.toHaveBeenCalled();
   });
 
-  it("loads each drawing once, one screen before its own scene", async () => {
+  it("loads each scene's moving parts once, one screen before the scene", async () => {
     const fake = fakeModules();
     setupRiceStory(fake.modules, document);
     expect(STORY_LOAD_AHEAD).toBe("top bottom+=100%");
     const triggers = loadTriggers(fake);
     expect(triggers).toHaveLength(8);
     triggers.forEach((t, i) => expect(t.vars).toMatchObject({ trigger: items()[i], once: true }));
-    expect(mocks.inlineSvg).not.toHaveBeenCalled();
+    expect(mocks.buildOverlay).not.toHaveBeenCalled();
     // Only the scene that comes near loads; the others wait for their own trigger.
     triggers[0].vars.onEnter?.();
     await flush();
-    expect(mocks.inlineSvg).toHaveBeenCalledTimes(1);
-    expect(mocks.inlineSvg).toHaveBeenCalledWith(items()[0].querySelector("img"));
+    expect(mocks.buildOverlay).toHaveBeenCalledTimes(1);
+    expect(mocks.buildOverlay).toHaveBeenCalledWith(stageOf(STORY_SCENES[0].slug), STORY_SCENES[0].slug);
     expect(mocks.build).toHaveBeenCalledTimes(1);
     triggers.slice(1).forEach((t) => t.vars.onEnter?.());
     await flush();
-    expect(mocks.inlineSvg).toHaveBeenCalledTimes(8);
+    expect(mocks.buildOverlay).toHaveBeenCalledTimes(8);
   });
 
-  it("moves the drawings that are already inline (the motion started again)", () => {
-    items().forEach((li) => {
-      li.querySelector("img")?.replaceWith(svgFor(li.getAttribute("data-story-scene") ?? ""));
-    });
+  it("shows each overlay only after its intro has set its first or last frame", async () => {
     const fake = fakeModules();
     setupRiceStory(fake.modules, document);
-    expect(loadTriggers(fake)).toHaveLength(0);
-    expect(mocks.inlineSvg).not.toHaveBeenCalled();
-    expect(mocks.build).toHaveBeenCalledTimes(8);
-    expect(mocks.build.mock.calls.map((call) => call[1])).toEqual(
-      items().map((li) => li.querySelector("svg[data-scene]")),
-    );
-    expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(8);
+    await load(fake);
+    expect(mocks.showOverlay).toHaveBeenCalledTimes(8);
+    const order = mocks.showOverlay.mock.invocationCallOrder[0];
+    expect(fake.ScrollTrigger.create.mock.invocationCallOrder.some((n) => n < order)).toBe(true);
   });
 
   it("never pins and never uses a sideways container animation", async () => {
@@ -413,14 +414,15 @@ describe("setupRiceStory", () => {
     loadTriggers(fake).forEach((t) => expect(t.kill).toHaveBeenCalled());
     expect(fake.contextRevert).toHaveBeenCalled();
     expect(stop.hasAttribute("data-active")).toBe(false);
+    // Back to the still sketches: no overlay is left in any stage.
+    expect(document.querySelectorAll("[data-story-overlay]")).toHaveLength(0);
     expect(fake.ScrollTrigger.removeEventListener).toHaveBeenCalledWith("refresh", expect.any(Function));
   });
 
-  it("keeps the static image of a scene whose file fails and moves the others", async () => {
-    mocks.inlineSvg.mockImplementation(async (img: HTMLImageElement) => {
-      const slug = img.closest("li")?.getAttribute("data-story-scene") ?? "";
-      return slug === "say" ? null : svgFor(slug);
-    });
+  it("keeps the still sketch of a scene whose layers fail and moves the others", async () => {
+    mocks.buildOverlay.mockImplementation(async (stage: HTMLElement, slug: string) =>
+      slug === "say" ? null : overlayIn(stage),
+    );
     const fake = fakeModules();
     setupRiceStory(fake.modules, document);
     await load(fake);
@@ -432,43 +434,14 @@ describe("setupRiceStory", () => {
     expect(triggered).not.toContain(document.querySelector("li[data-story-scene='say']"));
   });
 
-  it("skips a scene whose drawing lacks a part", async () => {
+  it("skips a scene that lacks a part and removes its overlay", async () => {
     mocks.build.mockImplementationOnce(() => null);
     const fake = fakeModules();
     setupRiceStory(fake.modules, document);
     await load(fake);
     expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(7);
-  });
-
-  it("moves a drawing that an earlier run swapped in while this run's file loaded", async () => {
-    // Run 1 starts the fetch, then the motion restarts (a media query change) before it ends.
-    const pending: Array<(svg: SVGSVGElement | null) => void> = [];
-    mocks.inlineSvg.mockImplementation(
-      (img: HTMLImageElement) =>
-        new Promise((resolve) => {
-          pending.push((svg) => {
-            if (svg && img.isConnected) img.replaceWith(svg);
-            resolve(svg && svg.isConnected ? svg : null);
-          });
-        }),
-    );
-    const first = fakeModules();
-    const cleanup = setupRiceStory(first.modules, document);
-    loadTriggers(first)[0].vars.onEnter?.();
-    (cleanup as () => void)();
-    const second = fakeModules();
-    setupRiceStory(second.modules, document);
-    loadTriggers(second)[0].vars.onEnter?.();
-    expect(pending).toHaveLength(2);
-    // Run 1's file swaps the img, so run 2's file finds no img and returns null.
-    pending[0](svgFor(STORY_SCENES[0].slug));
-    pending[1](svgFor(STORY_SCENES[0].slug));
-    await flush();
-    const inline = items()[0].querySelector("svg[data-scene]");
-    expect(inline).not.toBeNull();
-    expect(mocks.build).toHaveBeenCalledTimes(1);
-    expect(mocks.build.mock.calls[0][1]).toBe(inline);
-    expect(second.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(1);
+    expect(stageOf(STORY_SCENES[0].slug).querySelector("[data-story-overlay]")).toBeNull();
+    expect(document.querySelectorAll("[data-story-overlay]")).toHaveLength(7);
   });
 
   it("skips a scene whose slug has no motion and moves the others", async () => {
@@ -478,16 +451,6 @@ describe("setupRiceStory", () => {
     await load(fake);
     expect(mocks.build).toHaveBeenCalledTimes(7);
     expect(fake.triggers.filter((t) => t.vars.start === introStart())).toHaveLength(7);
-  });
-
-  it("skips an already inline drawing whose slug has no motion", () => {
-    items().forEach((li) => {
-      li.querySelector("img")?.replaceWith(svgFor(li.getAttribute("data-story-scene") ?? ""));
-    });
-    items()[3].setAttribute("data-story-scene", "not-a-scene");
-    const fake = fakeModules();
-    expect(() => setupRiceStory(fake.modules, document)).not.toThrow();
-    expect(mocks.build).toHaveBeenCalledTimes(7);
   });
 
   it("fills the stop inside each scene, also when a scene above has none", () => {
@@ -523,13 +486,14 @@ describe("setupRiceStory", () => {
     }
   });
 
-  it("does not move the drawings that arrive after cleanup", async () => {
+  it("drops the overlays that arrive after cleanup", async () => {
     const fake = fakeModules();
     const cleanup = setupRiceStory(fake.modules, document);
     loadTriggers(fake).forEach((t) => t.vars.onEnter?.());
     (cleanup as () => void)();
     await flush();
     expect(mocks.build).not.toHaveBeenCalled();
+    expect(document.querySelectorAll("[data-story-overlay]")).toHaveLength(0);
   });
 });
 
