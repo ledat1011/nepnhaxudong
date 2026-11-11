@@ -25,7 +25,7 @@ A layer entry in layers.json:
 - `matte_range: [low, high]` (optional): the matte thresholds for this layer, when its
   background has a texture that the default range would keep.
 - `fill`: true makes the layer the filled-in background itself (as a patch, but stacked in the
-  entry order, so it can lie over an earlier layer that moves, such as the harvester).
+  entry order, so it can lie over an earlier layer, or stand alone under a layer that turns).
   `fill_color: [r, g, b]` fills it with one colour instead, when the things around the hole
   (a dark machine, ink lines) would darken the smooth fill.
 - `radial: {"from": a, "to": b, "copies": n}` (with `circle` and `matte`): a wheel with n equal

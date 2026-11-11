@@ -20,7 +20,6 @@
     }
   ],
   "gat": [
-    { "name": "harvester", "rect": [434, 215, 983, 548], "pad": 10, "feather": 8 },
     { "name": "reel-bg", "circle": [918, 435, 64], "pad": 3, "feather": 2, "fill": true, "fill_color": [224, 184, 104] },
     {
       "name": "reel",

@@ -125,16 +125,6 @@
   ],
   "gat": [
     {
-      "name": "harvester",
-      "src": "/lop/gat-harvester.webp",
-      "left": 35.25,
-      "top": 30.222,
-      "width": 47.667,
-      "height": 52.741,
-      "originX": 49.913,
-      "originY": 49.86
-    },
-    {
       "name": "reel-bg",
       "src": "/lop/gat-reel-bg.webp",
       "left": 70.917,
