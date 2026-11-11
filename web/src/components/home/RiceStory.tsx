@@ -2,10 +2,10 @@ import { ZaloLink } from "@/components/contact/ZaloLink";
 import { StageIcon } from "@/components/home/RicePlant";
 import { MotionPauseButton } from "@/components/motion/MotionPauseButton";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { BRAND } from "@/lib/brand/colors";
+import { BRAND, ILLUSTRATION_ONLY_COLORS } from "@/lib/brand/colors";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { roadBend, roadPath } from "@/lib/story/road";
-import { RICE_STAGES, SCENE_STAGE, STORY_SCENES, type RiceStage, type SceneSlug } from "@/lib/story/scenes";
+import { RICE_STAGES, STORY_SCENES, type SceneSlug } from "@/lib/story/scenes";
 
 type RiceStoryProps = {
   dict: Dictionary;
@@ -34,17 +34,25 @@ function sceneText(dict: Dictionary, slug: SceneSlug): { title: string; text: st
 }
 
 /**
- * The colour of the road already passed, by what the rice is on that stretch (owner,
- * 2026-11-11): young-rice green while it grows, gold for the paddy, brown from the mill on (the
- * brown of the bag and the bowl). Not rice white: on the straw road it looked as if nobody had
- * passed there (owner, 2026-11-11).
+ * The colours of the road already passed, at each stop and at the end of the road: one band
+ * that grows darker down the whole road, like a progress bar (owner, 2026-11-11). It goes
+ * from light young-rice green, through the gold of the ripe rice (step 2 ripens from green to
+ * gold), to brown from the mill on, and dark brown at the end. Each stretch blends from its own
+ * stop's colour to the next one, so no colour changes at once. The colours between the brand
+ * colours are their even mixes.
  */
-const PASSED_ROAD: Record<RiceStage, string> = {
-  seed: BRAND.sprout,
-  paddy: BRAND.grain,
-  rice: BRAND.coat,
-  bowl: BRAND.coat,
-};
+export const ROAD_SHADES = [
+  ILLUSTRATION_ONLY_COLORS.leafLight,
+  BRAND.sprout,
+  BRAND.grain,
+  "#B27E33", // grain and coat, half and half
+  BRAND.coat,
+  "#7B4F27", // coat, a quarter of the way to earth
+  "#6B4323", // coat and earth, half and half
+  "#5A381E", // three quarters of the way to earth
+  BRAND.earth,
+] as const;
+
 
 /** Where the road runs: 20 px from the left below 768 px, the middle of the list from 768 px. */
 const ON_ROAD_LEFT = "md:left-auto md:right-0 md:translate-x-1/2";
@@ -167,9 +175,21 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                           strokeLinecap="round"
                           className="absolute inset-0 h-full w-full overflow-visible"
                         >
+                          {/* In the viewBox units: a straight stretch has no width to measure. */}
+                          <linearGradient
+                            id={`story-road-shade-${i}`}
+                            gradientUnits="userSpaceOnUse"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="100"
+                          >
+                            <stop offset="0" stopColor={ROAD_SHADES[i]} />
+                            <stop offset="1" stopColor={ROAD_SHADES[i + 1]} />
+                          </linearGradient>
                           <path
                             d={roadPath(bend)}
-                            stroke={PASSED_ROAD[SCENE_STAGE[scene.slug]]}
+                            stroke={`url(#story-road-shade-${i})`}
                             vectorEffect="non-scaling-stroke"
                             className="[stroke-width:12px] md:[stroke-width:20px]"
                           />

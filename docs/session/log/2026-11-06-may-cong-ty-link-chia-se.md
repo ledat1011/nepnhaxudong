@@ -82,3 +82,5 @@
 - Đã làm trên nhánh `feat/hanh-trinh-hat`: cảnh gặt chỉ guồng quay; cảnh chạy lại đoạn mở đầu khi quay lại; tranh cảnh 960 × 540 (744 KB còn 460 KB); hình chạy 4 giai đoạn, đường đổi màu theo giai đoạn, hình không còn mờ (nằm đúng điểm ảnh, không có lớp riêng).
 - Chủ dự án (ảnh chụp bước 8): "để đường đã đi màu trắng như vậy như chưa từng đi qua đó" → đoạn đường đã qua ở bước gạo và bát xôi không dùng màu trắng gạo; đổi sang màu nâu (`coat`).
 - Chủ dự án (ảnh tranh đêm bước 2): "tối thì 2 ông bà về nghỉ ngơi rồi nên để hình đồng lúa là được rồi" → tranh đêm bỏ hai người, chỉ còn đồng lúa dưới trăng (sửa bằng Nano Banana, giữ nguyên bố cục).
+- Chủ dự án hỏi ý kiến (ảnh chụp đoạn đường xanh ở bước 1): "màu của đường đi đậm dần kiểu giống tiến độ á ok không" → chờ chủ dự án chọn cách làm.
+- Chủ dự án chọn: đường đã đi qua là một dải màu liền cả đường, đậm dần như thanh tiến độ: xanh mạ nhạt → xanh mạ → vàng thóc → vàng đậm → nâu → nâu đậm; không còn chỗ đổi màu đột ngột ở điểm dừng.

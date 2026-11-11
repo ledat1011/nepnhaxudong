@@ -5,7 +5,7 @@ import { BRAND } from "@/lib/brand/colors";
 import { roadBend, roadPath } from "@/lib/story/road";
 import { RICE_STAGES, STORY_SCENES } from "@/lib/story/scenes";
 import { Hero } from "./Hero";
-import { RiceStory } from "./RiceStory";
+import { RiceStory, ROAD_SHADES } from "./RiceStory";
 
 const KEYS = {
   "cay-ma": "cayMa",
@@ -67,14 +67,35 @@ describe("RiceStory", () => {
     expect(icons).toEqual([...RICE_STAGES]);
   });
 
-  it("colours the road already passed by what the rice is on that stretch", () => {
+  it("colours the road already passed as one band that grows darker down the road", () => {
     const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
-    const passed = [...container.querySelectorAll("li[data-story-scene]")].map((li) =>
-      li.querySelector("[data-story-road-passed] path")?.getAttribute("stroke"),
-    );
-    expect(passed).toEqual([
-      BRAND.sprout, BRAND.sprout, BRAND.grain, BRAND.grain, BRAND.coat, BRAND.coat, BRAND.coat, BRAND.coat,
-    ]);
+    const items = [...container.querySelectorAll("li[data-story-scene]")];
+    expect(ROAD_SHADES).toHaveLength(items.length + 1);
+    items.forEach((li, i) => {
+      const svg = li.querySelector("[data-story-road-passed] svg") as SVGSVGElement;
+      const gradient = svg.querySelector("linearGradient") as SVGLinearGradientElement;
+      const path = svg.querySelector("path") as SVGPathElement;
+      expect(path.getAttribute("stroke")).toBe(`url(#${gradient.id})`);
+      // From this stop's colour to the next one: the stretches join without a jump.
+      const stops = [...gradient.querySelectorAll("stop")].map((s) => s.getAttribute("stop-color"));
+      expect(stops).toEqual([ROAD_SHADES[i], ROAD_SHADES[i + 1]]);
+      expect(gradient.getAttribute("gradientUnits")).toBe("userSpaceOnUse");
+    });
+    const ids = items.map((li) => li.querySelector("linearGradient")?.id);
+    expect(new Set(ids).size).toBe(items.length);
+    // Green while the rice grows, gold when it is ripe, brown from the mill on, darkest at the end.
+    expect(ROAD_SHADES[1]).toBe(BRAND.sprout);
+    expect(ROAD_SHADES[2]).toBe(BRAND.grain);
+    expect(ROAD_SHADES[4]).toBe(BRAND.coat);
+    expect(ROAD_SHADES.at(-1)).toBe(BRAND.earth);
+    const lightness = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((k) => parseInt(hex.slice(k, k + 2), 16));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    // From the ripe gold on, every stop is darker than the one before.
+    for (let k = 3; k < ROAD_SHADES.length; k++) {
+      expect(lightness(ROAD_SHADES[k])).toBeLessThan(lightness(ROAD_SHADES[k - 1]));
+    }
   });
 
   it("puts the scenes left and right of the road from 768 px, the first one on the left", () => {
