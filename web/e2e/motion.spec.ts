@@ -978,12 +978,19 @@ test.describe("the rice story road", () => {
       (el) => getComputedStyle(el).transform,
     );
     expect(IDENTITY).toContain(passed);
-    // The darker road is Vàng lúa, inside the Vàng rơm road.
-    const passedStroke = await page.$eval(
-      "li[data-story-scene]:nth-child(2) [data-story-road-passed] path",
-      (el) => el.getAttribute("stroke"),
+    // The road passed has the colour of the stage: green while the rice grows (step 2), gold
+    // for the paddy (step 4).
+    const passedStroke = (step: number) =>
+      page.$eval(`li[data-story-scene]:nth-child(${step}) [data-story-road-passed] path`, (el) =>
+        el.getAttribute("stroke")?.toUpperCase(),
+      );
+    expect(await passedStroke(2)).toBe(BRAND.sprout.toUpperCase());
+    expect(await passedStroke(4)).toBe(BRAND.grain.toUpperCase());
+    // At step 4 the marker shows a paddy grain, and only that icon.
+    const shownIcons = await page.$$eval("[data-story-grain] [data-stage]", (els) =>
+      els.filter((el) => Number(getComputedStyle(el).opacity) > 0.5).map((el) => el.getAttribute("data-stage")),
     );
-    expect(passedStroke?.toUpperCase()).toBe(BRAND.grain.toUpperCase());
+    expect(shownIcons).toEqual(["paddy"]);
 
     // Back up the page, the grain goes back up the road.
     const down = await grainY();
