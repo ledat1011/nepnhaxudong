@@ -63,3 +63,6 @@
 - PR #44 merge (`b6b99c6`) sau khi mọi check CI qua. Chủ dự án: "làm tiếp việc 5 và 6 luôn".
 - Việc 5: repo không còn ảnh thật chưa dùng → chủ dự án chọn dùng tranh vẽ 8 bước làm ảnh bìa câu chuyện: truyền hình → cảnh gặt, từ cửa hàng tới bịch gạo → cảnh đến tay khách, mẻ sấy → cảnh sấy, nấu xôi → mâm cơm, bảo quản → đóng gói. Chỉ đổi dữ liệu mẫu; web thật đặt ảnh bìa ở trang quản trị.
 - Đã làm việc 5 và 6 ở PR #46 (`feat/anh-bia-va-chan-trang`): ảnh bìa 5 câu chuyện mẫu là tranh 8 bước; chữ dưới 2 giấy chứng nhận ở chân trang 16 px và 14 px; `theme-color` là màu Trắng gạo. Merge khi CI qua.
+- Chủ dự án: "tiếp theo sẽ làm chuyển động cho chuyện hạt nếp" → đang brainstorm. Chọn cách: giữ tranh manhua làm nền, chỉ cắt vài vật cần động thành lớp ảnh trong suốt (cánh quạt, mây, máy gặt, xe chở gạo), cộng hiệu ứng vẽ bằng code (mưa, gió, hơi bốc, trấu bay); bước 2 chuyển ngày sang đêm bằng tranh đêm đã có. Không dựng lại SVG tách lớp.
+- Chủ dự án duyệt bảng chuyển động 8 cảnh: mở đầu 1–2 giây khi cảnh tới giữa màn hình, rồi chuyển động nhỏ lặp lại; cảnh ra khỏi màn hình thì dừng. Máy gặt và xe chở gạo chỉ rung hoặc quay bánh tại chỗ, không chạy ngang (không vẽ bù nền bằng AI). "viết spec đi rồi làm đi".
+- CI của PR #46 lỗi: ở 320 px hai giấy chứng nhận ở chân trang rộng 352 px. Sửa: cột chữ 9rem dưới 375 px, 10rem từ 375 px.
