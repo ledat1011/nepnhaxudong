@@ -120,6 +120,26 @@ test.describe("no horizontal scroll at 320x640", () => {
   }
 });
 
+// The full menu needs about 830 px; below 1024 px the header shows the menu button instead.
+for (const width of [768, 1023]) {
+  test.describe(`header at ${width} px`, () => {
+    test.use({ viewport: { width, height: 900 } });
+
+    for (const path of ["/vi", "/en"]) {
+      test(`${path}: no horizontal scroll, menu behind the menu button`, async ({ page }) => {
+        await page.goto(path);
+        const widths = await page.evaluate(() => ({
+          scroll: document.documentElement.scrollWidth,
+          client: document.documentElement.clientWidth,
+        }));
+        expect(widths.scroll).toBeLessThanOrEqual(widths.client);
+        const dict = getDictionary(path === "/vi" ? "vi" : "en");
+        await expect(page.getByRole("button", { name: dict.nav.openMenu })).toBeVisible();
+      });
+    }
+  });
+}
+
 test.describe("journey photos", () => {
   const CERTIFICATE = "Giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm, cấp năm 2021";
   const BAG = "Bao gạo nếp cái hoa vàng Duy Tân 2 kg đầu tiên, năm 2021";
@@ -174,3 +194,40 @@ test.describe("journey photos", () => {
     });
   });
 });
+
+for (const width of [768, 1024, 1440]) {
+  test.describe(`rice story at ${width} px`, () => {
+    test.use({ viewport: { width, height: 900 } });
+
+    test("scenes interleave without overlap, and the road joins at every stop", async ({ page }) => {
+      await page.goto("/vi");
+      const shape = await page.evaluate(() =>
+        [...document.querySelectorAll("[data-story-scene]")].map((li) => {
+          const box = li.getBoundingClientRect();
+          const road = li.querySelector("[data-story-road]")!.getBoundingClientRect();
+          const stop = li.querySelector("[data-story-stop]")!.getBoundingClientRect();
+          const content = li.querySelector("[data-story-content]")!.getBoundingClientRect();
+          return {
+            top: box.top,
+            contentBottom: content.bottom,
+            roadTop: road.top,
+            roadBottom: road.bottom,
+            stopMiddle: stop.top + stop.height / 2,
+          };
+        }),
+      );
+      expect(shape).toHaveLength(8);
+      for (let i = 0; i + 1 < shape.length; i++) {
+        // Each scene starts before the one above it ends: the columns fill each other's gaps.
+        expect(shape[i + 1].top).toBeLessThan(shape[i].contentBottom);
+        // The stretch of road ends where the next one starts, at the next scene's stop.
+        expect(Math.abs(shape[i].roadBottom - shape[i + 1].roadTop)).toBeLessThanOrEqual(1);
+        expect(Math.abs(shape[i].roadBottom - shape[i + 1].stopMiddle)).toBeLessThanOrEqual(1);
+      }
+      for (let i = 0; i + 2 < shape.length; i++) {
+        // A scene ends at least 24 px above the next scene on its own side.
+        expect(shape[i + 2].top - shape[i].contentBottom).toBeGreaterThanOrEqual(24);
+      }
+    });
+  });
+}

@@ -273,8 +273,10 @@ export const setupRiceStory: MotionSetup = (modules, root) => {
     scenes.forEach(({ li }) => {
       const stop = li.querySelector<HTMLElement>("[data-story-stop]");
       if (!stop) return;
+      // The stretch of road runs from this stop to the next one. From 768 px the next scene starts
+      // before this one ends, so with the scene itself as the trigger two stops would be filled.
       ScrollTrigger.create({
-        trigger: li,
+        trigger: li.querySelector<HTMLElement>("[data-story-road]") ?? li,
         start: `top ${line}`,
         end: `bottom ${line}`,
         onToggle: (self) => stop.toggleAttribute("data-active", self.isActive),

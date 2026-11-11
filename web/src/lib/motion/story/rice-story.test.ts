@@ -306,7 +306,10 @@ describe("setupRiceStory", () => {
     const triggers = fake.triggers.filter((t) => t.vars.start === `top ${roadLine()}`);
     expect(triggers).toHaveLength(8);
     triggers.forEach((t, i) =>
-      expect(t.vars).toMatchObject({ trigger: items()[i], end: `bottom ${roadLine()}` }),
+      expect(t.vars).toMatchObject({
+        trigger: items()[i].querySelector("[data-story-road]"),
+        end: `bottom ${roadLine()}`,
+      }),
     );
     triggers[2].vars.onToggle?.({ isActive: true });
     expect(stops[2].hasAttribute("data-active")).toBe(true);
@@ -492,7 +495,11 @@ describe("setupRiceStory", () => {
     const fake = fakeModules();
     setupRiceStory(fake.modules, document);
     const fill = fake.triggers.filter((t) => t.vars.start === `top ${roadLine()}`);
-    expect(fill.map((t) => t.vars.trigger)).toEqual(items().slice(1));
+    expect(fill.map((t) => t.vars.trigger)).toEqual(
+      items()
+        .slice(1)
+        .map((li) => li.querySelector("[data-story-road]")),
+    );
     fill[1].vars.onToggle?.({ isActive: true });
     const active = Array.from(document.querySelectorAll("[data-story-stop][data-active]"));
     expect(active).toEqual([items()[2].querySelector("[data-story-stop]")]);

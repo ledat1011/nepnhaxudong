@@ -58,9 +58,20 @@ function Stretch({ bend, edge, middle }: StretchProps) {
 }
 
 /**
+ * From 768 px a scene starts this far above the end of the one before. A scene there is about
+ * 400 px high, so a scene still ends above the next scene on its own side. Its road stretch ends
+ * this much higher too, at the next scene's stop, so the stretches still join without a gap or
+ * a double line. The class names are written in full for Tailwind.
+ */
+const OVERLAP_SCENE = "md:-mt-40";
+const OVERLAP_ROAD = "md:h-[calc(100%-10rem)]";
+
+/**
  * The eight scenes from the seedling to the table, as one vertical timeline along a winding
  * dirt road: below 768 px the road runs on the left and the scenes stand to its right; from
- * 768 px it runs down the middle and the scenes take turns left and right. Each scene draws
+ * 768 px it runs down the middle and the scenes take turns left and right, and each scene
+ * starts `OVERLAP_SCENE` above the end of the one before, so the two columns fill each other's gaps
+ * instead of leaving half the width empty. Each scene draws
  * its own stretch of road down to the next stop, so the stops always sit on the road. The
  * static markup is complete: the whole road is drawn and every drawing shows its final frame.
  * The motion code (lib/motion/story/rice-story.ts) moves the grain down the road, darkens the
@@ -109,13 +120,15 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                   data-story-scene={scene.slug}
                   className={`relative pb-12 pl-14 last:pb-0 md:w-1/2 md:pb-8 ${
                     onLeft ? "md:pl-0 md:pr-16" : "md:ml-auto md:pl-16"
-                  }`}
+                  } ${i > 0 ? OVERLAP_SCENE : ""}`}
                 >
                   <span
                     data-story-road
                     data-bend={bend}
                     aria-hidden="true"
-                    className={`absolute left-[20px] top-[14px] h-full w-10 -translate-x-1/2 md:w-24 ${side}`}
+                    className={`absolute left-[20px] top-[14px] h-full w-10 -translate-x-1/2 md:w-24 ${side} ${
+                      isLast ? "" : OVERLAP_ROAD
+                    }`}
                   >
                     <Stretch
                       bend={bend}

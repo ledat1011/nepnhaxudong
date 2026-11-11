@@ -86,6 +86,7 @@ const vi = {
     address: "Địa chỉ",
     viewMap: "Xem bản đồ",
     hours: "Giờ liên hệ",
+    intro: "Gọi điện hoặc nhắn Zalo để hỏi giá, đặt gạo hay hẹn ghé nhà lấy gạo.",
   },
   zalo: {
     title: "Nhắn Nếp Nhà qua Zalo",
@@ -118,6 +119,10 @@ const vi = {
     next: "Ảnh sau",
     close: "Đóng",
     bag: "Hình túi gạo",
+  },
+  press: {
+    open: "Xem bài gốc",
+    newTab: "(mở trong tab mới)",
   },
   stories: {
     readMore: "Đọc tiếp",
@@ -235,6 +240,7 @@ const en: Dictionary = {
     address: "Address",
     viewMap: "View map",
     hours: "Contact hours",
+    intro: "Call or message us on Zalo to ask the price, order rice or arrange to pick it up at our home.",
   },
   zalo: {
     title: "Message Nếp Nhà on Zalo",
@@ -267,6 +273,10 @@ const en: Dictionary = {
     next: "Next image",
     close: "Close",
     bag: "Drawing of the rice bag",
+  },
+  press: {
+    open: "See the original",
+    newTab: "(opens in a new tab)",
   },
   stories: {
     readMore: "Read more",
