@@ -115,28 +115,48 @@ body {
 }
 
 /*
- * The picture of the home village (Hero.tsx, HERO_PICTURE in HeroScene.tsx). Its parent is a size
- * container, so 100cqh is the panel height. The picture is as high as the panel (the mountain top
- * is near its top edge, so it is never cut) and keeps its shape, so its width is
- * 100cqh x 2400 / 1209. It is placed from the mascot, not from the panel edges: the right edge
- * of the bag (0.5625 of the picture) goes 0.5rem left of the mascot, so the bag stands beside it
- * and the mountain rises behind it. The mascot center (`--hero-mascot-x`) is the panel center on a
- * phone, and from md the center of the right column: 50% + the container width / 4 + 0.125rem,
- * from the grid in Hero.tsx.
- * Where the picture does not reach a side of the panel (very wide or very narrow screens), its
- * edges fade into the sky gradient behind it, so no cut line shows.
+ * The picture of the home village (Hero.tsx, HERO_PICTURE in hero-picture.ts). Its parent is a
+ * size container, so 100cqh is the panel height. The picture is as high as the panel (the
+ * mountain top is near its top edge, so it is never cut) and keeps its shape, so its width is
+ * 100cqh x its width / height (`--hero-picture-ratio`, set on the box from HERO_PICTURE). It is
+ * placed from the mascot, not from the panel edges: the right edge of the bag
+ * (`--hero-picture-bag`, a part of the picture width) goes 0.5rem left of the mascot, so the bag
+ * stands beside it and the mountain rises behind it. The mascot center (`--hero-mascot-x`) is the
+ * panel center on a phone, and from md the center of the right column: 50% + the container
+ * width / 4 + 0.125rem, from the grid in Hero.tsx.
+ * The picture is wide enough to reach the right edge of the panel at every width up to 2560 px
+ * (hero-picture.ts has the worst case). Where it does not reach a side of the panel (the left edge
+ * on very wide screens), its edges fade into the sky gradient behind it, so no cut line shows.
  */
 .hero-picture {
-  --hero-picture-w: calc(100cqh * 2400 / 1209);
+  --hero-picture-w: calc(100cqh * var(--hero-picture-ratio));
   --hero-mascot-x: 50%;
   position: absolute;
   bottom: 0;
-  left: calc(var(--hero-mascot-x) - var(--hero-m) / 2 - 0.5rem - 0.5625 * var(--hero-picture-w));
+  left: calc(
+    var(--hero-mascot-x) - var(--hero-m) / 2 - 0.5rem - var(--hero-picture-bag) * var(--hero-picture-w)
+  );
   width: var(--hero-picture-w);
   max-width: none;
   height: 100%;
   -webkit-mask-image: linear-gradient(to right, transparent, var(--color-earth) 6%, var(--color-earth) 92%, transparent);
   mask-image: linear-gradient(to right, transparent, var(--color-earth) 6%, var(--color-earth) 92%, transparent);
+}
+
+/*
+ * The sun in the box of the picture (HeroSun, before the canvas): its center is at
+ * (`--hero-sun-x`, `--hero-sun-y`), parts of the picture width and height (from md the `-md-`
+ * pair, see HERO_PICTURE.sun), and its box is `--hero-sun-size` x the picture height (100cqh), so
+ * it keeps its place behind the mountain and its size next to it at every width.
+ */
+.hero-sun {
+  --hero-sun-box: calc(100cqh * var(--hero-sun-size));
+  --hero-sun-cx: var(--hero-sun-x);
+  --hero-sun-cy: var(--hero-sun-y);
+  left: calc(var(--hero-sun-cx) * 100% - var(--hero-sun-box) / 2);
+  top: calc(var(--hero-sun-cy) * 100% - var(--hero-sun-box) / 2);
+  width: var(--hero-sun-box);
+  height: var(--hero-sun-box);
 }
 
 .hero-fade-mascot {
@@ -173,6 +193,12 @@ body {
   /* From md the mascot is the center of the right column (see .hero-picture above). */
   .hero-picture {
     --hero-mascot-x: calc(50% + min(100%, 72rem) / 4 + 0.125rem);
+  }
+
+  /* From md the sun stands behind the big mountain, above the mascot (see .hero-sun above). */
+  .hero-sun {
+    --hero-sun-cx: var(--hero-sun-md-x);
+    --hero-sun-cy: var(--hero-sun-md-y);
   }
 }
 

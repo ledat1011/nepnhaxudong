@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { heroPictureSources } from "./hero-picture";
+import { type ReactNode, useEffect, useRef } from "react";
+import { HERO_PICTURE_STYLE, heroPictureSources } from "./hero-picture";
 
 /**
  * The picture of the home village behind the hero, drawn on a canvas.
@@ -14,11 +14,13 @@ import { heroPictureSources } from "./hero-picture";
  * Hero.tsx preloads the same sources with a high fetch priority, so the picture is usually
  * downloaded before this code runs. Without script there is no picture; the sky gradient stays.
  *
- * The canvas has the box of `.hero-picture` (globals.css) and the picture's own shape, so the
+ * The box (`.hero-picture` in globals.css) has the picture's own shape; the canvas fills it, so the
  * picture is drawn over the whole canvas. It is drawn again when the box changes size, at the
  * screen's pixel density (at most 2, more would only cost memory).
+ * `behind` goes in the same box before the canvas: the picture's sky is transparent, so the
+ * mountain covers what stands behind it (the sun, HeroSun).
  */
-export function HeroPicture() {
+export function HeroPicture({ behind }: { behind?: ReactNode }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -31,8 +33,9 @@ export function HeroPicture() {
     picture.srcset = srcSet;
     picture.src = src;
 
+    let decoded = false;
     const draw = () => {
-      if (!picture.complete || picture.naturalWidth === 0) return;
+      if (!decoded) return;
       const box = canvas.getBoundingClientRect();
       const density = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.round(box.width * density);
@@ -43,14 +46,29 @@ export function HeroPicture() {
       canvas.getContext("2d")?.drawImage(picture, 0, 0, width, height);
     };
 
-    picture.addEventListener("load", draw);
+    // decode() decodes the picture off the main thread; drawImage on a picture that is only
+    // loaded would decode it on the main thread, in one long task. If the picture does not load,
+    // decode() rejects and the canvas stays empty: the sky gradient behind it is enough.
+    let active = true;
+    picture
+      .decode()
+      .then(() => {
+        decoded = true;
+        if (active) draw();
+      })
+      .catch(() => {});
     const resize = new ResizeObserver(draw);
     resize.observe(canvas);
     return () => {
-      picture.removeEventListener("load", draw);
+      active = false;
       resize.disconnect();
     };
   }, []);
 
-  return <canvas ref={ref} data-hero-picture="" aria-hidden="true" className="hero-picture" />;
+  return (
+    <div data-hero-picture-box="" aria-hidden="true" className="hero-picture" style={HERO_PICTURE_STYLE}>
+      {behind}
+      <canvas ref={ref} data-hero-picture="" className="absolute inset-0 size-full" />
+    </div>
+  );
 }

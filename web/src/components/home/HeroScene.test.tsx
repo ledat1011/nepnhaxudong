@@ -115,10 +115,13 @@ describe("HeroScene", () => {
   });
 
   it("places the clouds at the start positions, the second one smaller", () => {
-    expect(HERO_CLOUD_STARTS).toEqual([0.08, 0.42, 0.74]);
+    expect(HERO_CLOUD_STARTS).toEqual([0.08, 0.42, 0.3]);
     const { container } = render(<HeroSky />);
     const clouds = [...container.querySelectorAll<SVGElement>("[data-hero-cloud]")];
-    expect(clouds.map((c) => c.style.left)).toEqual(["8%", "42%", "74%"]);
+    clouds.forEach((c, i) => {
+      expect(c.style.left).toMatch(/%$/);
+      expect(parseFloat(c.style.left)).toBeCloseTo(HERO_CLOUD_STARTS[i] * 100, 6);
+    });
     const widths = clouds.map((c) => parseFloat(c.style.width));
     expect(widths[1]).toBeLessThan(widths[0]);
     expect(widths[1]).toBeLessThan(widths[2]);

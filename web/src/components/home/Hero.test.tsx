@@ -83,9 +83,10 @@ describe("Hero", () => {
     expect(sky?.className).toContain("[container-type:size]");
     // A canvas, not an <img>: a canvas is never a Largest Contentful Paint candidate.
     expect(sky?.querySelector("img")).toBeNull();
-    const picture = sky?.querySelector("canvas[data-hero-picture].hero-picture");
+    const box = sky?.querySelector("[data-hero-picture-box].hero-picture");
+    expect(box).toHaveAttribute("aria-hidden", "true");
+    const picture = box?.querySelector("canvas[data-hero-picture]");
     expect(picture).not.toBeNull();
-    expect(picture).toHaveAttribute("aria-hidden", "true");
     // The clouds come after the picture in the panel, so they are drawn over it.
     const cloud = sky?.querySelector("[data-hero-cloud]");
     expect(picture!.compareDocumentPosition(cloud!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -126,12 +127,38 @@ describe("Hero", () => {
     expect(rule).toMatch(/var\(--color-earth\) 30%, transparent\) var\(--hero-text-end\)/);
   });
 
-  it("puts the sun in the mascot box, behind the mascot", () => {
+  it("preloads the village picture with a low priority, so it never delays the fonts", () => {
+    renderHero(null);
+    const link = document.head.querySelector('link[rel="preload"][as="image"]');
+    expect(link).not.toBeNull();
+    expect(link).toHaveAttribute("fetchpriority", "low");
+  });
+
+  it("puts the sun in the picture box before the canvas, so the mountain hides part of it", () => {
     const { container } = renderHero(null);
-    const mascot = container.querySelector("svg[data-mascot]");
-    const sun = container.querySelector("[data-hero-sun]")?.closest("svg");
-    expect(sun?.parentElement).toBe(mascot?.parentElement);
-    expect(sun?.compareDocumentPosition(mascot as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    const box = container.querySelector("[data-hero-picture-box]");
+    const canvas = box?.querySelector("canvas[data-hero-picture]");
+    for (const selector of ["[data-hero-sun]", "[data-hero-sun-rays]"]) {
+      const sun = container.querySelector(selector)?.closest("svg");
+      expect(sun?.parentElement).toBe(box);
+      expect(sun).toHaveClass("hero-sun");
+      expect(sun?.compareDocumentPosition(canvas as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    }
+    // Its place and size come from HERO_PICTURE, in picture coordinates.
+    const style = (box as HTMLElement).style;
+    for (const name of [
+      "--hero-sun-x",
+      "--hero-sun-y",
+      "--hero-sun-md-x",
+      "--hero-sun-md-y",
+      "--hero-sun-size",
+      "--hero-picture-ratio",
+    ]) {
+      expect(Number(style.getPropertyValue(name))).toBeGreaterThan(0);
+    }
+    // The sun is no longer in the mascot box.
+    const mascotBox = container.querySelector("svg[data-mascot]")?.parentElement;
+    expect(mascotBox?.querySelector("[data-hero-sun]")).toBeNull();
   });
 
   it("has the pause button for the motion", () => {

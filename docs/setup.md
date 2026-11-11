@@ -142,6 +142,15 @@ Kết quả đo sau khi hero có ảnh nền quê (quyết định `0016`, ảnh
 
 Khi ảnh nền còn là `<img>`, `/vi` chỉ được Performance 80–83 và LCP 4,4–5,0 giây, vì ảnh thành phần tử LCP.
 
+Kết quả đo sau khi ảnh nền nối rộng sang phải và mặt trời nấp sau núi (ảnh có trời trong suốt, trên điện thoại khoảng 64 KB thay vì 24 KB), ngày 2026-11-11, máy công ty, Lighthouse 13.6.0, mobile, `/vi`, bản build production. Đo xen kẽ với `main` ngay trước thay đổi, mỗi bên 6 lần, cùng máy, cùng lúc:
+
+| Bản | Performance | LCP chậm (trên 2,5 s) | TBT |
+|---|---|---|---|
+| `main` trước thay đổi | 95 / 89 / 99 / 96 / 100 / 99 | 0 / 6 lần | 55–428 ms |
+| Ảnh rộng, mặt trời sau núi | 77 / 98 / 90 / 98 / 95 / 86 | 1 / 6 lần (4,6 s) | 116–547 ms |
+
+`/en` cùng bản: 99 / 100. Accessibility, Best Practices, SEO: 100. Phần tử LCP ở mọi lần đo là chữ "Nếp Nhà". Khi ảnh được tải trước với ưu tiên cao, `/vi` có LCP 4,9 giây ở 2 trong 3 lần (Performance 73–76), vì ảnh giành băng thông với font; nay ảnh tải trước với ưu tiên thấp và được giải mã ngoài luồng chính (`decode()`). Lần đo LCP chậm còn lại có FCP 1,3 giây, khi mọi tài nguyên đã tải xong từ 279 ms và ảnh nền chưa được vẽ; nguyên nhân chưa rõ, có thể do dao động của luồng chính trên máy này.
+
 ## Cloud session
 Sẽ điền sau khi kiểm tra trên claude.ai/code.
 
