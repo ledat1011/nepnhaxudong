@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { preload } from "react-dom";
 import { Mascot } from "@/components/brand/Mascot";
 import { ZaloLink } from "@/components/contact/ZaloLink";
 import { MotionPauseButton } from "@/components/motion/MotionPauseButton";
@@ -6,7 +6,9 @@ import { SectionLink } from "@/components/ui/SectionLink";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { homePath } from "@/lib/i18n/routes";
-import { HERO_PICTURE, HeroSky, HeroSun } from "./HeroScene";
+import { HeroPicture } from "./HeroPicture";
+import { heroPictureSources } from "./hero-picture";
+import { HeroSky, HeroSun } from "./HeroScene";
 
 type HeroProps = {
   lang: Lang;
@@ -39,6 +41,15 @@ const BUTTON_CLASS =
  * bottom-right corner of the hero.
  */
 export function Hero({ lang, dict, tagline, zalo }: HeroProps) {
+  // The canvas (HeroPicture.tsx) loads its picture only after the page script runs; this preload
+  // in the document head starts the download at once, with a high priority.
+  const picture = heroPictureSources();
+  preload(picture.src, {
+    as: "image",
+    imageSrcSet: picture.srcSet,
+    imageSizes: picture.sizes,
+    fetchPriority: "high",
+  });
   return (
     <section
       data-hero-scene=""
@@ -50,18 +61,7 @@ export function Hero({ lang, dict, tagline, zalo }: HeroProps) {
         className="hero-fade-side pointer-events-none absolute inset-x-0 top-0 z-0 h-[calc(2.5rem+var(--hero-m))] md:inset-y-0 md:h-auto"
       >
         <div className="hero-fade-bottom absolute inset-0 bg-linear-to-b from-sky from-0% via-sky-light via-50% to-rice to-95% [container-type:size]">
-          {/* Decorative, so alt="". Above the fold, so it loads first and never lazily (Next 16's
-              `priority` is deprecated and does not write fetchpriority="high"). */}
-          <Image
-            src={HERO_PICTURE.src}
-            alt=""
-            width={HERO_PICTURE.width}
-            height={HERO_PICTURE.height}
-            fetchPriority="high"
-            loading="eager"
-            sizes="(min-width: 48rem) 1600px, 560px"
-            className="hero-picture"
-          />
+          <HeroPicture />
           <HeroSky />
         </div>
       </div>

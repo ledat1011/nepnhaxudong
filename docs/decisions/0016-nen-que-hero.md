@@ -22,5 +22,6 @@ Chủ dự án muốn giữ hình cũ để quay lại được:
 
 ## Hệ quả
 - Màn hình rất rộng (trên khoảng 1500 px) hoặc rất hẹp: ảnh không phủ hết bề ngang, hai mép ảnh mờ dần vào nền trời.
-- Ảnh nền thêm một ảnh lớn ở màn hình đầu (nguồn WebP 221 KB, web tự đổi cỡ và sang AVIF / WebP). Chưa đo Lighthouse sau thay đổi.
+- Ảnh nền được vẽ lên `<canvas>` (`web/src/components/home/HeroPicture.tsx`), không dùng `<img>`. Lý do: khi là `<img>`, ảnh trở thành phần tử lớn nhất của màn hình đầu (LCP), và Lighthouse mobile tính cả thời gian chạy JS trước nó: Performance 80–83, LCP 4,4–5,0 giây, dưới mục tiêu 90 và 2,5 giây của spec; test e2e "LCP là chữ" trên `main` báo lỗi. Canvas không bao giờ là LCP, nên LCP vẫn là chữ "Nếp Nhà". Ảnh được tải trước (preload, ưu tiên cao) ngay trong `<head>`; canvas vẽ ảnh khi script của trang chạy. Không có JS thì không có ảnh, chỉ còn nền trời.
+- Đo sau khi đổi (Lighthouse 13.6.0, mobile, bản production, dữ liệu mẫu): `/vi` Performance 91 / 93 / 95, LCP 1,5 giây; `/en` 93 / 98, LCP 1,4 giây; CLS 0. Ảnh nền trên điện thoại khoảng 24 KB (AVIF).
 - Tiền Nano Banana cho cả phần này: khoảng 3 USD.

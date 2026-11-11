@@ -77,15 +77,15 @@ describe("Hero", () => {
     expect(panel?.querySelector("h1, a, svg[data-mascot]")).toBeNull();
   });
 
-  it("puts the decorative village picture under the clouds, loaded first, never lazily", () => {
+  it("draws the village picture on a canvas under the clouds, so it is never the LCP", () => {
     const { container } = renderHero(null);
     const sky = container.querySelector("[data-hero-panel] .hero-fade-bottom");
     expect(sky?.className).toContain("[container-type:size]");
-    const picture = sky?.querySelector("img.hero-picture");
+    // A canvas, not an <img>: a canvas is never a Largest Contentful Paint candidate.
+    expect(sky?.querySelector("img")).toBeNull();
+    const picture = sky?.querySelector("canvas[data-hero-picture].hero-picture");
     expect(picture).not.toBeNull();
-    expect(picture).toHaveAttribute("alt", "");
-    expect(picture).not.toHaveAttribute("loading", "lazy");
-    expect(picture?.getAttribute("fetchpriority") ?? picture?.getAttribute("fetchPriority")).toBe("high");
+    expect(picture).toHaveAttribute("aria-hidden", "true");
     // The clouds come after the picture in the panel, so they are drawn over it.
     const cloud = sky?.querySelector("[data-hero-cloud]");
     expect(picture!.compareDocumentPosition(cloud!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
