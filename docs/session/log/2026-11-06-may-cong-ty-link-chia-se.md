@@ -69,3 +69,4 @@
 - Chủ dự án: bước 2 "nắng mưa, sáng đêm, với lúa từ mầm xanh tới chín vàng, nở lên từ từ" → chọn vẽ thêm tranh lúa non bằng Nano Banana (cùng bố cục, chủ dự án duyệt trước), rồi chuyển dần: mạ non → lúa xanh (đổi màu từ tranh gốc) → lúa vàng → đêm trăng. Giọt mưa có sẵn trong tranh được cắt thành lớp riêng, chỉ hiện khi mây đã tới; thêm vài giọt rơi vẽ bằng code.
 - PR #50 (chuyển động chuyện hạt nếp) merge sau khi CI qua.
 - Chủ dự án xem bản xem thử, góp ý: (1) "sao các chặng lại gần nhau vậy" (các chấm trên con đường giữa các bước gần nhau quá); (2) "ảnh không chạy liên tục, chạy xong bị dừng" → chuyển động phải chạy liên tục khi cảnh còn trên màn hình, không dừng sau đoạn mở đầu; (3) bước 3: đầu máy gặt (guồng) quay như cánh quạt là được.
+- PR #52 (sửa theo 3 góp ý trên) merge sau khi CI qua (`c09739c`). PR #53 của session nền mascot (hero: cảnh tới mép phải, mặt trời nấp sau núi) merge sau khi CI qua (`1de630b`), khi chủ dự án hỏi "merge hết chưa".
