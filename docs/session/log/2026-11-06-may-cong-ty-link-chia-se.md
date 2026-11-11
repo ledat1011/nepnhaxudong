@@ -62,3 +62,4 @@
 - Chủ dự án mở session riêng "Nền mascot mang chất quê hương (Nano Banana)": brainstorm nền mascot có núi quê, sản phẩm…, rồi vẽ bản xem thử bằng Nano Banana để duyệt.
 - PR #44 merge (`b6b99c6`) sau khi mọi check CI qua. Chủ dự án: "làm tiếp việc 5 và 6 luôn".
 - Việc 5: repo không còn ảnh thật chưa dùng → chủ dự án chọn dùng tranh vẽ 8 bước làm ảnh bìa câu chuyện: truyền hình → cảnh gặt, từ cửa hàng tới bịch gạo → cảnh đến tay khách, mẻ sấy → cảnh sấy, nấu xôi → mâm cơm, bảo quản → đóng gói. Chỉ đổi dữ liệu mẫu; web thật đặt ảnh bìa ở trang quản trị.
+- Đã làm việc 5 và 6 ở PR #46 (`feat/anh-bia-va-chan-trang`): ảnh bìa 5 câu chuyện mẫu là tranh 8 bước; chữ dưới 2 giấy chứng nhận ở chân trang 16 px và 14 px; `theme-color` là màu Trắng gạo. Merge khi CI qua.
