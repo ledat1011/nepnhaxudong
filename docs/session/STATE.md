@@ -1,11 +1,12 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-11 — máy công ty (chuyển động chuyện hạt nếp)
+Cập nhật: 2026-11-12 — máy công ty (chuyển động chuyện hạt nếp)
 
 ## Giai đoạn hiện tại
 `main` (`9e5eb42`) đã có đủ phần B: API (B1), web công khai (B2), trang quản trị (B3, PR #11), hiệu ứng GSAP (B4), logo và mascot (phần A), popup Zalo và thanh đang tải (PR #12), 10 việc cải tiến trang quản trị (quyết định `0008` và `0010`), cảnh minh họa (PR #21, #24), hai báo cáo rà giao diện và danh sách đề xuất chung (PR #16, #22, #23), luật Rancher Desktop và luật làm việc chung (PR #25). Đang làm dở: nhóm A và B của danh sách đề xuất (3 nhánh) và việc 9 cuộn mượt khối câu chuyện (1 nhánh). Cả 4 nhánh đã push lên GitHub; thư mục làm việc ở máy đã xóa. Xem mục "Đang làm". Phần D (hạ tầng): code, test và tài liệu đã merge (PR #31; sửa theo review ở PR #33; plan `docs/superpowers/plans/2026-11-05-phan-d-ha-tang.md`, quyết định `0012`). Web chưa lên VPS: còn chờ chủ dự án làm checklist `docs/deploy.md`.
 
 ## Đã xong
+- 2026-11-12: chuyện hạt nếp: đêm trăng trong vòng lặp bước 2 giữ 2,5 giây thay vì 5 giây (cả vòng khoảng 10,7 giây); nắp máy hút chân không bước 6 dập lại mỗi 1,6 giây thay vì 4,5 giây (PR #60, `b5ca86c`). Chưa thử trên điện thoại thật.
 - 2026-11-11: chuyện hạt nếp: cảnh đang chạy dở mà ra khỏi màn hình thì dừng đúng chỗ, quay lại thì chạy tiếp; cảnh đã chạy xong thì quay lại vẫn chạy lại từ đầu (PR #58, `3050980`).
 - 2026-11-11: mở link chia sẻ có tham số (`?utm_source=zalo...`) rồi bấm mục trên menu thì cuộn tới khối ngay lần bấm đầu (PR #57, `981d5ac`). Chưa thử trong trình duyệt của Zalo (chủ dự án thấy địa chỉ bị lặp `#tu-hat-lua#tu-hat-lua` ở đó).
 - 2026-11-11: góp ý thứ hai về chuyện hạt nếp (PR #55 đã merge, `6108d2e`): hình chạy trên con đường đổi theo giai đoạn (hạt mầm, hạt thóc, hạt gạo, bát xôi), rõ nét, có viền trắng gạo; đường đã đi qua là một dải màu đậm dần như thanh tiến độ, từ xanh nhạt tới nâu túi gạo; cảnh ra khỏi màn hình rồi quay lại thì chạy lại từ đầu (PR #58 sửa thêm: đang chạy dở thì dừng và chạy tiếp); cảnh gặt chỉ guồng quay; tranh đêm bước 2 chỉ còn đồng lúa; tranh cảnh 960 × 540 (744 KB còn 460 KB). LCP đo lại: 1,36–1,41 giây, không chậm.
