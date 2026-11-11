@@ -86,3 +86,4 @@
 - Chủ dự án chọn: đường đã đi qua là một dải màu liền cả đường, đậm dần như thanh tiến độ: xanh mạ nhạt → xanh mạ → vàng thóc → vàng đậm → nâu → nâu đậm; không còn chỗ đổi màu đột ngột ở điểm dừng.
 - Chủ dự án (ảnh đoạn cuối đường): "màu khác được không, lên mâm cơm, đóng gói rồi màu càng ngày càng đen không đúng lắm" → đoạn cuối đường không được tối dần tới gần đen; chọn màu khác cho các bước đóng gói, mâm cơm.
 - Chủ dự án chọn: đường đậm dần nhưng dừng ở nâu túi gạo (`coat`) ở cuối, không tới gần đen: xanh nhạt → xanh mạ → vàng thóc → vàng đậm → vàng nâu → nâu túi gạo.
+- Chủ dự án merge PR #55 (`6108d2e`): "đã merge".
