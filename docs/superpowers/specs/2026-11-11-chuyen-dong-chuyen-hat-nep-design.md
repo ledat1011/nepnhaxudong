@@ -44,7 +44,7 @@ Khi làm, vị trí chính xác của từng vật được đo trên tranh gố
   - 8 tranh cảnh trên web, 960 × 540 (sau góp ý "page load hơi lâu", 2026-11-11: khung cảnh rộng tối đa 416 px nên 960 px vẫn nét trên màn hình tỉ lệ 2, nhẹ hơn khoảng 30 %);
   - mỗi lớp ra một file WebP có kênh trong suốt, trong `web/public/lop/`;
   - vị trí và kích thước của mọi lớp (theo phần trăm khung cảnh) ra `web/src/lib/story/scene-layers.json`.
-- **Tranh đêm bước 2:** `web/public/story/canh-2-nang-mua-gio-dem.webp` (960 × 540, như tranh ngày), xuất từ `brand/story/phac/2-nang-mua-gio-dem.webp`.
+- **Tranh đêm bước 2:** chỉ có đồng lúa dưới trăng, không có người: ban đêm hai ông bà đã về nghỉ (chủ dự án, 2026-11-11). Khi trời chuyển sang đêm, hai người mờ dần cùng lúc tranh đêm hiện lên. File `web/public/story/canh-2-nang-mua-gio-dem.webp` (960 × 540, như tranh ngày), xuất từ `brand/story/phac/2-nang-mua-gio-dem.webp`.
 - **Giới hạn dung lượng:** mỗi lớp dưới 40 KB; tổng các lớp của một cảnh dưới 120 KB. Tranh lúa non và tranh đêm của bước 2 tính riêng: mỗi tranh dưới 120 KB. Test kiểm tra.
 - **Bước 2 (chủ dự án chọn thêm, 2026-11-11):** lúa lớn dần: tranh lúa non mới (Nano Banana Pro, cùng bố cục) → lúa xanh → lúa chín vàng → đêm trăng. Lúa xanh được đổi màu từ tranh gốc ngay trong trình duyệt (`web/src/lib/story/green-rice.ts`), vì làm thành file thì nặng như chính tranh gốc (khoảng 150 KB). Việc đổi màu chia thành từng dải 60 hàng điểm ảnh, nghỉ giữa các dải, để không làm khựng chuyển động khác đang chạy (làm một lần thì chặn trang 50–80 ms). Giọt mưa có sẵn trong tranh được cắt theo từng giọt (mỗi giọt một hình tròn nhỏ) và che đi lúc đầu, rồi hiện ra khi mây đã tới; thêm vài giọt rơi vẽ bằng code. Như vậy không có mưa trước khi có mây.
 

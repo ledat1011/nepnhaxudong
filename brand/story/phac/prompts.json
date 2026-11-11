@@ -103,7 +103,15 @@
     "inputs": [
       "2-ngay-v3.png"
     ],
-    "prompt": "Turn the attached daytime scene into the SAME scene at NIGHT under a full moon. Keep EXACTLY the same composition and framing: the same dense rice field, BA and ME in the same places and poses, the same line style. Replace the sun with a big pale full moon in the same place, replace the rain cloud with a few thin moonlit clouds, remove the rain drops and wind lines, add a few small fireflies above the rice. Night colours: deep blue-grey ink-wash sky, the rice and people in darker, cooler flat colours with soft silver moonlight, still flat fills with the same ink-brush outlines. No text, no letters, no watermark."
+    "prompt": "Turn the attached daytime scene into the SAME scene at NIGHT under a full moon. Keep EXACTLY the same composition and framing: the same dense rice field, BA and ME in the same places and poses, the same line style. Replace the sun with a big pale full moon in the same place, replace the rain cloud with a few thin moonlit clouds, remove the rain drops and wind lines, add a few small fireflies above the rice. Night colours: deep blue-grey ink-wash sky, the rice and people in darker, cooler flat colours with soft silver moonlight, still flat fills with the same ink-brush outlines. No text, no letters, no watermark.",
+    "edit": {
+      "date": "2026-11-11",
+      "why": "Chủ dự án: ban đêm hai ông bà đã về nghỉ, nên tranh đêm chỉ còn đồng lúa.",
+      "inputs": [
+        "2-nang-mua-gio-dem.webp"
+      ],
+      "prompt": "Edit the attached image (a rice field at night under the full moon, with fireflies, and two farmers, BA and ME, standing in the field).\nREMOVE BOTH PEOPLE: the farmers have gone home to rest. Where they stood, continue the same night rice field: the same ripe rice plants with drooping heads, the same dark blue-grey night colours, the same rows and spacing, so the field fills the whole width with no gap, no shadow and no trace of the people.\nKeep EVERYTHING ELSE EXACTLY the same, pixel for pixel where possible: the composition and framing, the moon in the same place and size, the clouds, the night sky with its ink-wash, the fireflies, the rice in the foreground and the background.\nKEEP THE STYLE EXACTLY: flat colour fills and the same dark ink-brush outlines with thick and thin strokes. No new objects, no people, no animals, no text, no letters, no watermark."
+    }
   },
   {
     "name": "2-nang-mua-gio-non",

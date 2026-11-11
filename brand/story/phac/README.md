@@ -9,7 +9,7 @@ Prompt và ảnh đầu vào của từng ảnh nằm trong `prompts.json`.
 |---|---|
 | `1-cay-ma.webp` | 1. Cấy mạ |
 | `2-nang-mua-gio-ngay.webp` | 2. Nắng, mưa, gió (ngày): đồng lúa dày, ba mẹ chăm lúa |
-| `2-nang-mua-gio-dem.webp` | 2. Cùng cảnh, đêm trăng (cùng bố cục, để chuyển ngày sang đêm) |
+| `2-nang-mua-gio-dem.webp` | 2. Cùng cảnh, đêm trăng (cùng bố cục, để chuyển ngày sang đêm). Không có người: ban đêm hai ông bà đã về nghỉ (sửa ngày 2026-11-11, chủ dự án chọn) |
 | `2-nang-mua-gio-non.webp` | 2. Cùng cảnh, lúa non xanh (cùng bố cục, để lúa lớn dần; vẽ ngày 2026-11-11, chủ dự án chọn) |
 | `3-gat.webp` | 3. Gặt lúa |
 | `4-say.webp` | 4. Sấy thóc: quạt thấp, ba đứng sau quạt cho than vào lò |
