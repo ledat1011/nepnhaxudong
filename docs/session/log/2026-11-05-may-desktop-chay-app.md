@@ -6,12 +6,16 @@
 - Chủ dự án muốn xem web trên điện thoại qua link internet tạm → dùng Cloudflare quick tunnel tới bản production chạy dữ liệu mẫu ở cổng 3300.
 - Chủ dự án yêu cầu cài đủ plugin, MCP và công cụ còn thiếu trên máy này, trong một session riêng. Yêu cầu này thay cho luật "không tự cài plugin" trong `CLAUDE.md`, chỉ cho lần cài này.
 
+- Chủ dự án thấy mascot hiện tại có nét chung chung, giống hình AI tạo, không giống vẽ tay → làm lại mascot trong một session riêng. Session đó hỏi ý tưởng của chủ dự án trước, dùng Nano Banana (đã kết nối).
+
+- Chủ dự án muốn viết prompt Nano Banana cùng agent trong session này, để gọi một lần cho đỡ tốn tiền → phiên mascot chờ prompt, chưa gọi Nano Banana.
+
 ## Quyết định
-- (chưa có)
+- Mascot mới theo kiểu tranh Đông Hồ (khắc gỗ). Giữ nhân vật cô gái đội nón lá ôm bó lúa.
+- Test (2026-11-06): giữ nguyên bộ test hiện có, kể cả unit test của giao diện trang công khai. Không rà lại để bỏ test.
 
 ## Còn mở
-- Phần D (deploy lâu dài): session riêng, PR #31 chưa merge.
-- Link tạm: tunnel đã tắt. Muốn xem lại trên điện thoại thì mở tunnel mới và build lại.
+- (không còn việc mở của session này; phần D đã merge qua PR #31 và #33, bản xem thử Vercel thay cho tunnel)
 
 ## Đã làm
 - `npm ci` trong `web/`; tạo `.claude/launch.json` (cấu hình `web-mock`, cổng 3000).
