@@ -1,6 +1,6 @@
 # Trạng thái dự án Nếp Nhà
 
-Cập nhật: 2026-11-06 — máy công ty (link chia sẻ, ảnh chia sẻ, Hành trình thật)
+Cập nhật: 2026-11-11 — máy công ty (rà giao diện trang chủ)
 
 ## Giai đoạn hiện tại
 `main` (`9e5eb42`) đã có đủ phần B: API (B1), web công khai (B2), trang quản trị (B3, PR #11), hiệu ứng GSAP (B4), logo và mascot (phần A), popup Zalo và thanh đang tải (PR #12), 10 việc cải tiến trang quản trị (quyết định `0008` và `0010`), cảnh minh họa (PR #21, #24), hai báo cáo rà giao diện và danh sách đề xuất chung (PR #16, #22, #23), luật Rancher Desktop và luật làm việc chung (PR #25). Đang làm dở: nhóm A và B của danh sách đề xuất (3 nhánh) và việc 9 cuộn mượt khối câu chuyện (1 nhánh). Cả 4 nhánh đã push lên GitHub; thư mục làm việc ở máy đã xóa. Xem mục "Đang làm". Phần D (hạ tầng): code, test và tài liệu đã merge (PR #31; sửa theo review ở PR #33; plan `docs/superpowers/plans/2026-11-05-phan-d-ha-tang.md`, quyết định `0012`). Web chưa lên VPS: còn chờ chủ dự án làm checklist `docs/deploy.md`.
@@ -52,6 +52,8 @@ Mascot mới (nhánh `feat/mascot-moi`, 2026-11-05, máy desktop): chủ dự á
 Thông tin liên hệ thật (2026-11-05): dữ liệu mẫu của web (`web/src/fixtures/home.*.json`) dùng khẩu hiệu "Gạo nếp cái hoa vàng từ vùng quê Hải Dương", số Zalo và điện thoại 0967 598 629, địa chỉ Duy Tân, Kinh Môn, Hải Dương (nay thuộc Hải Phòng), không có Messenger. Trang thật lấy dữ liệu từ API: khi chạy thật, nhập các giá trị này ở màn hình "Liên hệ & cài đặt" của trang quản trị và để trống ô Messenger.
 
 Cảnh hành trình mới (nhánh `feat/hanh-trinh-manhua`, PR #34 đã merge vào `main`, 2026-11-05, máy desktop): trang chủ dùng 8 bản phác đã duyệt (màu phẳng, nét mực manhua, WebP), menu có mục "Quy trình", nút thứ hai ở hero là "Chuyện hạt nếp"; cả hai dẫn tới `#tu-hat-lua` và cuộn lại được khi bấm lần nữa. Xem quyết định `docs/decisions/0014-hanh-trinh-net-muc.md` và log `docs/session/log/2026-11-05-may-desktop-hanh-trinh-manhua.md`. Tuần sau: dựng 9 cảnh bằng SVG tách lớp, làm chuyển động (ngày sang đêm ở bước 2). Chờ chủ dự án chọn hướng làm nền trang đỡ trống (A loang mực sau tiêu đề, B vạch bông lúa giữa các khối, C nền Vàng rơm cho một hai khối).
+
+Rà giao diện trang chủ (2026-11-11, máy công ty, chưa sửa gì): đã rà bằng taste-skill và web-interface-guidelines trên bản build production. Hiệu ứng và nền ổn. Việc nên sửa, theo thứ tự: (1) ở 768–830 px menu đầu trang tràn, trang cuộn ngang (hiện menu đầy đủ từ 1024 px); (2) khối Quy trình trên máy tính trống nửa ngang ở mỗi bước, dài khoảng 5 màn hình; (3) Báo chí chỉ 1 thẻ, trống 2/3 bên phải; (4) Liên hệ lặp lại chân trang; (5) ảnh bìa lặp giữa Báo chí/Hành trình và Câu chuyện; (6) chữ 12 px dưới giấy chứng nhận, thiếu `theme-color`. Chờ chủ dự án chọn việc cần sửa. Hero núi và sương (nhánh `feat/hero-nui-may`, một session khác) đang chờ chủ dự án duyệt concept B.
 
 ## Việc tiếp theo
 1. Làm tiếp 4 nhánh ở mục "Đang làm" cho tới khi merge.
