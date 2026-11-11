@@ -72,7 +72,7 @@ export async function buildOverlay(
 
   if (slug === "nang-mua-gio") {
     const sketch = stage.querySelector("img");
-    const green = sketch && (await loaded(sketch)) ? greenRiceCanvas(sketch, doc) : null;
+    const green = sketch && (await loaded(sketch)) ? await greenRiceCanvas(sketch, doc) : null;
     if (green) {
       green.dataset.part = "green";
       green.style.cssText = `${FILL}opacity:0;`;

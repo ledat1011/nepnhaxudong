@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { greenRicePixels } from "./green-rice";
+import { greenRiceCanvas, greenRicePixels } from "./green-rice";
 
 type Rgb = [number, number, number];
 
@@ -39,5 +39,44 @@ describe("greenRicePixels", () => {
     const data = column([215, 165, 45], [255, 255, 255]);
     greenRicePixels(data, 1, 675);
     expect(at(data, 0)).toEqual([215, 165, 45]);
+  });
+});
+
+describe("greenRicePixels on a band of rows", () => {
+  it("knows where the band sits in the picture: gold above the sky line stays gold", () => {
+    // A 1 x 20 band whose first row is row 190 of a 675 px picture; the sky line is at row 200.
+    const data = new Uint8ClampedArray(20 * 4);
+    for (let y = 0; y < 20; y++) data.set([215, 165, 45, 255], y * 4);
+    greenRicePixels(data, 1, 20, 190, 675);
+    expect(at(data, 0)).toEqual([215, 165, 45]);
+    const [r, g] = at(data, 19);
+    expect(g).toBeGreaterThan(r);
+  });
+});
+
+describe("greenRiceCanvas", () => {
+  it("lets the page run between bands of rows, so it never blocks for long", async () => {
+    const canvas = document.createElement("canvas");
+    const bands: Array<[number, number]> = [];
+    const ctx = {
+      drawImage: () => {},
+      getImageData: (_x: number, y: number, w: number, h: number) => {
+        bands.push([y, h]);
+        return { data: new Uint8ClampedArray(w * h * 4) };
+      },
+      putImageData: () => {},
+    };
+    const doc = { createElement: () => Object.assign(canvas, { getContext: () => ctx }) } as unknown as Document;
+    const img = { naturalWidth: 1200, naturalHeight: 675, decode: () => Promise.resolve() } as unknown as HTMLImageElement;
+    let yields = 0;
+    const result = await greenRiceCanvas(img, doc, async () => {
+      yields++;
+    });
+    expect(result).toBe(canvas);
+    // Only the rows below the sky line, in bands of at most 60 rows, with a pause before each.
+    expect(bands[0][0]).toBe(200);
+    expect(bands.every(([, h]) => h <= 60)).toBe(true);
+    expect(bands.reduce((sum, [, h]) => sum + h, 0)).toBe(675 - 200);
+    expect(yields).toBeGreaterThanOrEqual(bands.length);
   });
 });

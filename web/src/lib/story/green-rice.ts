@@ -15,10 +15,22 @@ const RICE_TOP_PART = 200 / 675;
 const GREEN_SHIFT = 45;
 const GREEN_SAT = 0.8;
 
-/** Turns the gold rice pixels of an RGBA buffer green, in place. Exported for the tests. */
-export function greenRicePixels(data: Uint8ClampedArray, width: number, height: number): void {
-  const top = Math.round(height * RICE_TOP_PART);
-  for (let y = top; y < height; y++) {
+/** Rows recoloured in one go: about 70 000 pixels, a few milliseconds on a phone. */
+const BAND_ROWS = 60;
+
+/**
+ * Turns the gold rice pixels of an RGBA buffer green, in place. The buffer holds `rows` rows of
+ * the picture, starting at picture row `firstRow` of a picture `pictureHeight` rows high.
+ */
+export function greenRicePixels(
+  data: Uint8ClampedArray,
+  width: number,
+  rows: number,
+  firstRow = 0,
+  pictureHeight = rows,
+): void {
+  const top = Math.max(Math.round(pictureHeight * RICE_TOP_PART) - firstRow, 0);
+  for (let y = top; y < rows; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
       const r = data[i] / 255;
@@ -49,8 +61,19 @@ function hsvToRgb(h: number, s: number, v: number): [number, number, number] {
   return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
 }
 
-/** A canvas with the green-rice picture, or null when the browser cannot read the sketch. */
-export function greenRiceCanvas(img: HTMLImageElement, doc: Document): HTMLCanvasElement | null {
+/** Lets the page run (scroll, paint other motion) before the next band. */
+const nextTask = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+/**
+ * A canvas with the green-rice picture, or null when the browser cannot read the sketch. It
+ * works in bands of rows with a pause before each: in one go it blocks the page for 50 to 80 ms
+ * on a fast computer, which drops frames of the motion playing at the same time.
+ */
+export async function greenRiceCanvas(
+  img: HTMLImageElement,
+  doc: Document,
+  pause: () => Promise<void> = nextTask,
+): Promise<HTMLCanvasElement | null> {
   const width = img.naturalWidth;
   const height = img.naturalHeight;
   if (width === 0 || height === 0) return null;
@@ -60,10 +83,16 @@ export function greenRiceCanvas(img: HTMLImageElement, doc: Document): HTMLCanva
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return null;
   try {
+    // Decoded off the main thread, so drawImage does not decode it.
+    await img.decode().catch(() => {});
     ctx.drawImage(img, 0, 0);
-    const pixels = ctx.getImageData(0, 0, width, height);
-    greenRicePixels(pixels.data, width, height);
-    ctx.putImageData(pixels, 0, 0);
+    for (let y = Math.round(height * RICE_TOP_PART); y < height; y += BAND_ROWS) {
+      await pause();
+      const rows = Math.min(BAND_ROWS, height - y);
+      const band = ctx.getImageData(0, y, width, rows);
+      greenRicePixels(band.data, width, rows, y, height);
+      ctx.putImageData(band, 0, y);
+    }
   } catch {
     // A tainted canvas or a missing 2D context: the step plays without the green stage.
     return null;
