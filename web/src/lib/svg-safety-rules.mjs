@@ -1,5 +1,4 @@
-// Plain ESM with no imports: the build scripts (web/scripts/svg-safety.mjs) run it in Node, and
-// the browser check (web/src/lib/motion/story/inline-svg.ts) bundles it.
+// Plain ESM with no imports, so the build scripts (web/scripts/svg-safety.mjs) run it in Node.
 
 export const SVG_NS = "http://www.w3.org/2000/svg";
 

@@ -170,16 +170,26 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                     <p data-story-step className="font-bold leading-7 text-coat">
                       {`${dict.story.step} ${i + 1}`}
                     </p>
-                    {/* eslint-disable-next-line @next/next/no-img-element -- the scenes are small static WebP files served as they are */}
-                    <img
-                      src={scene.src}
-                      width={scene.width}
-                      height={scene.height}
-                      loading="lazy"
-                      decoding="async"
-                      alt=""
-                      className="story-scene-fade mt-3 aspect-[16/9] h-auto w-full"
-                    />
+                    {/*
+                      The stage holds the sketch and, once the motion code adds it, the layer of
+                      moving parts on top of it. The soft edges belong to the stage, so the moving
+                      parts fade at the edges the same way as the sketch.
+                    */}
+                    <div
+                      data-story-stage
+                      className="story-scene-fade relative mt-3 aspect-[16/9] w-full overflow-hidden"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- the scenes are small static WebP files served as they are */}
+                      <img
+                        src={scene.src}
+                        width={scene.width}
+                        height={scene.height}
+                        loading="lazy"
+                        decoding="async"
+                        alt=""
+                        className="block h-full w-full"
+                      />
+                    </div>
                     <h3 className="mt-4 text-xl font-bold text-earth">{title}</h3>
                     <p data-story-text className="mt-2 leading-relaxed">
                       {text}

@@ -1,9 +1,0 @@
-{
-  "mirror": true,
-  "recolor": [
-    {"to": "da", "box": [296, 314, 382, 350], "from": "nau-dat"},
-    {"to": "da", "box": [444, 318, 536, 352], "from": "nau-dat"},
-    {"to": "da", "box": [368, 394, 456, 420], "from": "nau-dat"}
-  ],
-  "overlay": "me-cay-face.svg"
-}

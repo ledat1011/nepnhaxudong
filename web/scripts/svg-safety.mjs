@@ -13,7 +13,7 @@ function decode(value) {
 
 const localName = (qualified) => qualified.slice(qualified.indexOf(":") + 1);
 
-/** Why the markup fails the rules of svg-safety-rules.mjs (the browser check), or null. */
+/** Why the markup fails the rules of svg-safety-rules.mjs, or null. */
 function findUnsafe(svg) {
   const markup = svg.replace(COMMENT, "");
   // An entity declared in a doctype could hide markup from this check.
@@ -33,7 +33,7 @@ function findUnsafe(svg) {
   return null;
 }
 
-/** Throws when the svg has markup that the browser check (inline-svg.ts `isSafe`) rejects. */
+/** Throws when the svg has markup that the rules of svg-safety-rules.mjs reject. */
 export function assertSafe(svg, name) {
   const problem = findUnsafe(svg);
   if (problem) throw new Error(`${name} contains ${problem}`);

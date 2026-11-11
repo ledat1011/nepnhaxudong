@@ -922,9 +922,9 @@ test.describe("the rice story road", () => {
       if (i > 0) expect(labels[i].top).toBeGreaterThan(labels[i - 1].top);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(PHONE.width);
-    // The WebP sketches stay as images: there are no scene parts to move (decision 0014).
-    await expect(page.locator(`${SCENES} img`)).toHaveCount(8);
-    await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(0);
+    // Each sketch stays in its stage, with its layer of moving parts over it (decision 0017).
+    await expect(page.locator(`${SCENES} [data-story-stage] > img`)).toHaveCount(8);
+    await expect(page.locator(`${SCENES} [data-story-overlay]`)).toHaveCount(8);
   });
 
   test("desktop: the scenes take turns left and right of the road, nothing is pinned", async ({
@@ -1009,21 +1009,32 @@ test.describe("the rice story road", () => {
     await expect(page.locator("footer")).toBeInViewport();
   });
 
-  // The scenes are WebP sketches until the layered SVG scenes come back for motion (decision
-  // 0014). Nothing is swapped for an inline svg now. Turn this test on again with them.
-  test.skip("a broken scene file keeps the static image", async ({ page }) => {
-    let calls = 0;
-    // The first request is the <img>; the second one is the fetch of the inline swap.
-    await page.route("**/story/canh-4-say.svg", async (route) => {
-      calls += 1;
-      if (calls === 1) await route.continue();
-      else await route.fulfill({ status: 500, body: "" });
+  test("loads a scene's layers only near it, and keeps the still sketch when one fails", async ({
+    page,
+  }) => {
+    const requested: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("/story/lop/")) requested.push(new URL(request.url()).pathname);
     });
+    await page.route("**/story/lop/say-fan.webp", (route) => route.fulfill({ status: 500, body: "" }));
     await openStory(page, PHONE);
+    // At the top of the page no layer has loaded yet.
+    expect(requested).toEqual([]);
     await scrollThroughStory(page);
-    await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(7);
-    await expect(page.locator("li[data-story-scene='say'] img")).toHaveCount(1);
-    await expect(page.locator("li[data-story-scene='say'] svg[data-scene]")).toHaveCount(0);
+    expect(requested.length).toBeGreaterThan(0);
+    await expect(page.locator(`${SCENES} [data-story-overlay]`)).toHaveCount(7);
+    await expect(page.locator("li[data-story-scene='say'] [data-story-overlay]")).toHaveCount(0);
+    await expect(page.locator("li[data-story-scene='say'] [data-story-stage] > img")).toHaveCount(1);
+  });
+
+  test("step 2 ends at night, over the sketch", async ({ page }) => {
+    await openStory(page, DESKTOP);
+    await scrollToScene(page, 1);
+    const night = page.locator("li[data-story-scene='nang-mua-gio'] [data-part='night']");
+    await expect(night).toBeAttached();
+    await expect
+      .poll(() => night.evaluate((el) => getComputedStyle(el).opacity), { timeout: 15000 })
+      .toBe("1");
   });
 
   test("the skip link jumps past the story", async ({ page }) => {
@@ -1057,21 +1068,17 @@ test.describe("the rice story road", () => {
     expect(press.every((o) => o === "1")).toBe(true);
   });
 
-  // The scenes are WebP sketches until the layered SVG scenes come back for motion (decision
-  // 0014). Nothing is swapped for an inline svg now. Turn this test on again with them.
-  test.skip("the pause button also stops the story loops", async ({ page }) => {
+  test("the pause button also stops the story loops", async ({ page }) => {
     await openStory(page, PHONE);
     await page.evaluate(() => {
       const li = document.querySelector("li[data-story-scene='say']") as HTMLElement;
       window.scrollBy({ top: li.getBoundingClientRect().top - 120, behavior: "instant" });
     });
-    // The intro plays first (about 2.3 s); the loop runs after it.
+    // The intro plays first; the loop runs after it.
+    await page.locator("li[data-story-scene='say'] [data-part='fan']").waitFor({ state: "attached" });
     await page.waitForTimeout(3500);
     const fan = () =>
-      page.$eval(
-        "[data-part='fan-blades']",
-        (el) => el.getAttribute("transform") ?? getComputedStyle(el).transform,
-      );
+      page.$eval("li[data-story-scene='say'] [data-part='fan']", (el) => getComputedStyle(el).transform);
     const turning = await fan();
     await page.waitForTimeout(400);
     expect(await fan()).not.toBe(turning);
@@ -1128,7 +1135,8 @@ test.describe("the rice story road", () => {
       await page.goto("/vi");
       await page.waitForTimeout(2000);
       await scrollThroughStory(page);
-      await expect(page.locator(`${SCENES} svg[data-scene]`)).toHaveCount(0);
+      // No layer of moving parts and no layer download: only the still sketches.
+      await expect(page.locator(`${SCENES} [data-story-overlay]`)).toHaveCount(0);
       await expect(page.locator(`${SCENES} img`)).toHaveCount(8);
       await expect(page.locator("[data-story-road]")).toHaveCount(8);
       await expect(page.locator("[data-story-pause] button")).toBeHidden();

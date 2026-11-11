@@ -100,13 +100,15 @@ describe("RiceStory", () => {
     expect(container.querySelector("section[data-rice-story]")?.getAttribute("class")).toContain("overflow-x-clip");
     const items = [...container.querySelectorAll("li[data-story-scene]")];
     items.forEach((li) => {
-      const img = li.querySelector("img") as HTMLImageElement;
-      const classes = img.getAttribute("class") ?? "";
-      // A 16:9 sketch (1200 x 675) as wide as the column; the fade softens its four edges.
-      for (const name of ["story-scene-fade", "aspect-[16/9]", "w-full"]) {
+      const stage = li.querySelector("[data-story-stage]") as HTMLElement;
+      const classes = stage.getAttribute("class") ?? "";
+      // A 16:9 stage (the 1200 x 675 sketch) as wide as the column; the fade softens its four
+      // edges, and it clips the moving parts that the motion code lays over the sketch.
+      for (const name of ["story-scene-fade", "aspect-[16/9]", "w-full", "overflow-hidden", "relative"]) {
         expect(classes, name).toContain(name);
       }
       expect(classes).not.toContain("max-w-none");
+      expect(stage.querySelector("img")?.getAttribute("class")).toContain("h-full w-full");
     });
   });
 

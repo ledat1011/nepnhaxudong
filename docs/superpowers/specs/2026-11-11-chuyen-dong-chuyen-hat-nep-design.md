@@ -44,7 +44,8 @@ Khi làm, vị trí chính xác của từng vật được đo trên tranh gố
   - mỗi lớp ra một file WebP có kênh trong suốt, trong `web/public/story/lop/`;
   - vị trí và kích thước của mọi lớp (theo phần trăm khung cảnh) ra `web/src/lib/story/scene-layers.json`.
 - **Tranh đêm bước 2:** `web/public/story/canh-2-nang-mua-gio-dem.webp` (1200 × 675), xuất từ `brand/story/phac/2-nang-mua-gio-dem.webp`.
-- **Giới hạn dung lượng:** mỗi lớp dưới 40 KB; tổng phần tải thêm của một cảnh dưới 120 KB. Test kiểm tra.
+- **Giới hạn dung lượng:** mỗi lớp dưới 40 KB; tổng các lớp của một cảnh dưới 120 KB. Tranh lúa non và tranh đêm của bước 2 tính riêng: mỗi tranh dưới 120 KB. Test kiểm tra.
+- **Bước 2 (chủ dự án chọn thêm, 2026-11-11):** lúa lớn dần: tranh lúa non mới (Nano Banana Pro, cùng bố cục) → lúa xanh → lúa chín vàng → đêm trăng. Lúa xanh được đổi màu từ tranh gốc ngay trong trình duyệt (`web/src/lib/story/green-rice.ts`), vì làm thành file thì nặng như chính tranh gốc (khoảng 150 KB). Mưa vẽ bằng code (giọt rơi thêm), vì giọt mưa có sẵn nằm sát ngọn lúa nên không cắt sạch được.
 
 ### 4.2. Trên trang
 - **Phần HTML tĩnh gần như không đổi.** Ảnh WebP của mỗi cảnh được bọc trong một khung (`data-story-stage`). Khung mang hiệu ứng mờ mép (`story-scene-fade`), nên lớp động cũng mờ mép như tranh.
