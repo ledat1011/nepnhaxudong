@@ -1,7 +1,8 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { BRAND } from "@/lib/brand/colors";
-import { RiceEar, RiceGrain, RiceLeaf } from "./RicePlant";
+import { RICE_STAGES } from "@/lib/story/scenes";
+import { RiceEar, RiceLeaf, StageIcon } from "./RicePlant";
 
 const ALLOWED = new Set<string>(Object.values(BRAND).map((c) => c.toLowerCase()));
 
@@ -50,17 +51,27 @@ describe("RiceEar", () => {
   });
 });
 
-describe("RiceGrain", () => {
-  it("is a hidden white grain with a dark outline, the shape of the bag's grains", () => {
-    const { container } = render(<RiceGrain />);
+describe("StageIcon", () => {
+  it.each(RICE_STAGES)("draws the %s as a hidden 32 px icon in brand colours", (stage) => {
+    const { container } = render(<StageIcon stage={stage} />);
     const svg = container.querySelector("svg") as SVGSVGElement;
     expect(svg).toHaveAttribute("aria-hidden", "true");
     expect(svg).toHaveAttribute("focusable", "false");
-    const grain = svg.querySelector("ellipse") as SVGEllipseElement;
-    expect(grain.getAttribute("fill")).toBe(BRAND.rice);
-    expect(grain.getAttribute("stroke")).toBe(BRAND.earth);
-    // The same proportions as the falling grains of ProductBag (rx 3.5, ry 5.5).
-    expect(Number(grain.getAttribute("rx")) / Number(grain.getAttribute("ry"))).toBeCloseTo(3.5 / 5.5, 2);
+    expect(svg).toHaveAttribute("data-stage", stage);
+    expect(svg).toHaveAttribute("viewBox", "0 0 32 32");
+    expect(svg.childElementCount).toBeGreaterThan(0);
     expect(colorsOf(svg).every((c) => ALLOWED.has(c.toLowerCase()))).toBe(true);
+    // Every icon has the dark ink outline of the drawings.
+    expect(colorsOf(svg)).toContain(BRAND.earth);
+  });
+
+  it("tells the stages apart by colour: green sprout, gold paddy, white rice, brown bowl", () => {
+    const fills = (stage: (typeof RICE_STAGES)[number]) =>
+      colorsOf(render(<StageIcon stage={stage} />).container.querySelector("svg")!);
+    expect(fills("seed")).toContain(BRAND.sprout);
+    expect(fills("paddy")).toContain(BRAND.grain);
+    expect(fills("rice")).toContain(BRAND.rice);
+    expect(fills("rice")).not.toContain(BRAND.grain);
+    expect(fills("bowl")).toContain(BRAND.coat);
   });
 });

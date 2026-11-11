@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GsapModules } from "../load-gsap";
 import { roadBend, roadPoint } from "@/lib/story/road";
-import { STORY_SCENES } from "@/lib/story/scenes";
+import { RICE_STAGES, SCENE_STAGE, STORY_SCENES } from "@/lib/story/scenes";
 import {
   setupRiceStory,
   STORY_INTRO_LINE,
@@ -31,6 +31,7 @@ vi.mock("../loops", () => ({ getLoopController: () => ({ add: mocks.add }) }));
 
 type Vars = Record<string, unknown> & {
   onEnter?: () => void;
+  onEnterBack?: () => void;
   onToggle?: (self: { isActive: boolean }) => void;
   onUpdate?: () => void;
 };
@@ -108,7 +109,7 @@ const MARKUP = `
   <section data-rice-story>
     <a href="#sau-cau-chuyen" data-story-skip>skip</a>
     <div data-story-road-wrap>
-      <span data-story-grain aria-hidden="true"></span>
+      <span data-story-grain aria-hidden="true">${RICE_STAGES.map((s) => `<svg data-stage="${s}"></svg>`).join("")}</span>
       <ol data-story-list>${STORY_SCENES.map(
         (s, i) => `<li data-story-scene="${s.slug}">
           <span data-story-road data-bend="${roadBend(i)}" aria-hidden="true">
@@ -401,8 +402,9 @@ describe("setupRiceStory", () => {
       const { fake, grain, passed } = road();
       const shownGrain = fake.sets.some((s) => s.target === grain && s.vars.opacity === 1);
       expect(shownGrain).toBe(true);
-      // The layer hint comes with the motion, not with the static markup.
-      expect(fake.sets.some((s) => s.target === grain && s.vars.willChange === "transform")).toBe(true);
+      // No layer of its own: a layer moved by part of a pixel looks blurred.
+      expect(fake.sets.some((s) => s.target === grain && s.vars.force3D === false)).toBe(true);
+      expect(fake.sets.some((s) => s.target === grain && "willChange" in s.vars)).toBe(false);
       const shownPassed = fake.sets.some(
         (s) =>
           Array.isArray(s.target) &&
@@ -441,6 +443,54 @@ describe("setupRiceStory", () => {
       expect(fake.written.get(grain)?.y).toBeCloseTo(STOP, 0);
       at(1);
       expect(fake.written.get(grain)?.y).toBeCloseTo(STOP + 8 * SCENE_H, 0);
+    });
+
+    it("puts the marker on whole device pixels of the page", () => {
+      Object.defineProperty(window, "devicePixelRatio", { value: 1.5, configurable: true });
+      try {
+        const { fake, grain, at } = road();
+        for (const part of [0.13, 2.37 / 8, 0.61]) {
+          at(part);
+          const { x, y } = fake.written.get(grain) ?? {};
+          // The wrap is 2000 px down the screen and the page is not scrolled.
+          expect(((2000 + y) * 1.5) % 1).toBeCloseTo(0, 6);
+          expect((x * 1.5) % 1).toBeCloseTo(0, 6);
+        }
+      } finally {
+        Object.defineProperty(window, "devicePixelRatio", { value: 1, configurable: true });
+      }
+    });
+
+    it("shows what the rice is at each stretch: seed, paddy, rice, then the bowl", () => {
+      const { fake, grain, at } = road();
+      const icon = (stage: string) => grain.querySelector(`[data-stage="${stage}"]`) as Element;
+      /** The icon last made visible, by a set or a tween to opacity 1. */
+      const shown = () => {
+        const calls = [
+          ...fake.sets.map((c) => ({ target: c.target, vars: c.vars })),
+          ...fake.gsap.to.mock.calls.map(([target, vars]) => ({ target, vars: vars as Record<string, unknown> })),
+        ];
+        const order = [
+          ...fake.gsap.set.mock.invocationCallOrder,
+          ...fake.gsap.to.mock.invocationCallOrder,
+        ];
+        const last = calls
+          .map((c, i) => ({ ...c, n: order[i] }))
+          .filter((c) => c.vars.opacity === 1 && RICE_STAGES.some((s) => c.target === icon(s)))
+          .sort((a, b) => a.n - b.n)
+          .at(-1);
+        return (last?.target as Element | undefined)?.getAttribute("data-stage");
+      };
+      STORY_SCENES.forEach((scene, i) => {
+        at((i + 0.5) / 8);
+        expect(shown(), scene.slug).toBe(SCENE_STAGE[scene.slug]);
+      });
+      expect(STORY_SCENES.map((s) => SCENE_STAGE[s.slug])).toEqual([
+        "seed", "seed", "paddy", "paddy", "rice", "rice", "rice", "bowl",
+      ]);
+      // Back up the road, the icon changes back.
+      at(0.5 / 8);
+      expect(shown()).toBe("seed");
     });
 
     it("measures the road again after every refresh", () => {

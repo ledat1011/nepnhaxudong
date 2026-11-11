@@ -1,6 +1,6 @@
 import { buildOverlay, showOverlay, type Overlay } from "@/lib/story/overlay";
 import { roadPoint } from "@/lib/story/road";
-import type { SceneSlug } from "@/lib/story/scenes";
+import { SCENE_STAGE, type RiceStage, type SceneSlug } from "@/lib/story/scenes";
 import type { GsapModules, MotionSetup } from "../load-gsap";
 import { pendingHashScroll, shouldHideElement } from "../reveal";
 import { getLoopController, type Loop, type LoopEntry } from "../loops";
@@ -20,6 +20,8 @@ export const STORY_INTRO_LINE = 0.75;
 export const STORY_ROAD_LINE = 0.5;
 /** The grain follows the scroll this many seconds late, so it glides instead of jumping. */
 export const STORY_ROAD_SCRUB_S = 0.6;
+/** How long the marker takes to change its icon at a stop. */
+export const STORY_MARKER_SWAP_S = 0.25;
 /** After a long gap (a background tab), the loop goes on from where it was, not far ahead. */
 const LOOP_MAX_STEP_S = 0.1;
 
@@ -67,6 +69,8 @@ export function throttledLoop(gsap: Gsap, loop: Pick<gsap.core.Timeline, "totalT
 type Stretch = {
   el: HTMLElement;
   bend: number;
+  /** What the rice is on this stretch: the marker shows its icon. */
+  stage: RiceStage;
   /** Moves the passed layer's window and, the other way, its content (both `yPercent`). */
   setWindow: Setter | null;
   setContent: Setter | null;
@@ -76,10 +80,11 @@ type Stretch = {
 };
 
 /**
- * Moves the rice grain down the road with the scroll and darkens the road it has passed. One
+ * Moves the marker down the road with the scroll and colours the road it has passed. One
  * scrubbed tween drives a proxy from 0 (the top of the road reaches the screen line) to 1 (its
- * bottom does); each update writes two transforms per stretch that changed and the grain's x
- * and y. The road is measured again at every refresh. Returns the cleanup.
+ * bottom does); each update writes two transforms per stretch that changed and the marker's x
+ * and y. At each stop where the rice changes (seed, paddy, rice, bowl) the marker swaps its icon.
+ * The road is measured again at every refresh. Returns the cleanup.
  */
 function setupRoad(
   { gsap, ScrollTrigger }: GsapModules,
@@ -88,7 +93,7 @@ function setupRoad(
   scenes: Scene[],
 ): () => void {
   const stretches: Stretch[] = [];
-  for (const { li } of scenes) {
+  for (const { li, slug } of scenes) {
     const el = li.querySelector<HTMLElement>("[data-story-road]");
     if (!el) continue;
     const passed = el.querySelector<HTMLElement>("[data-story-road-passed]");
@@ -96,6 +101,7 @@ function setupRoad(
     stretches.push({
       el,
       bend: Number(el.dataset.bend) || 50,
+      stage: SCENE_STAGE[slug] ?? "seed",
       setWindow: passed ? (gsap.quickSetter(passed, "yPercent") as Setter) : null,
       setContent: content ? (gsap.quickSetter(content, "yPercent") as Setter) : null,
       shown: -1,
@@ -107,14 +113,43 @@ function setupRoad(
   const passedLayers = stretches.flatMap(
     (s) => s.el.querySelector<HTMLElement>("[data-story-road-passed]") ?? [],
   );
-  // The layer hint only while the grain moves; the context revert removes it with the rest.
-  gsap.set(grain, { opacity: 1, xPercent: -50, yPercent: -50, willChange: "transform" });
+  // No layer of its own (no will-change, no 3D transform) and whole device pixels below: a
+  // layer drawn once and moved by part of a pixel looked blurred (owner, 2026-11-11).
+  gsap.set(grain, { opacity: 1, xPercent: -50, yPercent: -50, force3D: false });
   if (passedLayers.length > 0) gsap.set(passedLayers, { opacity: 1 });
   const grainX = gsap.quickSetter(grain, "x", "px") as Setter;
   const grainY = gsap.quickSetter(grain, "y", "px") as Setter;
+  const icons = new Map(
+    Array.from(grain.querySelectorAll<SVGElement>("[data-stage]"), (icon) => [icon.dataset.stage as RiceStage, icon]),
+  );
+  gsap.set([...icons.values()], { opacity: 0, transformOrigin: "50% 50%" });
+  let shownStage: RiceStage | null = null;
+  const showStage = (stage: RiceStage) => {
+    if (stage === shownStage) return;
+    const previous = shownStage ? icons.get(shownStage) : undefined;
+    const next = icons.get(stage);
+    const first = shownStage === null;
+    shownStage = stage;
+    if (!next) return;
+    if (first) {
+      gsap.set(next, { opacity: 1, scale: 1 });
+      return;
+    }
+    if (previous) gsap.to(previous, { opacity: 0, scale: 0.6, duration: STORY_MARKER_SWAP_S * 0.6, overwrite: true });
+    gsap.set(next, { scale: 0.6 });
+    gsap.to(next, { opacity: 1, scale: 1, duration: STORY_MARKER_SWAP_S, ease: "back.out(2)", overwrite: true });
+  };
+  /** The wrap's place on the page, so the marker lands on whole device pixels of the page. */
+  const origin = { x: 0, y: 0 };
+  const onPixel = (value: number, from: number) => {
+    const density = window.devicePixelRatio || 1;
+    return Math.round((from + value) * density) / density - from;
+  };
 
   const measure = () => {
     const outer = wrap.getBoundingClientRect();
+    origin.x = outer.left + window.scrollX;
+    origin.y = outer.top + window.scrollY;
     for (const s of stretches) {
       const box = s.el.getBoundingClientRect();
       s.box = { top: box.top - outer.top, left: box.left - outer.left, width: box.width, height: box.height };
@@ -137,8 +172,9 @@ function setupRoad(
       const clamped = Math.min(1, Math.max(0, part));
       if (i === index) {
         const point = roadPoint(s.bend, clamped);
-        grainX(s.box.left + (point.x / 100) * s.box.width);
-        grainY(s.box.top + (point.y / 100) * s.box.height);
+        grainX(onPixel(s.box.left + (point.x / 100) * s.box.width, origin.x));
+        grainY(onPixel(s.box.top + (point.y / 100) * s.box.height, origin.y));
+        showStage(s.stage);
       }
       if (clamped === s.shown) return;
       s.shown = clamped;

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { BRAND } from "@/lib/brand/colors";
 import { roadBend, roadPath } from "@/lib/story/road";
-import { STORY_SCENES } from "@/lib/story/scenes";
+import { RICE_STAGES, STORY_SCENES } from "@/lib/story/scenes";
 import { Hero } from "./Hero";
 import { RiceStory } from "./RiceStory";
 
@@ -61,8 +61,20 @@ describe("RiceStory", () => {
     const grain = container.querySelector("[data-story-road-wrap] > [data-story-grain]") as HTMLElement;
     expect(grain).toHaveAttribute("aria-hidden", "true");
     expect(grain.getAttribute("class")).toContain("opacity-0");
-    // No layer for a grain that does not move: the motion code adds the hint.
     expect(grain.getAttribute("class")).not.toContain("will-change");
+    // One icon per stage of the rice, one over the other; the motion code shows one of them.
+    const icons = [...grain.querySelectorAll("svg[data-stage]")].map((svg) => svg.getAttribute("data-stage"));
+    expect(icons).toEqual([...RICE_STAGES]);
+  });
+
+  it("colours the road already passed by what the rice is on that stretch", () => {
+    const { container } = render(<RiceStory dict={getDictionary("vi")} zalo={null} />);
+    const passed = [...container.querySelectorAll("li[data-story-scene]")].map((li) =>
+      li.querySelector("[data-story-road-passed] path")?.getAttribute("stroke"),
+    );
+    expect(passed).toEqual([
+      BRAND.sprout, BRAND.sprout, BRAND.grain, BRAND.grain, BRAND.rice, BRAND.rice, BRAND.rice, BRAND.rice,
+    ]);
   });
 
   it("puts the scenes left and right of the road from 768 px, the first one on the left", () => {

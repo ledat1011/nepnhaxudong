@@ -1,11 +1,11 @@
 import { ZaloLink } from "@/components/contact/ZaloLink";
-import { RiceGrain } from "@/components/home/RicePlant";
+import { StageIcon } from "@/components/home/RicePlant";
 import { MotionPauseButton } from "@/components/motion/MotionPauseButton";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { BRAND } from "@/lib/brand/colors";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { roadBend, roadPath } from "@/lib/story/road";
-import { STORY_SCENES, type SceneSlug } from "@/lib/story/scenes";
+import { RICE_STAGES, SCENE_STAGE, STORY_SCENES, type RiceStage, type SceneSlug } from "@/lib/story/scenes";
 
 type RiceStoryProps = {
   dict: Dictionary;
@@ -32,6 +32,18 @@ function sceneText(dict: Dictionary, slug: SceneSlug): { title: string; text: st
   const key = KEYS[slug];
   return { title: story[`${key}Title`], text: story[`${key}Text`] };
 }
+
+/**
+ * The colour of the road already passed, by what the rice is on that stretch (owner,
+ * 2026-11-11): young-rice green while it grows, gold for the paddy, rice white from the mill on.
+ * The road's brown edges stay, so the white still reads on the straw middle.
+ */
+const PASSED_ROAD: Record<RiceStage, string> = {
+  seed: BRAND.sprout,
+  paddy: BRAND.grain,
+  rice: BRAND.rice,
+  bowl: BRAND.rice,
+};
 
 /** Where the road runs: 20 px from the left below 768 px, the middle of the list from 768 px. */
 const ON_ROAD_LEFT = "md:left-auto md:right-0 md:translate-x-1/2";
@@ -75,8 +87,9 @@ const OVERLAP_ROAD = "md:h-[calc(100%-4rem)]";
  * instead of leaving half the width empty. Each scene draws
  * its own stretch of road down to the next stop, so the stops always sit on the road. The
  * static markup is complete: the whole road is drawn and every drawing shows its final frame.
- * The motion code (lib/motion/story/rice-story.ts) moves the grain down the road, darkens the
- * part already passed and fills the stop of the scene in view, through the `data-story-*`
+ * The motion code (lib/motion/story/rice-story.ts) moves the marker (what the rice is at that
+ * step) down the road, colours the part already passed and fills the stop of the scene in view,
+ * through the `data-story-*`
  * hooks.
  */
 export function RiceStory({ dict, zalo }: RiceStoryProps) {
@@ -101,12 +114,18 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
           </div>
         </div>
         <div data-story-road-wrap className="relative">
+          {/*
+            The marker that moves down the road: what the rice is at the scene it passes. All four
+            icons are here, one over the other; the motion code shows the one of the stretch.
+          */}
           <span
             data-story-grain
             aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-0 z-20 opacity-0"
+            className="pointer-events-none absolute left-0 top-0 z-20 size-8 opacity-0"
           >
-            <RiceGrain className="block" />
+            {RICE_STAGES.map((stage) => (
+              <StageIcon key={stage} stage={stage} className="absolute inset-0 block opacity-0" />
+            ))}
           </span>
           <ol data-story-list role="list">
             {STORY_SCENES.map((scene, i) => {
@@ -149,7 +168,7 @@ export function RiceStory({ dict, zalo }: RiceStoryProps) {
                         >
                           <path
                             d={roadPath(bend)}
-                            stroke={BRAND.grain}
+                            stroke={PASSED_ROAD[SCENE_STAGE[scene.slug]]}
                             vectorEffect="non-scaling-stroke"
                             className="[stroke-width:12px] md:[stroke-width:20px]"
                           />
