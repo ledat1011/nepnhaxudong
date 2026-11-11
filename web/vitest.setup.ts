@@ -22,3 +22,12 @@ for (const name of ["setPointerCapture", "releasePointerCapture", "hasPointerCap
     });
   }
 }
+
+// jsdom has no layout, so no ResizeObserver. The hero picture (HeroPicture.tsx) redraws its canvas when it resizes.
+if (typeof globalThis.ResizeObserver !== "function") {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}

@@ -1,3 +1,4 @@
+import { preload } from "react-dom";
 import { Mascot } from "@/components/brand/Mascot";
 import { ZaloLink } from "@/components/contact/ZaloLink";
 import { MotionPauseButton } from "@/components/motion/MotionPauseButton";
@@ -5,7 +6,9 @@ import { SectionLink } from "@/components/ui/SectionLink";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Lang } from "@/lib/i18n/langs";
 import { homePath } from "@/lib/i18n/routes";
-import { HeroField, HeroSky, HeroSun } from "./HeroScene";
+import { HeroPicture } from "./HeroPicture";
+import { heroPictureSources } from "./hero-picture";
+import { HeroSky, HeroSun } from "./HeroScene";
 
 type HeroProps = {
   lang: Lang;
@@ -20,12 +23,14 @@ const BUTTON_CLASS =
 /**
  * First screen. The largest element is the brand text, so the LCP is text, not an image.
  *
- * The illustrated scene (sky, clouds, village, field) is a panel: on a phone the top band of the
- * hero, behind the mascot; from `md` the full hero width, behind the text and the mascot. It is
- * clearest behind the mascot and fades toward the left edge (at most 30 % over the text column,
- * so the text keeps its contrast) and toward the bottom (`hero-fade-*` in globals.css).
- * `--hero-m` is the mascot width; the mascot stands on the bottom of the panel, and the field is
- * sized from `--hero-m` so that its horizon is at the mascot's waist (HeroScene.tsx).
+ * The illustrated scene is a panel: on a phone the top band of the hero, behind the mascot; from
+ * `md` the full hero width, behind the text and the mascot. It is clearest behind the mascot and
+ * fades toward the left edge (at most 30 % over the text column, so the text keeps its contrast)
+ * and toward the bottom (`hero-fade-*` in globals.css).
+ * In the panel: the sky gradient, the picture of the home village (the real limestone mountain of
+ * Duy Tân, the rice field and the family's 2 kg bag; `.hero-picture` in globals.css places it so
+ * the bag stands left of the mascot), and over it the moving clouds and sun (HeroScene.tsx).
+ * `--hero-m` is the mascot width; the mascot stands on the bottom of the panel.
  *
  * Layers, back to front: panel (z-0), sun (z-1), text and mascot (z-2), pause button (z-10).
  * The section is `isolate`, so these z values stay inside the hero.
@@ -36,6 +41,15 @@ const BUTTON_CLASS =
  * bottom-right corner of the hero.
  */
 export function Hero({ lang, dict, tagline, zalo }: HeroProps) {
+  // The canvas (HeroPicture.tsx) loads its picture only after the page script runs; this preload
+  // in the document head starts the download at once, with a high priority.
+  const picture = heroPictureSources();
+  preload(picture.src, {
+    as: "image",
+    imageSrcSet: picture.srcSet,
+    imageSizes: picture.sizes,
+    fetchPriority: "high",
+  });
   return (
     <section
       data-hero-scene=""
@@ -46,12 +60,14 @@ export function Hero({ lang, dict, tagline, zalo }: HeroProps) {
         aria-hidden="true"
         className="hero-fade-side pointer-events-none absolute inset-x-0 top-0 z-0 h-[calc(2.5rem+var(--hero-m))] md:inset-y-0 md:h-auto"
       >
-        <div className="hero-fade-bottom absolute inset-0 bg-linear-to-b from-sky from-0% via-sky-light via-50% to-rice to-95%">
+        <div className="hero-fade-bottom absolute inset-0 bg-linear-to-b from-sky from-0% via-sky-light via-50% to-rice to-95% [container-type:size]">
+          <HeroPicture />
           <HeroSky />
-          <HeroField />
         </div>
       </div>
-      <div className="relative mx-auto grid max-w-6xl gap-6 px-4 pt-10 pb-16 md:grid-cols-2 md:items-center md:gap-10 md:pt-16 md:pb-0">
+      {/* From md the hero is at least 34rem high: the picture is as high as the hero, so this
+          keeps the mountain large enough to read behind the mascot. */}
+      <div className="relative mx-auto grid max-w-6xl gap-6 px-4 pt-10 pb-16 md:min-h-[34rem] md:grid-cols-2 md:items-center md:gap-10 md:pt-16 md:pb-0">
         <div className="relative z-[2] order-2 text-center md:order-1 md:py-16 md:text-left">
           <h1 className="font-display text-6xl leading-[1.3] text-earth md:text-7xl">{dict.site.name}</h1>
           <p className="mx-auto mt-4 max-w-md text-lg font-medium md:mx-0 md:text-xl">{tagline}</p>

@@ -358,6 +358,13 @@ const FIELD_BOX =
 const FIELD_BOX_WIDE =
   "pointer-events-none absolute bottom-0 left-1/2 aspect-[4320/260] w-[calc(var(--hero-m)*14.19)] max-w-none -translate-x-1/2";
 
+/*
+ * HeroField and HeroFieldStatic are not drawn any more: the picture of the home village
+ * (HERO_PICTURE in hero-picture.ts) replaced them in the hero and the share image. The owner asked to keep the old
+ * field so it can come back (decision 0016, git tag `hero-cu-2026-11-11`); deleting it would lose
+ * that way back.
+ */
+
 /**
  * The far village and the rice field at the bottom of the scene panel. It is 4.73 x the mascot
  * width, centered, so the horizon is at the mascot's waist.

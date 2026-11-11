@@ -16,6 +16,8 @@
 | `story/phac/` | Tranh các bước của khối "Từ hạt lúa tới người dùng" (nét mực manhua, quyết định `0014`), kèm tranh lúa non và tranh đêm của bước 2. Xem `story/phac/README.md`. |
 | `story/layers.json` | Vị trí các vật chuyển động trong mỗi cảnh (mây, quạt, xe, nắp máy...). `tools/cut-story-layers.py` cắt chúng thành lớp ảnh cho web (quyết định `0017`). |
 | `story/parts/bag.svg` | Túi gạo 2 kg dùng cho hình túi ở khối Sản phẩm. |
+| `hero/tranh-mascot-ngang-16x9.webp`, `hero/tranh-mascot-vuong-1x1.webp` | Tranh mascot đứng riêng (quyết định `0016`): cô gái ôm bó lúa trước núi đá thật ở Duy Tân, bao 2 kg trong ruộng. Bản ngang cho ảnh bìa, banner (góc trái để trống cho chữ); bản vuông cho bài đăng. Vẽ bằng Nano Banana Pro; cô gái là bản AI vẽ lại mascot, bản in lớn nên đặt mascot SVG thật lên. |
+| `hero/anh-chia-se-cu-2026-11-11.png` | Ảnh chia sẻ link cũ (đồng lúa vẽ bằng code), lưu lại để quay lại được (quyết định `0016`, tag git `hero-cu-2026-11-11`). |
 | `tokens/tokens.json` | Nguồn gốc màu, font, các cặp chữ / nền hợp lệ. |
 | `tokens/tokens.css` | Biến CSS sinh từ `tokens.json` (`--color-*`, `--font-*`). |
 | `fonts/` | Pacifico, Quicksand 400 / 500 / 700 (giấy phép OFL). |

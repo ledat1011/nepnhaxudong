@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { HomeData, StoryDetail } from "@/lib/content/types";
 import StoryPage from "./page";
 
-vi.mock("next/image", () => ({
+vi.mock("next/image", async (importOriginal) => ({
+  // getImageProps stays real: the hero builds the sources of its picture with it.
+  ...(await importOriginal<typeof import("next/image")>()),
   // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
   default: (props: Record<string, unknown>) => <img {...props} />,
 }));

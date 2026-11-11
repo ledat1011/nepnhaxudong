@@ -52,7 +52,8 @@ describe("Hero", () => {
     expect(scene).not.toBeNull();
     expect(scene?.querySelectorAll("[data-hero-cloud]")).toHaveLength(3);
     expect(scene?.querySelector("[data-hero-sun]")).not.toBeNull();
-    expect(scene?.querySelectorAll("[data-hero-gust]")).toHaveLength(5);
+    // The picture of the home village replaced the drawn field and its swaying rice.
+    expect(scene?.querySelectorAll("[data-hero-gust]")).toHaveLength(0);
     // The old FieldBackdrop strip (viewBox 0 0 1200 160) is gone.
     expect(container.querySelector('svg[viewBox="0 0 1200 160"]')).toBeNull();
   });
@@ -73,8 +74,21 @@ describe("Hero", () => {
     const sky = panel?.querySelector(".hero-fade-bottom");
     expect(sky?.className).toMatch(/bg-linear-to-b from-sky/);
     expect(sky?.querySelectorAll("[data-hero-cloud]")).toHaveLength(3);
-    expect(sky?.querySelectorAll("[data-hero-gust]")).toHaveLength(5);
     expect(panel?.querySelector("h1, a, svg[data-mascot]")).toBeNull();
+  });
+
+  it("draws the village picture on a canvas under the clouds, so it is never the LCP", () => {
+    const { container } = renderHero(null);
+    const sky = container.querySelector("[data-hero-panel] .hero-fade-bottom");
+    expect(sky?.className).toContain("[container-type:size]");
+    // A canvas, not an <img>: a canvas is never a Largest Contentful Paint candidate.
+    expect(sky?.querySelector("img")).toBeNull();
+    const picture = sky?.querySelector("canvas[data-hero-picture].hero-picture");
+    expect(picture).not.toBeNull();
+    expect(picture).toHaveAttribute("aria-hidden", "true");
+    // The clouds come after the picture in the panel, so they are drawn over it.
+    const cloud = sky?.querySelector("[data-hero-cloud]");
+    expect(picture!.compareDocumentPosition(cloud!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("anchors the mascot to the bottom of the panel and sizes both from --hero-m", () => {
