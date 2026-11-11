@@ -37,10 +37,10 @@ const GLOW_S = 1.2;
  */
 export const motionNangMuaGio: SceneMotionBuilder = (gsap, overlay) => {
   const parts = pick(overlay, [
-    "young", "sun", "cloud", "wind", "night", "sun-patch", "cloud-patch", "wind-patch",
+    "young", "sun", "cloud", "wind", "rain", "night", "sun-patch", "cloud-patch", "wind-patch", "rain-patch",
   ] as const);
   if (!parts) return null;
-  const { young, sun, cloud, wind, night } = parts;
+  const { young, sun, cloud, wind, rain, night } = parts;
   const green = overlay.parts.green ?? null;
   const doc = overlay.root.ownerDocument;
 
@@ -76,6 +76,8 @@ export const motionNangMuaGio: SceneMotionBuilder = (gsap, overlay) => {
   gsap.set(sun, { scale: 0.94, rotation: -6 });
   gsap.set(cloud, { x: "-21%", opacity: 0 });
   gsap.set(wind, { x: "-15%", opacity: 0 });
+  // The drops drawn in the pictures: their patch hides them until the cloud has come.
+  gsap.set(rain, { opacity: 0 });
   gsap.set(night, { opacity: 0 });
   gsap.set(fireflies.map((f) => f.dot), { opacity: 0 });
 
@@ -85,6 +87,7 @@ export const motionNangMuaGio: SceneMotionBuilder = (gsap, overlay) => {
   intro.to(sun, { scale: 1, rotation: 0, duration: 0.8, ease: "sine.inOut" }, 1.0);
   // The cloud slides in from the left, and it rains for about 2 s.
   intro.to(cloud, { x: "0%", opacity: 1, duration: 1.2 }, 0.6);
+  intro.to(rain, { opacity: 1, duration: 0.3 }, 1.8);
   drops.forEach(({ drop, y }, i) => {
     const at = 1.6 + i * 0.1;
     // Each drop falls twice; `repeat` starts the fall again from the top.

@@ -2,7 +2,7 @@
   "cay-ma": [
     {
       "name": "cloud-left-patch",
-      "src": "/story/lop/cay-ma-cloud-left-patch.webp",
+      "src": "/lop/cay-ma-cloud-left-patch.webp",
       "left": 22.167,
       "top": 12.444,
       "width": 11.333,
@@ -12,7 +12,7 @@
     },
     {
       "name": "cloud-right-patch",
-      "src": "/story/lop/cay-ma-cloud-right-patch.webp",
+      "src": "/lop/cay-ma-cloud-right-patch.webp",
       "left": 61.75,
       "top": 8.889,
       "width": 8.833,
@@ -22,7 +22,7 @@
     },
     {
       "name": "cloud-left",
-      "src": "/story/lop/cay-ma-cloud-left.webp",
+      "src": "/lop/cay-ma-cloud-left.webp",
       "left": 22.667,
       "top": 13.185,
       "width": 10.417,
@@ -32,7 +32,7 @@
     },
     {
       "name": "cloud-right",
-      "src": "/story/lop/cay-ma-cloud-right.webp",
+      "src": "/lop/cay-ma-cloud-right.webp",
       "left": 62.333,
       "top": 9.481,
       "width": 7.75,
@@ -44,7 +44,7 @@
   "nang-mua-gio": [
     {
       "name": "sun-patch",
-      "src": "/story/lop/nang-mua-gio-sun-patch.webp",
+      "src": "/lop/nang-mua-gio-sun-patch.webp",
       "left": 18.333,
       "top": 1.481,
       "width": 15.417,
@@ -54,7 +54,7 @@
     },
     {
       "name": "cloud-patch",
-      "src": "/story/lop/nang-mua-gio-cloud-patch.webp",
+      "src": "/lop/nang-mua-gio-cloud-patch.webp",
       "left": 38.667,
       "top": 7.704,
       "width": 24.333,
@@ -64,7 +64,7 @@
     },
     {
       "name": "wind-patch",
-      "src": "/story/lop/nang-mua-gio-wind-patch.webp",
+      "src": "/lop/nang-mua-gio-wind-patch.webp",
       "left": 63.667,
       "top": 9.037,
       "width": 17.917,
@@ -73,8 +73,18 @@
       "originY": 50.329
     },
     {
+      "name": "rain-patch",
+      "src": "/lop/nang-mua-gio-rain-patch.webp",
+      "left": 42.083,
+      "top": 25.63,
+      "width": 19.917,
+      "height": 19.852,
+      "originX": 51.106,
+      "originY": 48.881
+    },
+    {
       "name": "sun",
-      "src": "/story/lop/nang-mua-gio-sun.webp",
+      "src": "/lop/nang-mua-gio-sun.webp",
       "left": 18.833,
       "top": 2.37,
       "width": 14.417,
@@ -84,7 +94,7 @@
     },
     {
       "name": "cloud",
-      "src": "/story/lop/nang-mua-gio-cloud.webp",
+      "src": "/lop/nang-mua-gio-cloud.webp",
       "left": 38.833,
       "top": 8.593,
       "width": 23.583,
@@ -94,19 +104,29 @@
     },
     {
       "name": "wind",
-      "src": "/story/lop/nang-mua-gio-wind.webp",
+      "src": "/lop/nang-mua-gio-wind.webp",
       "left": 64.25,
       "top": 10.074,
       "width": 17.083,
       "height": 20.444,
       "originX": 49.268,
       "originY": 50.362
+    },
+    {
+      "name": "rain",
+      "src": "/lop/nang-mua-gio-rain.webp",
+      "left": 42.667,
+      "top": 26.074,
+      "width": 18.75,
+      "height": 18.815,
+      "originX": 51.175,
+      "originY": 49.213
     }
   ],
   "gat": [
     {
       "name": "harvester",
-      "src": "/story/lop/gat-harvester.webp",
+      "src": "/lop/gat-harvester.webp",
       "left": 35.25,
       "top": 30.222,
       "width": 47.667,
@@ -118,7 +138,7 @@
   "say": [
     {
       "name": "fan",
-      "src": "/story/lop/say-fan.webp",
+      "src": "/lop/say-fan.webp",
       "left": 18.5,
       "top": 53.63,
       "width": 8.75,
@@ -130,7 +150,7 @@
   "dong-goi": [
     {
       "name": "bag-top-patch",
-      "src": "/story/lop/dong-goi-bag-top-patch.webp",
+      "src": "/lop/dong-goi-bag-top-patch.webp",
       "left": 75.25,
       "top": 64.593,
       "width": 10.0,
@@ -140,7 +160,7 @@
     },
     {
       "name": "lid",
-      "src": "/story/lop/dong-goi-lid.webp",
+      "src": "/lop/dong-goi-lid.webp",
       "left": 40.0,
       "top": 35.259,
       "width": 12.75,
@@ -150,7 +170,7 @@
     },
     {
       "name": "bag-top",
-      "src": "/story/lop/dong-goi-bag-top.webp",
+      "src": "/lop/dong-goi-bag-top.webp",
       "left": 75.25,
       "top": 64.593,
       "width": 10.0,
@@ -162,7 +182,7 @@
   "den-tay-khach": [
     {
       "name": "cloud-patch",
-      "src": "/story/lop/den-tay-khach-cloud-patch.webp",
+      "src": "/lop/den-tay-khach-cloud-patch.webp",
       "left": 32.833,
       "top": 6.667,
       "width": 10.083,
@@ -172,7 +192,7 @@
     },
     {
       "name": "cloud",
-      "src": "/story/lop/den-tay-khach-cloud.webp",
+      "src": "/lop/den-tay-khach-cloud.webp",
       "left": 33.417,
       "top": 7.704,
       "width": 8.917,
@@ -182,7 +202,7 @@
     },
     {
       "name": "truck",
-      "src": "/story/lop/den-tay-khach-truck.webp",
+      "src": "/lop/den-tay-khach-truck.webp",
       "left": 56.25,
       "top": 66.667,
       "width": 32.083,
@@ -192,7 +212,7 @@
     },
     {
       "name": "wheel-front",
-      "src": "/story/lop/den-tay-khach-wheel-front.webp",
+      "src": "/lop/den-tay-khach-wheel-front.webp",
       "left": 59.083,
       "top": 86.963,
       "width": 5.083,
@@ -202,7 +222,7 @@
     },
     {
       "name": "wheel-back",
-      "src": "/story/lop/den-tay-khach-wheel-back.webp",
+      "src": "/lop/den-tay-khach-wheel-back.webp",
       "left": 78.75,
       "top": 86.963,
       "width": 5.083,

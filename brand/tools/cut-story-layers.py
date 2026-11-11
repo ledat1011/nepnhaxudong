@@ -3,13 +3,15 @@
 Reads `brand/story/layers.json` and the scene pictures the page shows (`web/public/story/canh-*.webp`,
 1200 x 675), so every layer matches the page pixel for pixel. Writes:
 
-- `web/public/story/lop/<slug>-<name>.webp`: one RGBA WebP per layer, cropped to its visible box;
+- `web/public/lop/<slug>-<name>.webp`: one RGBA WebP per layer, cropped to its visible box (a
+  folder of its own, one level deep, as the path guard of the site wants);
 - `web/public/story/canh-2-nang-mua-gio-{non,dem}.webp`: the young-rice and night pictures of step 2;
 - `web/src/lib/story/scene-layers.json`: where each layer sits, in percent of the scene.
 
 A layer entry in layers.json:
 - `name`: the part name the motion code looks for (`data-part`).
-- `rect: [x0, y0, x1, y1]` or `circle: [cx, cy, r]`, in pixels of the 1200 x 675 picture.
+- `rect: [x0, y0, x1, y1]`, `circle: [cx, cy, r]` or `circles: [[cx, cy, r], ...]` (several small
+  shapes that move as one part, such as rain drops), in pixels of the 1200 x 675 picture.
 - `pad`: pixels added around the shape. The layer covers the part plus this margin, so a part
   that shakes or drifts by less than `pad` never shows the original part behind it.
 - `feather`: the width in pixels of the soft edge, inside the pad.
@@ -36,7 +38,7 @@ from PIL import Image, ImageFilter
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = ROOT / "brand" / "story" / "layers.json"
 SCENES = ROOT / "web" / "public" / "story"
-OUT_DIR = SCENES / "lop"
+OUT_DIR = ROOT / "web" / "public" / "lop"
 MANIFEST = ROOT / "web" / "src" / "lib" / "story" / "scene-layers.json"
 SKETCHES = ROOT / "brand" / "story" / "phac"
 # The extra pictures of step 2, which fade over the day picture: young rice and night. The green
@@ -60,6 +62,11 @@ PICTURE_QUALITY = 70
 def shape_mask(entry: dict, grow: float) -> np.ndarray:
     """A 0..1 mask of the entry's shape grown by `grow` pixels, over the whole picture."""
     ys, xs = np.mgrid[0:HEIGHT, 0:WIDTH]
+    if "circles" in entry:
+        inside = np.zeros((HEIGHT, WIDTH), dtype=bool)
+        for cx, cy, r in entry["circles"]:
+            inside |= (xs - cx) ** 2 + (ys - cy) ** 2 <= (r + grow) ** 2
+        return inside.astype(np.float32)
     if "circle" in entry:
         cx, cy, r = entry["circle"]
         return ((xs - cx) ** 2 + (ys - cy) ** 2 <= (r + grow) ** 2).astype(np.float32)
@@ -122,7 +129,7 @@ def place(name: str, slug: str, box: tuple[int, int, int, int], origin: tuple[fl
     x, y, w, h = box
     return {
         "name": name,
-        "src": f"/story/lop/{slug}-{name}.webp",
+        "src": f"/lop/{slug}-{name}.webp",
         "left": pct(x, WIDTH),
         "top": pct(y, HEIGHT),
         "width": pct(w, WIDTH),
@@ -137,6 +144,11 @@ def centre(entry: dict) -> tuple[float, float]:
         return tuple(entry["origin"])
     if "circle" in entry:
         return entry["circle"][0], entry["circle"][1]
+    if "circles" in entry:
+        return (
+            sum(c[0] for c in entry["circles"]) / len(entry["circles"]),
+            sum(c[1] for c in entry["circles"]) / len(entry["circles"]),
+        )
     x0, y0, x1, y1 = entry["rect"]
     return (x0 + x1) / 2, (y0 + y1) / 2
 

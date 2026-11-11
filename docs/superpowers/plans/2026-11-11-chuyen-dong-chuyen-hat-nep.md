@@ -34,7 +34,7 @@
 
 **Files:**
 - Create: `brand/tools/cut-story-layers.py`, `brand/story/layers.json`
-- Create (generated): `web/public/story/lop/*.webp`, `web/src/lib/story/scene-layers.json`, `web/public/story/canh-2-nang-mua-gio-dem.webp`
+- Create (generated): `web/public/lop/*.webp`, `web/src/lib/story/scene-layers.json`, `web/public/story/canh-2-nang-mua-gio-dem.webp`
 - Test: `web/src/lib/story/scene-layers.test.ts`
 
 **Interfaces:**

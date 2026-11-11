@@ -64,7 +64,8 @@ describe("classifyPath", () => {
   });
 
   it("lets the story scene files through, and nothing else under /story", () => {
-    expect(classifyPath("/story/canh-1-cay-ma.svg")).toBe("pass");
+    // The layered SVG scenes are gone (decision 0017): only the WebP sketches are left.
+    expect(classifyPath("/story/canh-1-cay-ma.svg")).toBe("not-found");
     expect(classifyPath("/story/canh-1-cay-ma.webp")).toBe("pass");
     expect(classifyPath("/story/a/b.webp")).toBe("not-found");
     expect(classifyPath("/story/a.png")).toBe("not-found");
@@ -73,9 +74,16 @@ describe("classifyPath", () => {
     expect(classifyPath("/story/a.php")).toBe("not-found");
     // Pinned as they are today: the guard looks at the plain segments only. Next serves a file
     // from `public/` only when its name matches exactly, so these still end in a 404.
-    expect(classifyPath("/story/.svg")).toBe("pass");
-    expect(classifyPath("/story/a.svg/")).toBe("pass");
-    expect(classifyPath("/story/a%2Fb.svg")).toBe("pass");
+    expect(classifyPath("/story/.webp")).toBe("pass");
+    expect(classifyPath("/story/a.webp/")).toBe("pass");
+    expect(classifyPath("/story/a%2Fb.webp")).toBe("pass");
+  });
+
+  it("lets the moving layers of the story scenes through, one level deep", () => {
+    expect(classifyPath("/lop/say-fan.webp")).toBe("pass");
+    expect(classifyPath("/lop/a/b.webp")).toBe("not-found");
+    expect(classifyPath("/lop/a.png")).toBe("not-found");
+    expect(classifyPath("/story/lop/say-fan.webp")).toBe("not-found");
   });
 
   it("answers 404 for a first segment that is not a language", () => {

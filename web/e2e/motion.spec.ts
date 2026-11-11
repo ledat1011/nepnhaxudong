@@ -1014,9 +1014,9 @@ test.describe("the rice story road", () => {
   }) => {
     const requested: string[] = [];
     page.on("request", (request) => {
-      if (request.url().includes("/story/lop/")) requested.push(new URL(request.url()).pathname);
+      if (request.url().includes("/lop/")) requested.push(new URL(request.url()).pathname);
     });
-    await page.route("**/story/lop/say-fan.webp", (route) => route.fulfill({ status: 500, body: "" }));
+    await page.route("**/lop/say-fan.webp", (route) => route.fulfill({ status: 500, body: "" }));
     await openStory(page, PHONE);
     // At the top of the page no layer has loaded yet.
     expect(requested).toEqual([]);

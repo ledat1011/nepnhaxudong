@@ -59,7 +59,7 @@ này (bỏ qua bước không đổi gì; mỗi bước dùng kết quả của 
 
 `python cut-story-layers.py` (chạy từ thư mục gốc của repo: `python brand/tools/cut-story-layers.py`):
 đọc `story/layers.json` và tranh mà web đang dùng (`web/public/story/canh-*.webp`), rồi ghi lớp ảnh vào
-`web/public/story/lop/`, vị trí các lớp vào `web/src/lib/story/scene-layers.json`, và tranh lúa non, tranh đêm
+`web/public/lop/`, vị trí các lớp vào `web/src/lib/story/scene-layers.json`, và tranh lúa non, tranh đêm
 của bước 2. Cùng Python và `requirements-mascot.txt` như bước 3. Sửa `layers.json` rồi chạy lại công cụ;
 không sửa tay `scene-layers.json`.
 

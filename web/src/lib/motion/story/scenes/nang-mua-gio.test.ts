@@ -81,6 +81,28 @@ describe("motionNangMuaGio", () => {
     for (const drop of drops) expect(num(drop, "opacity")).toBe(0);
   });
 
+  it("hides the drawn rain until the cloud has come, then keeps it", () => {
+    const { overlay, motion } = build();
+    const { rain, cloud } = overlay.parts;
+    expect(num(rain, "opacity")).toBe(0);
+    for (let t = 0; t <= motion.intro.duration(); t += 0.05) {
+      motion.intro.time(t);
+      // No rain without its cloud.
+      if (num(rain, "opacity") > 0.01) expect(num(cloud, "opacity")).toBeGreaterThan(0.9);
+    }
+    motion.intro.time(2.4);
+    expect(num(rain, "opacity")).toBe(1);
+    motion.intro.progress(1);
+    expect(num(rain, "opacity")).toBe(1);
+    motion.intro.progress(0);
+    expect(num(rain, "opacity")).toBe(0);
+  });
+
+  it("returns null without the rain or its patch", () => {
+    expect(motionNangMuaGio(gsap, testOverlay("nang-mua-gio", ["rain"]))).toBeNull();
+    expect(motionNangMuaGio(gsap, testOverlay("nang-mua-gio", ["rain-patch"]))).toBeNull();
+  });
+
   it("draws the fireflies above the night picture, dark until the loop", () => {
     const { overlay, motion, sky, fireflies } = build();
     expect(sky).not.toBeNull();

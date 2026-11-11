@@ -41,11 +41,11 @@ Khi làm, vị trí chính xác của từng vật được đo trên tranh gố
 - **Nguồn:** bản phác đã duyệt `brand/story/phac/*.webp` (1600 px).
 - **Định nghĩa lớp:** `brand/story/layers.json`. Mỗi lớp ghi: cảnh, tên, hình cắt (chữ nhật, tròn hoặc đa giác, đo theo pixel của bản 1600 px), độ mờ mép, tâm quay nếu có. Nếu vật dời khỏi chỗ cũ, ghi thêm vùng tô bù bằng màu nền phẳng xung quanh. Chỉ dùng vùng tô bù khi nền ở đó là màu phẳng.
 - **Công cụ cắt:** `brand/tools/cut-story-layers.py` (Python, PIL). Script đọc `layers.json`, cắt từng lớp từ tranh gốc và thu về tỉ lệ của tranh trên web (1200 × 675). Script ghi:
-  - mỗi lớp ra một file WebP có kênh trong suốt, trong `web/public/story/lop/`;
+  - mỗi lớp ra một file WebP có kênh trong suốt, trong `web/public/lop/`;
   - vị trí và kích thước của mọi lớp (theo phần trăm khung cảnh) ra `web/src/lib/story/scene-layers.json`.
 - **Tranh đêm bước 2:** `web/public/story/canh-2-nang-mua-gio-dem.webp` (1200 × 675), xuất từ `brand/story/phac/2-nang-mua-gio-dem.webp`.
 - **Giới hạn dung lượng:** mỗi lớp dưới 40 KB; tổng các lớp của một cảnh dưới 120 KB. Tranh lúa non và tranh đêm của bước 2 tính riêng: mỗi tranh dưới 120 KB. Test kiểm tra.
-- **Bước 2 (chủ dự án chọn thêm, 2026-11-11):** lúa lớn dần: tranh lúa non mới (Nano Banana Pro, cùng bố cục) → lúa xanh → lúa chín vàng → đêm trăng. Lúa xanh được đổi màu từ tranh gốc ngay trong trình duyệt (`web/src/lib/story/green-rice.ts`), vì làm thành file thì nặng như chính tranh gốc (khoảng 150 KB). Mưa vẽ bằng code (giọt rơi thêm), vì giọt mưa có sẵn nằm sát ngọn lúa nên không cắt sạch được.
+- **Bước 2 (chủ dự án chọn thêm, 2026-11-11):** lúa lớn dần: tranh lúa non mới (Nano Banana Pro, cùng bố cục) → lúa xanh → lúa chín vàng → đêm trăng. Lúa xanh được đổi màu từ tranh gốc ngay trong trình duyệt (`web/src/lib/story/green-rice.ts`), vì làm thành file thì nặng như chính tranh gốc (khoảng 150 KB). Giọt mưa có sẵn trong tranh được cắt theo từng giọt (mỗi giọt một hình tròn nhỏ) và che đi lúc đầu, rồi hiện ra khi mây đã tới; thêm vài giọt rơi vẽ bằng code. Như vậy không có mưa trước khi có mây.
 
 ### 4.2. Trên trang
 - **Phần HTML tĩnh gần như không đổi.** Ảnh WebP của mỗi cảnh được bọc trong một khung (`data-story-stage`). Khung mang hiệu ứng mờ mép (`story-scene-fade`), nên lớp động cũng mờ mép như tranh.
