@@ -92,3 +92,4 @@
 - Chủ dự án chọn "gộp cả hai": cảnh đang chạy dở mà cuộn ra khỏi màn hình thì dừng đúng chỗ, quay lại thì chạy tiếp từ chỗ đó; cảnh đã chạy xong một lượt thì khi quay lại vẫn chạy lại từ đầu.
 - Chủ dự án (2026-11-12, ảnh tranh đêm bước 2): "bước 2 để time hơi lâu so với những cảnh trước" → rút ngắn đoạn đêm trong vòng lặp bước 2 (đang giữ 5 giây) cho gần nhịp bước 1.
 - Chủ dự án (2026-11-12, ảnh bước 6 Đóng gói): "máy hút chân không không dập mở liên tục, dập được có 1 lần à" → nắp máy hút chân không phải dập xuống rồi mở lên liên tục khi cảnh còn trên màn hình, không chỉ một lần.
+- Chủ dự án (2026-11-12) hỏi vì sao một thay đổi lại thành hai PR (#60 và #61 chỉ ghi STATE) → chủ dự án đồng ý quy tắc: các thay đổi liên quan tới nhau (code, test, spec, log, `STATE.md` của cùng một việc) để chung một PR, cập nhật `STATE.md` trước khi merge và chỉ ghi số PR; việc không liên quan thì tách PR. Đã ghi vào `CLAUDE.md`.
