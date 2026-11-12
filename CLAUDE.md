@@ -108,6 +108,13 @@ Testcontainers and the full-stack e2e all need it.
   Never stop the owner's own servers silently.
 
 ## Code and pull requests
+- One PR holds the changes that belong together: they come from the same request, or they must reach `main`
+  together to be correct. That includes the code, its tests, the spec and decision notes, the session log and
+  the `docs/session/STATE.md` entry for that work. Changes that are not related go in separate PRs, even when
+  you make them in the same session, so one can be reverted without the other (owner, 2026-11-12).
+- Update `docs/session/STATE.md` in the same PR, before the merge, and refer to the work by its PR number.
+  Do not open a second, docs-only PR just to record the merge commit. Open one only when STATE must record a
+  result that exists only after the merge, for example a check on the deployed preview.
 - When new code replaces an old code path, delete the old path, its config and its tests in the same change.
   Do not keep both behind a flag, unless the owner asks for a step-by-step rollout.
 - When code on purpose leaves out something that the code around it has (a check, a retry, a cleanup, a list
